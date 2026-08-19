@@ -1,0 +1,143 @@
+# ---------------------------------------------------------------
+# .NET / C#  (backend)
+# ---------------------------------------------------------------
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+[Ll]og/
+[Ll]ogs/
+x64/
+x86/
+build/
+bld/
+[Oo]ut/
+
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.sln.docstates
+*.dbmdl
+*.pidb
+*.svclog
+*.scc
+
+# Resultados de test y cobertura
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+TestResults/
+
+# Paquetes NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# Publicación
+publish/
+*.publishsettings
+PublishScripts/
+
+# ---------------------------------------------------------------
+# Node / Angular  (frontend)
+# ---------------------------------------------------------------
+node_modules/
+dist/
+tmp/
+out-tsc/
+.angular/
+bazel-out/
+
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+
+# Cobertura de tests del frontend
+/coverage/
+/libpeerconnection.log
+testem.log
+/typings
+
+# ---------------------------------------------------------------
+# Variables de entorno y secretos
+# NUNCA versionar credenciales de proveedores, cadenas de conexión
+# ni claves de la base de datos
+# ---------------------------------------------------------------
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.Local.json
+appsettings.Production.json
+secrets.json
+*.pfx
+*.key
+*.pem
+
+# ---------------------------------------------------------------
+# Docker
+# ---------------------------------------------------------------
+docker-compose.override.yml
+.docker/
+
+# ---------------------------------------------------------------
+# Base de datos y migración de datos
+# Los volcados de Multisoft y los datos reales de la empresa
+# no se versionan
+# ---------------------------------------------------------------
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.tps
+*.bak
+*.dump
+/data/
+/dumps/
+/migracion/datos/
+
+# ---------------------------------------------------------------
+# Archivos de prueba con datos reales
+# ---------------------------------------------------------------
+/facturas-prueba/
+*.factura.pdf
+
+# ---------------------------------------------------------------
+# IDEs y editores
+# ---------------------------------------------------------------
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+*~
+
+# ---------------------------------------------------------------
+# Sistema operativo
+# ---------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
