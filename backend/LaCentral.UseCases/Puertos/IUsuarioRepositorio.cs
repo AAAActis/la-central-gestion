@@ -1,4 +1,4 @@
-using LaCentral.UseCases.Models; // Ahora el namespace matchea con lo que generó EF Core
+using LaCentral.UseCases.Entidades; // Ahora el namespace matchea con lo que generó EF Core
 
 namespace LaCentral.UseCases.Puertos;
 

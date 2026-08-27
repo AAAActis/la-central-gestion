@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace LaCentral.UseCases.Models;
+namespace LaCentral.Data.Models;
 
 /// <summary>
 /// Un usuario representa un puesto de trabajo, no una persona. La trazabilidad alcanza a la terminal desde la que se operó.

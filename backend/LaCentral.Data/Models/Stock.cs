@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace LaCentral.UseCases.Models;
+namespace LaCentral.Data.Models;
 
 /// <summary>
 /// Existencia por artículo y ubicación. Admite valores negativos: la venta sin stock no se bloquea (HU-STK-03).

@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using LaCentral.UseCases.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace LaCentral.Data;
+namespace LaCentral.Data.Models;
 
 public partial class LaCentralDbContext : DbContext
 {

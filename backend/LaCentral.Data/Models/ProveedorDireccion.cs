@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace LaCentral.UseCases.Models;
+namespace LaCentral.Data.Models;
 
-public partial class ClienteDireccion
+public partial class ProveedorDireccion
 {
     public int Id { get; set; }
 
-    public int ClienteId { get; set; }
+    public int ProveedorId { get; set; }
 
     public string? Calle { get; set; }
 
@@ -21,5 +21,5 @@ public partial class ClienteDireccion
 
     public string? Descripcion { get; set; }
 
-    public virtual Cliente Cliente { get; set; } = null!;
+    public virtual Proveedor Proveedor { get; set; } = null!;
 }
