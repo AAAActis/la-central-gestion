@@ -5,7 +5,7 @@ public class Usuario
     public int Id { get; set; }
     public string NombreUsuario { get; set; } = null!;
     public string HashContrasena { get; set; } = null!;
-    public int SucursalId { get; set; }
-    public int RolId { get; set; }
+    public string SucursalId { get; set; } = null!;
+    public string RolId { get; set; } = null!;
     public bool Activo { get; set; }
 }
