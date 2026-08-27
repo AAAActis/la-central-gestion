@@ -1,41 +1,43 @@
+using Microsoft.EntityFrameworkCore;
+using LaCentral.Data;
+using LaCentral.Data.Repositorios;
+using LaCentral.Data.Servicios; 
+using LaCentral.UseCases.Puertos;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// 1. Registrar DbContext leyendo el appsettings.json (Tu parte)
+builder.Services.AddDbContext<LaCentralDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
+
+// 2. Inyectar dependencias (Tu parte)
+builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
+builder.Services.AddScoped<IServicioHash, ServicioHash>(); 
+
+// 3. Configuración de API y Swagger (Parte de Javi)
 builder.Services.AddOpenApi();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "La Central · API v1");
+        options.RoutePrefix = "swagger";
+    });
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
+// Endpoint temporal para probar la conexión a la base (Tu objetivo del Martes)
+app.MapGet("/api/test-db", async (LaCentralDbContext context) => 
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    var usuarios = await context.Usuarios.Select(u => u.NombreUsuario).ToListAsync();
+    return Results.Ok(usuarios);
+});
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
+app.MapControllers();
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
