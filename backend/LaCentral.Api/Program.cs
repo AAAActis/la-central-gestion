@@ -6,15 +6,15 @@ using LaCentral.UseCases.Puertos;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Registrar DbContext leyendo el appsettings.json (Tu parte)
 builder.Services.AddDbContext<LaCentralDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
-// 2. Inyectar dependencias (Tu parte)
+builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
+builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IServicioHash, ServicioHash>(); 
+builder.Services.AddScoped<IGeneradorToken, GeneradorToken>(); 
 
-// 3. Configuración de API y Swagger (Parte de Javi)
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
