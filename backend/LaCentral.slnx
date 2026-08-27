@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="LaCentral.Api/LaCentral.Api.csproj" />
+  <Project Path="LaCentral.Data/LaCentral.Data.csproj" />
+  <Project Path="LaCentral.UseCases/LaCentral.UseCases.csproj" />
+</Solution>
