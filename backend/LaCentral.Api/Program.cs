@@ -1,32 +1,38 @@
 using Microsoft.EntityFrameworkCore;
-using LaCentral.Data; // Acá vive ahora tu DbContext
+using LaCentral.Data;
 using LaCentral.Data.Repositorios;
-using LaCentral.Data.Servicios; // Para el hash de BCrypt (Miércoles)
+using LaCentral.Data.Servicios; 
 using LaCentral.UseCases.Puertos;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Registrar DbContext leyendo el appsettings.json
+// 1. Registrar DbContext leyendo el appsettings.json (Tu parte)
 builder.Services.AddDbContext<LaCentralDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
-// 2. Inyectar dependencias (Puertos -> Implementaciones en Data)
+// 2. Inyectar dependencias (Tu parte)
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
-builder.Services.AddScoped<IServicioHash, ServicioHash>(); // Lo tuyo de hoy
+builder.Services.AddScoped<IServicioHash, ServicioHash>(); 
 
+// 3. Configuración de API y Swagger (Parte de Javi)
+builder.Services.AddOpenApi();
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "La Central · API v1");
+        options.RoutePrefix = "swagger";
+    });
 }
 
-// Endpoint temporal para probar la conexión a la base (Objetivo del Martes)
+app.UseHttpsRedirection();
+
+// Endpoint temporal para probar la conexión a la base (Tu objetivo del Martes)
 app.MapGet("/api/test-db", async (LaCentralDbContext context) => 
 {
     var usuarios = await context.Usuarios.Select(u => u.NombreUsuario).ToListAsync();
