@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using LaCentral.Data;
+using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using LaCentral.Data.Servicios; 
 using LaCentral.UseCases.Puertos;

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace LaCentral.UseCases.Models;
+namespace LaCentral.Data.Models;
 
 public partial class FacturaCompra
 {
