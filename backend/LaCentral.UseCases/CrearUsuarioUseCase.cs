@@ -40,12 +40,22 @@ public class CrearUsuarioUseCase
         var passwordHash = _servicioHash.HashearClave(request.Password);
 
         // 5. Armar el modelo de dominio/DTO para el repositorio
+        int idSucursal = request.Sucursal == "FR" ? 1 : 2; 
+
+        // Mapeo de Rol
+        int idRol = request.Rol switch
+        {
+            "Admin" => 1,
+            "Operador" => 2,
+            _ => 2 // Valor por defecto. (Si tenés más roles, sumalos acá)
+        };
+
         var nuevoUsuario = new Usuario
         {
             NombreUsuario = request.NombreUsuario,
             HashContrasena = passwordHash,
-            RolId = request.Rol,
-            SucursalId = request.Sucursal,
+            RolId = idRol,
+            SucursalId = idSucursal,
             Activo = true // Por defecto arranca activo
         };
 
