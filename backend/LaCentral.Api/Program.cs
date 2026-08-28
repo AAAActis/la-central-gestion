@@ -4,6 +4,9 @@ using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using LaCentral.Data.Servicios; 
 using LaCentral.UseCases.Puertos;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +18,24 @@ builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IServicioHash, ServicioHash>(); 
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>(); 
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true, // Acá se cumple tu prueba de token vencido
+            ValidateIssuerSigningKey = true,
+            
+            // Mapeo directo a tu appsettings.json
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? string.Empty))
+        };
+    });
 
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
@@ -32,6 +53,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication(); 
+app.UseAuthorization();
 
 // Endpoint temporal para probar la conexión a la base (Tu objetivo del Martes)
 app.MapGet("/api/test-db", async (LaCentralDbContext context) => 
