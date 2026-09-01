@@ -7,6 +7,7 @@ using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using LaCentral.UseCases;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +18,8 @@ builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IServicioHash, ServicioHash>(); 
-builder.Services.AddScoped<IGeneradorToken, GeneradorToken>(); 
+builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
+builder.Services.AddScoped<AutenticarUsuarioUseCase>(); 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
