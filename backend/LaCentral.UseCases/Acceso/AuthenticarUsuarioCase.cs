@@ -1,5 +1,6 @@
 using LaCentral.UseCases.Models;
 using LaCentral.UseCases.Puertos;
+using LaCentral.UseCases.Comun;
 
 namespace LaCentral.UseCases;
 
@@ -56,7 +57,12 @@ public class AutenticarUsuarioUseCase
         string codigoSucursal = usuario.SucursalId == 1 ? "FR" : "SV";
 
         // CA1: Todo correcto. Generamos el token delegando al puerto y pasándole los 2 parámetros que pide Santi.
-        var token = _generadorToken.GenerarToken(usuario, nombreRol);
+        var token = _generadorToken.GenerarToken(
+            usuario.Id, 
+            usuario.NombreUsuario, 
+            "Admin", // O la variable que contenga el nombre del rol (ej: usuario.Rol.Nombre)
+            (short)usuario.SucursalId
+        );
 
         // CA5: Retornamos la respuesta usando los strings que acabamos de mapear
         var response = new AuthenticarUsuarioResponse

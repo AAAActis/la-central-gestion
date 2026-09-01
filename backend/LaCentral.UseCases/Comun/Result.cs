@@ -1,4 +1,4 @@
-namespace LaCentral.UseCases
+namespace LaCentral.UseCases.Comun
 {
     public class Result
     {

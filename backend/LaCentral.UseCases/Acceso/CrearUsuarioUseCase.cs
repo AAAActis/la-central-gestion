@@ -1,6 +1,7 @@
 using LaCentral.UseCases.Entidades;
 using LaCentral.UseCases.Models;
 using LaCentral.UseCases.Puertos;
+using LaCentral.UseCases.Comun;
 
 namespace LaCentral.UseCases;
 
