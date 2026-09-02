@@ -60,7 +60,7 @@ public class AutenticarUsuarioUseCase
         var token = _generadorToken.GenerarToken(
             usuario.Id, 
             usuario.NombreUsuario, 
-            "Admin", // O la variable que contenga el nombre del rol (ej: usuario.Rol.Nombre)
+            nombreRol, // O la variable que contenga el nombre del rol (ej: usuario.Rol.Nombre)
             (short)usuario.SucursalId
         );
 
