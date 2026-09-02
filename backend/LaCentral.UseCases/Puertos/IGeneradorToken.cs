@@ -4,5 +4,5 @@ namespace LaCentral.UseCases.Puertos;
 
 public interface IGeneradorToken
 {
-    string GenerarToken(Usuario usuario, string nombreRol);
+    string GenerarToken(int usuarioId, string nombreUsuario, string nombreRol, short sucursalId);
 }

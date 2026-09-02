@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using LaCentral.Data;
 using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using LaCentral.Data.Servicios; 
 using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using LaCentral.Api.Seguridad;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,9 +15,7 @@ builder.Services.AddDbContext<LaCentralDbContext>(options =>
 
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IServicioHash, ServicioHash>();
-builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
-builder.Services.AddScoped<IServicioHash, ServicioHash>(); 
-builder.Services.AddScoped<IGeneradorToken, GeneradorToken>(); 
+builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -62,7 +60,7 @@ app.MapGet("/api/test-db", async (LaCentralDbContext context) =>
 {
     var usuarios = await context.Usuarios.Select(u => u.NombreUsuario).ToListAsync();
     return Results.Ok(usuarios);
-});
+}).RequireAuthorization();
 
 app.MapControllers();
 app.Run();
