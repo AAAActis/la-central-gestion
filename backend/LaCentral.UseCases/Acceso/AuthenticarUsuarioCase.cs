@@ -1,6 +1,7 @@
+using LaCentral.UseCases.Acceso.Dtos;
+using LaCentral.UseCases.Comun;
 using LaCentral.UseCases.Models;
 using LaCentral.UseCases.Puertos;
-using LaCentral.UseCases.Comun;
 
 namespace LaCentral.UseCases;
 
@@ -20,59 +21,55 @@ public class AutenticarUsuarioUseCase
         _generadorToken = generadorToken;
     }
 
-    public async Task<Result<AuthenticarUsuarioResponse>> EjecutarAsync(AuthenticarUsuarioRequest request, CancellationToken ct = default)
+    public async Task<Result<SesionDto>> EjecutarAsync(AuthenticarUsuarioRequest request, CancellationToken ct = default)
     {
         // Buscamos al usuario por el puerto
         var usuario = await _usuarioRepositorio.ObtenerPorNombreAsync(request.NombreUsuario, ct);
 
-        // CA2: Mensaje genérico si no existe
+        // CA2: Mensaje generico si no existe
         if (usuario == null)
         {
-            return Result<AuthenticarUsuarioResponse>.Failure("Usuario o contraseña incorrectos.");
+            return Result<SesionDto>.Failure("Usuario o contraseña incorrectos.");
         }
 
-        // CA2: Mensaje genérico si la contraseña no coincide
+        // CA2: Mensaje generico si la contraseña no coincide
         var claveValida = _servicioHash.VerificarClave(request.Contrasena, usuario.HashContrasena);
         if (!claveValida)
         {
             // CA4: No llevamos contador de intentos, solo rechazamos
-            return Result<AuthenticarUsuarioResponse>.Failure("Usuario o contraseña incorrectos.");
+            return Result<SesionDto>.Failure("Usuario o contraseña incorrectos.");
         }
 
         // CA3: Denegar si está dado de baja (validando el campo Activo)
         if (!usuario.Activo)
         {
-            return Result<AuthenticarUsuarioResponse>.Failure("El usuario no tiene acceso al sistema.");
+            return Result<SesionDto>.Failure("El usuario no tiene acceso al sistema.");
         }
 
-        // Mapeo inverso de Rol (ajustá los números según los IDs reales de tu base)
+        // Mapeo inverso de Rol con los strings exactos de la base
         string nombreRol = usuario.RolId switch
         {
-            1 => "Admin",
-            2 => "Operador",
-            _ => "Desconocido"
+            2 => "ADMINISTRADOR",
+            1 => "OPERADOR",
+            _ => "OPERADOR" // Ante la duda, siempre otorgar el menor privilegio posible
         };
 
-        // Mapeo inverso de Sucursal (asumiendo 1 = FR, 2 = SV)
-        string codigoSucursal = usuario.SucursalId == 1 ? "FR" : "SV";
-
-        // CA1: Todo correcto. Generamos el token delegando al puerto y pasándole los 2 parámetros que pide Santi.
+        // CA1: Generamos el token pasándole los 4 parámetros exactos que pide la nueva interfaz
         var token = _generadorToken.GenerarToken(
             usuario.Id, 
             usuario.NombreUsuario, 
-            nombreRol, // O la variable que contenga el nombre del rol (ej: usuario.Rol.Nombre)
+            nombreRol, 
             (short)usuario.SucursalId
         );
 
-        // CA5: Retornamos la respuesta usando los strings que acabamos de mapear
-        var response = new AuthenticarUsuarioResponse
-        {
-            Token = token,
-            Rol = nombreRol,                 
-            NombreUsuario = usuario.NombreUsuario,
-            Sucursal = codigoSucursal        
-        };
+        // CA5: Retornamos el record SesionDto (sin mapear la sucursal a string porque pide el short directo)
+        var response = new SesionDto(
+            token,
+            usuario.NombreUsuario,
+            nombreRol,
+            (short)usuario.SucursalId
+        );
 
-        return Result<AuthenticarUsuarioResponse>.Success(response);
+        return Result<SesionDto>.Success(response);
     }
 }

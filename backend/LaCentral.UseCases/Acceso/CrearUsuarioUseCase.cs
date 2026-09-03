@@ -44,12 +44,16 @@ public class CrearUsuarioUseCase
         int idSucursal = request.Sucursal == "FR" ? 1 : 2; 
 
         // Mapeo de Rol
-        int idRol = request.Rol switch
+        int idRol = request.Rol.ToUpper() switch
         {
-            "Admin" => 1,
-            "Operador" => 2,
-            _ => 2 // Valor por defecto. (Si tenés más roles, sumalos acá)
+            "ADMINISTRADOR" => 2,
+            "OPERADOR" => 1,
+            _ => 0 // 0 indica inválido
         };
+        if (idRol == 0)
+        {
+            return Result.Failure("Rol inválido. Debe ser ADMINISTRADOR u OPERADOR.");
+        }
 
         var nuevoUsuario = new Usuario
         {
