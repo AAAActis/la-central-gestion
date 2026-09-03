@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using LaCentral.Api.Seguridad;
 using System.Text;
-using LaCentral.UseCases;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +17,7 @@ builder.Services.AddDbContext<LaCentralDbContext>(options =>
 builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
-builder.Services.AddScoped<AutenticarUsuarioUseCase>();
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IContextoUsuario, ContextoUsuario>();
 
