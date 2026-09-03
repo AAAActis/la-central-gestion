@@ -1,4 +1,5 @@
 using LaCentral.UseCases.Acceso.Dtos;
+using LaCentral.UseCases.Comun;
 using LaCentral.UseCases.Models;
 using LaCentral.UseCases.Puertos;
 
@@ -45,16 +46,21 @@ public class AutenticarUsuarioUseCase
             return Result<SesionDto>.Failure("El usuario no tiene acceso al sistema.");
         }
 
-        // Mapeo inverso de Rol (ajustá los números según los IDs reales de tu base)
+        // Mapeo inverso de Rol con los strings exactos de la base
         string nombreRol = usuario.RolId switch
         {
-            1 => "Admin",
-            2 => "Operador",
-            _ => "Desconocido"
+            2 => "ADMINISTRADOR",
+            1 => "OPERADOR",
+            _ => "OPERADOR" // Ante la duda, siempre otorgar el menor privilegio posible
         };
 
-        // CA1: Todo correcto. Generamos el token delegando al puerto y pasándole los 2 parámetros que pide Santi.
-        var token = _generadorToken.GenerarToken(usuario, nombreRol);
+        // CA1: Generamos el token pasándole los 4 parámetros exactos que pide la nueva interfaz
+        var token = _generadorToken.GenerarToken(
+            usuario.Id, 
+            usuario.NombreUsuario, 
+            nombreRol, 
+            (short)usuario.SucursalId
+        );
 
         // CA5: Retornamos el record SesionDto (sin mapear la sucursal a string porque pide el short directo)
         var response = new SesionDto(

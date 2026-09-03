@@ -1,4 +1,4 @@
-namespace LaCentral.UseCases
+namespace LaCentral.UseCases.Comun
 {
     public class Result
     {
@@ -6,7 +6,12 @@ namespace LaCentral.UseCases
         public bool IsFailure => !IsSuccess;
         public string Error { get; }
 
-        protected Result(bool isSuccess, string error)
+        /// <summary>Qué clase de fallo fue. En un Result exitoso es Ninguno.</summary>
+        public TipoError Tipo { get; }
+
+        // El parámetro tipo es opcional para no romper las llamadas existentes:
+        // Result<T> podía seguir invocando base(isSuccess, error) sin cambios.
+        protected Result(bool isSuccess, string error, TipoError tipo = TipoError.Ninguno)
         {
             if (isSuccess && error != string.Empty)
                 throw new InvalidOperationException();
@@ -15,9 +20,18 @@ namespace LaCentral.UseCases
 
             IsSuccess = isSuccess;
             Error = error;
+            Tipo = tipo;
         }
 
-        public static Result Success() => new Result(true, string.Empty);
-        public static Result Failure(string error) => new Result(false, error);
+        public static Result Success() => new Result(true, string.Empty, TipoError.Ninguno);
+
+        /// <summary>
+        /// Sobrecarga heredada. Se mantiene para que los casos de uso ya escritos
+        /// sigan compilando; clasifica el fallo como Invalido, que en la API es 400.
+        /// </summary>
+        public static Result Failure(string error) => new Result(false, error, TipoError.Invalido);
+
+        /// <summary>Forma preferida: declara explícitamente qué tipo de fallo fue.</summary>
+        public static Result Failure(TipoError tipo, string error) => new Result(false, error, tipo);
     }
 }

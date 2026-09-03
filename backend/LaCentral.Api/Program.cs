@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using LaCentral.Data;
 using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using LaCentral.Data.Servicios; 
 using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using LaCentral.Api.Seguridad;
 using System.Text;
 using LaCentral.UseCases;
 
@@ -62,7 +62,7 @@ app.MapGet("/api/test-db", async (LaCentralDbContext context) =>
 {
     var usuarios = await context.Usuarios.Select(u => u.NombreUsuario).ToListAsync();
     return Results.Ok(usuarios);
-});
+}).RequireAuthorization();
 
 app.MapControllers();
 app.Run();

@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using LaCentral.UseCases.Entidades;
 using LaCentral.UseCases.Puertos;
 
-namespace LaCentral.Data.Servicios;
+namespace LaCentral.Api.Seguridad;
 
 public class GeneradorToken : IGeneradorToken
 {
@@ -17,7 +17,8 @@ public class GeneradorToken : IGeneradorToken
         _config = config;
     }
 
-    public string GenerarToken(Usuario usuario, string nombreRol)
+     public string GenerarToken(int usuarioId, string nombreUsuario,
+                          string rol, short sucursalId)
     {
         var jwtKey = _config["Jwt:Key"] ?? throw new ArgumentNullException("Falta Jwt:Key en appsettings");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
@@ -25,10 +26,10 @@ public class GeneradorToken : IGeneradorToken
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
-            new Claim(ClaimTypes.Name, usuario.NombreUsuario),
-            new Claim(ClaimTypes.Role, nombreRol),
-            new Claim("sucursal_id", usuario.SucursalId.ToString())
+            new Claim(ClaimTypes.NameIdentifier, usuarioId.ToString()),
+            new Claim(ClaimTypes.Name, nombreUsuario),
+            new Claim(ClaimTypes.Role, rol),
+            new Claim("sucursal", sucursalId.ToString())
         };
 
         var token = new JwtSecurityToken(
@@ -41,4 +42,5 @@ public class GeneradorToken : IGeneradorToken
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
 }
