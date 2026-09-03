@@ -45,7 +45,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(opciones =>
+{
+    // Suma el esquema Bearer al documento: es lo que habilita el
+    // botón Authorize de Swagger para probar endpoints protegidos.
+    opciones.AddDocumentTransformer<SeguridadOpenApi>();
+});
 builder.Services.AddControllers();
 
 var app = builder.Build();

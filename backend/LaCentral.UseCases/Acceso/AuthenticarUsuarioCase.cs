@@ -1,7 +1,7 @@
 using LaCentral.UseCases.Acceso.Dtos;
-using LaCentral.UseCases.Comun;
 using LaCentral.UseCases.Models;
 using LaCentral.UseCases.Puertos;
+using LaCentral.UseCases.Comun;
 
 namespace LaCentral.UseCases;
 
@@ -29,7 +29,7 @@ public class AutenticarUsuarioUseCase
         // CA2: Mensaje generico si no existe
         if (usuario == null)
         {
-            return Result<SesionDto>.Failure("Usuario o contraseña incorrectos.");
+            return Result<SesionDto>.Failure(TipoError.NoAutorizado, "Usuario o contraseña incorrectos.");
         }
 
         // CA2: Mensaje generico si la contraseña no coincide
@@ -37,28 +37,32 @@ public class AutenticarUsuarioUseCase
         if (!claveValida)
         {
             // CA4: No llevamos contador de intentos, solo rechazamos
-            return Result<SesionDto>.Failure("Usuario o contraseña incorrectos.");
+            return Result<SesionDto>.Failure(TipoError.NoAutorizado, "Usuario o contraseña incorrectos.");
         }
 
         // CA3: Denegar si está dado de baja (validando el campo Activo)
         if (!usuario.Activo)
         {
-            return Result<SesionDto>.Failure("El usuario no tiene acceso al sistema.");
+            return Result<SesionDto>.Failure(TipoError.NoAutorizado, "El usuario no tiene acceso al sistema.");
         }
 
-        // Mapeo inverso de Rol con los strings exactos de la base
+        // Mapeo de rol contra los valores reales de la tabla `rol`:
+        //   1 = OPERADOR   2 = ADMINISTRADOR
+        // Estaba invertido: un operador recibía un token que lo declaraba
+        // administrador. Los nombres son los de la base, tal cual, porque
+        // [Authorize(Roles = "...")] compara el string exacto del claim.
         string nombreRol = usuario.RolId switch
         {
-            2 => "ADMINISTRADOR",
             1 => "OPERADOR",
-            _ => "OPERADOR" // Ante la duda, siempre otorgar el menor privilegio posible
+            2 => "ADMINISTRADOR",
+            _ => "DESCONOCIDO"   // no coincide con ningún [Authorize]: no habilita nada
         };
 
         // CA1: Generamos el token pasándole los 4 parámetros exactos que pide la nueva interfaz
         var token = _generadorToken.GenerarToken(
             usuario.Id, 
             usuario.NombreUsuario, 
-            nombreRol, 
+            nombreRol,
             (short)usuario.SucursalId
         );
 
