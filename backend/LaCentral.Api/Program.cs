@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using LaCentral.Data.Servicios; 
+using LaCentral.UseCases;
 using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -18,6 +19,11 @@ builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IContextoUsuario, ContextoUsuario>();
+
+// Casos de uso: se registran como clase concreta, sin interfaz.
+// Los controladores los reciben por constructor.
+builder.Services.AddScoped<CrearUsuarioUseCase>();
+builder.Services.AddScoped<AutenticarUsuarioUseCase>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
