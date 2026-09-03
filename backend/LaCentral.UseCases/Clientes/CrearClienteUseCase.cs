@@ -46,8 +46,11 @@ public class CrearClienteUseCase
             Codigo = request.Codigo,
             RazonSocial = request.RazonSocial,
             Cuit = request.Cuit,
-            
-            // TODO para Santi: instanciar listas y usar _contextoUsuario.UsuarioId para trazabilidad
+            CondicionFiscal = request.CondicionFiscal,
+            CondicionPago = request.CondicionPago,
+            Telefonos = request.Telefonos,
+            Direcciones = request.Direcciones,
+            UsuarioAltaId = _contextoUsuario.UsuarioId // Trazabilidad
         };
 
         // Persistimos
