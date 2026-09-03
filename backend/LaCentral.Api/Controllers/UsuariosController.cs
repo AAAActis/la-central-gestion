@@ -1,6 +1,7 @@
 using LaCentral.Api.Dtos;
 using LaCentral.Api.Middleware;
 using LaCentral.UseCases;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using DtosNucleo = LaCentral.UseCases.Models;
 
@@ -8,6 +9,14 @@ namespace LaCentral.Api.Controllers;
 
 [ApiController]
 [Route("api/usuarios")]
+// La gestión de usuarios queda reservada al Administrador: CA2 y CA3 de
+// HU-ACC-03. Va sobre la clase y no sobre cada método, así cualquier
+// endpoint que se agregue después queda protegido por omisión — la
+// alternativa, anotar método por método, se olvida.
+//
+// El string es el valor exacto de la tabla `rol`. [Authorize] compara el
+// claim tal cual: ni normaliza mayúsculas ni ignora acentos.
+[Authorize(Roles = "ADMINISTRADOR")]
 public class UsuariosController : ControllerBase
 {
     private readonly CrearUsuarioUseCase _crearUsuario;
@@ -21,12 +30,12 @@ public class UsuariosController : ControllerBase
         _crearUsuario = crearUsuario;
     }
 
-    /// <summary>Alta de usuario. Cubre CA-001 y CA-002 de HU-ACC-02.</summary>
-    // TODO (#38, martes): sumar [Authorize(Roles = "...")] cuando esté
-    // acordado el vocabulario de roles contra la tabla `rol` de la base.
+    /// <summary>Alta de usuario. Cubre CA1 y CA2 de HU-ACC-02.</summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Crear(
         CrearUsuarioRequest request, CancellationToken cancellationToken)
