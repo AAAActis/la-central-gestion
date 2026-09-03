@@ -24,7 +24,7 @@ public class CrearUsuarioUseCase
             return Result.Failure(TipoError.Invalido, "La sucursal debe ser FR (Fragueiro) o SV (San Vicente).");
         }
 
-        // 2. Validar Rol (acá poné los roles exactos que hayan definido, ej: Admin, Vendedor)
+        // 2. Validar Rol
         if (string.IsNullOrWhiteSpace(request.Rol))
         {
             return Result.Failure(TipoError.Invalido, "El rol es obligatorio.");
@@ -37,7 +37,7 @@ public class CrearUsuarioUseCase
             return Result.Failure(TipoError.Conflicto, "El nombre de usuario ya está registrado.");
         }
 
-        // 4. Hashear la contraseña (delegado al puerto que implementa Santi)
+        // 4. Hashear la contraseña
         var passwordHash = _servicioHash.HashearClave(request.Password);
 
         // 5. Armar el modelo de dominio/DTO para el repositorio
@@ -57,8 +57,7 @@ public class CrearUsuarioUseCase
 
         if (idRol == 0)
         {
-            return Result.Failure(TipoError.Invalido,
-                "El rol debe ser OPERADOR o ADMINISTRADOR.");
+            return Result.Failure(TipoError.Invalido, "El rol debe ser OPERADOR o ADMINISTRADOR.");
         }
 
         var nuevoUsuario = new Usuario
