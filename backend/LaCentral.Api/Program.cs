@@ -18,6 +18,8 @@ builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
 builder.Services.AddScoped<AutenticarUsuarioUseCase>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IContextoUsuario, ContextoUsuario>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
