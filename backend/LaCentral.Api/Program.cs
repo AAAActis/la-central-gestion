@@ -17,6 +17,8 @@ builder.Services.AddDbContext<LaCentralDbContext>(options =>
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IContextoUsuario, ContextoUsuario>();
 
 // Casos de uso: se registran como clase concreta, sin interfaz.
 // Los controladores los reciben por constructor.
