@@ -16,6 +16,8 @@ builder.Services.AddDbContext<LaCentralDbContext>(options =>
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IContextoUsuario, ContextoUsuario>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
