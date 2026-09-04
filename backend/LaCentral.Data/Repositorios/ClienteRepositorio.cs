@@ -4,11 +4,11 @@ using LaCentral.UseCases.Puertos;
 
 namespace LaCentral.Data.Repositorios;
 
-public class clienteRepositorio : IClienteRepositorio
+public class ClienteRepositorio : IClienteRepositorio
 {
     private readonly LaCentralDbContext _context;
 
-    public clienteRepositorio(LaCentralDbContext context)
+    public ClienteRepositorio(LaCentralDbContext context)
     {
         _context = context;
     }
@@ -22,6 +22,8 @@ public class clienteRepositorio : IClienteRepositorio
             RazonSocial = cliente.RazonSocial,
             CuitCuil = cliente.Cuit,
             Activo = true, // Por defecto al dar de alta
+            CondicionFiscal = cliente.CondicionFiscal,
+            CondicionPago = cliente.CondicionPago,
 
             // Transformamos la List<string> del dominio a los modelos de EF Core
             ClienteTelefonos = cliente.Telefonos
