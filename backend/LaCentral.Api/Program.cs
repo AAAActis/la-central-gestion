@@ -3,6 +3,7 @@ using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using LaCentral.Data.Servicios; 
 using LaCentral.UseCases;
+using LaCentral.UseCases.Clientes;
 using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -25,6 +26,7 @@ builder.Services.AddScoped<IContextoUsuario, ContextoUsuario>();
 // Los controladores los reciben por constructor.
 builder.Services.AddScoped<CrearUsuarioUseCase>();
 builder.Services.AddScoped<AutenticarUsuarioUseCase>();
+builder.Services.AddScoped<CrearClienteUseCase>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
