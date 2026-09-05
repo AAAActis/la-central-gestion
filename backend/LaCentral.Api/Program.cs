@@ -25,6 +25,9 @@ builder.Services.AddScoped<IContextoUsuario, ContextoUsuario>();
 // Los controladores los reciben por constructor.
 builder.Services.AddScoped<CrearUsuarioUseCase>();
 builder.Services.AddScoped<AutenticarUsuarioUseCase>();
+builder.Services.AddScoped<DarDeBajaUsuarioUseCase>();
+builder.Services.AddScoped<ReactivarUsuarioUseCase>();
+builder.Services.AddScoped<RestablecerContrasenaUseCase>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
