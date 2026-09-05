@@ -27,12 +27,16 @@ public class ClienteRepositorio : IClienteRepositorio
 
             // Transformamos la List<string> del dominio a los modelos de EF Core
             ClienteTelefonos = cliente.Telefonos
-                .Select(tel => new ClienteTelefono { Numero = tel })
-                .ToList(),
-                
+            .Where(tel => !string.IsNullOrWhiteSpace(tel))
+            .Select(tel => new ClienteTelefono { Numero = tel })
+            .ToList(),
+    
             ClienteDireccions = cliente.Direcciones
-                .Select(dir => new ClienteDireccion { Calle = dir }) // Ajustá 'Calle' según tu columna en la BD
-                .ToList()
+            .Where(dir => !string.IsNullOrWhiteSpace(dir))
+            .Select(dir => new ClienteDireccion { Calle = dir })
+            .ToList()
+
+            
         };
 
         await _context.Clientes.AddAsync(clienteBd, cancellationToken);
@@ -45,9 +49,17 @@ public class ClienteRepositorio : IClienteRepositorio
             .AnyAsync(c => c.Codigo == codigo, cancellationToken);
     }
 
+    public Task<bool> ExisteCuitAsync(string cuit, CancellationToken ct = default)
+    {
+        return _context.Clientes
+            .AnyAsync(c => c.CuitCuil == cuit, ct);
+    }
+
     public async Task<bool> ExisteRazonSocialAsync(string razonSocial, CancellationToken cancellationToken = default)
     {
         return await _context.Clientes
             .AnyAsync(c => c.RazonSocial == razonSocial, cancellationToken);
     }
+
+    
 }
