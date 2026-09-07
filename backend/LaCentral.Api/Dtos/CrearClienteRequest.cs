@@ -25,6 +25,17 @@ public record CrearClienteRequest(
     [property: MaxLength(13, ErrorMessage = "El CUIT no puede superar los 13 caracteres.")]
     string? Cuit,
 
+    // Obligatorios: el caso de uso los rechaza si vienen vacíos. Validarlos
+    // acá hace que el rechazo salga en la validación del modelo, con un
+    // mensaje más claro y sin llegar a ejecutar la lógica de negocio.
+    [property: Required(ErrorMessage = "La condición fiscal es obligatoria.")]
+    [property: MaxLength(30, ErrorMessage = "La condición fiscal no puede superar los 30 caracteres.")]
+    string CondicionFiscal,
+
+    [property: Required(ErrorMessage = "La condición de pago es obligatoria.")]
+    [property: MaxLength(60, ErrorMessage = "La condición de pago no puede superar los 60 caracteres.")]
+    string CondicionPago,
+
     // Listas anidadas: viajan como arreglos JSON y se guardan en
     // cliente_telefono y cliente_direccion, en la misma operación que el
     // cliente. Son opcionales: un cliente puede no tener ninguno.

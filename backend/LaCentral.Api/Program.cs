@@ -17,6 +17,7 @@ builder.Services.AddDbContext<LaCentralDbContext>(options =>
 
 builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
+builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>(); 
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
 
 builder.Services.AddHttpContextAccessor();
