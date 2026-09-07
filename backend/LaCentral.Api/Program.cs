@@ -3,6 +3,7 @@ using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using LaCentral.Data.Servicios; 
 using LaCentral.UseCases;
+using LaCentral.UseCases.Clientes;
 using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -16,6 +17,7 @@ builder.Services.AddDbContext<LaCentralDbContext>(options =>
 
 builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
+builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>(); 
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
 
 builder.Services.AddHttpContextAccessor();
@@ -28,6 +30,7 @@ builder.Services.AddScoped<AutenticarUsuarioUseCase>();
 builder.Services.AddScoped<DarDeBajaUsuarioUseCase>();
 builder.Services.AddScoped<ReactivarUsuarioUseCase>();
 builder.Services.AddScoped<RestablecerContrasenaUseCase>();
+builder.Services.AddScoped<CrearClienteUseCase>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
