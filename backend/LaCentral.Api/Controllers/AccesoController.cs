@@ -28,17 +28,16 @@ public class AccesoController : ControllerBase
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> IniciarSesion(
-        LoginRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> IniciarSesion(LoginRequest req, CancellationToken ct)
     {
-        var entrada = new DtosNucleo.AuthenticarUsuarioRequest
-        {
-            NombreUsuario = request.NombreUsuario,
-            Contrasena    = request.Clave
+        // Empaquetamos los datos de la API en el request que espera tu caso de uso
+        var requestNucleo = new DtosNucleo.AuthenticarUsuarioRequest
+        { 
+            NombreUsuario = req.NombreUsuario, 
+            Contrasena = req.Contrasena 
         };
 
-        var resultado = await _autenticar.EjecutarAsync(entrada, cancellationToken);
-
+        var resultado = await _autenticar.EjecutarAsync(requestNucleo, ct);
         return this.AResultadoHttp(resultado);
     }
 }
