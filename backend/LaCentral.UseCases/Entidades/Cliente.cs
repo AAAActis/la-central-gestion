@@ -14,4 +14,7 @@ public class Cliente
     // CA-004: Listas para teléfonos y direcciones (Santi después mapeará esto a sus tablas con EF Core)
     public List<string> Telefonos { get; set; } = new();
     public List<string> Direcciones { get; set; } = new();
+
+    public int? UsuarioAltaId { get; set; }
+public int? UsuarioBajaId { get; set; }
 }

@@ -39,4 +39,7 @@ public partial class Usuario
     public virtual Sucursal Sucursal { get; set; } = null!;
 
     public virtual ICollection<Transferencium> Transferencia { get; set; } = new List<Transferencium>();
+
+    public int? UsuarioAltaId { get; set; }
+    public int? UsuarioBajaId { get; set; }
 }

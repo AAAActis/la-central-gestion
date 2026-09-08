@@ -252,6 +252,22 @@ public partial class LaCentralDbContext : DbContext
             entity.Property(e => e.TieneCuentaCorriente)
                 .HasComment("Dato informativo. El sistema NO lleva saldo ni deuda: Cuentas a Cobrar está fuera del alcance, en coherencia con la exclusión de Cuentas a Pagar.")
                 .HasColumnName("tiene_cuenta_corriente");
+            
+            // Mapeo de columnas de auditoría y relaciones
+            entity.Property(e => e.UsuarioAltaId).HasColumnName("usuario_alta_id");
+            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
+
+            entity.HasOne<Usuario>()
+                .WithMany()
+                .HasForeignKey(c => c.UsuarioAltaId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("cliente_usuario_alta_id_fkey");
+
+            entity.HasOne<Usuario>()
+                .WithMany()
+                .HasForeignKey(c => c.UsuarioBajaId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("cliente_usuario_baja_id_fkey");
         });
 
         modelBuilder.Entity<ClienteDireccion>(entity =>
@@ -817,6 +833,22 @@ public partial class LaCentralDbContext : DbContext
                 .HasForeignKey(d => d.SucursalId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("usuario_sucursal_id_fkey");
+
+            // Mapeo de columnas de auditoría y auto-referencia
+            entity.Property(e => e.UsuarioAltaId).HasColumnName("usuario_alta_id");
+            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
+
+            entity.HasOne<Usuario>()
+                .WithMany()
+                .HasForeignKey(u => u.UsuarioAltaId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("usuario_usuario_alta_id_fkey");
+
+            entity.HasOne<Usuario>()
+                .WithMany()
+                .HasForeignKey(u => u.UsuarioBajaId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("usuario_usuario_baja_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);
