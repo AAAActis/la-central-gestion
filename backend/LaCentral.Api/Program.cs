@@ -84,3 +84,6 @@ app.MapGet("/api/test-db", async (LaCentralDbContext context) =>
 
 app.MapControllers();
 app.Run();
+
+
+public partial class Program { }
