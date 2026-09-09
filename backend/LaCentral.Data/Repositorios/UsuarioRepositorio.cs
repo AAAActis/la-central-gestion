@@ -86,9 +86,6 @@ public class UsuarioRepositorio : IUsuarioRepositorio
 
     public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Usuario usuario, CancellationToken cancellationToken = default)
     {
-        // Se relee la fila en lugar de adjuntar la entidad de dominio: así EF
-        // controla el seguimiento de cambios y no se pisan columnas que el
-        // caso de uso no conoce, como fecha_alta.
         var usuarioBd = await _context.Usuarios
             .SingleOrDefaultAsync(u => u.Id == usuario.Id, cancellationToken);
 
@@ -98,9 +95,12 @@ public class UsuarioRepositorio : IUsuarioRepositorio
         usuarioBd.HashContrasena = usuario.HashContrasena;
         usuarioBd.SucursalId = (short)usuario.SucursalId;
         usuarioBd.RolId = (short)usuario.RolId;
+        
+        // Mapeo de auditoría y baja (CA3 y CA4)
         usuarioBd.Activo = usuario.Activo;
         usuarioBd.MotivoBaja = usuario.MotivoBaja;
         usuarioBd.FechaBaja = usuario.FechaBaja;
+        usuarioBd.UsuarioBajaId = usuario.UsuarioBajaId;
 
         await _context.SaveChangesAsync(cancellationToken);
     }

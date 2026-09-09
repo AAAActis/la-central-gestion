@@ -85,7 +85,8 @@ public class DarDeBajaUsuarioUseCase
         // cuando activo es falso.
         usuario.Activo = false;
         usuario.MotivoBaja = motivo.Trim();
-        usuario.FechaBaja = DateTime.UtcNow;
+        usuario.FechaBaja = DateTime.UtcNow; 
+        usuario.UsuarioBajaId = _contexto.UsuarioId;
 
         await _usuarios.ActualizarAsync(usuario, cancellationToken);
 
