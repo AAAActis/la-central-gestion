@@ -14,6 +14,7 @@ public class DarDeBajaUsuarioUseCaseTests
 
     private DarDeBajaUsuarioUseCase CrearCasoDeUso() => 
         new DarDeBajaUsuarioUseCase(_repoMock.Object, _contextoMock.Object);
+        
 
     [Fact]
     public async Task Ejecutar_BajaSinMotivo_DevuelveFalloInvalido()
@@ -74,5 +75,38 @@ public class DarDeBajaUsuarioUseCaseTests
         Assert.False(resultado.IsSuccess);
         Assert.Equal(TipoError.Conflicto, resultado.Tipo);
         Assert.Contains("único administrador", resultado.Error.ToLower());
+    }
+
+    [Fact]
+    public async Task Ejecutar_BajaValida_RegistraMotivoYUsuarioResponsable()
+    {
+        // Arrange
+        int idOperadorEnSesion = 2; // Simulamos que el puesto 2 ejecuta la acción
+        _contextoMock.Setup(c => c.UsuarioId).Returns(idOperadorEnSesion); 
+        
+        var usuarioABajar = new Usuario { Id = 1, RolId = 1, Activo = true };
+        
+        _repoMock.Setup(r => r.ObtenerPorIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(usuarioABajar);
+
+        // Variable para capturar la entidad que viaja al repositorio
+        Usuario? usuarioActualizado = null;
+        _repoMock.Setup(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
+            .Callback<Usuario, CancellationToken>((u, ct) => usuarioActualizado = u)
+            .Returns(Task.CompletedTask);
+            
+        var caso = CrearCasoDeUso();
+
+        // Act
+        var resultado = await caso.EjecutarAsync(1, "Cese de actividades");
+
+        // Assert
+        Assert.True(resultado.IsSuccess);
+        Assert.NotNull(usuarioActualizado);
+        Assert.False(usuarioActualizado.Activo);
+        // CA5: Guarda el motivo de la anulación/baja
+        Assert.Equal("Cese de actividades", usuarioActualizado.MotivoBaja);
+        // CA4: Atribuye la operación al puesto que la ejecutó
+        Assert.Equal(idOperadorEnSesion, usuarioActualizado.UsuarioBajaId); 
     }
 }

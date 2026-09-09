@@ -45,6 +45,7 @@ public partial class Cliente
     public virtual ICollection<ClienteTelefono> ClienteTelefonos { get; set; } = new List<ClienteTelefono>();
 
     public virtual ICollection<FacturaVentum> FacturaVenta { get; set; } = new List<FacturaVentum>();
+
 public int? UsuarioAltaId { get; set; }
     public int? UsuarioBajaId { get; set; }
 }
