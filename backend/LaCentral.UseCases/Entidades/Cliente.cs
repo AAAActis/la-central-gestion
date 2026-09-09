@@ -16,5 +16,5 @@ public class Cliente
     public List<string> Direcciones { get; set; } = new();
 
     public int? UsuarioAltaId { get; set; }
-public int? UsuarioBajaId { get; set; }
+    public int? UsuarioBajaId { get; set; }
 }

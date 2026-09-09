@@ -853,6 +853,43 @@ public partial class LaCentralDbContext : DbContext
 
         OnModelCreatingPartial(modelBuilder);
     }
-
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+    partial void OnModelCreatingPartial(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Cliente>(entity =>
+        {
+            entity.Property(e => e.UsuarioAltaId).HasColumnName("usuario_alta_id");
+            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
+
+            entity.HasOne<Usuario>()
+                .WithMany()
+                .HasForeignKey(c => c.UsuarioAltaId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("cliente_usuario_alta_id_fkey");
+
+            entity.HasOne<Usuario>()
+                .WithMany()
+                .HasForeignKey(c => c.UsuarioBajaId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("cliente_usuario_baja_id_fkey");
+        });
+
+        modelBuilder.Entity<Usuario>(entity =>
+        {
+            entity.Property(e => e.UsuarioAltaId).HasColumnName("usuario_alta_id");
+            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
+
+            entity.HasOne<Usuario>()
+                .WithMany()
+                .HasForeignKey(u => u.UsuarioAltaId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("usuario_usuario_alta_id_fkey");
+
+            entity.HasOne<Usuario>()
+                .WithMany()
+                .HasForeignKey(u => u.UsuarioBajaId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("usuario_usuario_baja_id_fkey");
+        });
+    }
 }
