@@ -84,12 +84,13 @@ public class UsuarioRepositorio : IUsuarioRepositorio
         };
     }
 
-    public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Usuario usuario, CancellationToken cancellationToken = default)
+    public async Task<bool> ActualizarAsync(LaCentral.UseCases.Entidades.Usuario usuario, CancellationToken cancellationToken = default)
     {
         var usuarioBd = await _context.Usuarios
             .SingleOrDefaultAsync(u => u.Id == usuario.Id, cancellationToken);
 
-        if (usuarioBd == null) return;
+        // Hallazgo 8: En vez de fallar en silencio, reportamos el fracaso.
+        if (usuarioBd == null) return false;
 
         usuarioBd.NombreUsuario = usuario.NombreUsuario;
         usuarioBd.HashContrasena = usuario.HashContrasena;
@@ -103,11 +104,10 @@ public class UsuarioRepositorio : IUsuarioRepositorio
         usuarioBd.UsuarioBajaId = usuario.UsuarioBajaId;
 
         await _context.SaveChangesAsync(cancellationToken);
+        
+        return true;
     }
 
-    // rol_id 2 = ADMINISTRADOR en la tabla `rol`. Queda acá y no en el caso de
-    // uso porque es una correspondencia de datos, no una regla de negocio.
-    // Anotado para la retro: debería salir de la tabla, no de una constante.
     private const short RolAdministrador = 2;
 
     public async Task<int> ContarAdministradoresActivosAsync(CancellationToken cancellationToken = default)
