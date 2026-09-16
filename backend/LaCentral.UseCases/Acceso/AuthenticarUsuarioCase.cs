@@ -11,6 +11,10 @@ public class AutenticarUsuarioUseCase
     private readonly IServicioHash _servicioHash;
     private readonly IGeneradorToken _generadorToken;
 
+
+    const string mensajeError = "Usuario o contraseña incorrectos.";
+
+
     public AutenticarUsuarioUseCase(
         IUsuarioRepositorio usuarioRepositorio, 
         IServicioHash servicioHash, 
@@ -24,12 +28,12 @@ public class AutenticarUsuarioUseCase
     public async Task<Result<SesionDto>> EjecutarAsync(AuthenticarUsuarioRequest request, CancellationToken ct = default)
     {
         // Buscamos al usuario por el puerto
-        var usuario = await _usuarioRepositorio.ObtenerPorNombreAsync(request.NombreUsuario, ct);
+        var  usuario = await _usuarioRepositorio.ObtenerPorNombreAsync(request.NombreUsuario, ct);
 
         // CA2: Mensaje generico si no existe
-        if (usuario == null)
+        if (usuario == null || !usuario.Activo)
         {
-            return Result<SesionDto>.Failure(TipoError.NoAutorizado, "Usuario o contraseña incorrectos.");
+            return Result<SesionDto>.Failure(TipoError.NoAutorizado, mensajeError);
         }
 
         // CA2: Mensaje generico si la contraseña no coincide
@@ -37,13 +41,7 @@ public class AutenticarUsuarioUseCase
         if (!claveValida)
         {
             // CA4: No llevamos contador de intentos, solo rechazamos
-            return Result<SesionDto>.Failure(TipoError.NoAutorizado, "Usuario o contraseña incorrectos.");
-        }
-
-        // CA3: Denegar si está dado de baja (validando el campo Activo)
-        if (!usuario.Activo)
-        {
-            return Result<SesionDto>.Failure(TipoError.NoAutorizado, "El usuario no tiene acceso al sistema.");
+            return Result<SesionDto>.Failure(TipoError.NoAutorizado, mensajeError);
         }
 
         // Mapeo de rol contra los valores reales de la tabla `rol`:

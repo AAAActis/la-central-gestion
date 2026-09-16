@@ -84,9 +84,7 @@ public class AutenticarUsuarioUseCaseTests
         _repoMock.Setup(r => r.ObtenerPorNombreAsync("inactivo", It.IsAny<CancellationToken>()))
             .ReturnsAsync(usuario);
             
-        // ESTO FALTABA: Simulamos que la clave está bien para que el código llegue a evaluar el Activo = false
-        _hashMock.Setup(h => h.VerificarClave("clave123", "hash_real"))
-            .Returns(true);
+        // (Eliminamos el _hashMock.Setup porque la ejecución ya no llega hasta ahí)
             
         var caso = CrearCasoDeUso();
         var request = new AuthenticarUsuarioRequest { NombreUsuario = "inactivo", Contrasena = "clave123" };
@@ -97,7 +95,9 @@ public class AutenticarUsuarioUseCaseTests
         // Assert
         Assert.False(resultado.IsSuccess);
         Assert.Equal(TipoError.NoAutorizado, resultado.Tipo);
-        Assert.Equal(MensajeUsuarioInactivo, resultado.Error); 
+        
+        // Validamos contra el nuevo mensaje genérico unificado
+        Assert.Equal("Usuario o contraseña incorrectos.", resultado.Error); 
     }
 
     [Fact]
