@@ -10,7 +10,6 @@ public class CrearClienteUseCase
     private readonly IClienteRepositorio _clienteRepositorio;
     private readonly IContextoUsuario _contextoUsuario;
 
-    // Inyectamos el contexto de usuario para la trazabilidad
     public CrearClienteUseCase(
         IClienteRepositorio clienteRepositorio, 
         IContextoUsuario contextoUsuario)
@@ -21,35 +20,41 @@ public class CrearClienteUseCase
 
     public async Task<Result<CrearClienteResponse>> EjecutarAsync(CrearClienteRequest request, CancellationToken ct = default)
     {
-        // 1. Validar campos obligatorios básicos, condición fiscal y condición de pago
-        if (string.IsNullOrWhiteSpace(request.Codigo) || 
-            string.IsNullOrWhiteSpace(request.RazonSocial) || 
-            string.IsNullOrWhiteSpace(request.CondicionFiscal) || 
-            string.IsNullOrWhiteSpace(request.CondicionPago))
+        // 1. Hallazgo 3: Validación de campos obligatorios y sus longitudes máximas
+        if (string.IsNullOrWhiteSpace(request.Codigo) || request.Codigo.Length > 20 || 
+            string.IsNullOrWhiteSpace(request.RazonSocial) || request.RazonSocial.Length > 120 || 
+            string.IsNullOrWhiteSpace(request.CondicionFiscal) || request.CondicionFiscal.Length > 30 || 
+            string.IsNullOrWhiteSpace(request.CondicionPago) || request.CondicionPago.Length > 60)
         {
-            return Result<CrearClienteResponse>.Failure(TipoError.Invalido, "El código, la razón social, la condición fiscal y la condición de pago son obligatorios.");
+            return Result<CrearClienteResponse>.Failure(TipoError.Invalido, "Faltan campos obligatorios o superan la longitud máxima permitida en la base de datos.");
         }
 
-        // 2. CA-001: Código duplicado (Conflicto 409)
+        // Validación de longitud de CUIT
+        if (!string.IsNullOrWhiteSpace(request.Cuit) && request.Cuit.Length > 13)
+        {
+            return Result<CrearClienteResponse>.Failure(TipoError.Invalido, "El CUIT/CUIL no puede superar los 13 caracteres.");
+        }
+
+        // 2. CA-001: Código duplicado
         if (await _clienteRepositorio.ExisteCodigoAsync(request.Codigo, ct))
         {
             return Result<CrearClienteResponse>.Failure(TipoError.Conflicto, "Ya existe un cliente registrado con este código.");
         }
 
-        // 2.bis: CUIT duplicado (Evita el error 500 por índice único en la base)
+        // 3. CUIT duplicado
         if (!string.IsNullOrWhiteSpace(request.Cuit) && await _clienteRepositorio.ExisteCuitAsync(request.Cuit, ct))
         {
             return Result<CrearClienteResponse>.Failure(TipoError.Conflicto, "Ya existe un cliente registrado con este CUIT/CUIL.");
         }
 
-        // 3. CA-002: Razón social repetida -> Genera advertencia
+        // 4. CA-002: Razón social repetida
         string? advertencia = null;
         if (await _clienteRepositorio.ExisteRazonSocialAsync(request.RazonSocial, ct))
         {
             advertencia = "Advertencia: Ya existe otro cliente con la misma Razón Social.";
         }
 
-        // 4. CA-004: Mapeo de la entidad (filtrando strings vacíos en listas)
+        // 5. Hallazgo 4: Mapeo tolerante a nulos usando ?? new List<string>()
         var nuevoCliente = new Cliente
         {
             Codigo = request.Codigo,
@@ -57,16 +62,13 @@ public class CrearClienteUseCase
             Cuit = request.Cuit,
             CondicionFiscal = request.CondicionFiscal,
             CondicionPago = request.CondicionPago,
-            Telefonos = request.Telefonos.Where(t => !string.IsNullOrWhiteSpace(t)).ToList(),
-            Direcciones = request.Direcciones.Where(d => !string.IsNullOrWhiteSpace(d)).ToList(),
+            Telefonos = (request.Telefonos ?? new List<string>()).Where(t => !string.IsNullOrWhiteSpace(t)).ToList(),
+            Direcciones = (request.Direcciones ?? new List<string>()).Where(d => !string.IsNullOrWhiteSpace(d)).ToList(),
         };
 
-        // Persistimos
         await _clienteRepositorio.AgregarAsync(nuevoCliente, ct);
-
-        // Armamos la respuesta
-        var response = new CrearClienteResponse(nuevoCliente.Codigo, advertencia);
         
+        var response = new CrearClienteResponse(nuevoCliente.Codigo, advertencia);
         return Result<CrearClienteResponse>.Success(response);
     }
 }

@@ -106,4 +106,104 @@ public class CrearClienteUseCaseTests
         Assert.Null(resultado.Value?.Advertencia);
         Assert.Equal("CLI-001", resultado.Value?.Codigo);
     }
+    // =========================================================
+    // HALLAZGO 3: VALIDACIÓN DE LÍMITES (5 TESTS INDIVIDUALES)
+    // =========================================================
+
+    [Fact]
+    public async Task Ejecutar_CodigoExcedeMaximo_DevuelveFalloInvalido()
+    {
+        // Arrange
+        var caso = CrearCasoDeUso();
+        var requestMalo = CrearRequestValido() with { Codigo = new string('A', 21) }; // Límite 20
+
+        // Act
+        var resultado = await caso.EjecutarAsync(requestMalo);
+
+        // Assert
+        Assert.False(resultado.IsSuccess);
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+    }
+
+    [Fact]
+    public async Task Ejecutar_RazonSocialExcedeMaximo_DevuelveFalloInvalido()
+    {
+        // Arrange
+        var caso = CrearCasoDeUso();
+        var requestMalo = CrearRequestValido() with { RazonSocial = new string('A', 121) }; // Límite 120
+
+        // Act
+        var resultado = await caso.EjecutarAsync(requestMalo);
+
+        // Assert
+        Assert.False(resultado.IsSuccess);
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+    }
+
+    [Fact]
+    public async Task Ejecutar_CuitExcedeMaximo_DevuelveFalloInvalido()
+    {
+        // Arrange
+        var caso = CrearCasoDeUso();
+        var requestMalo = CrearRequestValido() with { Cuit = new string('1', 14) }; // Límite 13
+
+        // Act
+        var resultado = await caso.EjecutarAsync(requestMalo);
+
+        // Assert
+        Assert.False(resultado.IsSuccess);
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+    }
+
+    [Fact]
+    public async Task Ejecutar_CondicionFiscalExcedeMaximo_DevuelveFalloInvalido()
+    {
+        // Arrange
+        var caso = CrearCasoDeUso();
+        var requestMalo = CrearRequestValido() with { CondicionFiscal = new string('A', 31) }; // Límite 30
+
+        // Act
+        var resultado = await caso.EjecutarAsync(requestMalo);
+
+        // Assert
+        Assert.False(resultado.IsSuccess);
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+    }
+
+    [Fact]
+    public async Task Ejecutar_CondicionPagoExcedeMaximo_DevuelveFalloInvalido()
+    {
+        // Arrange
+        var caso = CrearCasoDeUso();
+        var requestMalo = CrearRequestValido() with { CondicionPago = new string('A', 61) }; // Límite 60
+
+        // Act
+        var resultado = await caso.EjecutarAsync(requestMalo);
+
+        // Assert
+        Assert.False(resultado.IsSuccess);
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+    }
+
+    // =========================================================
+    // HALLAZGO 4: COLECCIONES NULAS
+    // =========================================================
+
+    [Fact]
+    public async Task Ejecutar_ColeccionesNulas_DevuelveExitoSinExcepcion()
+    {
+        // Arrange
+        _repoMock.Setup(r => r.ExisteCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _repoMock.Setup(r => r.ExisteRazonSocialAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        var caso = CrearCasoDeUso();
+        
+        // Simulamos que el frontend mandó null en vez de []
+        var requestNulo = CrearRequestValido() with { Telefonos = null, Direcciones = null };
+
+        // Act
+        var resultado = await caso.EjecutarAsync(requestNulo);
+
+        // Assert
+        Assert.True(resultado.IsSuccess, "El caso de uso debería instanciar listas vacías y no tirar NullReferenceException.");
+    }
 }
