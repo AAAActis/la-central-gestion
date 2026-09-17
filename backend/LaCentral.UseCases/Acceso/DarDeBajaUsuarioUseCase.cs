@@ -88,7 +88,14 @@ public class DarDeBajaUsuarioUseCase
         usuario.FechaBaja = DateTime.UtcNow; 
         usuario.UsuarioBajaId = _contexto.UsuarioId;
 
-        await _usuarios.ActualizarAsync(usuario, cancellationToken);
+        // ACÁ ESTÁ LA CORRECCIÓN DEL HALLAZGO 8
+        bool actualizado = await _usuarios.ActualizarAsync(usuario, cancellationToken);
+        
+        if (!actualizado)
+        {
+            return Result.Failure(TipoError.NoEncontrado, 
+                "El registro del usuario no se encontró en la base de datos al intentar actualizar.");
+        }
 
         return Result.Success();
     }
