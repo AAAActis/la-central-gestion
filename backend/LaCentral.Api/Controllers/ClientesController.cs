@@ -16,10 +16,12 @@ namespace LaCentral.Api.Controllers;
 public class ClientesController : ControllerBase
 {
     private readonly CrearClienteUseCase _crearCliente;
+    private readonly ConsultarClientesUseCase _consultarClientes;
 
-    public ClientesController(CrearClienteUseCase crearCliente)
+    public ClientesController(CrearClienteUseCase crearCliente, ConsultarClientesUseCase consultarClientes)
     {
         _crearCliente = crearCliente;
+        _consultarClientes = consultarClientes;
     }
 
     /// <summary>Alta de cliente con sus teléfonos y direcciones. HU-CLI-01.</summary>
@@ -48,6 +50,23 @@ public class ClientesController : ControllerBase
         // Devuelve 200 con cuerpo y no 204, porque la respuesta trae la
         // advertencia del CA2: si ya existe otro cliente con la misma razón
         // social, el alta se hace igual pero el usuario tiene que enterarse.
+        return this.AResultadoHttp(resultado);
+    }
+
+    /// <summary>
+    /// Búsqueda de clientes por Razón Social (coincidencia difusa, puede devolver
+    /// varios) o por CUIT/CUIL (coincidencia exacta, devuelve a lo sumo uno). HU-CLI-02.
+    /// </summary>
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Consultar(
+        [FromQuery] string texto, [FromQuery] bool incluirInactivos, CancellationToken cancellationToken)
+    {
+        var resultado = await _consultarClientes.EjecutarAsync(texto, incluirInactivos, cancellationToken);
+
         return this.AResultadoHttp(resultado);
     }
 }

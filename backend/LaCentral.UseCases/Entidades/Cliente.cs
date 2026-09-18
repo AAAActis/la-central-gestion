@@ -17,4 +17,7 @@ public class Cliente
 
     public int? UsuarioAltaId { get; set; }
     public int? UsuarioBajaId { get; set; }
+
+    // HU-CLI-02: refleja el estado del cliente para poder filtrar/mostrar en la búsqueda
+    public bool Activo { get; set; }
 }
