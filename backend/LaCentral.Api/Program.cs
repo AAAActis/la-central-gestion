@@ -31,6 +31,7 @@ builder.Services.AddScoped<DarDeBajaUsuarioUseCase>();
 builder.Services.AddScoped<ReactivarUsuarioUseCase>();
 builder.Services.AddScoped<RestablecerContrasenaUseCase>();
 builder.Services.AddScoped<CrearClienteUseCase>();
+builder.Services.AddScoped<ConsultarClientesUseCase>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
