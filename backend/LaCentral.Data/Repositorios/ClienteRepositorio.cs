@@ -135,4 +135,52 @@ public class ClienteRepositorio : IClienteRepositorio
             Direcciones = clienteBd.ClienteDireccions.Select(d => d.Calle).ToList() 
         };
     }
+
+    public async Task<LaCentral.UseCases.Entidades.Cliente?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default)
+    {
+        var c = await _context.Clientes.FirstOrDefaultAsync(x => x.CuitCuil == cuit, ct);
+        if (c == null) return null;
+        
+        // Mapeo mínimo para el mensaje de error del CA-003
+        return new LaCentral.UseCases.Entidades.Cliente 
+        { 
+            Codigo = c.Codigo, 
+            RazonSocial = c.RazonSocial, 
+            Cuit = c.CuitCuil 
+        };
+    }
+
+    public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Cliente cliente, CancellationToken ct = default)
+    {
+        // Traemos la entidad completa con tracking
+        var clienteBd = await _context.Clientes
+            .Include(c => c.ClienteTelefonos)
+            .Include(c => c.ClienteDireccions)
+            .SingleOrDefaultAsync(c => c.Codigo == cliente.Codigo, ct);
+
+        if (clienteBd == null) return;
+
+        // Actualización de primitivos
+        clienteBd.RazonSocial = cliente.RazonSocial;
+        clienteBd.CuitCuil = cliente.Cuit;
+        clienteBd.CondicionFiscal = cliente.CondicionFiscal;
+        clienteBd.CondicionPago = cliente.CondicionPago;
+        clienteBd.Codigo = cliente.Codigo;
+
+        // Sincronización inteligente de Teléfonos
+        var telsABorrar = clienteBd.ClienteTelefonos.Where(t => !cliente.Telefonos.Contains(t.Numero)).ToList();
+        foreach (var t in telsABorrar) _context.Remove(t);
+
+        var telsNuevos = cliente.Telefonos.Where(t => !clienteBd.ClienteTelefonos.Any(bd => bd.Numero == t)).ToList();
+        foreach (var t in telsNuevos) clienteBd.ClienteTelefonos.Add(new LaCentral.Data.Models.ClienteTelefono { Numero = t });
+
+        // Sincronización inteligente de Direcciones
+        var dirsABorrar = clienteBd.ClienteDireccions.Where(d => !cliente.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
+        foreach (var d in dirsABorrar) _context.Remove(d);
+
+        var dirsNuevas = cliente.Direcciones.Where(d => !clienteBd.ClienteDireccions.Any(bd => bd.Calle == d)).ToList();
+        foreach (var d in dirsNuevas) clienteBd.ClienteDireccions.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = d });
+
+        await _context.SaveChangesAsync(ct);
+    }
 }

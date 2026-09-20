@@ -22,4 +22,7 @@ public interface IClienteRepositorio
     /// de sus teléfonos y direcciones (entidades 1:N).
     /// </summary>
     Task<Cliente?> ObtenerDetallePorIdAsync(int id, CancellationToken ct = default);
+
+    Task<Cliente?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default);
+    Task ActualizarAsync(Cliente cliente, CancellationToken ct = default);
 }

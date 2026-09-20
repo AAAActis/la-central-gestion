@@ -18,15 +18,18 @@ public class ClientesController : ControllerBase
     private readonly CrearClienteUseCase _crearCliente;
     private readonly ConsultarClientesUseCase _consultarClientes;
     private readonly ObtenerClienteDetalleUseCase _obtenerDetalle;
+    private readonly ModificarClienteUseCase _modificarCliente;
 
     public ClientesController(
         CrearClienteUseCase crearCliente, 
         ConsultarClientesUseCase consultarClientes,
-        ObtenerClienteDetalleUseCase obtenerDetalle)
+        ObtenerClienteDetalleUseCase obtenerDetalle,
+        ModificarClienteUseCase modificarCliente)
     {
         _crearCliente = crearCliente;
         _consultarClientes = consultarClientes;
         _obtenerDetalle = obtenerDetalle;
+        _modificarCliente = modificarCliente;
     }
 
     /// <summary>Alta de cliente con sus teléfonos y direcciones. HU-CLI-01.</summary>
@@ -86,6 +89,18 @@ public class ClientesController : ControllerBase
         // Nota: Si usás [FromServices] directo en el método, te ahorrás inyectarlo en el constructor.
         // Queda a criterio de cómo lo vengan manejando.
         var resultado = await _obtenerDetalle.EjecutarAsync(id, cancellationToken);
+        return this.AResultadoHttp(resultado);
+    }
+
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Modificar(int id, [FromBody] DtosNucleo.ModificarClienteRequest request, CancellationToken ct)
+    {
+        // _modificarCliente debe inyectarse en el constructor del controller previamente
+        var resultado = await _modificarCliente.EjecutarAsync(id, request, ct);
         return this.AResultadoHttp(resultado);
     }
 }

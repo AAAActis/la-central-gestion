@@ -33,6 +33,8 @@ builder.Services.AddScoped<RestablecerContrasenaUseCase>();
 builder.Services.AddScoped<CrearClienteUseCase>();
 builder.Services.AddScoped<ConsultarClientesUseCase>();
 builder.Services.AddScoped<ObtenerClienteDetalleUseCase>();
+builder.Services.AddScoped<ModificarClienteUseCase>();
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
