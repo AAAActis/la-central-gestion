@@ -4,6 +4,7 @@ using LaCentral.Data.Repositorios;
 using LaCentral.Data.Servicios; 
 using LaCentral.UseCases;
 using LaCentral.UseCases.Clientes;
+using LaCentral.UseCases.Proveedores;
 using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -33,6 +34,7 @@ builder.Services.AddScoped<RestablecerContrasenaUseCase>();
 builder.Services.AddScoped<CrearClienteUseCase>();
 builder.Services.AddScoped<ConsultarClientesUseCase>();
 builder.Services.AddScoped<ObtenerClienteDetalleUseCase>();
+builder.Services.AddScoped<CrearProveedorUseCase>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
