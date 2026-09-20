@@ -93,7 +93,7 @@ public class DarDeBajaUsuarioUseCaseTests
         Usuario? usuarioActualizado = null;
         _repoMock.Setup(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
             .Callback<Usuario, CancellationToken>((u, ct) => usuarioActualizado = u)
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
             
         var caso = CrearCasoDeUso();
 

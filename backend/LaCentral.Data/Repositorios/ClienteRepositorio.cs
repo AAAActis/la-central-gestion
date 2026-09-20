@@ -107,6 +107,32 @@ public class ClienteRepositorio : IClienteRepositorio
                 CondicionPago = c.CondicionPago ?? string.Empty,
                 Activo = c.Activo
             })
-            .ToList();
+            .ToList(); 
+    }
+
+    public async Task<LaCentral.UseCases.Entidades.Cliente?> ObtenerDetallePorIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        // Usamos los nombres reales de las propiedades de navegación de LaCentral.Data.Models.Cliente
+        var clienteBd = await _context.Clientes
+            .Include(c => c.ClienteTelefonos)
+            .Include(c => c.ClienteDireccions)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+        if (clienteBd == null) return null;
+
+        return new LaCentral.UseCases.Entidades.Cliente
+        {
+            // Se elimina Id = clienteBd.Id porque el dominio exige usar Codigo
+            Codigo = clienteBd.Codigo,
+            RazonSocial = clienteBd.RazonSocial,
+            Cuit = clienteBd.CuitCuil,
+            CondicionFiscal = clienteBd.CondicionFiscal ?? string.Empty,
+            CondicionPago = clienteBd.CondicionPago ?? string.Empty,
+            Activo = clienteBd.Activo,
+            
+            // Mapeamos leyendo desde ClienteTelefonos y ClienteDireccions
+            Telefonos = clienteBd.ClienteTelefonos.Select(t => t.Numero).ToList(), 
+            Direcciones = clienteBd.ClienteDireccions.Select(d => d.Calle).ToList() 
+        };
     }
 }

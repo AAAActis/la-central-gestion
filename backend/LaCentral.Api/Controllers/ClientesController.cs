@@ -17,11 +17,16 @@ public class ClientesController : ControllerBase
 {
     private readonly CrearClienteUseCase _crearCliente;
     private readonly ConsultarClientesUseCase _consultarClientes;
+    private readonly ObtenerClienteDetalleUseCase _obtenerDetalle;
 
-    public ClientesController(CrearClienteUseCase crearCliente, ConsultarClientesUseCase consultarClientes)
+    public ClientesController(
+        CrearClienteUseCase crearCliente, 
+        ConsultarClientesUseCase consultarClientes,
+        ObtenerClienteDetalleUseCase obtenerDetalle)
     {
         _crearCliente = crearCliente;
         _consultarClientes = consultarClientes;
+        _obtenerDetalle = obtenerDetalle;
     }
 
     /// <summary>Alta de cliente con sus teléfonos y direcciones. HU-CLI-01.</summary>
@@ -67,6 +72,20 @@ public class ClientesController : ControllerBase
     {
         var resultado = await _consultarClientes.EjecutarAsync(texto, incluirInactivos, cancellationToken);
 
+        return this.AResultadoHttp(resultado);
+    }
+
+    /// <summary>
+    /// Detalle completo de un cliente, incluyendo todas sus direcciones y teléfonos. HU-CLI-02.
+    /// </summary>
+    [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ObtenerDetalle(int id, CancellationToken cancellationToken)
+    {
+        // Nota: Si usás [FromServices] directo en el método, te ahorrás inyectarlo en el constructor.
+        // Queda a criterio de cómo lo vengan manejando.
+        var resultado = await _obtenerDetalle.EjecutarAsync(id, cancellationToken);
         return this.AResultadoHttp(resultado);
     }
 }
