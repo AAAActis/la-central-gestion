@@ -16,4 +16,10 @@ public interface IClienteRepositorio
     /// no en memoria.
     /// </summary>
     Task<IReadOnlyList<Cliente>> BuscarAsync(string texto, bool incluirInactivos, CancellationToken ct = default);
+    
+    /// <summary>
+    /// HU-CLI-02 (CA-005): Obtiene un cliente por ID incluyendo la totalidad 
+    /// de sus teléfonos y direcciones (entidades 1:N).
+    /// </summary>
+    Task<Cliente?> ObtenerDetallePorIdAsync(int id, CancellationToken ct = default);
 }
