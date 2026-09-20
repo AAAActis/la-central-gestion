@@ -18,11 +18,13 @@ builder.Services.AddDbContext<LaCentralDbContext>(options =>
 
 builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
-builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>(); 
+builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
+builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IContextoUsuario, ContextoUsuario>();
+
 
 // Casos de uso: se registran como clase concreta, sin interfaz.
 // Los controladores los reciben por constructor.
@@ -36,6 +38,7 @@ builder.Services.AddScoped<ConsultarClientesUseCase>();
 builder.Services.AddScoped<ObtenerClienteDetalleUseCase>();
 builder.Services.AddScoped<CrearProveedorUseCase>();
 builder.Services.AddScoped<ModificarProveedorUseCase>();
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
