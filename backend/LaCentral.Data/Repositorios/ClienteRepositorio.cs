@@ -35,7 +35,6 @@ public class ClienteRepositorio : IClienteRepositorio
             .Where(dir => !string.IsNullOrWhiteSpace(dir))
             .Select(dir => new ClienteDireccion { Calle = dir })
             .ToList()
-
             
         };
 
