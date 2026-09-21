@@ -4,6 +4,7 @@ using LaCentral.Data.Repositorios;
 using LaCentral.Data.Servicios; 
 using LaCentral.UseCases;
 using LaCentral.UseCases.Clientes;
+using LaCentral.UseCases.Proveedores;
 using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -19,6 +20,7 @@ builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>(); 
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
+builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IContextoUsuario, ContextoUsuario>();
@@ -33,6 +35,7 @@ builder.Services.AddScoped<RestablecerContrasenaUseCase>();
 builder.Services.AddScoped<CrearClienteUseCase>();
 builder.Services.AddScoped<ConsultarClientesUseCase>();
 builder.Services.AddScoped<ObtenerClienteDetalleUseCase>();
+builder.Services.AddScoped<CrearProveedorUseCase>();
 builder.Services.AddScoped<ModificarClienteUseCase>();
 
 
