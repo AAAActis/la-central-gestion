@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Json;
@@ -7,6 +8,7 @@ using Xunit;
 using Moq;
 using LaCentral.UseCases.Puertos;
 using LaCentral.UseCases.Entidades;
+using System.Collections.Generic;
 
 namespace LaCentral.Tests.Acceso;
 
@@ -22,7 +24,6 @@ public class LoginIntegracionTests : IClassFixture<WebApplicationFactory<Program
     [Fact]
     public async Task Login_RutaCorrectaYCredencialesValidas_DevuelveTokenYStatus200()
     {
-        // Arrange: Preparamos los mocks
         var repoMock = new Mock<IUsuarioRepositorio>();
         var hashMock = new Mock<IServicioHash>();
 
@@ -34,9 +35,17 @@ public class LoginIntegracionTests : IClassFixture<WebApplicationFactory<Program
         hashMock.Setup(h => h.VerificarClave("clave_buena", "hash_real"))
             .Returns(true);
 
-        // Interceptamos la API para inyectar los mocks en vez de las clases reales
         var cliente = _factory.WithWebHostBuilder(builder =>
         {
+            builder.ConfigureAppConfiguration((context, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Jwt:Secret"] = "ClaveSecretaDePruebaMuyLargaParaQueNoFalle123!",
+                    ["Jwt:Key"] = "ClaveSecretaDePruebaMuyLargaParaQueNoFalle123!"
+                });
+            });
+
             builder.ConfigureTestServices(services =>
             {
                 services.AddScoped(_ => repoMock.Object);
@@ -44,13 +53,10 @@ public class LoginIntegracionTests : IClassFixture<WebApplicationFactory<Program
             });
         }).CreateClient();
 
-        // El objeto tiene que coincidir con tu LoginRequest de la API
         var request = new { NombreUsuario = "admin", Contrasena = "clave_buena" };
 
-        // Act: Le pegamos directo al endpoint HTTP como si fuéramos Postman
         var respuesta = await cliente.PostAsJsonAsync("/api/acceso/login", request);
 
-        // Assert
         Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
         
         var contenido = await respuesta.Content.ReadAsStringAsync();
