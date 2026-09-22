@@ -34,7 +34,7 @@ public class ConsultarProveedoresUseCase
         }
 
         var respuesta = proveedores
-            .Select(p => new ProveedorResumenDto(p.Id, p.RazonSocial, p.Cuit, p.UrlReferencia, p.Activo))
+            .Select(p => new ProveedorResumenDto(p.Id, p.Codigo, p.RazonSocial, p.Cuit, p.UrlReferencia, p.Activo))
             .ToList();
 
         return Result<IReadOnlyList<ProveedorResumenDto>>.Success(respuesta);

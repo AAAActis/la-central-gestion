@@ -140,6 +140,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
             .Select(p => new LaCentral.UseCases.Entidades.Proveedor
             {
                 Id = p.Id,
+                Codigo = p.Codigo,
                 RazonSocial = p.RazonSocial,
                 Cuit = p.Cuit,
                 UrlReferencia = p.UrlReferencia,
