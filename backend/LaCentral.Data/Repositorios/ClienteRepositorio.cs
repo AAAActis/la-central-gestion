@@ -163,6 +163,9 @@ public class ClienteRepositorio : IClienteRepositorio
         clienteBd.CondicionFiscal = cliente.CondicionFiscal;
         clienteBd.CondicionPago = cliente.CondicionPago;
         clienteBd.Codigo = cliente.Codigo;
+        clienteBd.Activo = cliente.Activo;
+        clienteBd.MotivoBaja = cliente.MotivoBaja;
+        clienteBd.FechaBaja = cliente.FechaBaja;
 
         // Sincronización inteligente de Teléfonos
         var telsABorrar = clienteBd.ClienteTelefonos.Where(t => !cliente.Telefonos.Contains(t.Numero)).ToList();

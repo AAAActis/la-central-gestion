@@ -1,5 +1,6 @@
 using LaCentral.Api.Dtos;
 using LaCentral.Api.Middleware;
+using LaCentral.UseCases;
 using LaCentral.UseCases.Clientes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,17 +20,19 @@ public class ClientesController : ControllerBase
     private readonly ConsultarClientesUseCase _consultarClientes;
     private readonly ObtenerClienteDetalleUseCase _obtenerDetalle;
     private readonly ModificarClienteUseCase _modificarCliente;
-
+    private readonly DarDeBajaClienteUseCase _darDeBajaCliente;
     public ClientesController(
         CrearClienteUseCase crearCliente, 
         ConsultarClientesUseCase consultarClientes,
         ObtenerClienteDetalleUseCase obtenerDetalle,
-        ModificarClienteUseCase modificarCliente)
+        ModificarClienteUseCase modificarCliente,
+        DarDeBajaClienteUseCase darDeBajaCliente)
     {
         _crearCliente = crearCliente;
         _consultarClientes = consultarClientes;
         _obtenerDetalle = obtenerDetalle;
         _modificarCliente = modificarCliente;
+        _darDeBajaCliente = darDeBajaCliente;
     }
 
     /// <summary>Alta de cliente con sus teléfonos y direcciones. HU-CLI-01.</summary>
@@ -103,4 +106,38 @@ public class ClientesController : ControllerBase
         var resultado = await _modificarCliente.EjecutarAsync(id, request, ct);
         return this.AResultadoHttp(resultado);
     }
+
+/// <summary>
+    /// Baja lógica de un cliente exigiendo confirmación explícita (CUIT o Código) y motivo. HU-CLI-04.
+    /// </summary>
+    [HttpPut("{id}/baja")]
+    [ProducesResponseType(StatusCodes.Status200OK)] // o 204 No Content dependiendo de tu AResultadoHttp
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DarDeBaja(
+        int id, 
+        [FromBody] BajaClienteRequest request, 
+        [FromServices] DarDeBajaClienteUseCase useCase, 
+        CancellationToken ct)
+    {
+        var resultado = await useCase.EjecutarAsync(id, request.Confirmacion, request.Motivo, ct);
+        return this.AResultadoHttp(resultado);
+    }
+
+    /// <summary>
+    /// Reactivación de un cliente inactivo conservando su historial de baja. HU-CLI-05.
+    /// </summary>
+    [HttpPut("{id}/reactivacion")]
+    [ProducesResponseType(StatusCodes.Status200OK)] // o 204 No Content
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Reactivar(
+        int id, 
+        [FromServices] ReactivarClienteUseCase useCase, 
+        CancellationToken ct)
+    {
+        var resultado = await useCase.EjecutarAsync(id, ct);
+        return this.AResultadoHttp(resultado);
+    }
+
 }
