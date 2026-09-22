@@ -24,7 +24,6 @@ public class LoginIntegracionTests : IClassFixture<WebApplicationFactory<Program
     [Fact]
     public async Task Login_RutaCorrectaYCredencialesValidas_DevuelveTokenYStatus200()
     {
-        // Arrange: Preparamos los mocks
         var repoMock = new Mock<IUsuarioRepositorio>();
         var hashMock = new Mock<IServicioHash>();
 
@@ -56,13 +55,10 @@ public class LoginIntegracionTests : IClassFixture<WebApplicationFactory<Program
             });
         }).CreateClient();
 
-        // El objeto tiene que coincidir con tu LoginRequest de la API
         var request = new { NombreUsuario = "admin", Contrasena = "clave_buena" };
 
-        // Act: Le pegamos directo al endpoint HTTP como si fuéramos Postman
         var respuesta = await cliente.PostAsJsonAsync("/api/acceso/login", request);
 
-        // Assert
         Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
         
         var contenido = await respuesta.Content.ReadAsStringAsync();

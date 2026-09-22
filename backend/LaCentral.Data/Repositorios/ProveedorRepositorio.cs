@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using LaCentral.Data.Models; // Modelos generados por EF Core
+using LaCentral.Data.Models; 
 using LaCentral.UseCases.Puertos;
 
 namespace LaCentral.Data.Repositorios;
@@ -17,12 +17,12 @@ public class ProveedorRepositorio : IProveedorRepositorio
     {
         var proveedorBd = new LaCentral.Data.Models.Proveedor
         {
+            Codigo = proveedor.Codigo,
             RazonSocial = proveedor.RazonSocial,
-            Cuit = proveedor.Cuit, // Cambiar a CuitCuil si la DB lo llama así
+            Cuit = proveedor.Cuit, 
             UrlReferencia = proveedor.UrlReferencia,
             Activo = proveedor.Activo,
             
-            // Mapeo 1:N
             ProveedorTelefonos = proveedor.Telefonos
                 .Select(t => new ProveedorTelefono { Numero = t })
                 .ToList(),
@@ -38,7 +38,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
 
     public Task<bool> ExisteCuitAsync(string cuit, CancellationToken ct = default)
     {
-        return _context.Proveedors.AnyAsync(p => p.Cuit == cuit, ct); // Cambiar a CuitCuil si hace falta
+        return _context.Proveedors.AnyAsync(p => p.Cuit == cuit, ct); 
     }
 
     public Task<bool> ExisteRazonSocialAsync(string razonSocial, CancellationToken ct = default)

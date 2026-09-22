@@ -21,6 +21,7 @@ builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
+builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IContextoUsuario, ContextoUsuario>();

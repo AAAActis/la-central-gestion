@@ -20,19 +20,18 @@ public class CrearClienteUseCase
 
     public async Task<Result<CrearClienteResponse>> EjecutarAsync(CrearClienteRequest request, CancellationToken ct = default)
     {
-        // 1. Hallazgo 3: Validación de campos obligatorios y sus longitudes máximas
-        if (string.IsNullOrWhiteSpace(request.Codigo) || request.Codigo.Length > 20 || 
-            string.IsNullOrWhiteSpace(request.RazonSocial) || request.RazonSocial.Length > 120 || 
-            string.IsNullOrWhiteSpace(request.CondicionFiscal) || request.CondicionFiscal.Length > 30 || 
-            string.IsNullOrWhiteSpace(request.CondicionPago) || request.CondicionPago.Length > 60)
-        {
-            return Result<CrearClienteResponse>.Failure(TipoError.Invalido, "Faltan campos obligatorios o superan la longitud máxima permitida en la base de datos.");
-        }
+        // 1. Validación centralizada (Hallazgo 3 reutilizado)
+        var validacion = ClienteValidaciones.ValidarLimites(
+            request.Codigo, 
+            request.RazonSocial, 
+            request.Cuit, 
+            request.CondicionFiscal, 
+            request.CondicionPago
+        );
 
-        // Validación de longitud de CUIT
-        if (!string.IsNullOrWhiteSpace(request.Cuit) && request.Cuit.Length > 13)
+        if (!validacion.IsSuccess)
         {
-            return Result<CrearClienteResponse>.Failure(TipoError.Invalido, "El CUIT/CUIL no puede superar los 13 caracteres.");
+            return Result<CrearClienteResponse>.Failure(validacion.Tipo, validacion.Error);
         }
 
         // 2. CA-001: Código duplicado

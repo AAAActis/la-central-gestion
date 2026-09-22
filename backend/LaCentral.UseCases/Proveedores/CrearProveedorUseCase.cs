@@ -16,35 +16,34 @@ public class CrearProveedorUseCase
 
     public async Task<Result<CrearProveedorResponse>> EjecutarAsync(CrearProveedorRequest request, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(request.RazonSocial) || string.IsNullOrWhiteSpace(request.Cuit))
+        // Validación obligatoria: Código y Razón Social (CUIT es opcional)
+        if (string.IsNullOrWhiteSpace(request.Codigo) || string.IsNullOrWhiteSpace(request.RazonSocial))
         {
-            return Result<CrearProveedorResponse>.Failure(TipoError.Invalido, "Razón Social y CUIT son obligatorios.");
+            return Result<CrearProveedorResponse>.Failure(TipoError.Invalido, "Código y Razón Social son obligatorios.");
         }
 
-        // CA-004 y CA-005: Validar formato de URL absoluta solo si se envió un valor
         if (!string.IsNullOrWhiteSpace(request.UrlReferencia) && !Uri.TryCreate(request.UrlReferencia, UriKind.Absolute, out _))
         {
             return Result<CrearProveedorResponse>.Failure(TipoError.Invalido, "La URL de referencia no tiene un formato válido. Debe incluir http:// o https://");
         }
 
-        // CA-002: CUIT duplicado rechaza la operación
-        if (await _proveedorRepositorio.ExisteCuitAsync(request.Cuit, ct))
+        // Solo validamos duplicado si enviaron un CUIT
+        if (!string.IsNullOrWhiteSpace(request.Cuit) && await _proveedorRepositorio.ExisteCuitAsync(request.Cuit, ct))
         {
             return Result<CrearProveedorResponse>.Failure(TipoError.Conflicto, "Ya existe un proveedor registrado con este CUIT.");
         }
 
-        // CA-003: Razón social repetida no frena el alta, pero genera advertencia
         string? advertencia = null;
         if (await _proveedorRepositorio.ExisteRazonSocialAsync(request.RazonSocial, ct))
         {
             advertencia = "Advertencia: Ya existe otro proveedor con la misma Razón Social.";
         }
 
-        // CA-001: Se registra activo. Evitamos colecciones nulas (Hallazgo 4)
         var nuevoProveedor = new Proveedor
         {
+            Codigo = request.Codigo.Trim(),
             RazonSocial = request.RazonSocial.Trim(),
-            Cuit = request.Cuit.Trim(),
+            Cuit = string.IsNullOrWhiteSpace(request.Cuit) ? null : request.Cuit.Trim(),
             UrlReferencia = request.UrlReferencia?.Trim(),
             Activo = true,
             Telefonos = (request.Telefonos ?? new List<string>()).Where(t => !string.IsNullOrWhiteSpace(t)).ToList(),
@@ -53,7 +52,7 @@ public class CrearProveedorUseCase
 
         await _proveedorRepositorio.AgregarAsync(nuevoProveedor, ct);
 
-        var response = new CrearProveedorResponse(nuevoProveedor.Cuit, advertencia);
+        var response = new CrearProveedorResponse(nuevoProveedor.Codigo, advertencia);
         return Result<CrearProveedorResponse>.Success(response);
     }
 }
