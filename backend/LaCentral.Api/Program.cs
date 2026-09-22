@@ -4,6 +4,7 @@ using LaCentral.Data.Repositorios;
 using LaCentral.Data.Servicios; 
 using LaCentral.UseCases;
 using LaCentral.UseCases.Clientes;
+using LaCentral.UseCases.Proveedores;
 using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -17,11 +18,14 @@ builder.Services.AddDbContext<LaCentralDbContext>(options =>
 
 builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
-builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>(); 
+builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
+builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
+builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IContextoUsuario, ContextoUsuario>();
+
 
 // Casos de uso: se registran como clase concreta, sin interfaz.
 // Los controladores los reciben por constructor.

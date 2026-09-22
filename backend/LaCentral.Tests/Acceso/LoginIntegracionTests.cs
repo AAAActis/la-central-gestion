@@ -35,12 +35,14 @@ public class LoginIntegracionTests : IClassFixture<WebApplicationFactory<Program
         hashMock.Setup(h => h.VerificarClave("clave_buena", "hash_real"))
             .Returns(true);
 
+        // Interceptamos la API para inyectar los mocks y pisar la config del JWT
         var cliente = _factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureAppConfiguration((context, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
+                    // Pisamos la config para que el generador de tokens no tire el error de length zero
                     ["Jwt:Secret"] = "ClaveSecretaDePruebaMuyLargaParaQueNoFalle123!",
                     ["Jwt:Key"] = "ClaveSecretaDePruebaMuyLargaParaQueNoFalle123!"
                 });

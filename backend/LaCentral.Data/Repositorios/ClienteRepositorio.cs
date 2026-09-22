@@ -25,17 +25,15 @@ public class ClienteRepositorio : IClienteRepositorio
             CondicionFiscal = cliente.CondicionFiscal,
             CondicionPago = cliente.CondicionPago,
 
-            // Transformamos la List<string> del dominio a los modelos de EF Core
+            // El filtrado de vacíos ya se realizó en el Caso de Uso.
+            // Solo mapeamos directamente a los modelos de EF Core.
             ClienteTelefonos = cliente.Telefonos
-            .Where(tel => !string.IsNullOrWhiteSpace(tel))
-            .Select(tel => new ClienteTelefono { Numero = tel })
-            .ToList(),
-    
+                .Select(tel => new ClienteTelefono { Numero = tel })
+                .ToList(),
+        
             ClienteDireccions = cliente.Direcciones
-            .Where(dir => !string.IsNullOrWhiteSpace(dir))
-            .Select(dir => new ClienteDireccion { Calle = dir })
-            .ToList()
-            
+                .Select(dir => new ClienteDireccion { Calle = dir })
+                .ToList()
         };
 
         await _context.Clientes.AddAsync(clienteBd, cancellationToken);
