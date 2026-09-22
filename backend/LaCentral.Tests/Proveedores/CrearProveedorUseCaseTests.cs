@@ -15,7 +15,7 @@ public class CrearProveedorUseCaseTests
     private CrearProveedorUseCase CrearCasoDeUso() => new(_repoMock.Object);
 
     private CrearProveedorRequest CrearRequestValido() => new(
-        "Proveedor S.A.", "30-12345678-9", "https://proveedor.com", null, null);
+        "PROV001", "Proveedor S.A.", "30-12345678-9", "https://proveedor.com", null, null);
 
     // CA-004: URL inválida bloquea el alta
     [Fact]
