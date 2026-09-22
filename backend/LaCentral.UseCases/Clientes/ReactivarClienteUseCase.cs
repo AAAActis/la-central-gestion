@@ -17,10 +17,10 @@ public class ReactivarClienteUseCase
         var cliente = await _repositorio.ObtenerDetallePorIdAsync(id, ct);
         
         if (cliente is null)
-            return Result.Failure("El cliente no existe.");
+            return Result.Failure(TipoError.NoEncontrado, "El cliente no existe.");
 
         if (cliente.Activo)
-            return Result.Failure("El cliente ya está activo.");
+            return Result.Failure(TipoError.Invalido, "El cliente ya está activo.");
 
         // CA-002 y CA-003: reactivar manteniendo el historial del motivo
         cliente.Activo = true;
