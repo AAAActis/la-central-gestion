@@ -106,4 +106,45 @@ public class ProveedorRepositorio : IProveedorRepositorio
 
         await _context.SaveChangesAsync(ct);
     }
+
+    // HU-PRO-02: mismo umbral que ClienteRepositorio.BuscarAsync.
+    private const double UmbralSimilitudRazonSocial = 0.2;
+
+    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarAsync(
+        string texto, bool incluirInactivos, CancellationToken ct = default)
+    {
+        var query = _context.Proveedors.AsQueryable();
+
+        if (!incluirInactivos)
+        {
+            query = query.Where(p => p.Activo);
+        }
+
+        // Detecta CUIT por cantidad de dígitos (11), igual que ClienteRepositorio.
+        var soloDigitos = new string(texto.Where(char.IsDigit).ToArray());
+
+        if (soloDigitos.Length == 11)
+        {
+            query = query.Where(p => p.Cuit == texto);
+        }
+        else
+        {
+            query = query
+                .Where(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto) > UmbralSimilitudRazonSocial)
+                .OrderByDescending(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto));
+        }
+
+        var proveedoresBd = await query.ToListAsync(ct);
+
+        return proveedoresBd
+            .Select(p => new LaCentral.UseCases.Entidades.Proveedor
+            {
+                Id = p.Id,
+                RazonSocial = p.RazonSocial,
+                Cuit = p.Cuit,
+                UrlReferencia = p.UrlReferencia,
+                Activo = p.Activo
+            })
+            .ToList();
+    }
 }

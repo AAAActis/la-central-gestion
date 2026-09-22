@@ -21,7 +21,6 @@ builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
-builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IContextoUsuario, ContextoUsuario>();
@@ -39,6 +38,7 @@ builder.Services.AddScoped<ConsultarClientesUseCase>();
 builder.Services.AddScoped<ObtenerClienteDetalleUseCase>();
 builder.Services.AddScoped<CrearProveedorUseCase>();
 builder.Services.AddScoped<ModificarProveedorUseCase>();
+builder.Services.AddScoped<ConsultarProveedoresUseCase>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
