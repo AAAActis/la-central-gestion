@@ -39,6 +39,9 @@ builder.Services.AddScoped<ObtenerClienteDetalleUseCase>();
 builder.Services.AddScoped<CrearProveedorUseCase>();
 builder.Services.AddScoped<ModificarProveedorUseCase>();
 builder.Services.AddScoped<ConsultarProveedoresUseCase>();
+builder.Services.AddScoped<ModificarClienteUseCase>();
+builder.Services.AddScoped<DarDeBajaClienteUseCase>();
+builder.Services.AddScoped<ReactivarClienteUseCase>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

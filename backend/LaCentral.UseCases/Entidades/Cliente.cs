@@ -20,4 +20,8 @@ public class Cliente
 
     // HU-CLI-02: refleja el estado del cliente para poder filtrar/mostrar en la búsqueda
     public bool Activo { get; set; }
+
+    // HU-CLI-04 y HU-CLI-05: Historial de baja
+    public string? MotivoBaja { get; set; }
+    public DateTime? FechaBaja { get; set; }
 }
