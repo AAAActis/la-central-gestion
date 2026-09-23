@@ -90,7 +90,7 @@ public class ProveedoresController : ControllerBase
     /// <summary>
     /// Baja lógica de un proveedor exigiendo confirmación explícita (CUIT o Código) y motivo. HU-PRO-04.
     /// </summary>
-    [HttpPut("{id}/baja")]
+    [HttpPost("{id}/baja")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -109,7 +109,7 @@ public class ProveedoresController : ControllerBase
     /// <summary>
     /// Reactivación de un proveedor inactivo conservando su historial de baja. HU-PRO-05.
     /// </summary>
-    [HttpPut("{id}/reactivacion")]
+    [HttpPost("{id}/reactivacion")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
