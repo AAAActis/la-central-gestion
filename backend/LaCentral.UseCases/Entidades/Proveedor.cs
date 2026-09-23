@@ -11,4 +11,5 @@ public class Proveedor
     
     public List<string> Telefonos { get; set; } = new();
     public List<string> Direcciones { get; set; } = new();
+    public string? MotivoBaja { get; set; }
 }
