@@ -172,13 +172,13 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
 
         // 5. Baja — HU-CLI-04 (confirmación por Código, porque este cliente no tiene CUIT)
         var bajaRequest = new { Confirmacion = codigoClientePrueba, Motivo = "Prueba de integracion" };
-        var respuestaBaja = await http.PutAsJsonAsync($"/api/clientes/{idClientePrueba}/baja", bajaRequest);
+        var respuestaBaja = await http.PostAsJsonAsync($"/api/clientes/{idClientePrueba}/baja", bajaRequest);
         Assert.Equal(HttpStatusCode.NoContent, respuestaBaja.StatusCode);
         Assert.False(clienteGuardado.Activo);
         Assert.Equal("Prueba de integracion", clienteGuardado.MotivoBaja);
 
         // 6. Reactivación — HU-CLI-05 (CA-003: el motivo de la baja anterior sigue como historial)
-        var respuestaReactivar = await http.PutAsync($"/api/clientes/{idClientePrueba}/reactivacion", null);
+        var respuestaReactivar = await http.PostAsync($"/api/clientes/{idClientePrueba}/reactivacion", null);
         Assert.Equal(HttpStatusCode.NoContent, respuestaReactivar.StatusCode);
         Assert.True(clienteGuardado.Activo);
         Assert.Equal("Prueba de integracion", clienteGuardado.MotivoBaja);
@@ -260,13 +260,13 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
 
         // 4. Baja — HU-PRO-04
         var bajaRequest = new { CuitReescrito = "30-99999999-9", MotivoBaja = "Prueba de integracion" };
-        var respuestaBaja = await http.PutAsJsonAsync($"/api/proveedores/{idProveedor}/baja", bajaRequest);
+        var respuestaBaja = await http.PostAsJsonAsync($"/api/proveedores/{idProveedor}/baja", bajaRequest);
         Assert.Equal(HttpStatusCode.NoContent, respuestaBaja.StatusCode);
         Assert.False(tabla.Single().Activo);
         Assert.Equal("Prueba de integracion", tabla.Single().MotivoBaja);
 
         // 5. Reactivación — HU-PRO-05
-        var respuestaReactivar = await http.PutAsync($"/api/proveedores/{idProveedor}/reactivacion", null);
+        var respuestaReactivar = await http.PostAsync($"/api/proveedores/{idProveedor}/reactivacion", null);
         Assert.Equal(HttpStatusCode.NoContent, respuestaReactivar.StatusCode);
         Assert.True(tabla.Single().Activo);
         Assert.Equal("Prueba de integracion", tabla.Single().MotivoBaja);
