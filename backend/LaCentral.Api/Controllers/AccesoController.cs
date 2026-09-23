@@ -28,6 +28,7 @@ public class AccesoController : ControllerBase
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> IniciarSesion(LoginRequest req, CancellationToken ct)
     {
         // Empaquetamos los datos de la API en el request que espera tu caso de uso

@@ -3,7 +3,6 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using LaCentral.UseCases.Entidades;
 using LaCentral.UseCases.Puertos;
 
 namespace LaCentral.Api.Seguridad;

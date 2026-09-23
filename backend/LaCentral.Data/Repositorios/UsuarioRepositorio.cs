@@ -36,12 +36,6 @@ public class UsuarioRepositorio : IUsuarioRepositorio
             .AnyAsync(u => u.NombreUsuario == nombreUsuario, cancellationToken);
     }
 
-    public Task<LaCentral.UseCases.Entidades.Usuario?> ObtenerPorNombreAsync(string nombreUsuario)
-    {
-        // Reutilizamos la sobrecarga nueva pasándole un token vacío para no duplicar código
-        return ObtenerPorNombreAsync(nombreUsuario, CancellationToken.None);
-    }
-
     public async Task<LaCentral.UseCases.Entidades.Usuario?> ObtenerPorNombreAsync(string nombreUsuario, CancellationToken cancellationToken = default)
     {
         // 1. Consulta con EF Core usando la entidad scaffoldeada
