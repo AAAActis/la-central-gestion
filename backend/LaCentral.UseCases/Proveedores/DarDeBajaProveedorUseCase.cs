@@ -34,15 +34,17 @@ public class DarDeBajaProveedorUseCase
         }
 
         // CA-001 & CA-002: Baja lógica, asignación de motivo y reescritura de CUIT para liberar unicidad
+        bool coincideCuit = !string.IsNullOrWhiteSpace(proveedor.Cuit) && proveedor.Cuit == request.CuitReescrito;
+        bool coincideCodigo = !string.IsNullOrWhiteSpace(proveedor.Codigo) && proveedor.Codigo == request.CuitReescrito;
+        
+        if (!coincideCuit && !coincideCodigo)
+        {
+            return Result.Failure(TipoError.Invalido, "El valor ingresado no coincide con el CUIT ni con el Código del proveedor.");
+        }
+        
         proveedor.Activo = false;
         proveedor.MotivoBaja = request.MotivoBaja;
         
-        // Se anexa un sufijo al CUIT original para que el unique index de la DB permita dar de alta otro proveedor con el mismo CUIT si fuera necesario.
-        if (!proveedor.Cuit.Contains("-BAJA"))
-        {
-            proveedor.Cuit = $"{proveedor.Cuit}-BAJA-{DateTime.UtcNow:yyyyMMddHHmmss}";
-        }
-
         await _repositorio.ActualizarAsync(proveedor, ct);
 
         return Result.Success();

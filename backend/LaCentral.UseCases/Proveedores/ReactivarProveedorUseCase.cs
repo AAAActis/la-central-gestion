@@ -26,25 +26,8 @@ public class ReactivarProveedorUseCase
             return Result.Failure(TipoError.Invalido, "El proveedor ya se encuentra activo.");
         }
 
-        // Restauración del estado
+        // Restauramos el estado activo conservando MotivoBaja como historial
         proveedor.Activo = true;
-        proveedor.MotivoBaja = null;
-
-        // Limpiamos el sufijo de baja del CUIT
-        var indiceBaja = proveedor.Cuit.IndexOf("-BAJA", StringComparison.Ordinal);
-        if (indiceBaja >= 0)
-        {
-            var cuitLimpio = proveedor.Cuit[..indiceBaja];
-            
-            // Verificamos si el CUIT original no fue tomado por otro proveedor activo en el interín
-            var cuitEnUso = await _repositorio.ExisteCuitAsync(cuitLimpio, ct);
-            if (cuitEnUso)
-            {
-                 return Result.Failure(TipoError.Conflicto, "No se puede reactivar: el CUIT original ya fue registrado por otro proveedor.");
-            }
-            
-            proveedor.Cuit = cuitLimpio;
-        }
 
         await _repositorio.ActualizarAsync(proveedor, ct);
 

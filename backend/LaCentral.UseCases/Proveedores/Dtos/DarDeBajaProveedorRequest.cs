@@ -1,3 +1,6 @@
 namespace LaCentral.UseCases.Proveedores.Dtos;
 
-public record DarDeBajaProveedorRequest(string MotivoBaja);
+public record DarDeBajaProveedorRequest(
+    string MotivoBaja,
+    string CuitReescrito
+    );
