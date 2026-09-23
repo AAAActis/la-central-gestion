@@ -110,7 +110,7 @@ public class ClientesController : ControllerBase
 /// <summary>
     /// Baja lógica de un cliente exigiendo confirmación explícita (CUIT o Código) y motivo. HU-CLI-04.
     /// </summary>
-    [HttpPut("{id}/baja")]
+    [HttpPost("{id}/baja")]
     [ProducesResponseType(StatusCodes.Status200OK)] // o 204 No Content dependiendo de tu AResultadoHttp
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -127,7 +127,7 @@ public class ClientesController : ControllerBase
     /// <summary>
     /// Reactivación de un cliente inactivo conservando su historial de baja. HU-CLI-05.
     /// </summary>
-    [HttpPut("{id}/reactivacion")]
+    [HttpPost("{id}/reactivacion")]
     [ProducesResponseType(StatusCodes.Status200OK)] // o 204 No Content
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
