@@ -1,7 +1,7 @@
 using LaCentral.UseCases.Puertos;
 using BCrypt.Net;
 
-namespace LaCentral.Data.Servicios;
+namespace LaCentral.Api.Seguridad;
 
 public class ServicioHash : IServicioHash
 {
