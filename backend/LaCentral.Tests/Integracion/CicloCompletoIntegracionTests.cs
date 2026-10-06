@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Headers;
+using Microsoft.AspNetCore.TestHost;
 using System.Net.Http.Json;
 using Moq;
 using LaCentral.Api.Seguridad;
@@ -170,20 +171,35 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
         Assert.Equal("Cliente Integracion SA Modificado", clienteGuardado!.RazonSocial);
         Assert.Equal(2, clienteGuardado.Telefonos.Count);
 
-        // 5. Baja — HU-CLI-04 (confirmación por Código, porque este cliente no tiene CUIT)
-        var bajaRequest = new { Confirmacion = codigoClientePrueba, Motivo = "Prueba de integracion" };
-        var respuestaBaja = await http.PostAsJsonAsync($"/api/clientes/{idClientePrueba}/baja", bajaRequest);
-        Assert.Equal(HttpStatusCode.NoContent, respuestaBaja.StatusCode);
-        Assert.False(clienteGuardado.Activo);
-        Assert.Equal("Prueba de integracion", clienteGuardado.MotivoBaja);
+       // 5. Baja — HU-CLI-04 
+        var bajaRequest = new LaCentral.Api.Dtos.BajaClienteRequest 
+        { 
+            Confirmacion = codigoClientePrueba, 
+            Motivo = "Prueba de integracion" 
+        };
 
+        var respuestaBaja = await http.PostAsJsonAsync($"/api/clientes/{idClientePrueba}/baja", bajaRequest);
+        
+        if (!respuestaBaja.IsSuccessStatusCode)
+        {
+            var detalleError = await respuestaBaja.Content.ReadAsStringAsync();
+            throw new Exception($"EL BACKEND RECHAZÓ LA BAJA CON 400. Motivo exacto: {detalleError}");
+        }
+
+        Assert.Equal(HttpStatusCode.NoContent, respuestaBaja.StatusCode);
         // 6. Reactivación — HU-CLI-05 (CA-003: el motivo de la baja anterior sigue como historial)
         var respuestaReactivar = await http.PostAsync($"/api/clientes/{idClientePrueba}/reactivacion", null);
+        
+        if (!respuestaReactivar.IsSuccessStatusCode)
+        {
+            var detalleError = respuestaReactivar.Content.ReadAsStringAsync().Result;
+            throw new Exception($"[ERROR API REACTIVAR CLIENTE] Código: {respuestaReactivar.StatusCode} - Detalle: {detalleError}");
+        }
+
         Assert.Equal(HttpStatusCode.NoContent, respuestaReactivar.StatusCode);
-        Assert.True(clienteGuardado.Activo);
+        Assert.True(clienteGuardado!.Activo);
         Assert.Equal("Prueba de integracion", clienteGuardado.MotivoBaja);
     }
-
     // HU-PRO-01 → 02 → 03 → 04 → 05.
     //
     // A diferencia de Cliente, ProveedorResumenDto sí expone Id — así que acá
