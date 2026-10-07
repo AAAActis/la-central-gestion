@@ -45,9 +45,50 @@ public class ProveedorRepositorio : IProveedorRepositorio
     {
         return _context.Proveedors.AnyAsync(p => p.RazonSocial == razonSocial, ct);
     }
+
+    // --- MÉTODO FALTANTE QUE ROMPÍA LA INTERFAZ ---
+    private const double UmbralSimilitudRazonSocial = 0.2;
+
+    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarAsync(
+        string texto, bool incluirInactivos, CancellationToken ct = default)
+    {
+        var query = _context.Proveedors.AsQueryable();
+
+        if (!incluirInactivos)
+        {
+            query = query.Where(p => p.Activo);
+        }
+
+        var soloDigitos = new string(texto.Where(char.IsDigit).ToArray());
+
+        if (soloDigitos.Length == 11)
+        {
+            query = query.Where(p => p.Cuit == texto);
+        }
+        else
+        {
+            query = query
+                .Where(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto) > UmbralSimilitudRazonSocial)
+                .OrderByDescending(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto));
+        }
+
+        var bd = await query.ToListAsync(ct);
+
+        return bd.Select(p => new LaCentral.UseCases.Entidades.Proveedor
+        {
+            Id = p.Id,
+            Codigo = p.Codigo,
+            RazonSocial = p.RazonSocial,
+            Cuit = p.Cuit ?? string.Empty,
+            UrlReferencia = p.UrlReferencia,
+            Activo = p.Activo
+        }).ToList();
+    }
+    // ----------------------------------------------
+
     public async Task<LaCentral.UseCases.Entidades.Proveedor?> ObtenerDetallePorIdAsync(int id, CancellationToken ct = default)
     {
-        var bd = await _context.Proveedors // Usá el nombre exacto que corregimos (ej. Proveedors si quedó así)
+        var bd = await _context.Proveedors 
             .Include(p => p.ProveedorTelefonos)
             .Include(p => p.ProveedorDireccions)
             .FirstOrDefaultAsync(p => p.Id == id, ct);
@@ -57,10 +98,12 @@ public class ProveedorRepositorio : IProveedorRepositorio
         return new LaCentral.UseCases.Entidades.Proveedor
         {
             Id = bd.Id,
+            Codigo = bd.Codigo,
             RazonSocial = bd.RazonSocial,
-            Cuit = bd.Cuit, // Asegurá que coincida con Cuit o CuitCuil según tu modelo
+            Cuit = bd.Cuit, 
             UrlReferencia = bd.UrlReferencia,
             Activo = bd.Activo,
+            MotivoBaja = bd.MotivoBaja, // <--- FALTABA ESTA LÍNEA
             Telefonos = bd.ProveedorTelefonos.Select(t => t.Numero ?? string.Empty).ToList(),
             Direcciones = bd.ProveedorDireccions.Select(d => d.Calle ?? string.Empty).ToList()
         };
@@ -74,6 +117,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
         return new LaCentral.UseCases.Entidades.Proveedor
         {
             Id = bd.Id,
+            Codigo = bd.Codigo,
             RazonSocial = bd.RazonSocial,
             Cuit = bd.Cuit ?? string.Empty
         };
@@ -92,6 +136,17 @@ public class ProveedorRepositorio : IProveedorRepositorio
         bd.Cuit = proveedor.Cuit;
         bd.UrlReferencia = proveedor.UrlReferencia;
 
+        // FIX CRÍTICO 2: Mapeo de estado y motivo
+        bool estadoAnterior = bd.Activo;
+        bd.Activo = proveedor.Activo;
+        bd.MotivoBaja = proveedor.MotivoBaja;
+
+        // Si transiciona de Activo a Inactivo, estampa la fecha
+        if (estadoAnterior && !proveedor.Activo)
+        {
+            bd.FechaBaja = DateTime.UtcNow;
+        }
+
         var telsABorrar = bd.ProveedorTelefonos.Where(t => !proveedor.Telefonos.Contains(t.Numero ?? string.Empty)).ToList();
         foreach (var t in telsABorrar) _context.Remove(t);
 
@@ -105,47 +160,5 @@ public class ProveedorRepositorio : IProveedorRepositorio
         foreach (var d in dirsNuevas) bd.ProveedorDireccions.Add(new LaCentral.Data.Models.ProveedorDireccion { Calle = d });
 
         await _context.SaveChangesAsync(ct);
-    }
-
-    // HU-PRO-02: mismo umbral que ClienteRepositorio.BuscarAsync.
-    private const double UmbralSimilitudRazonSocial = 0.2;
-
-    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarAsync(
-        string texto, bool incluirInactivos, CancellationToken ct = default)
-    {
-        var query = _context.Proveedors.AsQueryable();
-
-        if (!incluirInactivos)
-        {
-            query = query.Where(p => p.Activo);
-        }
-
-        // Detecta CUIT por cantidad de dígitos (11), igual que ClienteRepositorio.
-        var soloDigitos = new string(texto.Where(char.IsDigit).ToArray());
-
-        if (soloDigitos.Length == 11)
-        {
-            query = query.Where(p => p.Cuit == texto);
-        }
-        else
-        {
-            query = query
-                .Where(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto) > UmbralSimilitudRazonSocial)
-                .OrderByDescending(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto));
-        }
-
-        var proveedoresBd = await query.ToListAsync(ct);
-
-        return proveedoresBd
-            .Select(p => new LaCentral.UseCases.Entidades.Proveedor
-            {
-                Id = p.Id,
-                Codigo = p.Codigo,
-                RazonSocial = p.RazonSocial,
-                Cuit = p.Cuit,
-                UrlReferencia = p.UrlReferencia,
-                Activo = p.Activo
-            })
-            .ToList();
-    }
+    }   
 }

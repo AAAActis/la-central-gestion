@@ -7,12 +7,13 @@ namespace LaCentral.Api.Dtos;
 /// Requiere confirmación explícita (CUIT o Código) y un motivo que justifique la acción.
 /// Mismo criterio que BajaClienteRequest.
 /// </summary>
-public record BajaProveedorRequest(
-    [property: Required(ErrorMessage = "La confirmación (Código o CUIT) es obligatoria.")]
-    [property: MaxLength(20, ErrorMessage = "La confirmación no puede superar los 20 caracteres.")]
-    string CuitReescrito,
+public record BajaProveedorRequest
+{
+    [Required(ErrorMessage = "La confirmación (Código o CUIT) es obligatoria.")]
+    [MaxLength(20, ErrorMessage = "La confirmación no puede superar los 20 caracteres.")]
+    public string CuitReescrito { get; init; } = string.Empty;
 
-    [property: Required(ErrorMessage = "El motivo de la baja es obligatorio.")]
-    [property: MaxLength(255, ErrorMessage = "El motivo no puede superar los 255 caracteres.")]
-    string MotivoBaja
-);
+    [Required(ErrorMessage = "El motivo de la baja es obligatorio.")]
+    [MaxLength(255, ErrorMessage = "El motivo no puede superar los 255 caracteres.")]
+    public string MotivoBaja { get; init; } = string.Empty;
+}

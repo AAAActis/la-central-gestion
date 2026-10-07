@@ -88,13 +88,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication(); 
 app.UseAuthorization();
 
-// Endpoint temporal para probar la conexión a la base (Tu objetivo del Martes)
-app.MapGet("/api/test-db", async (LaCentralDbContext context) => 
-{
-    var usuarios = await context.Usuarios.Select(u => u.NombreUsuario).ToListAsync();
-    return Results.Ok(usuarios);
-}).RequireAuthorization();
-
 app.MapControllers();
 app.Run();
 

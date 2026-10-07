@@ -126,7 +126,9 @@ public class ClienteRepositorio : IClienteRepositorio
             CondicionFiscal = clienteBd.CondicionFiscal ?? string.Empty,
             CondicionPago = clienteBd.CondicionPago ?? string.Empty,
             Activo = clienteBd.Activo,
-            
+            MotivoBaja = clienteBd.MotivoBaja,
+            FechaBaja = clienteBd.FechaBaja,
+
             // Mapeamos leyendo desde ClienteTelefonos y ClienteDireccions
             Telefonos = clienteBd.ClienteTelefonos.Select(t => t.Numero).ToList(), 
             Direcciones = clienteBd.ClienteDireccions.Select(d => d.Calle).ToList() 

@@ -1,44 +1,30 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace LaCentral.Api.Dtos;
 
-/// <summary>
-/// Contrato de entrada del alta de cliente, con sus datos multivaluados.
-///
-/// Los largos salen de la tabla `cliente`: codigo varchar(20),
-/// razon_social varchar(120), cuit_cuil varchar(13). Validarlos acá hace que
-/// un dato demasiado largo vuelva como 400 con un mensaje claro, en vez de
-/// llegar a la base y reventar el SaveChanges con un 500.
-/// </summary>
-public record CrearClienteRequest(
-    [property: Required(ErrorMessage = "El código es obligatorio.")]
-    [property: MaxLength(20, ErrorMessage = "El código no puede superar los 20 caracteres.")]
-    string Codigo,
+public record CrearClienteRequest
+{
+    [Required(ErrorMessage = "El código es obligatorio.")]
+    [MaxLength(20, ErrorMessage = "El código no puede superar los 20 caracteres.")]
+    public string Codigo { get; init; } = string.Empty;
 
-    [property: Required(ErrorMessage = "La razón social es obligatoria.")]
-    [property: MaxLength(120, ErrorMessage = "La razón social no puede superar los 120 caracteres.")]
-    string RazonSocial,
+    [Required(ErrorMessage = "La razón social es obligatoria.")]
+    [MaxLength(120, ErrorMessage = "La razón social no puede superar los 120 caracteres.")]
+    public string RazonSocial { get; init; } = string.Empty;
 
-    // Opcional a propósito: 1580 de los 2108 clientes importados no tienen
-    // CUIT cargado, así que la clave dura del negocio es el código heredado
-    // de Multisoft y no el CUIT.
-    [property: MaxLength(13, ErrorMessage = "El CUIT no puede superar los 13 caracteres.")]
-    string? Cuit,
+    [MaxLength(13, ErrorMessage = "El CUIT no puede superar los 13 caracteres.")]
+    public string? Cuit { get; init; }
 
-    // Obligatorios: el caso de uso los rechaza si vienen vacíos. Validarlos
-    // acá hace que el rechazo salga en la validación del modelo, con un
-    // mensaje más claro y sin llegar a ejecutar la lógica de negocio.
-    [property: Required(ErrorMessage = "La condición fiscal es obligatoria.")]
-    [property: MaxLength(30, ErrorMessage = "La condición fiscal no puede superar los 30 caracteres.")]
-    string CondicionFiscal,
+    [Required(ErrorMessage = "La condición fiscal es obligatoria.")]
+    [MaxLength(30, ErrorMessage = "La condición fiscal no puede superar los 30 caracteres.")]
+    public string CondicionFiscal { get; init; } = string.Empty;
 
-    [property: Required(ErrorMessage = "La condición de pago es obligatoria.")]
-    [property: MaxLength(60, ErrorMessage = "La condición de pago no puede superar los 60 caracteres.")]
-    string CondicionPago,
+    [Required(ErrorMessage = "La condición de pago es obligatoria.")]
+    [MaxLength(60, ErrorMessage = "La condición de pago no puede superar los 60 caracteres.")]
+    public string CondicionPago { get; init; } = string.Empty;
 
-    // Listas anidadas: viajan como arreglos JSON y se guardan en
-    // cliente_telefono y cliente_direccion, en la misma operación que el
-    // cliente. Son opcionales: un cliente puede no tener ninguno.
-    List<string>? Telefonos,
+    public List<string>? Telefonos { get; init; }
 
-    List<string>? Direcciones);
+    public List<string>? Direcciones { get; init; }
+}

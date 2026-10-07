@@ -111,7 +111,7 @@ public class ClientesController : ControllerBase
     /// Baja lógica de un cliente exigiendo confirmación explícita (CUIT o Código) y motivo. HU-CLI-04.
     /// </summary>
     [HttpPost("{id}/baja")]
-    [ProducesResponseType(StatusCodes.Status200OK)] // o 204 No Content dependiendo de tu AResultadoHttp
+    [ProducesResponseType(StatusCodes.Status200OK)] // o 204 No Content
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DarDeBaja(
@@ -120,7 +120,9 @@ public class ClientesController : ControllerBase
         [FromServices] DarDeBajaClienteUseCase useCase, 
         CancellationToken ct)
     {
+        // Orden restaurado: la confirmación va antes del motivo
         var resultado = await useCase.EjecutarAsync(id, request.Confirmacion, request.Motivo, ct);
+        
         return this.AResultadoHttp(resultado);
     }
 
