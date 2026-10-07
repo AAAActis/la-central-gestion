@@ -19,6 +19,7 @@ builder.Services.AddScoped<IServicioHash, ServicioHash>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
+builder.Services.AddScoped<IConsultaArticulosRepositorio, ArticuloRepositorio>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
 
 builder.Services.AddHttpContextAccessor();
