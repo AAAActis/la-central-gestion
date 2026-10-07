@@ -197,18 +197,23 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
         }
 
         Assert.Equal(HttpStatusCode.NoContent, respuestaBaja.StatusCode);
+        Assert.False(clienteGuardado!.Activo);
+        Assert.Equal("Prueba de integracion", clienteGuardado.MotivoBaja);
+        var fechaBaja = clienteGuardado.FechaBaja;
+        Assert.NotNull(fechaBaja);
         // 6. Reactivación — HU-CLI-05 (CA-003: el motivo de la baja anterior sigue como historial)
         var respuestaReactivar = await http.PostAsync($"/api/clientes/{idClientePrueba}/reactivacion", null);
         
         if (!respuestaReactivar.IsSuccessStatusCode)
         {
-            var detalleError = respuestaReactivar.Content.ReadAsStringAsync().Result;
+            var detalleError = await respuestaReactivar.Content.ReadAsStringAsync();
             throw new Exception($"[ERROR API REACTIVAR CLIENTE] Código: {respuestaReactivar.StatusCode} - Detalle: {detalleError}");
         }
 
         Assert.Equal(HttpStatusCode.NoContent, respuestaReactivar.StatusCode);
         Assert.True(clienteGuardado!.Activo);
         Assert.Equal("Prueba de integracion", clienteGuardado.MotivoBaja);
+        Assert.Equal(fechaBaja, clienteGuardado.FechaBaja);
     }
     // HU-PRO-01 → 02 → 03 → 04 → 05.
     //
