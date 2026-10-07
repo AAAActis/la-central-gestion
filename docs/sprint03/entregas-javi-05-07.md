@@ -5,9 +5,9 @@ PR ni se cambiaron issues, puntos, responsables o milestones.
 
 | Día | Rama | Base del PR | Validación |
 | --- | --- | --- | --- |
-| Lunes | fix/hu-cli-05-historial-reactivacion | develop | 66 pasan; regresión falla al retirar el mapeo |
-| Martes | feature/hu-art-02-preparacion-busqueda | develop | 71 pasan |
-| Miércoles | feature/hu-art-02-repositorio-busqueda | feature/hu-art-02-preparacion-busqueda | 83 pasan; 1 PostgreSQL omitida por falta de conexión |
+| Lunes | fix/hu-cli-05 | develop | 66 pasan; regresión falla al retirar el mapeo |
+| Martes | test/hu-art-02 | develop | 71 pasan |
+| Miércoles | feature/hu-art-02 | test/hu-art-02 | 83 pasan; 1 PostgreSQL omitida por falta de conexión |
 
 Si el PR del martes se integra primero, actualizar la base del miércoles a
 develop y revisar su diff. No mezclar los commits del lunes en el PR del martes.
