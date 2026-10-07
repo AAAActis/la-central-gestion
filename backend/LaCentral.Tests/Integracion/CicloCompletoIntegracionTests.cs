@@ -108,8 +108,12 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
             .ReturnsAsync(false);
         repoMock.Setup(r => r.ExisteRazonSocialAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
-        repoMock.Setup(r => r.AgregarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
-            .Callback<Cliente, CancellationToken>((c, _) => clienteGuardado = c)
+       repoMock.Setup(r => r.AgregarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+            .Callback<Cliente, CancellationToken>((c, _) => 
+            {
+                c.Activo = true;
+                clienteGuardado = c;
+            })
             .Returns(Task.CompletedTask);
         repoMock.Setup(r => r.ObtenerDetallePorIdAsync(idClientePrueba, It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => clienteGuardado);
@@ -155,7 +159,7 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
         var detalleContenido = await respuestaDetalle.Content.ReadAsStringAsync();
         Assert.Contains("3510000000", detalleContenido);
 
-        // 4. Modificación — HU-CLI-03
+       // 4. Modificación — HU-CLI-03
         var modificarRequest = new
         {
             Codigo = codigoClientePrueba,
@@ -167,10 +171,16 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
             Direcciones = new List<string> { "Bv. San Juan 500" }
         };
         var respuestaModificar = await http.PutAsJsonAsync($"/api/clientes/{idClientePrueba}", modificarRequest);
+        
+        if (!respuestaModificar.IsSuccessStatusCode)
+        {
+            var detalleError = await respuestaModificar.Content.ReadAsStringAsync();
+            throw new Exception($"[ERROR EN MODIFICACIÓN] Código {respuestaModificar.StatusCode}. Detalle: {detalleError}");
+        }
+
         Assert.Equal(HttpStatusCode.NoContent, respuestaModificar.StatusCode);
         Assert.Equal("Cliente Integracion SA Modificado", clienteGuardado!.RazonSocial);
         Assert.Equal(2, clienteGuardado.Telefonos.Count);
-
        // 5. Baja — HU-CLI-04 
         var bajaRequest = new LaCentral.Api.Dtos.BajaClienteRequest 
         { 
