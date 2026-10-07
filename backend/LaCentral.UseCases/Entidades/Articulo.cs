@@ -26,11 +26,11 @@ public class Articulo
     
     // Márgenes (HU-ART-05 y tabla articulo_margen)
     public decimal? MargenGanancia { get; set; }
-    public decimal CostoVigente { get; set; }
+    public decimal? CostoVigente { get; set; }
 
     // Ubicaciones (CA-001 de ART-01: existencia cero en ambas ubicaciones)
-    public int StockDeposito { get; set; }
-    public int StockMostrador { get; set; }
+    public decimal StockDeposito { get; set; }
+    public decimal StockMostrador { get; set; }
 
     // Códigos alternativos como parte del agregado (tabla articulo_codigo_alternativo)
     public List<CodigoAlternativo> CodigosAlternativos { get; set; } = new();
@@ -43,10 +43,10 @@ public class Articulo
     {
         get
         {
-            if (MargenGanancia is null) return null;
-            decimal costoConPercepciones = CostoVigente * (1 + Percepcion1) * (1 + Percepcion2);
+            if (MargenGanancia is null || CostoVigente is null) return null;
+            decimal costoConPercepciones = CostoVigente.Value * (1 + Percepcion1) * (1 + Percepcion2);
             if (MargenGanancia == 0.01m) return costoConPercepciones; // Venta al costo
-            return costoConPercepciones * (1 + (MargenGanancia.Value / 100));
+            return costoConPercepciones * (1 + (MargenGanancia.Value / 100m));
         }
     }
 }
