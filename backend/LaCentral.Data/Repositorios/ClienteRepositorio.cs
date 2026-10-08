@@ -151,39 +151,66 @@ public class ClienteRepositorio : IClienteRepositorio
     }
 
     public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Cliente cliente, CancellationToken ct = default)
+{
+    // Traemos la entidad completa con tracking
+    var clienteBd = await _context.Cliente
+        .Include(c => c.ClienteTelefono)
+        .Include(c => c.ClienteDireccion)
+        .SingleOrDefaultAsync(c => c.Codigo == cliente.Codigo, ct);
+
+    if (clienteBd == null) return;
+
+    // Actualización de primitivos
+    clienteBd.RazonSocial = cliente.RazonSocial;
+    clienteBd.CuitCuil = cliente.Cuit;
+    clienteBd.CondicionFiscal = cliente.CondicionFiscal;
+    clienteBd.CondicionPago = cliente.CondicionPago;
+    clienteBd.Codigo = cliente.Codigo;
+    clienteBd.Activo = cliente.Activo;
+    clienteBd.MotivoBaja = cliente.MotivoBaja;
+    clienteBd.FechaBaja = cliente.FechaBaja;
+
+    // LÓGICA D10: Gestión del Historial de Baja
+    if (!clienteBd.Activo)
     {
-        // Traemos la entidad completa con tracking
-        var clienteBd = await _context.Cliente
-            .Include(c => c.ClienteTelefono)
-            .Include(c => c.ClienteDireccion)
-            .SingleOrDefaultAsync(c => c.Codigo == cliente.Codigo, ct);
+        var bajaAbierta = await _context.ClienteHistorialBaja
+            .FirstOrDefaultAsync(h => h.ClienteId == clienteBd.Id && h.FechaReactivacion == null, ct);
+        
+        if (bajaAbierta == null)
+        {
+            _context.ClienteHistorialBaja.Add(new LaCentral.Data.Models.ClienteHistorialBaja
+            {
+                ClienteId = clienteBd.Id,
+                Motivo = clienteBd.MotivoBaja ?? "Baja lógica",
+                FechaBaja = clienteBd.FechaBaja ?? DateTime.UtcNow
+            });
+        }
+    }
+    else
+    {
+        var bajaAbierta = await _context.ClienteHistorialBaja
+            .FirstOrDefaultAsync(h => h.ClienteId == clienteBd.Id && h.FechaReactivacion == null, ct);
+        
+        if (bajaAbierta != null)
+        {
+            bajaAbierta.FechaReactivacion = DateTime.UtcNow;
+        }
+    }
 
-        if (clienteBd == null) return;
+    // Sincronización inteligente de Teléfonos
+    var telsABorrar = clienteBd.ClienteTelefono.Where(t => !cliente.Telefonos.Contains(t.Numero)).ToList();
+    foreach (var t in telsABorrar) _context.Remove(t);
 
-        // Actualización de primitivos
-        clienteBd.RazonSocial = cliente.RazonSocial;
-        clienteBd.CuitCuil = cliente.Cuit;
-        clienteBd.CondicionFiscal = cliente.CondicionFiscal;
-        clienteBd.CondicionPago = cliente.CondicionPago;
-        clienteBd.Codigo = cliente.Codigo;
-        clienteBd.Activo = cliente.Activo;
-        clienteBd.MotivoBaja = cliente.MotivoBaja;
-        clienteBd.FechaBaja = cliente.FechaBaja;
+    var telsNuevos = cliente.Telefonos.Where(t => !clienteBd.ClienteTelefono.Any(bd => bd.Numero == t)).ToList();
+    foreach (var t in telsNuevos) clienteBd.ClienteTelefono.Add(new LaCentral.Data.Models.ClienteTelefono { Numero = t });
 
-        // Sincronización inteligente de Teléfonos
-        var telsABorrar = clienteBd.ClienteTelefono.Where(t => !cliente.Telefonos.Contains(t.Numero)).ToList();
-        foreach (var t in telsABorrar) _context.Remove(t);
+    // Sincronización inteligente de Direcciones
+    var dirsABorrar = clienteBd.ClienteDireccion.Where(d => !cliente.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
+    foreach (var d in dirsABorrar) _context.Remove(d);
 
-        var telsNuevos = cliente.Telefonos.Where(t => !clienteBd.ClienteTelefono.Any(bd => bd.Numero == t)).ToList();
-        foreach (var t in telsNuevos) clienteBd.ClienteTelefono.Add(new LaCentral.Data.Models.ClienteTelefono { Numero = t });
+    var dirsNuevas = cliente.Direcciones.Where(d => !clienteBd.ClienteDireccion.Any(bd => bd.Calle == d)).ToList();
+    foreach (var d in dirsNuevas) clienteBd.ClienteDireccion.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = d });
 
-        // Sincronización inteligente de Direcciones
-        var dirsABorrar = clienteBd.ClienteDireccion.Where(d => !cliente.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
-        foreach (var d in dirsABorrar) _context.Remove(d);
-
-        var dirsNuevas = cliente.Direcciones.Where(d => !clienteBd.ClienteDireccion.Any(bd => bd.Calle == d)).ToList();
-        foreach (var d in dirsNuevas) clienteBd.ClienteDireccion.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = d });
-
-        await _context.SaveChangesAsync(ct);
+    await _context.SaveChangesAsync(ct);
     }
 }
