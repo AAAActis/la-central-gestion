@@ -32,19 +32,21 @@ public partial class Proveedor
 
     public DateTime FechaAlta { get; set; }
 
-    public virtual ICollection<ArticuloCodigoAlternativo> ArticuloCodigoAlternativos { get; set; } = new List<ArticuloCodigoAlternativo>();
+    public virtual ICollection<Articulo> Articulo { get; set; } = new List<Articulo>();
 
-    public virtual ICollection<ArticuloHistorialCompra> ArticuloHistorialCompras { get; set; } = new List<ArticuloHistorialCompra>();
+    public virtual ICollection<ArticuloCodigoAlternativo> ArticuloCodigoAlternativo { get; set; } = new List<ArticuloCodigoAlternativo>();
 
-    public virtual ICollection<Articulo> Articulos { get; set; } = new List<Articulo>();
+    public virtual ICollection<ArticuloHistorialCompra> ArticuloHistorialCompra { get; set; } = new List<ArticuloHistorialCompra>();
 
-    public virtual ICollection<FacturaCompra> FacturaCompras { get; set; } = new List<FacturaCompra>();
+    public virtual ICollection<FacturaCompra> FacturaCompra { get; set; } = new List<FacturaCompra>();
 
-    public virtual ICollection<PrecioProveedor> PrecioProveedors { get; set; } = new List<PrecioProveedor>();
+    public virtual ICollection<PrecioProveedor> PrecioProveedor { get; set; } = new List<PrecioProveedor>();
 
     public virtual ProveedorCredencial? ProveedorCredencial { get; set; }
 
-    public virtual ICollection<ProveedorDireccion> ProveedorDireccions { get; set; } = new List<ProveedorDireccion>();
+    public virtual ICollection<ProveedorDireccion> ProveedorDireccion { get; set; } = new List<ProveedorDireccion>();
 
-    public virtual ICollection<ProveedorTelefono> ProveedorTelefonos { get; set; } = new List<ProveedorTelefono>();
+    public virtual ProveedorHistorialBaja? ProveedorHistorialBaja { get; set; }
+
+    public virtual ICollection<ProveedorTelefono> ProveedorTelefono { get; set; } = new List<ProveedorTelefono>();
 }

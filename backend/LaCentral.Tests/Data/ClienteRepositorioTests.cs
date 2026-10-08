@@ -20,7 +20,7 @@ public class ClienteRepositorioTests
 
         using (var contextoSetup = new LaCentralDbContext(opciones))
         {
-            contextoSetup.Clientes.Add(new Cliente
+            contextoSetup.Cliente.Add(new Cliente
             {
                 Id = 1, Codigo = "CLI-01", RazonSocial = "Cliente Test", CuitCuil = "30-11111111-1",
                 Activo = false, MotivoBaja = "Cierre temporal", FechaBaja = fechaBaja, FechaAlta = DateTime.UtcNow
@@ -43,7 +43,7 @@ public class ClienteRepositorioTests
 
         using (var contextoValidacion = new LaCentralDbContext(opciones))
         {
-            var fila = await contextoValidacion.Clientes.FindAsync(1);
+            var fila = await contextoValidacion.Cliente.FindAsync(1);
             Assert.True(fila!.Activo);
             Assert.Equal("Cierre temporal", fila.MotivoBaja);
             Assert.Equal(fechaBaja, fila.FechaBaja);

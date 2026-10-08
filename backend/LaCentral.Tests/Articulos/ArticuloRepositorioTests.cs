@@ -20,10 +20,10 @@ public class ArticuloRepositorioTests
         using var context = CrearContexto();
         var porNombre = CrearArticulo(1, "ART-1", "Mouse GENIUS 01");
         var porProveedor = CrearArticulo(2, "ART-2", "Mouse GENIUS 01");
-        porProveedor.ArticuloCodigoAlternativos.Add(new() { Id = 1, ProveedorId = 1, Codigo = " gn-01 " });
+        porProveedor.ArticuloCodigoAlternativo.Add(new() { Id = 1, ProveedorId = 1, Codigo = " gn-01 " });
         var porInterno = CrearArticulo(3, " GN-01 ", "Mouse GENIUS 01");
         var inactivo = CrearArticulo(4, "ART-4", "Mouse GENIUS 01", false);
-        context.Articulos.AddRange(porNombre, porProveedor, porInterno, inactivo);
+        context.Articulo.AddRange(porNombre, porProveedor, porInterno, inactivo);
         await context.SaveChangesAsync();
 
         var pagina = await new ArticuloRepositorio(context).BuscarAsync(
@@ -39,7 +39,7 @@ public class ArticuloRepositorioTests
     public async Task Busqueda_PaginaDespuesDeUnirAlternativasYConservaTotalYOrdenEstable()
     {
         using var context = CrearContexto();
-        context.Articulos.AddRange(Enumerable.Range(1, 5)
+        context.Articulo.AddRange(Enumerable.Range(1, 5)
             .Select(i => CrearArticulo(i, $"ART-{i}", "Bujía NGK pequeña")));
         await context.SaveChangesAsync();
         var repo = new ArticuloRepositorio(context);
@@ -53,7 +53,7 @@ public class ArticuloRepositorioTests
     public async Task Busqueda_PermiteInactivosYNoInterpretaComodinesSQL()
     {
         using var context = CrearContexto();
-        context.Articulos.AddRange(CrearArticulo(1, "ART-1", "Filtro 100%_original", false),
+        context.Articulo.AddRange(CrearArticulo(1, "ART-1", "Filtro 100%_original", false),
             CrearArticulo(2, "ART-2", "Filtro común"));
         await context.SaveChangesAsync();
         var repo = new ArticuloRepositorio(context);
@@ -67,7 +67,7 @@ public class ArticuloRepositorioTests
     public async Task Conflictos_IncluyeTodosLosIdsAunqueSeanInactivosOFueraDePagina()
     {
         using var context = CrearContexto();
-        context.Articulos.AddRange(CrearArticulo(1, " gn-01 ", "Primero"),
+        context.Articulo.AddRange(CrearArticulo(1, " gn-01 ", "Primero"),
             CrearArticulo(2, "GN-01", "Segundo", false));
         await context.SaveChangesAsync();
         var pagina = await new ArticuloRepositorio(context).BuscarAsync(new("gn-01", TamanoPagina: 1));
@@ -80,17 +80,17 @@ public class ArticuloRepositorioTests
     {
         using var context = CrearContexto();
         var articulo = CrearArticulo(1, "ART-1", "Mouse GENIUS");
-        articulo.ArticuloCodigoAlternativos.Add(new()
+        articulo.ArticuloCodigoAlternativo.Add(new()
         {
             Id = 1, Codigo = " gn-01 ", ProveedorId = 1,
             Proveedor = new() { Id = 1, Codigo = "PRV-1", RazonSocial = "Proveedor de prueba", Activo = true }
         });
-        articulo.Stocks.Add(new()
+        articulo.Stock.Add(new()
         {
             SucursalId = 1, Cantidad = 1.5m,
             Sucursal = new() { Id = 1, Codigo = "FR", Nombre = "Fragueiro" }
         });
-        context.Articulos.Add(articulo);
+        context.Articulo.Add(articulo);
         await context.SaveChangesAsync();
         var repo = new ArticuloRepositorio(context);
         var detalle = await repo.ObtenerDetallePorIdAsync(1);

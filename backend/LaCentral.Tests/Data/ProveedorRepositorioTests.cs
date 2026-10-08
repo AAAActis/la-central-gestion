@@ -13,7 +13,11 @@ public class ProveedorRepositorioTests
 {
     private DbContextOptions<LaCentralDbContext> ObtenerOpcionesInMemory() =>
         new DbContextOptionsBuilder<LaCentralDbContext>()
+            // 1. PARA VOLVER A INMEMORY: Descomentá esta línea y comentá la de UseNpgsql
             .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
+            
+            // 2. PARA TESTEAR CONTRA POSTGRES: Dejá esta línea activa
+            //.UseNpgsql(Environment.GetEnvironmentVariable("LACENTRAL_TEST_PG"))
             .Options;
 
     [Fact]
@@ -23,8 +27,9 @@ public class ProveedorRepositorioTests
         
         using (var contextoSetup = new LaCentralDbContext(opciones))
         {
-            var proveedorDb = new Proveedor { Id = 1, RazonSocial = "Prov Test", Codigo = "PRV-01", Activo = true, FechaAlta = DateTime.UtcNow };
-            contextoSetup.Proveedors.Add(proveedorDb);
+            // Usamos ID 9999 para no chocar con los datos reales importados
+            var proveedorDb = new Proveedor { Id = 9999, RazonSocial = "Prov Test", Codigo = "PRV-99", Activo = true, FechaAlta = DateTime.UtcNow };
+            contextoSetup.Proveedor.Add(proveedorDb);
             await contextoSetup.SaveChangesAsync();
         }
 
@@ -33,12 +38,12 @@ public class ProveedorRepositorioTests
         {
             var repoBaja = new ProveedorRepositorio(contextoBaja);
             var casoUsoBaja = new DarDeBajaProveedorUseCase(repoBaja);
-            await casoUsoBaja.EjecutarAsync(1, new DarDeBajaProveedorRequest("Cierre temporal", "PRV-01"));
+            await casoUsoBaja.EjecutarAsync(9999, new DarDeBajaProveedorRequest("Cierre temporal", "PRV-99"));
         }
 
         using (var contextoValidacionBaja = new LaCentralDbContext(opciones))
         {
-            var filaBaja = await contextoValidacionBaja.Proveedors.FindAsync(1);
+            var filaBaja = await contextoValidacionBaja.Proveedor.FindAsync(9999);
             Assert.False(filaBaja!.Activo);
             Assert.Equal("Cierre temporal", filaBaja.MotivoBaja);
             Assert.NotNull(filaBaja.FechaBaja);
@@ -49,12 +54,12 @@ public class ProveedorRepositorioTests
         {
             var repoReactivacion = new ProveedorRepositorio(contextoReactivacion);
             var casoUsoReactivacion = new ReactivarProveedorUseCase(repoReactivacion);
-            await casoUsoReactivacion.EjecutarAsync(1);
+            await casoUsoReactivacion.EjecutarAsync(9999);
         }
 
         using (var contextoValidacionReactivacion = new LaCentralDbContext(opciones))
         {
-            var filaReactivada = await contextoValidacionReactivacion.Proveedors.FindAsync(1);
+            var filaReactivada = await contextoValidacionReactivacion.Proveedor.FindAsync(9999);
             Assert.True(filaReactivada!.Activo);
             Assert.Equal("Cierre temporal", filaReactivada.MotivoBaja); 
         }
@@ -63,14 +68,14 @@ public class ProveedorRepositorioTests
         using (var contextoModificacion = new LaCentralDbContext(opciones))
         {
             var repoModificacion = new ProveedorRepositorio(contextoModificacion);
-            var proveedorModificado = await repoModificacion.ObtenerDetallePorIdAsync(1);
+            var proveedorModificado = await repoModificacion.ObtenerDetallePorIdAsync(9999);
             proveedorModificado!.RazonSocial = "Nombre Nuevo";
             await repoModificacion.ActualizarAsync(proveedorModificado);
         }
 
         using (var contextoValidacionModificacion = new LaCentralDbContext(opciones))
         {
-            var filaModificada = await contextoValidacionModificacion.Proveedors.FindAsync(1);
+            var filaModificada = await contextoValidacionModificacion.Proveedor.FindAsync(9999);
             Assert.True(filaModificada!.Activo); 
             Assert.Equal("Nombre Nuevo", filaModificada.RazonSocial);
         }

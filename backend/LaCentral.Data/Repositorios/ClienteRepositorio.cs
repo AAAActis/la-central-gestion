@@ -27,34 +27,34 @@ public class ClienteRepositorio : IClienteRepositorio
 
             // El filtrado de vacíos ya se realizó en el Caso de Uso.
             // Solo mapeamos directamente a los modelos de EF Core.
-            ClienteTelefonos = cliente.Telefonos
+            ClienteTelefono = cliente.Telefonos
                 .Select(tel => new ClienteTelefono { Numero = tel })
                 .ToList(),
         
-            ClienteDireccions = cliente.Direcciones
+            ClienteDireccion = cliente.Direcciones
                 .Select(dir => new ClienteDireccion { Calle = dir })
                 .ToList()
         };
 
-        await _context.Clientes.AddAsync(clienteBd, cancellationToken);
+        await _context.Cliente.AddAsync(clienteBd, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<bool> ExisteCodigoAsync(string codigo, CancellationToken cancellationToken = default)
     {
-        return await _context.Clientes
+        return await _context.Cliente
             .AnyAsync(c => c.Codigo == codigo, cancellationToken);
     }
 
     public Task<bool> ExisteCuitAsync(string cuit, CancellationToken ct = default)
     {
-        return _context.Clientes
+        return _context.Cliente
             .AnyAsync(c => c.CuitCuil == cuit, ct);
     }
 
     public async Task<bool> ExisteRazonSocialAsync(string razonSocial, CancellationToken cancellationToken = default)
     {
-        return await _context.Clientes
+        return await _context.Cliente
             .AnyAsync(c => c.RazonSocial == razonSocial, cancellationToken);
     }
 
@@ -65,7 +65,7 @@ public class ClienteRepositorio : IClienteRepositorio
     public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Cliente>> BuscarAsync(
         string texto, bool incluirInactivos, CancellationToken cancellationToken = default)
     {
-        var query = _context.Clientes.AsQueryable();
+        var query = _context.Cliente.AsQueryable();
 
         if (!incluirInactivos)
         {
@@ -110,9 +110,9 @@ public class ClienteRepositorio : IClienteRepositorio
     public async Task<LaCentral.UseCases.Entidades.Cliente?> ObtenerDetallePorIdAsync(int id, CancellationToken cancellationToken = default)
     {
         // Usamos los nombres reales de las propiedades de navegación de LaCentral.Data.Models.Cliente
-        var clienteBd = await _context.Clientes
-            .Include(c => c.ClienteTelefonos)
-            .Include(c => c.ClienteDireccions)
+        var clienteBd = await _context.Cliente
+            .Include(c => c.ClienteTelefono)
+            .Include(c => c.ClienteDireccion)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
         if (clienteBd == null) return null;
@@ -130,14 +130,14 @@ public class ClienteRepositorio : IClienteRepositorio
             FechaBaja = clienteBd.FechaBaja,
 
             // Mapeamos leyendo desde ClienteTelefonos y ClienteDireccions
-            Telefonos = clienteBd.ClienteTelefonos.Select(t => t.Numero).ToList(), 
-            Direcciones = clienteBd.ClienteDireccions.Select(d => d.Calle).ToList() 
+            Telefonos = clienteBd.ClienteTelefono.Select(t => t.Numero).ToList(), 
+            Direcciones = clienteBd.ClienteDireccion.Select(d => d.Calle).ToList() 
         };
     }
 
     public async Task<LaCentral.UseCases.Entidades.Cliente?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default)
     {
-        var c = await _context.Clientes.FirstOrDefaultAsync(x => x.CuitCuil == cuit, ct);
+        var c = await _context.Cliente.FirstOrDefaultAsync(x => x.CuitCuil == cuit, ct);
         if (c == null) return null;
         
         // Mapeo mínimo para el mensaje de error del CA-003
@@ -153,9 +153,9 @@ public class ClienteRepositorio : IClienteRepositorio
     public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Cliente cliente, CancellationToken ct = default)
     {
         // Traemos la entidad completa con tracking
-        var clienteBd = await _context.Clientes
-            .Include(c => c.ClienteTelefonos)
-            .Include(c => c.ClienteDireccions)
+        var clienteBd = await _context.Cliente
+            .Include(c => c.ClienteTelefono)
+            .Include(c => c.ClienteDireccion)
             .SingleOrDefaultAsync(c => c.Codigo == cliente.Codigo, ct);
 
         if (clienteBd == null) return;
@@ -171,18 +171,18 @@ public class ClienteRepositorio : IClienteRepositorio
         clienteBd.FechaBaja = cliente.FechaBaja;
 
         // Sincronización inteligente de Teléfonos
-        var telsABorrar = clienteBd.ClienteTelefonos.Where(t => !cliente.Telefonos.Contains(t.Numero)).ToList();
+        var telsABorrar = clienteBd.ClienteTelefono.Where(t => !cliente.Telefonos.Contains(t.Numero)).ToList();
         foreach (var t in telsABorrar) _context.Remove(t);
 
-        var telsNuevos = cliente.Telefonos.Where(t => !clienteBd.ClienteTelefonos.Any(bd => bd.Numero == t)).ToList();
-        foreach (var t in telsNuevos) clienteBd.ClienteTelefonos.Add(new LaCentral.Data.Models.ClienteTelefono { Numero = t });
+        var telsNuevos = cliente.Telefonos.Where(t => !clienteBd.ClienteTelefono.Any(bd => bd.Numero == t)).ToList();
+        foreach (var t in telsNuevos) clienteBd.ClienteTelefono.Add(new LaCentral.Data.Models.ClienteTelefono { Numero = t });
 
         // Sincronización inteligente de Direcciones
-        var dirsABorrar = clienteBd.ClienteDireccions.Where(d => !cliente.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
+        var dirsABorrar = clienteBd.ClienteDireccion.Where(d => !cliente.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
         foreach (var d in dirsABorrar) _context.Remove(d);
 
-        var dirsNuevas = cliente.Direcciones.Where(d => !clienteBd.ClienteDireccions.Any(bd => bd.Calle == d)).ToList();
-        foreach (var d in dirsNuevas) clienteBd.ClienteDireccions.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = d });
+        var dirsNuevas = cliente.Direcciones.Where(d => !clienteBd.ClienteDireccion.Any(bd => bd.Calle == d)).ToList();
+        foreach (var d in dirsNuevas) clienteBd.ClienteDireccion.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = d });
 
         await _context.SaveChangesAsync(ct);
     }
