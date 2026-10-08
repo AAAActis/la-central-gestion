@@ -101,7 +101,7 @@ public class ProveedoresController : ControllerBase
         [FromServices] DarDeBajaProveedorUseCase useCase,
         CancellationToken ct)
     {
-        var entrada = new DtosNucleo.DarDeBajaProveedorRequest(request.MotivoBaja, request.CuitReescrito);
+        var entrada = new DtosNucleo.DarDeBajaProveedorRequest(request.MotivoBaja, request.Confirmacion);
         var resultado = await useCase.EjecutarAsync(id, entrada, ct);
         return this.AResultadoHttp(resultado);
     }

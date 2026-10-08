@@ -108,12 +108,8 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
             .ReturnsAsync(false);
         repoMock.Setup(r => r.ExisteRazonSocialAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
-       repoMock.Setup(r => r.AgregarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
-            .Callback<Cliente, CancellationToken>((c, _) => 
-            {
-                c.Activo = true;
-                clienteGuardado = c;
-            })
+        repoMock.Setup(r => r.AgregarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+            .Callback<Cliente, CancellationToken>((c, _) => clienteGuardado = c)
             .Returns(Task.CompletedTask);
         repoMock.Setup(r => r.ObtenerDetallePorIdAsync(idClientePrueba, It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => clienteGuardado);
@@ -285,7 +281,7 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
         Assert.Equal(2, tabla.Single().Telefonos.Count);
 
         // 4. Baja — HU-PRO-04
-        var bajaRequest = new { CuitReescrito = "30-99999999-9", MotivoBaja = "Prueba de integracion" };
+        var bajaRequest = new { Confirmacion = "30-99999999-9", MotivoBaja = "Prueba de integracion" };
         var respuestaBaja = await http.PostAsJsonAsync($"/api/proveedores/{idProveedor}/baja", bajaRequest);
         Assert.Equal(HttpStatusCode.NoContent, respuestaBaja.StatusCode);
         Assert.False(tabla.Single().Activo);

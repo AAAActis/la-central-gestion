@@ -21,7 +21,7 @@ public class ClienteRepositorio : IClienteRepositorio
             Codigo = cliente.Codigo,
             RazonSocial = cliente.RazonSocial,
             CuitCuil = cliente.Cuit,
-            Activo = true, // Por defecto al dar de alta
+            Activo = cliente.Activo, // La entidad nace activa
             CondicionFiscal = cliente.CondicionFiscal,
             CondicionPago = cliente.CondicionPago,
 
@@ -145,7 +145,8 @@ public class ClienteRepositorio : IClienteRepositorio
         { 
             Codigo = c.Codigo, 
             RazonSocial = c.RazonSocial, 
-            Cuit = c.CuitCuil 
+            Cuit = c.CuitCuil,
+            Activo = c.Activo
         };
     }
 
