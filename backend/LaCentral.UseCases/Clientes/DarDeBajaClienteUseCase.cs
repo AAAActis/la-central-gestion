@@ -12,7 +12,7 @@ public class DarDeBajaClienteUseCase
         _repositorio = repositorio;
     }
 
-    public async Task<Result> EjecutarAsync(int id, string cuitReescrito, string motivo, CancellationToken ct = default)
+    public async Task<Result> EjecutarAsync(int id, string confirmacion, string motivo, CancellationToken ct = default)
     {
         var cliente = await _repositorio.ObtenerDetallePorIdAsync(id, ct);
         
@@ -24,7 +24,7 @@ public class DarDeBajaClienteUseCase
         
         string valorEsperado = string.IsNullOrWhiteSpace(cliente.Cuit) ? cliente.Codigo : cliente.Cuit;
         // CA-002: confirmación por reescritura
-        if (valorEsperado != cuitReescrito)
+        if (valorEsperado != confirmacion)
             return Result.Failure(TipoError.Invalido, "El valor reescrito no coincide con el código o CUIT del cliente.");
 
         // CA-003: motivo obligatorio

@@ -7,7 +7,7 @@ public class Proveedor
     public string RazonSocial { get; set; } = string.Empty;
     public string? Cuit { get; set; }
     public string? UrlReferencia { get; set; }
-    public bool Activo { get; set; }
+    public bool Activo { get; set; } = true;
     
     public List<string> Telefonos { get; set; } = new();
     public List<string> Direcciones { get; set; } = new();

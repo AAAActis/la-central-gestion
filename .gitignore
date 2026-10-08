@@ -141,3 +141,9 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+# ---------------------------------------------------------------
+# Herramientas locales (Claude Code / graphify)
+# ---------------------------------------------------------------
+# settings.json contiene rutas absolutas de cada máquina (hooks de graphify).
+.claude/
+graphify-out/

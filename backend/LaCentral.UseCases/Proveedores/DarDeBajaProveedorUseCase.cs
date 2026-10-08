@@ -34,8 +34,8 @@ public class DarDeBajaProveedorUseCase
         }
 
         // CA-001 & CA-002: Baja lógica, asignación de motivo y reescritura de CUIT para liberar unicidad
-        bool coincideCuit = !string.IsNullOrWhiteSpace(proveedor.Cuit) && proveedor.Cuit == request.CuitReescrito;
-        bool coincideCodigo = !string.IsNullOrWhiteSpace(proveedor.Codigo) && proveedor.Codigo == request.CuitReescrito;
+        bool coincideCuit = !string.IsNullOrWhiteSpace(proveedor.Cuit) && proveedor.Cuit == request.Confirmacion;
+        bool coincideCodigo = !string.IsNullOrWhiteSpace(proveedor.Codigo) && proveedor.Codigo == request.Confirmacion;
         
         if (!coincideCuit && !coincideCodigo)
         {

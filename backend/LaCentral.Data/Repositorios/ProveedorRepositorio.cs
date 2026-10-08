@@ -79,7 +79,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
             Id = p.Id,
             Codigo = p.Codigo,
             RazonSocial = p.RazonSocial,
-            Cuit = p.Cuit ?? string.Empty,
+            Cuit = p.Cuit,
             UrlReferencia = p.UrlReferencia,
             Activo = p.Activo
         }).ToList();
@@ -119,7 +119,8 @@ public class ProveedorRepositorio : IProveedorRepositorio
             Id = bd.Id,
             Codigo = bd.Codigo,
             RazonSocial = bd.RazonSocial,
-            Cuit = bd.Cuit ?? string.Empty
+            Cuit = bd.Cuit,
+            Activo = bd.Activo
         };
     }
 
