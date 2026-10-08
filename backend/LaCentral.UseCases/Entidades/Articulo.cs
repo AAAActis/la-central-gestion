@@ -57,15 +57,27 @@ public class Articulo
     
     public List<MargenModalidad> Margenes { get; set; } = new();
 
-    // Contrato base para que el equipo avance. La lógica pesada de recálculo queda para ART-05.
-    public decimal? ObtenerPrecioEstimado(int modalidadId)
+    public decimal? CalcularPrecioEstimado(int modalidadId)
     {
-        if (CostoVigente is null) return null;
+        // TODO 1: Sin precio de costo -> null
+        if (CostoVigente is null)
+        {
+            return null;
+        }
 
         var margen = Margenes.FirstOrDefault(m => m.ModalidadId == modalidadId);
-        if (margen is null) return null;
+        
+        // TODO 2: Sin márgenes cargados para la modalidad -> null
+        if (margen is null)
+        {
+            return null;
+        }
 
-        // D1: Costo al 0% devuelve el costo neto
-        return CostoVigente.Value * (1 + (margen.Porcentaje / 100m));
+        // TODO 3: Fórmula según D1
+        decimal factor = 1m + (margen.Porcentaje / 100m);
+        decimal precioCalculado = CostoVigente.Value * factor;
+
+        // TODO 4: Redondeo explícito a 2 decimales, forzando la mitad hacia arriba
+        return Math.Round(precioCalculado, 2, MidpointRounding.AwayFromZero);
     }
 }
