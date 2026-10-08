@@ -5,47 +5,43 @@ namespace LaCentral.Tests.Entidades;
 
 public class ArticuloTests
 {
-    // CA3: Sin costo vigente, no hay precio estimado
     [Fact]
-    public void PrecioVentaEstimado_SinCosto_RetornaNull()
+    public void ObtenerPrecioEstimado_SinCosto_RetornaNull()
     {
-        var articulo = new Articulo { CostoVigente = null, MargenGanancia = 20m };
-        Assert.Null(articulo.PrecioVentaEstimado);
+        var articulo = new Articulo { CostoVigente = null };
+        articulo.Margenes.Add(new MargenModalidad(1, 20m));
+        
+        Assert.Null(articulo.ObtenerPrecioEstimado(1));
     }
 
-    // CA3: Sin margen, no hay precio estimado
     [Fact]
-    public void PrecioVentaEstimado_SinMargen_RetornaNull()
+    public void ObtenerPrecioEstimado_ModalidadInexistente_RetornaNull()
     {
-        var articulo = new Articulo { CostoVigente = 100m, MargenGanancia = null };
-        Assert.Null(articulo.PrecioVentaEstimado);
+        var articulo = new Articulo { CostoVigente = 100m };
+        
+        Assert.Null(articulo.ObtenerPrecioEstimado(99));
     }
 
-    // Regla de Negocio: Margen 0.01% = Venta al costo (Costo + Percepciones 50% y 40%)
+    // Regla D1: Costo neto al 0%
     [Fact]
-    public void PrecioVentaEstimado_MargenMinimo_RetornaCostoConPercepciones()
+    public void ObtenerPrecioEstimado_CostoAlCeroPorciento_RetornaMismoCosto()
     {
-        // Arrange: Costo 100. Percepciones: 100 * 1.5 * 1.4 = 210.
-        var articulo = new Articulo { CostoVigente = 100m, MargenGanancia = 0.01m };
+        var articulo = new Articulo { CostoVigente = 100m };
+        articulo.Margenes.Add(new MargenModalidad(1, 0m)); // 0% de margen
 
-        // Act
-        var precio = articulo.PrecioVentaEstimado;
+        var precio = articulo.ObtenerPrecioEstimado(1);
 
-        // Assert
-        Assert.Equal(210m, precio);
+        Assert.Equal(100m, precio);
     }
 
-    // Regla de Negocio: Cálculo estándar
     [Fact]
-    public void PrecioVentaEstimado_ConMargenNormal_RetornaCostoConPercepcionesYGanancia()
+    public void ObtenerPrecioEstimado_ConMargen_RetornaCostoMasPorcentaje()
     {
-        // Arrange: Costo 100. Base con percepciones: 210. Margen 10%. 210 * 1.10 = 231.
-        var articulo = new Articulo { CostoVigente = 100m, MargenGanancia = 10m };
+        var articulo = new Articulo { CostoVigente = 100m };
+        articulo.Margenes.Add(new MargenModalidad(1, 10m)); // 10% de margen
 
-        // Act
-        var precio = articulo.PrecioVentaEstimado;
+        var precio = articulo.ObtenerPrecioEstimado(1);
 
-        // Assert
-        Assert.Equal(231m, precio);
+        Assert.Equal(110m, precio);
     }
 }
