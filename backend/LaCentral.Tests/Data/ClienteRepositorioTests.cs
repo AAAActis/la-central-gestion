@@ -4,13 +4,14 @@ using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using System;
 using System.Threading.Tasks;
+using LaCentral.UseCases;
 
 namespace LaCentral.Tests.Data;
 
 public class ClienteRepositorioTests
 {
     [Fact]
-    public async Task Reactivacion_ConservaMotivoYFechaBaja_EnBaseDeDatos()
+    public async Task Reactivacion_ConservaMotivoYFechaBaja_ConRepositorioRealInMemory()
     {
         var opciones = new DbContextOptionsBuilder<LaCentralDbContext>()
             .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
@@ -31,8 +32,13 @@ public class ClienteRepositorioTests
         {
             var repo = new ClienteRepositorio(contexto);
             var cliente = await repo.ObtenerDetallePorIdAsync(1);
-            cliente!.Activo = true;
-            await repo.ActualizarAsync(cliente);
+            Assert.NotNull(cliente);
+            Assert.False(cliente.Activo);
+            Assert.Equal("Cierre temporal", cliente.MotivoBaja);
+            Assert.Equal(fechaBaja, cliente.FechaBaja);
+
+            var resultado = await new ReactivarClienteUseCase(repo).EjecutarAsync(1);
+            Assert.True(resultado.IsSuccess);
         }
 
         using (var contextoValidacion = new LaCentralDbContext(opciones))
