@@ -23,27 +23,27 @@ public class ProveedorRepositorio : IProveedorRepositorio
             UrlReferencia = proveedor.UrlReferencia,
             Activo = proveedor.Activo,
             
-            ProveedorTelefonos = proveedor.Telefonos
+            ProveedorTelefono = proveedor.Telefonos
                 .Select(t => new ProveedorTelefono { Numero = t })
                 .ToList(),
             
-            ProveedorDireccions = proveedor.Direcciones
+            ProveedorDireccion = proveedor.Direcciones
                 .Select(d => new ProveedorDireccion { Calle = d })
                 .ToList()
         };
 
-        await _context.Proveedors.AddAsync(proveedorBd, ct);
+        await _context.Proveedor.AddAsync(proveedorBd, ct);
         await _context.SaveChangesAsync(ct);
     }
 
     public Task<bool> ExisteCuitAsync(string cuit, CancellationToken ct = default)
     {
-        return _context.Proveedors.AnyAsync(p => p.Cuit == cuit, ct); 
+        return _context.Proveedor.AnyAsync(p => p.Cuit == cuit, ct); 
     }
 
     public Task<bool> ExisteRazonSocialAsync(string razonSocial, CancellationToken ct = default)
     {
-        return _context.Proveedors.AnyAsync(p => p.RazonSocial == razonSocial, ct);
+        return _context.Proveedor.AnyAsync(p => p.RazonSocial == razonSocial, ct);
     }
 
     // --- MÉTODO FALTANTE QUE ROMPÍA LA INTERFAZ ---
@@ -52,7 +52,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
     public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarAsync(
         string texto, bool incluirInactivos, CancellationToken ct = default)
     {
-        var query = _context.Proveedors.AsQueryable();
+        var query = _context.Proveedor.AsQueryable();
 
         if (!incluirInactivos)
         {
@@ -88,9 +88,9 @@ public class ProveedorRepositorio : IProveedorRepositorio
 
     public async Task<LaCentral.UseCases.Entidades.Proveedor?> ObtenerDetallePorIdAsync(int id, CancellationToken ct = default)
     {
-        var bd = await _context.Proveedors 
-            .Include(p => p.ProveedorTelefonos)
-            .Include(p => p.ProveedorDireccions)
+        var bd = await _context.Proveedor 
+            .Include(p => p.ProveedorTelefono)
+            .Include(p => p.ProveedorDireccion)
             .FirstOrDefaultAsync(p => p.Id == id, ct);
 
         if (bd == null) return null;
@@ -104,14 +104,14 @@ public class ProveedorRepositorio : IProveedorRepositorio
             UrlReferencia = bd.UrlReferencia,
             Activo = bd.Activo,
             MotivoBaja = bd.MotivoBaja, // <--- FALTABA ESTA LÍNEA
-            Telefonos = bd.ProveedorTelefonos.Select(t => t.Numero ?? string.Empty).ToList(),
-            Direcciones = bd.ProveedorDireccions.Select(d => d.Calle ?? string.Empty).ToList()
+            Telefonos = bd.ProveedorTelefono.Select(t => t.Numero ?? string.Empty).ToList(),
+            Direcciones = bd.ProveedorDireccion.Select(d => d.Calle ?? string.Empty).ToList()
         };
     }
 
     public async Task<LaCentral.UseCases.Entidades.Proveedor?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default)
     {
-        var bd = await _context.Proveedors.FirstOrDefaultAsync(p => p.Cuit == cuit, ct);
+        var bd = await _context.Proveedor.FirstOrDefaultAsync(p => p.Cuit == cuit, ct);
         if (bd == null) return null;
 
         return new LaCentral.UseCases.Entidades.Proveedor
@@ -125,41 +125,68 @@ public class ProveedorRepositorio : IProveedorRepositorio
     }
 
     public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Proveedor proveedor, CancellationToken ct = default)
+{
+    var bd = await _context.Proveedor
+        .Include(p => p.ProveedorTelefono)
+        .Include(p => p.ProveedorDireccion)
+        .SingleOrDefaultAsync(p => p.Id == proveedor.Id, ct);
+
+    if (bd == null) return;
+
+    bd.RazonSocial = proveedor.RazonSocial;
+    bd.Cuit = proveedor.Cuit;
+    bd.UrlReferencia = proveedor.UrlReferencia;
+
+    // FIX CRÍTICO 2: Mapeo de estado y motivo
+    bool estadoAnterior = bd.Activo;
+    bd.Activo = proveedor.Activo;
+    bd.MotivoBaja = proveedor.MotivoBaja;
+
+    // Si transiciona de Activo a Inactivo, estampa la fecha
+    if (estadoAnterior && !proveedor.Activo)
     {
-        var bd = await _context.Proveedors
-            .Include(p => p.ProveedorTelefonos)
-            .Include(p => p.ProveedorDireccions)
-            .SingleOrDefaultAsync(p => p.Id == proveedor.Id, ct);
+        bd.FechaBaja = DateTime.UtcNow;
+    }
 
-        if (bd == null) return;
-
-        bd.RazonSocial = proveedor.RazonSocial;
-        bd.Cuit = proveedor.Cuit;
-        bd.UrlReferencia = proveedor.UrlReferencia;
-
-        // FIX CRÍTICO 2: Mapeo de estado y motivo
-        bool estadoAnterior = bd.Activo;
-        bd.Activo = proveedor.Activo;
-        bd.MotivoBaja = proveedor.MotivoBaja;
-
-        // Si transiciona de Activo a Inactivo, estampa la fecha
-        if (estadoAnterior && !proveedor.Activo)
+    // LÓGICA D10: Gestión del Historial de Baja
+    if (!bd.Activo)
+    {
+        var bajaAbierta = await _context.ProveedorHistorialBaja
+            .FirstOrDefaultAsync(h => h.ProveedorId == bd.Id && h.FechaReactivacion == null, ct);
+        
+        if (bajaAbierta == null)
         {
-            bd.FechaBaja = DateTime.UtcNow;
+            _context.ProveedorHistorialBaja.Add(new LaCentral.Data.Models.ProveedorHistorialBaja
+            {
+                ProveedorId = bd.Id,
+                Motivo = bd.MotivoBaja ?? "Baja lógica",
+                FechaBaja = bd.FechaBaja ?? DateTime.UtcNow
+            });
         }
+    }
+    else
+    {
+        var bajaAbierta = await _context.ProveedorHistorialBaja
+            .FirstOrDefaultAsync(h => h.ProveedorId == bd.Id && h.FechaReactivacion == null, ct);
+        
+        if (bajaAbierta != null)
+        {
+            bajaAbierta.FechaReactivacion = DateTime.UtcNow;
+        }
+    }
 
-        var telsABorrar = bd.ProveedorTelefonos.Where(t => !proveedor.Telefonos.Contains(t.Numero ?? string.Empty)).ToList();
-        foreach (var t in telsABorrar) _context.Remove(t);
+    var telsABorrar = bd.ProveedorTelefono.Where(t => !proveedor.Telefonos.Contains(t.Numero ?? string.Empty)).ToList();
+    foreach (var t in telsABorrar) _context.Remove(t);
 
-        var telsNuevos = proveedor.Telefonos.Where(t => !bd.ProveedorTelefonos.Any(b => b.Numero == t)).ToList();
-        foreach (var t in telsNuevos) bd.ProveedorTelefonos.Add(new LaCentral.Data.Models.ProveedorTelefono { Numero = t });
+    var telsNuevos = proveedor.Telefonos.Where(t => !bd.ProveedorTelefono.Any(b => b.Numero == t)).ToList();
+    foreach (var t in telsNuevos) bd.ProveedorTelefono.Add(new LaCentral.Data.Models.ProveedorTelefono { Numero = t });
 
-        var dirsABorrar = bd.ProveedorDireccions.Where(d => !proveedor.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
-        foreach (var d in dirsABorrar) _context.Remove(d);
+    var dirsABorrar = bd.ProveedorDireccion.Where(d => !proveedor.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
+    foreach (var d in dirsABorrar) _context.Remove(d);
 
-        var dirsNuevas = proveedor.Direcciones.Where(d => !bd.ProveedorDireccions.Any(b => b.Calle == d)).ToList();
-        foreach (var d in dirsNuevas) bd.ProveedorDireccions.Add(new LaCentral.Data.Models.ProveedorDireccion { Calle = d });
+    var dirsNuevas = proveedor.Direcciones.Where(d => !bd.ProveedorDireccion.Any(b => b.Calle == d)).ToList();
+    foreach (var d in dirsNuevas) bd.ProveedorDireccion.Add(new LaCentral.Data.Models.ProveedorDireccion { Calle = d });
 
-        await _context.SaveChangesAsync(ct);
-    }   
+    await _context.SaveChangesAsync(ct);
+    }  
 }

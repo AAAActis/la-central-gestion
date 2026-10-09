@@ -16,7 +16,7 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
     internal IQueryable<CoincidenciaArticulo> CrearCoincidencias(ConsultaArticulos consulta)
     {
         consulta.Validar();
-        var articulos = _context.Articulos.AsNoTracking();
+        var articulos = _context.Articulo.AsNoTracking();
         if (!consulta.IncluirInactivos)
             articulos = articulos.Where(a => a.Activo);
 
@@ -25,7 +25,7 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
         {
             var interno = articulos.Where(a => a.CodigoInterno.Trim(new[] { ' ' }).ToUpper() == alternativa)
                 .Select(a => new CoincidenciaArticulo { Id = a.Id, Prioridad = 0 });
-            var proveedor = articulos.Where(a => a.ArticuloCodigoAlternativos.Any(
+            var proveedor = articulos.Where(a => a.ArticuloCodigoAlternativo.Any(
                     c => c.Codigo.Trim(new[] { ' ' }).ToUpper() == alternativa))
                 .Select(a => new CoincidenciaArticulo { Id = a.Id, Prioridad = 1 });
 
@@ -51,7 +51,7 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
     {
         var coincidencias = CrearCoincidencias(consulta);
         return (from c in coincidencias
-                join a in _context.Articulos.AsNoTracking() on c.Id equals a.Id
+                join a in _context.Articulo.AsNoTracking() on c.Id equals a.Id
                 orderby c.Prioridad, a.Nombre, a.Id
                 select new ArticuloResumenConsultaDto(a.Id, a.CodigoInterno, a.Nombre, a.Activo))
             .Skip((consulta.Pagina - 1) * consulta.TamanoPagina).Take(consulta.TamanoPagina);
@@ -77,9 +77,9 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
     {
         var clave = NormalizacionArticulo.Codigo(codigo);
         if (clave.Length == 0) throw new ArgumentException("El código no puede estar vacío.", nameof(codigo));
-        return await _context.Articulos.AsNoTracking()
+        return await _context.Articulo.AsNoTracking()
             .Where(a => a.CodigoInterno.Trim(new[] { ' ' }).ToUpper() == clave ||
-                a.ArticuloCodigoAlternativos.Any(c => c.Codigo.Trim(new[] { ' ' }).ToUpper() == clave))
+                a.ArticuloCodigoAlternativo.Any(c => c.Codigo.Trim(new[] { ' ' }).ToUpper() == clave))
             .OrderBy(a => a.Id)
             .Select(a => new ArticuloResumenConsultaDto(a.Id, a.CodigoInterno, a.Nombre, a.Activo))
             .ToListAsync(ct);
@@ -87,18 +87,18 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
 
     public async Task<ArticuloDetalleConsultaDto?> ObtenerDetallePorIdAsync(int id, CancellationToken ct = default)
     {
-        var articulo = await _context.Articulos.AsNoTracking()
-            .Include(a => a.ArticuloCodigoAlternativos).ThenInclude(c => c.Proveedor)
-            .Include(a => a.Stocks).ThenInclude(s => s.Sucursal)
+        var articulo = await _context.Articulo.AsNoTracking()
+            .Include(a => a.ArticuloCodigoAlternativo).ThenInclude(c => c.Proveedor)
+            .Include(a => a.Stock).ThenInclude(s => s.Sucursal)
             .SingleOrDefaultAsync(a => a.Id == id, ct);
         if (articulo is null) return null;
 
         return new(articulo.Id, articulo.CodigoInterno, articulo.Nombre, articulo.Activo,
             articulo.PrecioCosto, articulo.UltimoProveedorId,
-            articulo.ArticuloCodigoAlternativos.OrderBy(c => c.ProveedorId).ThenBy(c => c.Id)
+            articulo.ArticuloCodigoAlternativo.OrderBy(c => c.ProveedorId).ThenBy(c => c.Id)
                 .Select(c => new CodigoProveedorConsultaDto(c.ProveedorId, c.Proveedor.RazonSocial,
                     c.Codigo, NormalizacionArticulo.Codigo(c.Codigo))).ToArray(),
-            articulo.Stocks.OrderBy(s => s.SucursalId)
+            articulo.Stock.OrderBy(s => s.SucursalId)
                 .Select(s => new StockSucursalConsultaDto(s.SucursalId, s.Sucursal.Nombre, s.Cantidad)).ToArray(),
             // D1: el esquema vigente no identifica modalidades. No interpretar
             // márgenes legados ni calcular una fórmula que el equipo retiró.

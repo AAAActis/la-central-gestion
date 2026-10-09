@@ -11,15 +11,15 @@ public partial class Sucursal
 
     public string Nombre { get; set; } = null!;
 
-    public virtual ICollection<FacturaCompra> FacturaCompras { get; set; } = new List<FacturaCompra>();
+    public virtual ICollection<FacturaCompraDetalle> FacturaCompraDetalle { get; set; } = new List<FacturaCompraDetalle>();
 
-    public virtual ICollection<FacturaVentum> FacturaVenta { get; set; } = new List<FacturaVentum>();
+    public virtual ICollection<FacturaVenta> FacturaVenta { get; set; } = new List<FacturaVenta>();
 
-    public virtual ICollection<Stock> Stocks { get; set; } = new List<Stock>();
+    public virtual ICollection<Stock> Stock { get; set; } = new List<Stock>();
 
-    public virtual ICollection<Transferencium> TransferenciumSucursalDestinos { get; set; } = new List<Transferencium>();
+    public virtual ICollection<Transferencia> TransferenciaSucursalDestino { get; set; } = new List<Transferencia>();
 
-    public virtual ICollection<Transferencium> TransferenciumSucursalOrigens { get; set; } = new List<Transferencium>();
+    public virtual ICollection<Transferencia> TransferenciaSucursalOrigen { get; set; } = new List<Transferencia>();
 
-    public virtual ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
+    public virtual ICollection<Usuario> Usuario { get; set; } = new List<Usuario>();
 }

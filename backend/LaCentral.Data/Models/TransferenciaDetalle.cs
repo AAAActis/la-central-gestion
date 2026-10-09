@@ -13,5 +13,5 @@ public partial class TransferenciaDetalle
 
     public virtual Articulo Articulo { get; set; } = null!;
 
-    public virtual Transferencium Transferencia { get; set; } = null!;
+    public virtual Transferencia Transferencia { get; set; } = null!;
 }

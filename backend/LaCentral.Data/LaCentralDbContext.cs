@@ -11,49 +11,58 @@ public partial class LaCentralDbContext : DbContext
     {
     }
 
-    public virtual DbSet<Articulo> Articulos { get; set; }
+    public virtual DbSet<Articulo> Articulo { get; set; }
 
-    public virtual DbSet<ArticuloCodigoAlternativo> ArticuloCodigoAlternativos { get; set; }
+    public virtual DbSet<ArticuloCodigoAlternativo> ArticuloCodigoAlternativo { get; set; }
 
-    public virtual DbSet<ArticuloHistorialCompra> ArticuloHistorialCompras { get; set; }
+    public virtual DbSet<ArticuloHistorialBaja> ArticuloHistorialBaja { get; set; }
 
-    public virtual DbSet<ArticuloMargen> ArticuloMargens { get; set; }
+    public virtual DbSet<ArticuloHistorialCompra> ArticuloHistorialCompra { get; set; }
 
-    public virtual DbSet<Cliente> Clientes { get; set; }
+    public virtual DbSet<ArticuloMargen> ArticuloMargen { get; set; }
 
-    public virtual DbSet<ClienteDireccion> ClienteDireccions { get; set; }
+    public virtual DbSet<Cliente> Cliente { get; set; }
 
-    public virtual DbSet<ClienteTelefono> ClienteTelefonos { get; set; }
+    public virtual DbSet<ClienteDireccion> ClienteDireccion { get; set; }
 
-    public virtual DbSet<FacturaCompra> FacturaCompras { get; set; }
+    public virtual DbSet<ClienteHistorialBaja> ClienteHistorialBaja { get; set; }
 
-    public virtual DbSet<FacturaCompraDetalle> FacturaCompraDetalles { get; set; }
 
-    public virtual DbSet<FacturaVentaDetalle> FacturaVentaDetalles { get; set; }
+    public virtual DbSet<ClienteTelefono> ClienteTelefono { get; set; }
 
-    public virtual DbSet<FacturaVentum> FacturaVenta { get; set; }
+    public virtual DbSet<FacturaCompra> FacturaCompra { get; set; }
 
-    public virtual DbSet<PrecioProveedor> PrecioProveedors { get; set; }
+    public virtual DbSet<FacturaCompraDetalle> FacturaCompraDetalle { get; set; }
 
-    public virtual DbSet<Proveedor> Proveedors { get; set; }
+    public virtual DbSet<FacturaVenta> FacturaVenta { get; set; }
 
-    public virtual DbSet<ProveedorCredencial> ProveedorCredencials { get; set; }
+    public virtual DbSet<FacturaVentaDetalle> FacturaVentaDetalle { get; set; }
 
-    public virtual DbSet<ProveedorDireccion> ProveedorDireccions { get; set; }
+    public virtual DbSet<PrecioProveedor> PrecioProveedor { get; set; }
 
-    public virtual DbSet<ProveedorTelefono> ProveedorTelefonos { get; set; }
+    public virtual DbSet<Proveedor> Proveedor { get; set; }
 
-    public virtual DbSet<Rol> Rols { get; set; }
+    public virtual DbSet<ProveedorCredencial> ProveedorCredencial { get; set; }
 
-    public virtual DbSet<Stock> Stocks { get; set; }
+    public virtual DbSet<ProveedorDireccion> ProveedorDireccion { get; set; }
 
-    public virtual DbSet<Sucursal> Sucursals { get; set; }
+    public virtual DbSet<ProveedorHistorialBaja> ProveedorHistorialBaja { get; set; }
 
-    public virtual DbSet<TransferenciaDetalle> TransferenciaDetalles { get; set; }
+    public virtual DbSet<ProveedorTelefono> ProveedorTelefono { get; set; }
 
-    public virtual DbSet<Transferencium> Transferencia { get; set; }
+    public virtual DbSet<Rol> Rol { get; set; }
 
-    public virtual DbSet<Usuario> Usuarios { get; set; }
+    public virtual DbSet<Stock> Stock { get; set; }
+
+    public virtual DbSet<Sucursal> Sucursal { get; set; }
+
+    public virtual DbSet<Transferencia> Transferencia { get; set; }
+
+    public virtual DbSet<TransferenciaDetalle> TransferenciaDetalle { get; set; }
+
+    public virtual DbSet<Usuario> Usuario { get; set; }
+
+    public virtual DbSet<UsuarioHistorialBaja> UsuarioHistorialBaja { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -105,7 +114,7 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("ubicacion_deposito");
             entity.Property(e => e.UltimoProveedorId).HasColumnName("ultimo_proveedor_id");
 
-            entity.HasOne(d => d.UltimoProveedor).WithMany(p => p.Articulos)
+            entity.HasOne(d => d.UltimoProveedor).WithMany(p => p.Articulo)
                 .HasForeignKey(d => d.UltimoProveedorId)
                 .HasConstraintName("articulo_ultimo_proveedor_id_fkey");
         });
@@ -133,14 +142,49 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("codigo");
             entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
 
-            entity.HasOne(d => d.Articulo).WithMany(p => p.ArticuloCodigoAlternativos)
+            entity.HasOne(d => d.Articulo).WithMany(p => p.ArticuloCodigoAlternativo)
                 .HasForeignKey(d => d.ArticuloId)
                 .HasConstraintName("articulo_codigo_alternativo_articulo_id_fkey");
 
-            entity.HasOne(d => d.Proveedor).WithMany(p => p.ArticuloCodigoAlternativos)
+            entity.HasOne(d => d.Proveedor).WithMany(p => p.ArticuloCodigoAlternativo)
                 .HasForeignKey(d => d.ProveedorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("articulo_codigo_alternativo_proveedor_id_fkey");
+        });
+
+        modelBuilder.Entity<ArticuloHistorialBaja>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("articulo_historial_baja_pkey");
+
+            entity.ToTable("articulo_historial_baja");
+
+            entity.HasIndex(e => new { e.ArticuloId, e.FechaBaja }, "ix_articulo_hist_baja").IsDescending(false, true);
+
+            entity.HasIndex(e => e.ArticuloId, "ux_articulo_hist_abierta")
+                .IsUnique()
+                .HasFilter("(fecha_reactivacion IS NULL)");
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.ArticuloId).HasColumnName("articulo_id");
+            entity.Property(e => e.FechaBaja).HasColumnName("fecha_baja");
+            entity.Property(e => e.FechaReactivacion).HasColumnName("fecha_reactivacion");
+            entity.Property(e => e.Motivo).HasColumnName("motivo");
+            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
+            entity.Property(e => e.UsuarioReactivacionId).HasColumnName("usuario_reactivacion_id");
+
+            entity.HasOne(d => d.Articulo).WithOne(p => p.ArticuloHistorialBaja)
+                .HasForeignKey<ArticuloHistorialBaja>(d => d.ArticuloId)
+                .HasConstraintName("articulo_historial_baja_articulo_id_fkey");
+
+            entity.HasOne(d => d.UsuarioBaja).WithMany(p => p.ArticuloHistorialBajaUsuarioBaja)
+                .HasForeignKey(d => d.UsuarioBajaId)
+                .HasConstraintName("articulo_historial_baja_usuario_baja_id_fkey");
+
+            entity.HasOne(d => d.UsuarioReactivacion).WithMany(p => p.ArticuloHistorialBajaUsuarioReactivacion)
+                .HasForeignKey(d => d.UsuarioReactivacionId)
+                .HasConstraintName("articulo_historial_baja_usuario_reactivacion_id_fkey");
         });
 
         modelBuilder.Entity<ArticuloHistorialCompra>(entity =>
@@ -165,17 +209,17 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("precio_costo");
             entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
 
-            entity.HasOne(d => d.Articulo).WithMany(p => p.ArticuloHistorialCompras)
+            entity.HasOne(d => d.Articulo).WithMany(p => p.ArticuloHistorialCompra)
                 .HasForeignKey(d => d.ArticuloId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("articulo_historial_compra_articulo_id_fkey");
 
-            entity.HasOne(d => d.FacturaCompra).WithMany(p => p.ArticuloHistorialCompras)
+            entity.HasOne(d => d.FacturaCompra).WithMany(p => p.ArticuloHistorialCompra)
                 .HasForeignKey(d => d.FacturaCompraId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_historial_factura");
 
-            entity.HasOne(d => d.Proveedor).WithMany(p => p.ArticuloHistorialCompras)
+            entity.HasOne(d => d.Proveedor).WithMany(p => p.ArticuloHistorialCompra)
                 .HasForeignKey(d => d.ProveedorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("articulo_historial_compra_proveedor_id_fkey");
@@ -193,10 +237,11 @@ public partial class LaCentralDbContext : DbContext
                 .HasPrecision(6, 2)
                 .HasColumnName("porcentaje");
 
-            entity.HasOne(d => d.Articulo).WithMany(p => p.ArticuloMargens)
+            entity.HasOne(d => d.Articulo).WithMany(p => p.ArticuloMargen)
                 .HasForeignKey(d => d.ArticuloId)
                 .HasConstraintName("articulo_margen_articulo_id_fkey");
         });
+
 
         modelBuilder.Entity<Cliente>(entity =>
         {
@@ -252,21 +297,15 @@ public partial class LaCentralDbContext : DbContext
             entity.Property(e => e.TieneCuentaCorriente)
                 .HasComment("Dato informativo. El sistema NO lleva saldo ni deuda: Cuentas a Cobrar está fuera del alcance, en coherencia con la exclusión de Cuentas a Pagar.")
                 .HasColumnName("tiene_cuenta_corriente");
-            
-            // Mapeo de columnas de auditoría y relaciones
             entity.Property(e => e.UsuarioAltaId).HasColumnName("usuario_alta_id");
             entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
 
-            entity.HasOne<Usuario>()
-                .WithMany()
-                .HasForeignKey(c => c.UsuarioAltaId)
-                .OnDelete(DeleteBehavior.Restrict)
+            entity.HasOne(d => d.UsuarioAlta).WithMany(p => p.ClienteUsuarioAlta)
+                .HasForeignKey(d => d.UsuarioAltaId)
                 .HasConstraintName("cliente_usuario_alta_id_fkey");
 
-            entity.HasOne<Usuario>()
-                .WithMany()
-                .HasForeignKey(c => c.UsuarioBajaId)
-                .OnDelete(DeleteBehavior.Restrict)
+            entity.HasOne(d => d.UsuarioBaja).WithMany(p => p.ClienteUsuarioBaja)
+                .HasForeignKey(d => d.UsuarioBajaId)
                 .HasConstraintName("cliente_usuario_baja_id_fkey");
         });
 
@@ -303,9 +342,44 @@ public partial class LaCentralDbContext : DbContext
                 .UseCollation("es-AR-x-icu")
                 .HasColumnName("provincia");
 
-            entity.HasOne(d => d.Cliente).WithMany(p => p.ClienteDireccions)
+            entity.HasOne(d => d.Cliente).WithMany(p => p.ClienteDireccion)
                 .HasForeignKey(d => d.ClienteId)
                 .HasConstraintName("cliente_direccion_cliente_id_fkey");
+        });
+
+        modelBuilder.Entity<ClienteHistorialBaja>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("cliente_historial_baja_pkey");
+
+            entity.ToTable("cliente_historial_baja", tb => tb.HasComment("Una fila por cada baja. fecha_reactivacion NULL = baja vigente. El índice único parcial impide dos bajas abiertas simultáneas del mismo cliente."));
+
+            entity.HasIndex(e => new { e.ClienteId, e.FechaBaja }, "ix_cliente_hist_baja").IsDescending(false, true);
+
+            entity.HasIndex(e => e.ClienteId, "ux_cliente_hist_abierta")
+                .IsUnique()
+                .HasFilter("(fecha_reactivacion IS NULL)");
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.ClienteId).HasColumnName("cliente_id");
+            entity.Property(e => e.FechaBaja).HasColumnName("fecha_baja");
+            entity.Property(e => e.FechaReactivacion).HasColumnName("fecha_reactivacion");
+            entity.Property(e => e.Motivo).HasColumnName("motivo");
+            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
+            entity.Property(e => e.UsuarioReactivacionId).HasColumnName("usuario_reactivacion_id");
+
+            entity.HasOne(d => d.Cliente).WithOne(p => p.ClienteHistorialBaja)
+                .HasForeignKey<ClienteHistorialBaja>(d => d.ClienteId)
+                .HasConstraintName("cliente_historial_baja_cliente_id_fkey");
+
+            entity.HasOne(d => d.UsuarioBaja).WithMany(p => p.ClienteHistorialBajaUsuarioBaja)
+                .HasForeignKey(d => d.UsuarioBajaId)
+                .HasConstraintName("cliente_historial_baja_usuario_baja_id_fkey");
+
+            entity.HasOne(d => d.UsuarioReactivacion).WithMany(p => p.ClienteHistorialBajaUsuarioReactivacion)
+                .HasForeignKey(d => d.UsuarioReactivacionId)
+                .HasConstraintName("cliente_historial_baja_usuario_reactivacion_id_fkey");
         });
 
         modelBuilder.Entity<ClienteTelefono>(entity =>
@@ -327,7 +401,7 @@ public partial class LaCentralDbContext : DbContext
                 .HasMaxLength(60)
                 .HasColumnName("numero");
 
-            entity.HasOne(d => d.Cliente).WithMany(p => p.ClienteTelefonos)
+            entity.HasOne(d => d.Cliente).WithMany(p => p.ClienteTelefono)
                 .HasForeignKey(d => d.ClienteId)
                 .HasConstraintName("cliente_telefono_cliente_id_fkey");
         });
@@ -336,7 +410,7 @@ public partial class LaCentralDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("factura_compra_pkey");
 
-            entity.ToTable("factura_compra");
+            entity.ToTable("factura_compra", tb => tb.HasComment("Factura de compra de un proveedor. Importes en pesos argentinos: la empresa no opera en moneda extranjera (decisión D7, 07/10/2026). El sistema anterior admite moneda y cotización por comprobante y por línea (APS-005); acá queda excluido del alcance de forma deliberada. El destino de stock se carga por línea, no por comprobante (D9)."));
 
             entity.HasIndex(e => new { e.ProveedorId, e.Numero }, "ux_factura_compra_numero_activa")
                 .IsUnique()
@@ -363,42 +437,40 @@ public partial class LaCentralDbContext : DbContext
                 .HasMaxLength(10)
                 .HasDefaultValueSql("'MANUAL'::character varying")
                 .HasColumnName("origen");
+            entity.Property(e => e.PercepcionGanancias)
+                .HasPrecision(14, 2)
+                .HasDefaultValue(0m)
+                .HasComment("Percepción de Ganancias. Dato transcripto.")
+                .HasColumnName("percepcion_ganancias");
+            entity.Property(e => e.PercepcionIibb)
+                .HasPrecision(14, 2)
+                .HasDefaultValue(0m)
+                .HasComment("Percepción de Ingresos Brutos. Dato transcripto, sin cálculo por jurisdicción.")
+                .HasColumnName("percepcion_iibb");
+            entity.Property(e => e.PercepcionIva)
+                .HasPrecision(14, 2)
+                .HasDefaultValue(0m)
+                .HasComment("Percepción de IVA que el proveedor adiciona al comprobante. Dato transcripto del PDF: el sistema no calcula alícuotas ni liquida impuestos.")
+                .HasColumnName("percepcion_iva");
+            entity.Property(e => e.PercepcionMunicipal)
+                .HasPrecision(14, 2)
+                .HasDefaultValue(0m)
+                .HasComment("Percepción municipal. Dato transcripto.")
+                .HasColumnName("percepcion_municipal");
             entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
-            entity.Property(e => e.RetencionGanancias)
-                .HasPrecision(14, 2)
-                .HasDefaultValue(0m)
-                .HasColumnName("retencion_ganancias");
-            entity.Property(e => e.RetencionIibb)
-                .HasPrecision(14, 2)
-                .HasDefaultValue(0m)
-                .HasColumnName("retencion_iibb");
-            entity.Property(e => e.RetencionIva)
-                .HasPrecision(14, 2)
-                .HasDefaultValue(0m)
-                .HasColumnName("retencion_iva");
-            entity.Property(e => e.RetencionMunicipal)
-                .HasPrecision(14, 2)
-                .HasDefaultValue(0m)
-                .HasColumnName("retencion_municipal");
-            entity.Property(e => e.SucursalId).HasColumnName("sucursal_id");
             entity.Property(e => e.UsuarioAnulacionId).HasColumnName("usuario_anulacion_id");
             entity.Property(e => e.UsuarioId).HasColumnName("usuario_id");
 
-            entity.HasOne(d => d.Proveedor).WithMany(p => p.FacturaCompras)
+            entity.HasOne(d => d.Proveedor).WithMany(p => p.FacturaCompra)
                 .HasForeignKey(d => d.ProveedorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("factura_compra_proveedor_id_fkey");
 
-            entity.HasOne(d => d.Sucursal).WithMany(p => p.FacturaCompras)
-                .HasForeignKey(d => d.SucursalId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("factura_compra_sucursal_id_fkey");
-
-            entity.HasOne(d => d.UsuarioAnulacion).WithMany(p => p.FacturaCompraUsuarioAnulacions)
+            entity.HasOne(d => d.UsuarioAnulacion).WithMany(p => p.FacturaCompraUsuarioAnulacion)
                 .HasForeignKey(d => d.UsuarioAnulacionId)
                 .HasConstraintName("factura_compra_usuario_anulacion_id_fkey");
 
-            entity.HasOne(d => d.Usuario).WithMany(p => p.FacturaCompraUsuarios)
+            entity.HasOne(d => d.Usuario).WithMany(p => p.FacturaCompraUsuario)
                 .HasForeignKey(d => d.UsuarioId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("factura_compra_usuario_id_fkey");
@@ -409,6 +481,8 @@ public partial class LaCentralDbContext : DbContext
             entity.HasKey(e => new { e.FacturaCompraId, e.ArticuloId }).HasName("factura_compra_detalle_pkey");
 
             entity.ToTable("factura_compra_detalle");
+
+            entity.HasIndex(e => e.SucursalId, "ix_fc_detalle_sucursal");
 
             entity.Property(e => e.FacturaCompraId).HasColumnName("factura_compra_id");
             entity.Property(e => e.ArticuloId).HasColumnName("articulo_id");
@@ -421,43 +495,26 @@ public partial class LaCentralDbContext : DbContext
             entity.Property(e => e.PrecioUnitario)
                 .HasPrecision(14, 2)
                 .HasColumnName("precio_unitario");
+            entity.Property(e => e.SucursalId)
+                .HasComment("Destino de la mercadería de ESTA línea. Una factura puede repartirse entre Fragueiro y San Vicente, y el sistema anterior lo carga por línea (APS-005, columna «Dep.»). El stock se incrementa contra esta sucursal, no contra una del comprobante.")
+                .HasColumnName("sucursal_id");
 
-            entity.HasOne(d => d.Articulo).WithMany(p => p.FacturaCompraDetalles)
+            entity.HasOne(d => d.Articulo).WithMany(p => p.FacturaCompraDetalle)
                 .HasForeignKey(d => d.ArticuloId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("factura_compra_detalle_articulo_id_fkey");
 
-            entity.HasOne(d => d.FacturaCompra).WithMany(p => p.FacturaCompraDetalles)
+            entity.HasOne(d => d.FacturaCompra).WithMany(p => p.FacturaCompraDetalle)
                 .HasForeignKey(d => d.FacturaCompraId)
                 .HasConstraintName("factura_compra_detalle_factura_compra_id_fkey");
-        });
 
-        modelBuilder.Entity<FacturaVentaDetalle>(entity =>
-        {
-            entity.HasKey(e => new { e.FacturaVentaId, e.ArticuloId }).HasName("factura_venta_detalle_pkey");
-
-            entity.ToTable("factura_venta_detalle");
-
-            entity.Property(e => e.FacturaVentaId).HasColumnName("factura_venta_id");
-            entity.Property(e => e.ArticuloId).HasColumnName("articulo_id");
-            entity.Property(e => e.Cantidad)
-                .HasPrecision(12, 3)
-                .HasColumnName("cantidad");
-            entity.Property(e => e.PrecioUnitario)
-                .HasPrecision(14, 2)
-                .HasColumnName("precio_unitario");
-
-            entity.HasOne(d => d.Articulo).WithMany(p => p.FacturaVentaDetalles)
-                .HasForeignKey(d => d.ArticuloId)
+            entity.HasOne(d => d.Sucursal).WithMany(p => p.FacturaCompraDetalle)
+                .HasForeignKey(d => d.SucursalId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("factura_venta_detalle_articulo_id_fkey");
-
-            entity.HasOne(d => d.FacturaVenta).WithMany(p => p.FacturaVentaDetalles)
-                .HasForeignKey(d => d.FacturaVentaId)
-                .HasConstraintName("factura_venta_detalle_factura_venta_id_fkey");
+                .HasConstraintName("factura_compra_detalle_sucursal_id_fkey");
         });
 
-        modelBuilder.Entity<FacturaVentum>(entity =>
+        modelBuilder.Entity<FacturaVenta>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("factura_venta_pkey");
 
@@ -504,14 +561,39 @@ public partial class LaCentralDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("factura_venta_sucursal_id_fkey");
 
-            entity.HasOne(d => d.UsuarioAnulacion).WithMany(p => p.FacturaVentumUsuarioAnulacions)
+            entity.HasOne(d => d.UsuarioAnulacion).WithMany(p => p.FacturaVentaUsuarioAnulacion)
                 .HasForeignKey(d => d.UsuarioAnulacionId)
                 .HasConstraintName("factura_venta_usuario_anulacion_id_fkey");
 
-            entity.HasOne(d => d.Usuario).WithMany(p => p.FacturaVentumUsuarios)
+            entity.HasOne(d => d.Usuario).WithMany(p => p.FacturaVentaUsuario)
                 .HasForeignKey(d => d.UsuarioId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("factura_venta_usuario_id_fkey");
+        });
+
+        modelBuilder.Entity<FacturaVentaDetalle>(entity =>
+        {
+            entity.HasKey(e => new { e.FacturaVentaId, e.ArticuloId }).HasName("factura_venta_detalle_pkey");
+
+            entity.ToTable("factura_venta_detalle");
+
+            entity.Property(e => e.FacturaVentaId).HasColumnName("factura_venta_id");
+            entity.Property(e => e.ArticuloId).HasColumnName("articulo_id");
+            entity.Property(e => e.Cantidad)
+                .HasPrecision(12, 3)
+                .HasColumnName("cantidad");
+            entity.Property(e => e.PrecioUnitario)
+                .HasPrecision(14, 2)
+                .HasColumnName("precio_unitario");
+
+            entity.HasOne(d => d.Articulo).WithMany(p => p.FacturaVentaDetalle)
+                .HasForeignKey(d => d.ArticuloId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("factura_venta_detalle_articulo_id_fkey");
+
+            entity.HasOne(d => d.FacturaVenta).WithMany(p => p.FacturaVentaDetalle)
+                .HasForeignKey(d => d.FacturaVentaId)
+                .HasConstraintName("factura_venta_detalle_factura_venta_id_fkey");
         });
 
         modelBuilder.Entity<PrecioProveedor>(entity =>
@@ -533,11 +615,11 @@ public partial class LaCentralDbContext : DbContext
                 .HasPrecision(14, 2)
                 .HasColumnName("precio_lista");
 
-            entity.HasOne(d => d.Articulo).WithMany(p => p.PrecioProveedors)
+            entity.HasOne(d => d.Articulo).WithMany(p => p.PrecioProveedor)
                 .HasForeignKey(d => d.ArticuloId)
                 .HasConstraintName("precio_proveedor_articulo_id_fkey");
 
-            entity.HasOne(d => d.Proveedor).WithMany(p => p.PrecioProveedors)
+            entity.HasOne(d => d.Proveedor).WithMany(p => p.PrecioProveedor)
                 .HasForeignKey(d => d.ProveedorId)
                 .HasConstraintName("precio_proveedor_proveedor_id_fkey");
         });
@@ -653,9 +735,44 @@ public partial class LaCentralDbContext : DbContext
                 .UseCollation("es-AR-x-icu")
                 .HasColumnName("provincia");
 
-            entity.HasOne(d => d.Proveedor).WithMany(p => p.ProveedorDireccions)
+            entity.HasOne(d => d.Proveedor).WithMany(p => p.ProveedorDireccion)
                 .HasForeignKey(d => d.ProveedorId)
                 .HasConstraintName("proveedor_direccion_proveedor_id_fkey");
+        });
+
+        modelBuilder.Entity<ProveedorHistorialBaja>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("proveedor_historial_baja_pkey");
+
+            entity.ToTable("proveedor_historial_baja");
+
+            entity.HasIndex(e => new { e.ProveedorId, e.FechaBaja }, "ix_proveedor_hist_baja").IsDescending(false, true);
+
+            entity.HasIndex(e => e.ProveedorId, "ux_proveedor_hist_abierta")
+                .IsUnique()
+                .HasFilter("(fecha_reactivacion IS NULL)");
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.FechaBaja).HasColumnName("fecha_baja");
+            entity.Property(e => e.FechaReactivacion).HasColumnName("fecha_reactivacion");
+            entity.Property(e => e.Motivo).HasColumnName("motivo");
+            entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
+            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
+            entity.Property(e => e.UsuarioReactivacionId).HasColumnName("usuario_reactivacion_id");
+
+            entity.HasOne(d => d.Proveedor).WithOne(p => p.ProveedorHistorialBaja)
+                .HasForeignKey<ProveedorHistorialBaja>(d => d.ProveedorId)
+                .HasConstraintName("proveedor_historial_baja_proveedor_id_fkey");
+
+            entity.HasOne(d => d.UsuarioBaja).WithMany(p => p.ProveedorHistorialBajaUsuarioBaja)
+                .HasForeignKey(d => d.UsuarioBajaId)
+                .HasConstraintName("proveedor_historial_baja_usuario_baja_id_fkey");
+
+            entity.HasOne(d => d.UsuarioReactivacion).WithMany(p => p.ProveedorHistorialBajaUsuarioReactivacion)
+                .HasForeignKey(d => d.UsuarioReactivacionId)
+                .HasConstraintName("proveedor_historial_baja_usuario_reactivacion_id_fkey");
         });
 
         modelBuilder.Entity<ProveedorTelefono>(entity =>
@@ -677,7 +794,7 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("numero");
             entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
 
-            entity.HasOne(d => d.Proveedor).WithMany(p => p.ProveedorTelefonos)
+            entity.HasOne(d => d.Proveedor).WithMany(p => p.ProveedorTelefono)
                 .HasForeignKey(d => d.ProveedorId)
                 .HasConstraintName("proveedor_telefono_proveedor_id_fkey");
         });
@@ -710,11 +827,11 @@ public partial class LaCentralDbContext : DbContext
                 .HasPrecision(12, 3)
                 .HasColumnName("cantidad");
 
-            entity.HasOne(d => d.Articulo).WithMany(p => p.Stocks)
+            entity.HasOne(d => d.Articulo).WithMany(p => p.Stock)
                 .HasForeignKey(d => d.ArticuloId)
                 .HasConstraintName("stock_articulo_id_fkey");
 
-            entity.HasOne(d => d.Sucursal).WithMany(p => p.Stocks)
+            entity.HasOne(d => d.Sucursal).WithMany(p => p.Stock)
                 .HasForeignKey(d => d.SucursalId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("stock_sucursal_id_fkey");
@@ -741,29 +858,7 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("nombre");
         });
 
-        modelBuilder.Entity<TransferenciaDetalle>(entity =>
-        {
-            entity.HasKey(e => new { e.TransferenciaId, e.ArticuloId }).HasName("transferencia_detalle_pkey");
-
-            entity.ToTable("transferencia_detalle");
-
-            entity.Property(e => e.TransferenciaId).HasColumnName("transferencia_id");
-            entity.Property(e => e.ArticuloId).HasColumnName("articulo_id");
-            entity.Property(e => e.Cantidad)
-                .HasPrecision(12, 3)
-                .HasColumnName("cantidad");
-
-            entity.HasOne(d => d.Articulo).WithMany(p => p.TransferenciaDetalles)
-                .HasForeignKey(d => d.ArticuloId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("transferencia_detalle_articulo_id_fkey");
-
-            entity.HasOne(d => d.Transferencia).WithMany(p => p.TransferenciaDetalles)
-                .HasForeignKey(d => d.TransferenciaId)
-                .HasConstraintName("transferencia_detalle_transferencia_id_fkey");
-        });
-
-        modelBuilder.Entity<Transferencium>(entity =>
+        modelBuilder.Entity<Transferencia>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("transferencia_pkey");
 
@@ -780,12 +875,12 @@ public partial class LaCentralDbContext : DbContext
             entity.Property(e => e.SucursalOrigenId).HasColumnName("sucursal_origen_id");
             entity.Property(e => e.UsuarioId).HasColumnName("usuario_id");
 
-            entity.HasOne(d => d.SucursalDestino).WithMany(p => p.TransferenciumSucursalDestinos)
+            entity.HasOne(d => d.SucursalDestino).WithMany(p => p.TransferenciaSucursalDestino)
                 .HasForeignKey(d => d.SucursalDestinoId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("transferencia_sucursal_destino_id_fkey");
 
-            entity.HasOne(d => d.SucursalOrigen).WithMany(p => p.TransferenciumSucursalOrigens)
+            entity.HasOne(d => d.SucursalOrigen).WithMany(p => p.TransferenciaSucursalOrigen)
                 .HasForeignKey(d => d.SucursalOrigenId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("transferencia_sucursal_origen_id_fkey");
@@ -794,6 +889,28 @@ public partial class LaCentralDbContext : DbContext
                 .HasForeignKey(d => d.UsuarioId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("transferencia_usuario_id_fkey");
+        });
+
+        modelBuilder.Entity<TransferenciaDetalle>(entity =>
+        {
+            entity.HasKey(e => new { e.TransferenciaId, e.ArticuloId }).HasName("transferencia_detalle_pkey");
+
+            entity.ToTable("transferencia_detalle");
+
+            entity.Property(e => e.TransferenciaId).HasColumnName("transferencia_id");
+            entity.Property(e => e.ArticuloId).HasColumnName("articulo_id");
+            entity.Property(e => e.Cantidad)
+                .HasPrecision(12, 3)
+                .HasColumnName("cantidad");
+
+            entity.HasOne(d => d.Articulo).WithMany(p => p.TransferenciaDetalle)
+                .HasForeignKey(d => d.ArticuloId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("transferencia_detalle_articulo_id_fkey");
+
+            entity.HasOne(d => d.Transferencia).WithMany(p => p.TransferenciaDetalle)
+                .HasForeignKey(d => d.TransferenciaId)
+                .HasConstraintName("transferencia_detalle_transferencia_id_fkey");
         });
 
         modelBuilder.Entity<Usuario>(entity =>
@@ -823,73 +940,65 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("nombre_usuario");
             entity.Property(e => e.RolId).HasColumnName("rol_id");
             entity.Property(e => e.SucursalId).HasColumnName("sucursal_id");
+            entity.Property(e => e.UsuarioAltaId).HasColumnName("usuario_alta_id");
+            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
 
-            entity.HasOne(d => d.Rol).WithMany(p => p.Usuarios)
+            entity.HasOne(d => d.Rol).WithMany(p => p.Usuario)
                 .HasForeignKey(d => d.RolId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("usuario_rol_id_fkey");
 
-            entity.HasOne(d => d.Sucursal).WithMany(p => p.Usuarios)
+            entity.HasOne(d => d.Sucursal).WithMany(p => p.Usuario)
                 .HasForeignKey(d => d.SucursalId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("usuario_sucursal_id_fkey");
 
-            // Mapeo de columnas de auditoría y auto-referencia
-            entity.Property(e => e.UsuarioAltaId).HasColumnName("usuario_alta_id");
-            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
-
-            entity.HasOne<Usuario>()
-                .WithMany()
-                .HasForeignKey(u => u.UsuarioAltaId)
-                .OnDelete(DeleteBehavior.Restrict)
+            entity.HasOne(d => d.UsuarioAlta).WithMany(p => p.InverseUsuarioAlta)
+                .HasForeignKey(d => d.UsuarioAltaId)
                 .HasConstraintName("usuario_usuario_alta_id_fkey");
 
-            entity.HasOne<Usuario>()
-                .WithMany()
-                .HasForeignKey(u => u.UsuarioBajaId)
-                .OnDelete(DeleteBehavior.Restrict)
+            entity.HasOne(d => d.UsuarioBaja).WithMany(p => p.InverseUsuarioBaja)
+                .HasForeignKey(d => d.UsuarioBajaId)
                 .HasConstraintName("usuario_usuario_baja_id_fkey");
+        });
+
+        modelBuilder.Entity<UsuarioHistorialBaja>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("usuario_historial_baja_pkey");
+
+            entity.ToTable("usuario_historial_baja");
+
+            entity.HasIndex(e => new { e.UsuarioId, e.FechaBaja }, "ix_usuario_hist_baja").IsDescending(false, true);
+
+            entity.HasIndex(e => e.UsuarioId, "ux_usuario_hist_abierta")
+                .IsUnique()
+                .HasFilter("(fecha_reactivacion IS NULL)");
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.FechaBaja).HasColumnName("fecha_baja");
+            entity.Property(e => e.FechaReactivacion).HasColumnName("fecha_reactivacion");
+            entity.Property(e => e.Motivo).HasColumnName("motivo");
+            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
+            entity.Property(e => e.UsuarioId).HasColumnName("usuario_id");
+            entity.Property(e => e.UsuarioReactivacionId).HasColumnName("usuario_reactivacion_id");
+
+            entity.HasOne(d => d.UsuarioBaja).WithMany(p => p.UsuarioHistorialBajaUsuarioBaja)
+                .HasForeignKey(d => d.UsuarioBajaId)
+                .HasConstraintName("usuario_historial_baja_usuario_baja_id_fkey");
+
+            entity.HasOne(d => d.Usuario).WithOne(p => p.UsuarioHistorialBajaUsuario)
+                .HasForeignKey<UsuarioHistorialBaja>(d => d.UsuarioId)
+                .HasConstraintName("usuario_historial_baja_usuario_id_fkey");
+
+            entity.HasOne(d => d.UsuarioReactivacion).WithMany(p => p.UsuarioHistorialBajaUsuarioReactivacion)
+                .HasForeignKey(d => d.UsuarioReactivacionId)
+                .HasConstraintName("usuario_historial_baja_usuario_reactivacion_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);
     }
+
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Cliente>(entity =>
-        {
-            entity.Property(e => e.UsuarioAltaId).HasColumnName("usuario_alta_id");
-            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
-
-            entity.HasOne<Usuario>()
-                .WithMany()
-                .HasForeignKey(c => c.UsuarioAltaId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("cliente_usuario_alta_id_fkey");
-
-            entity.HasOne<Usuario>()
-                .WithMany()
-                .HasForeignKey(c => c.UsuarioBajaId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("cliente_usuario_baja_id_fkey");
-        });
-
-        modelBuilder.Entity<Usuario>(entity =>
-        {
-            entity.Property(e => e.UsuarioAltaId).HasColumnName("usuario_alta_id");
-            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
-
-            entity.HasOne<Usuario>()
-                .WithMany()
-                .HasForeignKey(u => u.UsuarioAltaId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("usuario_usuario_alta_id_fkey");
-
-            entity.HasOne<Usuario>()
-                .WithMany()
-                .HasForeignKey(u => u.UsuarioBajaId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("usuario_usuario_baja_id_fkey");
-        });
-    }
 }
