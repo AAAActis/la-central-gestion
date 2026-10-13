@@ -7,9 +7,9 @@ public class ArticuloPrecioEstimadoTests
     public void CalcularPrecioEstimado_SinCosto_RetornaNull()
     {
         var articulo = new Articulo { CostoVigente = null };
-        articulo.Margenes.Add(new MargenModalidad(1, 40m));
+        articulo.Margenes.Add(new MargenModalidad(Modalidad.Lista, 40m));
         
-        Assert.Null(articulo.CalcularPrecioEstimado(1));
+        Assert.Null(articulo.CalcularPrecioEstimado(Modalidad.Lista));
     }
 
     // CA-003 / TODO 2: Sin márgenes
@@ -19,7 +19,7 @@ public class ArticuloPrecioEstimadoTests
         var articulo = new Articulo { CostoVigente = 100m };
         // No agregamos márgenes
         
-        Assert.Null(articulo.CalcularPrecioEstimado(1));
+        Assert.Null(articulo.CalcularPrecioEstimado(Modalidad.Lista));
     }
 
     // Casos borde: 0.01% (Precio ≈ Costo)
@@ -27,10 +27,10 @@ public class ArticuloPrecioEstimadoTests
     public void CalcularPrecioEstimado_MargenMinimo_CalculaCorrectamente()
     {
         var articulo = new Articulo { CostoVigente = 100m };
-        articulo.Margenes.Add(new MargenModalidad(1, 0.01m)); 
+        articulo.Margenes.Add(new MargenModalidad(Modalidad.Lista, 0.01m)); 
 
         // 100 * (1 + 0.0001) = 100.01
-        var resultado = articulo.CalcularPrecioEstimado(1);
+        var resultado = articulo.CalcularPrecioEstimado(Modalidad.Lista);
 
         Assert.Equal(100.01m, resultado);
     }
@@ -42,9 +42,9 @@ public class ArticuloPrecioEstimadoTests
     public void CalcularPrecioEstimado_MargenesEstandar_CalculaCorrectamente(decimal porcentaje, decimal esperado)
     {
         var articulo = new Articulo { CostoVigente = 100m };
-        articulo.Margenes.Add(new MargenModalidad(1, porcentaje));
+        articulo.Margenes.Add(new MargenModalidad(Modalidad.Lista, porcentaje));
 
-        var resultado = articulo.CalcularPrecioEstimado(1);
+        var resultado = articulo.CalcularPrecioEstimado(Modalidad.Lista);
 
         Assert.Equal(esperado, resultado);
     }
@@ -54,10 +54,10 @@ public class ArticuloPrecioEstimadoTests
     public void CalcularPrecioEstimado_CostoConCentavos_AplicaMargenCorrectamente()
     {
         var articulo = new Articulo { CostoVigente = 125.50m };
-        articulo.Margenes.Add(new MargenModalidad(1, 10m));
+        articulo.Margenes.Add(new MargenModalidad(Modalidad.Lista, 10m));
 
         // 125.50 * 1.10 = 138.05
-        var resultado = articulo.CalcularPrecioEstimado(1);
+        var resultado = articulo.CalcularPrecioEstimado(Modalidad.Lista);
 
         Assert.Equal(138.05m, resultado);
     }
@@ -67,10 +67,10 @@ public class ArticuloPrecioEstimadoTests
     public void CalcularPrecioEstimado_MilésimaCinco_RedondeaHaciaArriba()
     {
         var articulo = new Articulo { CostoVigente = 10.25m };
-        articulo.Margenes.Add(new MargenModalidad(1, 10m));
+        articulo.Margenes.Add(new MargenModalidad(Modalidad.Lista, 10m));
 
         // 10.25 * 1.10 = 11.275 -> MidpointRounding.AwayFromZero debe dar 11.28
-        var resultado = articulo.CalcularPrecioEstimado(1);
+        var resultado = articulo.CalcularPrecioEstimado(Modalidad.Lista);
 
         Assert.Equal(11.28m, resultado);
     }

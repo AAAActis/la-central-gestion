@@ -9,17 +9,18 @@ public class ArticuloTests
     public void ObtenerPrecioEstimado_SinCosto_RetornaNull()
     {
         var articulo = new Articulo { CostoVigente = null };
-        articulo.Margenes.Add(new MargenModalidad(1, 20m));
+        articulo.Margenes.Add(new MargenModalidad(Modalidad.Lista, 20m));
         
-        Assert.Null(articulo.CalcularPrecioEstimado(1));
+        Assert.Null(articulo.CalcularPrecioEstimado(Modalidad.Lista));
     }
 
     [Fact]
-    public void ObtenerPrecioEstimado_ModalidadInexistente_RetornaNull()
+    public void ObtenerPrecioEstimado_ModalidadSinMargenCargado_RetornaNull()
     {
         var articulo = new Articulo { CostoVigente = 100m };
-        
-        Assert.Null(articulo.CalcularPrecioEstimado(99));
+        articulo.Margenes.Add(new MargenModalidad(Modalidad.Lista, 50m));
+
+        Assert.Null(articulo.CalcularPrecioEstimado(Modalidad.Tarjeta3));
     }
 
     // Regla D1: Costo neto al 0%
@@ -27,9 +28,9 @@ public class ArticuloTests
     public void ObtenerPrecioEstimado_CostoAlCeroPorciento_RetornaMismoCosto()
     {
         var articulo = new Articulo { CostoVigente = 100m };
-        articulo.Margenes.Add(new MargenModalidad(1, 0m)); // 0% de margen
+        articulo.Margenes.Add(new MargenModalidad(Modalidad.Costo, 0m)); // 0% de margen
 
-        var precio = articulo.CalcularPrecioEstimado(1);
+        var precio = articulo.CalcularPrecioEstimado(Modalidad.Costo);
 
         Assert.Equal(100m, precio);
     }
@@ -38,9 +39,9 @@ public class ArticuloTests
     public void ObtenerPrecioEstimado_ConMargen_RetornaCostoMasPorcentaje()
     {
         var articulo = new Articulo { CostoVigente = 100m };
-        articulo.Margenes.Add(new MargenModalidad(1, 10m)); // 10% de margen
+        articulo.Margenes.Add(new MargenModalidad(Modalidad.Lista, 10m)); // 10% de margen
 
-        var precio = articulo.CalcularPrecioEstimado(1);
+        var precio = articulo.CalcularPrecioEstimado(Modalidad.Lista);
 
         Assert.Equal(110m, precio);
     }
