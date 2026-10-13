@@ -334,14 +334,13 @@ COMMENT ON TABLE factura_compra IS
     'excluido del alcance de forma deliberada. El destino de stock se carga por '
     'línea, no por comprobante (D9).';
 
-ROLLBACK;
+--ROLLBACK;
 
 ALTER TABLE cliente ADD COLUMN IF NOT EXISTS usuario_alta_id INTEGER REFERENCES usuario(id);
 ALTER TABLE cliente ADD COLUMN IF NOT EXISTS usuario_baja_id INTEGER REFERENCES usuario(id);
 
 ALTER TABLE usuario ADD COLUMN IF NOT EXISTS usuario_alta_id INTEGER REFERENCES usuario(id);
 ALTER TABLE usuario ADD COLUMN IF NOT EXISTS usuario_baja_id INTEGER REFERENCES usuario(id);
-
 
 COMMIT;
 
@@ -351,39 +350,39 @@ COMMIT;
 -- =============================================================================
 -- 1 · Las cuatro columnas renombradas y la sucursal fuera de la cabecera:
 --
-    SELECT column_name FROM information_schema.columns
-    WHERE  table_name = 'factura_compra' ORDER BY ordinal_position;
+--    SELECT column_name FROM information_schema.columns
+--    WHERE  table_name = 'factura_compra' ORDER BY ordinal_position;
      -- se esperan percepcion_* y NINGUNA sucursal_id
 --
 -- 2 · El destino por línea, con su FK:
 --
-    SELECT column_name, is_nullable, data_type
-    FROM   information_schema.columns
-    WHERE  table_name = 'factura_compra_detalle' ORDER BY ordinal_position;
+--    SELECT column_name, is_nullable, data_type
+--   FROM   information_schema.columns
+--    WHERE  table_name = 'factura_compra_detalle' ORDER BY ordinal_position;
 --
 -- 3 · Que el estado que antes rompía ahora sea legal — ESTA es la prueba de D10:
 --
-     BEGIN;
-     INSERT INTO cliente (codigo, razon_social, activo, motivo_baja, fecha_baja)
-     VALUES ('ZZ-TEST-D10', 'Prueba D10', false, 'Cierre temporal', now());
+--     BEGIN;
+--     INSERT INTO cliente (codigo, razon_social, activo, motivo_baja, fecha_baja)
+--    VALUES ('ZZ-TEST-D10', 'Prueba D10', false, 'Cierre temporal', now());
 --
-     UPDATE cliente SET activo = true
-     WHERE  codigo = 'ZZ-TEST-D10';
+--     UPDATE cliente SET activo = true
+--     WHERE  codigo = 'ZZ-TEST-D10';
      -- Antes: 23514. Ahora tiene que pasar, conservando motivo y fecha.
 --
-     SELECT activo, motivo_baja, fecha_baja FROM cliente WHERE codigo = 'ZZ-TEST-D10';
-     ROLLBACK;
+--     SELECT activo, motivo_baja, fecha_baja FROM cliente WHERE codigo = 'ZZ-TEST-D10';
+--    ROLLBACK;
 --
 -- 4 · Que el índice único parcial del historial haga su trabajo:
 --
-     BEGIN;
-     INSERT INTO cliente (codigo, razon_social) VALUES ('ZZ-TEST-HIST', 'Prueba');
-     INSERT INTO cliente_historial_baja (cliente_id, motivo, fecha_baja)
-     SELECT id, 'primera', now() FROM cliente WHERE codigo = 'ZZ-TEST-HIST';
-     INSERT INTO cliente_historial_baja (cliente_id, motivo, fecha_baja)
-     SELECT id, 'segunda', now() FROM cliente WHERE codigo = 'ZZ-TEST-HIST';
+--     BEGIN;
+--     INSERT INTO cliente (codigo, razon_social) VALUES ('ZZ-TEST-HIST', 'Prueba');
+--     INSERT INTO cliente_historial_baja (cliente_id, motivo, fecha_baja)
+--     SELECT id, 'primera', now() FROM cliente WHERE codigo = 'ZZ-TEST-HIST';
+--     INSERT INTO cliente_historial_baja (cliente_id, motivo, fecha_baja)
+--     SELECT id, 'segunda', now() FROM cliente WHERE codigo = 'ZZ-TEST-HIST';
      -- Se espera 23505 unique_violation en ux_cliente_hist_abierta
-     ROLLBACK;
+--     ROLLBACK;
 -- =============================================================================
 
 
