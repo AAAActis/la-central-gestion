@@ -89,4 +89,32 @@ public class ClienteRepositorioTests
         var error = await Assert.ThrowsAsync<DbUpdateException>(() => restriccion.SaveChangesAsync());
         Assert.Equal(PostgresErrorCodes.UniqueViolation, Assert.IsType<PostgresException>(error.InnerException).SqlState);
     }
+
+    // 1.9: una dirección importada sin calle viaja como "" (convención del dominio) y
+    // el ciclo baja → reactivación no la duplica ni la borra.
+    [PostgreSqlFact]
+    public async Task DireccionSinCalle_SeLeeComoVaciaYNoSeDuplicaAlActualizar_PostgreSQL()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var cliente = new Cliente { Codigo = "CLI-DIR", RazonSocial = "Cliente Sin Calle", Activo = true };
+        cliente.ClienteDireccion.Add(new ClienteDireccion { Calle = null, Localidad = "Córdoba" });
+        await using (var setup = fixture.CrearContexto())
+        {
+            setup.Cliente.Add(cliente);
+            await setup.SaveChangesAsync();
+        }
+
+        await using (var leer = fixture.CrearContexto())
+            Assert.Equal(new[] { string.Empty }, (await new ClienteRepositorio(leer).ObtenerDetallePorIdAsync(cliente.Id))!.Direcciones);
+        await using (var baja = fixture.CrearContexto())
+            Assert.True((await new DarDeBajaClienteUseCase(new ClienteRepositorio(baja))
+                .EjecutarAsync(cliente.Id, cliente.Codigo, "Baja con dirección sin calle")).IsSuccess);
+        await using (var reactivar = fixture.CrearContexto())
+            Assert.True((await new ReactivarClienteUseCase(new ClienteRepositorio(reactivar)).EjecutarAsync(cliente.Id)).IsSuccess);
+
+        await using var final = fixture.CrearContexto();
+        var direccion = Assert.Single(await final.ClienteDireccion.AsNoTracking().Where(d => d.ClienteId == cliente.Id).ToListAsync());
+        Assert.Null(direccion.Calle);
+        Assert.Equal("Córdoba", direccion.Localidad);
+    }
 }
