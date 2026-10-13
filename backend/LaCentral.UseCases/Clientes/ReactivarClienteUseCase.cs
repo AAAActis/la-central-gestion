@@ -26,7 +26,8 @@ public class ReactivarClienteUseCase
         cliente.Activo = true;
         // OJO: No blanqueamos MotivoBaja ni FechaBaja, quedan en la entidad.
 
-        await _repositorio.ActualizarAsync(cliente, ct);
+        if (!await _repositorio.ActualizarAsync(cliente, ct))
+            return Result.Failure(TipoError.NoEncontrado, "El cliente no existe.");
 
         return Result.Success();
     }

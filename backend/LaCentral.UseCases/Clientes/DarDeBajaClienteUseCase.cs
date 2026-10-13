@@ -36,7 +36,8 @@ public class DarDeBajaClienteUseCase
         cliente.MotivoBaja = motivo;
         cliente.FechaBaja = DateTime.UtcNow;
 
-        await _repositorio.ActualizarAsync(cliente, ct);
+        if (!await _repositorio.ActualizarAsync(cliente, ct))
+            return Result.Failure(TipoError.NoEncontrado, "El cliente no existe.");
 
         return Result.Success();
     }
