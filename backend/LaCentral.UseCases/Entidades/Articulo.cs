@@ -48,6 +48,11 @@ public class Articulo
     public string CodigoInterno { get; set; } = string.Empty;
     public string Nombre { get; set; } = string.Empty;
     public bool Activo { get; set; }
+
+    // El CHECK articulo_baja_coherente exige motivo Y fecha cuando activo = false;
+    // una fila activa puede conservarlos como rastro de su última baja (D10).
+    public string? MotivoBaja { get; set; }
+    public DateTime? FechaBaja { get; set; }
     
     public decimal? CostoVigente { get; set; }
 
