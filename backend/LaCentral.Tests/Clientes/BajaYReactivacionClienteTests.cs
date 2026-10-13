@@ -58,6 +58,7 @@ public class BajaYReactivacionClienteTests
     {
         var cliente = CrearClienteBase(activo: true);
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+        _repoMock.Setup(r => r.ActualizarAsync(cliente, It.IsAny<CancellationToken>())).ReturnsAsync(true);
         var casoUso = new DarDeBajaClienteUseCase(_repoMock.Object);
 
         var resultado = await casoUso.EjecutarAsync(1, "30-12345678-9", "Cese de actividades");
@@ -117,6 +118,7 @@ public class BajaYReactivacionClienteTests
     {
         var cliente = CrearClienteBase(activo: false);
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+        _repoMock.Setup(r => r.ActualizarAsync(cliente, It.IsAny<CancellationToken>())).ReturnsAsync(true);
         var casoUso = new ReactivarClienteUseCase(_repoMock.Object);
 
         var resultado = await casoUso.EjecutarAsync(1);

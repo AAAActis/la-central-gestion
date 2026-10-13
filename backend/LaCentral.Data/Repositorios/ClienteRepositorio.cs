@@ -150,7 +150,7 @@ public class ClienteRepositorio : IClienteRepositorio
         };
     }
 
-    public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Cliente cliente, CancellationToken ct = default)
+    public async Task<bool> ActualizarAsync(LaCentral.UseCases.Entidades.Cliente cliente, CancellationToken ct = default)
 {
     // Traemos la entidad completa con tracking
     var clienteBd = await _context.Cliente
@@ -158,7 +158,7 @@ public class ClienteRepositorio : IClienteRepositorio
         .Include(c => c.ClienteDireccion)
         .SingleOrDefaultAsync(c => c.Codigo == cliente.Codigo, ct);
 
-    if (clienteBd == null) return;
+    if (clienteBd == null) return false;
 
     // Actualización de primitivos
     clienteBd.RazonSocial = cliente.RazonSocial;
@@ -212,6 +212,7 @@ public class ClienteRepositorio : IClienteRepositorio
     foreach (var d in dirsNuevas) clienteBd.ClienteDireccion.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = d });
 
     await _context.SaveChangesAsync(ct);
+    return true;
     }
 
     // El dominio representa "sin dato" como cadena vacía; la base, como NULL.

@@ -2,6 +2,8 @@ namespace LaCentral.UseCases.Entidades;
 
 public class Cliente
 {
+    public int Id { get; set; }
+
     // Propiedades principales
     public string Codigo { get; set; } = string.Empty;
     public string RazonSocial { get; set; } = string.Empty;
