@@ -7,14 +7,13 @@ using Xunit.Abstractions;
 
 namespace LaCentral.Tests.Infraestructura;
 
+/// <summary>
+/// Marca un test que corre contra PostgreSQL real. NUNCA se omite: sin conexión
+/// configurada falla (ver PostgreSqlPruebas.ConexionRequerida). Una prueba no
+/// ejecutada no es una prueba aprobada.
+/// </summary>
 public sealed class PostgreSqlFactAttribute : FactAttribute
 {
-    public PostgreSqlFactAttribute()
-    {
-        if (PostgreSqlPruebas.ConexionConfigurada is null &&
-            Environment.GetEnvironmentVariable("LA_CENTRAL_REQUIRE_POSTGRES") != "1")
-            Skip = "PostgreSQL no ejecutado: falta LA_CENTRAL_TEST_POSTGRES (alias LACENTRAL_TEST_PG).";
-    }
 }
 
 /// <summary>
@@ -34,6 +33,11 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         }
     }
 
+    /// <summary>La conexión de test, o una falla que explica cómo configurarla.</summary>
+    public static string ConexionRequerida => ConexionConfigurada ?? throw new InvalidOperationException(
+        "Falta la conexión PostgreSQL de test: definí LACENTRAL_TEST_PG (o LA_CENTRAL_TEST_POSTGRES) " +
+        "apuntando a una base test_* o *_test. Ver LaCentral.Tests/README.md.");
+
     private readonly NpgsqlConnection _administracion;
     private readonly string _esquema;
     private readonly string _conexionAislada;
@@ -47,7 +51,7 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
 
     public static async Task<PostgreSqlPruebas> CrearAsync(ITestOutputHelper salida)
     {
-        var conexion = ConexionConfigurada ?? throw new InvalidOperationException("Falta conexión PostgreSQL de test.");
+        var conexion = ConexionRequerida;
         var alias = Environment.GetEnvironmentVariable("LACENTRAL_TEST_PG");
         var principal = Environment.GetEnvironmentVariable("LA_CENTRAL_TEST_POSTGRES");
         if (!string.IsNullOrWhiteSpace(alias) && !string.IsNullOrWhiteSpace(principal) && alias != principal)

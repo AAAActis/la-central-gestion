@@ -20,7 +20,7 @@ public class RestriccionesUnicasPostgreSqlTests
     [PostgreSqlFact]
     public async Task CadaRestriccionReconocida_ExisteComoIndiceUnicoEnElEsquemaReal()
     {
-        var config = new NpgsqlConnectionStringBuilder(PostgreSqlPruebas.ConexionConfigurada);
+        var config = new NpgsqlConnectionStringBuilder(PostgreSqlPruebas.ConexionRequerida);
         PostgreSqlPruebas.ValidarBase(config.Database);
         var esquema = Environment.GetEnvironmentVariable("LA_CENTRAL_TEST_SCHEMA") ?? "public";
 
