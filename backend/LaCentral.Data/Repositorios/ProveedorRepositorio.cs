@@ -124,8 +124,20 @@ public class ProveedorRepositorio : IProveedorRepositorio
         };
     }
 
-    public Task<LaCentral.UseCases.Entidades.Proveedor?> ObtenerPorCodigoAsync(string codigo, CancellationToken ct = default)
-        => Task.FromResult<LaCentral.UseCases.Entidades.Proveedor?>(null);
+    public async Task<LaCentral.UseCases.Entidades.Proveedor?> ObtenerPorCodigoAsync(string codigo, CancellationToken ct = default)
+    {
+        var bd = await _context.Proveedor.AsNoTracking().FirstOrDefaultAsync(p => p.Codigo == codigo, ct);
+        if (bd == null) return null;
+
+        return new LaCentral.UseCases.Entidades.Proveedor
+        {
+            Id = bd.Id,
+            Codigo = bd.Codigo,
+            RazonSocial = bd.RazonSocial,
+            Cuit = bd.Cuit,
+            Activo = bd.Activo
+        };
+    }
 
     public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Proveedor proveedor, CancellationToken ct = default)
 {

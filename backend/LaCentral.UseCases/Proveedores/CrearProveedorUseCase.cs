@@ -27,6 +27,15 @@ public class CrearProveedorUseCase
             return Result<CrearProveedorResponse>.Failure(TipoError.Invalido, "La URL de referencia no tiene un formato válido. Debe incluir http:// o https://");
         }
 
+        // ALTO 5: el código es la clave de negocio. Se informa a quién pertenece;
+        // ante dos altas simultáneas, el índice proveedor_codigo_key decide.
+        var duenioDelCodigo = await _proveedorRepositorio.ObtenerPorCodigoAsync(request.Codigo.Trim(), ct);
+        if (duenioDelCodigo is not null)
+        {
+            return Result<CrearProveedorResponse>.Failure(TipoError.Conflicto,
+                $"El código {duenioDelCodigo.Codigo} ya pertenece al proveedor: {duenioDelCodigo.RazonSocial}.");
+        }
+
         // Solo validamos duplicado si enviaron un CUIT
         if (!string.IsNullOrWhiteSpace(request.Cuit) && await _proveedorRepositorio.ExisteCuitAsync(request.Cuit, ct))
         {
