@@ -1,0 +1,27 @@
+namespace LaCentral.UseCases.Entidades;
+
+public class Cliente
+{
+    // Propiedades principales
+    public string Codigo { get; set; } = string.Empty;
+    public string RazonSocial { get; set; } = string.Empty;
+    public string? Cuit { get; set; } // Opcional, como pide la regla de negocio
+
+    // Agregados para cumplir la HU-CLI-01
+    public string CondicionFiscal { get; set; } = string.Empty;
+    public string CondicionPago { get; set; } = string.Empty;
+
+    // CA-004: Listas para teléfonos y direcciones (Santi después mapeará esto a sus tablas con EF Core)
+    public List<string> Telefonos { get; set; } = new();
+    public List<string> Direcciones { get; set; } = new();
+
+    public int? UsuarioAltaId { get; set; }
+    public int? UsuarioBajaId { get; set; }
+
+    // HU-CLI-02: refleja el estado del cliente para poder filtrar/mostrar en la búsqueda
+    public bool Activo { get; set; } = true;
+
+    // HU-CLI-04 y HU-CLI-05: Historial de baja
+    public string? MotivoBaja { get; set; }
+    public DateTime? FechaBaja { get; set; }
+}

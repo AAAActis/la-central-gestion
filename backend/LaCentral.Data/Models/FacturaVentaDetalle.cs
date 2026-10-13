@@ -1,0 +1,19 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace LaCentral.Data.Models;
+
+public partial class FacturaVentaDetalle
+{
+    public int FacturaVentaId { get; set; }
+
+    public int ArticuloId { get; set; }
+
+    public decimal Cantidad { get; set; }
+
+    public decimal PrecioUnitario { get; set; }
+
+    public virtual Articulo Articulo { get; set; } = null!;
+
+    public virtual FacturaVenta FacturaVenta { get; set; } = null!;
+}

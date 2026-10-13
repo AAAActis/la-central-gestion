@@ -1,0 +1,221 @@
+using Microsoft.EntityFrameworkCore;
+using LaCentral.Data.Models; // La base de datos
+using LaCentral.UseCases.Puertos;
+
+namespace LaCentral.Data.Repositorios;
+
+public class ClienteRepositorio : IClienteRepositorio
+{
+    private readonly LaCentralDbContext _context;
+
+    public ClienteRepositorio(LaCentralDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task AgregarAsync(LaCentral.UseCases.Entidades.Cliente cliente, CancellationToken cancellationToken = default)
+    {
+        // Mapeo inverso: Entidad de dominio pura -> Entidad de EF Core
+        var clienteBd = new LaCentral.Data.Models.Cliente
+        {
+            Codigo = cliente.Codigo,
+            RazonSocial = cliente.RazonSocial,
+            CuitCuil = cliente.Cuit,
+            Activo = cliente.Activo, // La entidad nace activa
+            CondicionFiscal = VacioANull(cliente.CondicionFiscal),
+            CondicionPago = VacioANull(cliente.CondicionPago),
+
+            // El filtrado de vacíos ya se realizó en el Caso de Uso.
+            // Solo mapeamos directamente a los modelos de EF Core.
+            ClienteTelefono = cliente.Telefonos
+                .Select(tel => new ClienteTelefono { Numero = tel })
+                .ToList(),
+        
+            ClienteDireccion = cliente.Direcciones
+                .Select(dir => new ClienteDireccion { Calle = dir })
+                .ToList()
+        };
+
+        await _context.Cliente.AddAsync(clienteBd, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<bool> ExisteCodigoAsync(string codigo, CancellationToken cancellationToken = default)
+    {
+        return await _context.Cliente
+            .AnyAsync(c => c.Codigo == codigo, cancellationToken);
+    }
+
+    public Task<bool> ExisteCuitAsync(string cuit, CancellationToken ct = default)
+    {
+        return _context.Cliente
+            .AnyAsync(c => c.CuitCuil == cuit, ct);
+    }
+
+    public async Task<bool> ExisteRazonSocialAsync(string razonSocial, CancellationToken cancellationToken = default)
+    {
+        return await _context.Cliente
+            .AnyAsync(c => c.RazonSocial == razonSocial, cancellationToken);
+    }
+
+    // HU-CLI-02: por debajo de este umbral la similitud de trigramas empieza a
+    // traer resultados que no tienen nada que ver con lo buscado.
+    private const double UmbralSimilitudRazonSocial = 0.2;
+
+    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Cliente>> BuscarAsync(
+        string texto, bool incluirInactivos, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Cliente.AsQueryable();
+
+        if (!incluirInactivos)
+        {
+            query = query.Where(c => c.Activo);
+        }
+
+        // Detecta CUIT/CUIL por cantidad de dígitos (11), sin importar guiones u
+        // otro formato que haya tipeado el operador.
+        var soloDigitos = new string(texto.Where(char.IsDigit).ToArray());
+
+        if (soloDigitos.Length == 11)
+        {
+            // Coincidencia exacta: igual criterio que ExisteCuitAsync, sin normalizar
+            // el valor guardado en la base.
+            query = query.Where(c => c.CuitCuil == texto);
+        }
+        else
+        {
+            // Búsqueda difusa por Razón Social, usando el índice GIN
+            // ix_cliente_razon_social_trgm ya existente en la base.
+            query = query
+                .Where(c => EF.Functions.TrigramsSimilarity(c.RazonSocial, texto) > UmbralSimilitudRazonSocial)
+                .OrderByDescending(c => EF.Functions.TrigramsSimilarity(c.RazonSocial, texto));
+        }
+
+        var clientesBd = await query.ToListAsync(cancellationToken);
+
+        // Mapeo inverso: Entidad de EF Core -> Entidad de dominio pura.
+        return clientesBd
+            .Select(c => new LaCentral.UseCases.Entidades.Cliente
+            {
+                Codigo = c.Codigo,
+                RazonSocial = c.RazonSocial,
+                Cuit = c.CuitCuil,
+                CondicionFiscal = c.CondicionFiscal ?? string.Empty,
+                CondicionPago = c.CondicionPago ?? string.Empty,
+                Activo = c.Activo
+            })
+            .ToList(); 
+    }
+
+    public async Task<LaCentral.UseCases.Entidades.Cliente?> ObtenerDetallePorIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        // Usamos los nombres reales de las propiedades de navegación de LaCentral.Data.Models.Cliente
+        var clienteBd = await _context.Cliente
+            .Include(c => c.ClienteTelefono)
+            .Include(c => c.ClienteDireccion)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+        if (clienteBd == null) return null;
+
+        return new LaCentral.UseCases.Entidades.Cliente
+        {
+            // Se elimina Id = clienteBd.Id porque el dominio exige usar Codigo
+            Codigo = clienteBd.Codigo,
+            RazonSocial = clienteBd.RazonSocial,
+            Cuit = clienteBd.CuitCuil,
+            CondicionFiscal = clienteBd.CondicionFiscal ?? string.Empty,
+            CondicionPago = clienteBd.CondicionPago ?? string.Empty,
+            Activo = clienteBd.Activo,
+            MotivoBaja = clienteBd.MotivoBaja,
+            FechaBaja = clienteBd.FechaBaja,
+
+            // Mapeamos leyendo desde ClienteTelefonos y ClienteDireccions
+            Telefonos = clienteBd.ClienteTelefono.Select(t => t.Numero).ToList(), 
+            Direcciones = clienteBd.ClienteDireccion.Select(d => d.Calle).ToList() 
+        };
+    }
+
+    public async Task<LaCentral.UseCases.Entidades.Cliente?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default)
+    {
+        var c = await _context.Cliente.FirstOrDefaultAsync(x => x.CuitCuil == cuit, ct);
+        if (c == null) return null;
+        
+        // Mapeo mínimo para el mensaje de error del CA-003
+        return new LaCentral.UseCases.Entidades.Cliente 
+        { 
+            Codigo = c.Codigo, 
+            RazonSocial = c.RazonSocial, 
+            Cuit = c.CuitCuil,
+            Activo = c.Activo
+        };
+    }
+
+    public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Cliente cliente, CancellationToken ct = default)
+{
+    // Traemos la entidad completa con tracking
+    var clienteBd = await _context.Cliente
+        .Include(c => c.ClienteTelefono)
+        .Include(c => c.ClienteDireccion)
+        .SingleOrDefaultAsync(c => c.Codigo == cliente.Codigo, ct);
+
+    if (clienteBd == null) return;
+
+    // Actualización de primitivos
+    clienteBd.RazonSocial = cliente.RazonSocial;
+    clienteBd.CuitCuil = cliente.Cuit;
+    clienteBd.CondicionFiscal = VacioANull(cliente.CondicionFiscal);
+    clienteBd.CondicionPago = VacioANull(cliente.CondicionPago);
+    clienteBd.Codigo = cliente.Codigo;
+    clienteBd.Activo = cliente.Activo;
+    clienteBd.MotivoBaja = cliente.MotivoBaja;
+    clienteBd.FechaBaja = cliente.FechaBaja;
+
+    // LÓGICA D10: Gestión del Historial de Baja
+    if (!clienteBd.Activo)
+    {
+        var bajaAbierta = await _context.ClienteHistorialBaja
+            .FirstOrDefaultAsync(h => h.ClienteId == clienteBd.Id && h.FechaReactivacion == null, ct);
+        
+        if (bajaAbierta == null)
+        {
+            _context.ClienteHistorialBaja.Add(new LaCentral.Data.Models.ClienteHistorialBaja
+            {
+                ClienteId = clienteBd.Id,
+                Motivo = clienteBd.MotivoBaja ?? "Baja lógica",
+                FechaBaja = clienteBd.FechaBaja ?? DateTime.UtcNow
+            });
+        }
+    }
+    else
+    {
+        var bajaAbierta = await _context.ClienteHistorialBaja
+            .FirstOrDefaultAsync(h => h.ClienteId == clienteBd.Id && h.FechaReactivacion == null, ct);
+        
+        if (bajaAbierta != null)
+        {
+            bajaAbierta.FechaReactivacion = DateTime.UtcNow;
+        }
+    }
+
+    // Sincronización inteligente de Teléfonos
+    var telsABorrar = clienteBd.ClienteTelefono.Where(t => !cliente.Telefonos.Contains(t.Numero)).ToList();
+    foreach (var t in telsABorrar) _context.Remove(t);
+
+    var telsNuevos = cliente.Telefonos.Where(t => !clienteBd.ClienteTelefono.Any(bd => bd.Numero == t)).ToList();
+    foreach (var t in telsNuevos) clienteBd.ClienteTelefono.Add(new LaCentral.Data.Models.ClienteTelefono { Numero = t });
+
+    // Sincronización inteligente de Direcciones
+    var dirsABorrar = clienteBd.ClienteDireccion.Where(d => !cliente.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
+    foreach (var d in dirsABorrar) _context.Remove(d);
+
+    var dirsNuevas = cliente.Direcciones.Where(d => !clienteBd.ClienteDireccion.Any(bd => bd.Calle == d)).ToList();
+    foreach (var d in dirsNuevas) clienteBd.ClienteDireccion.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = d });
+
+    await _context.SaveChangesAsync(ct);
+    }
+
+    // El dominio representa "sin dato" como cadena vacía; la base, como NULL.
+    // Los CHECK de condición fiscal/pago aceptan NULL pero no "".
+    private static string? VacioANull(string? valor)
+        => string.IsNullOrWhiteSpace(valor) ? null : valor;
+}

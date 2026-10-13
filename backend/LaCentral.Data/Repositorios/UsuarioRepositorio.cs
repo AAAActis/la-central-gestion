@@ -1,0 +1,112 @@
+using Microsoft.EntityFrameworkCore;
+using LaCentral.Data.Models; // La base de datos
+using LaCentral.UseCases.Puertos;
+
+namespace LaCentral.Data.Repositorios;
+
+public class UsuarioRepositorio : IUsuarioRepositorio
+{
+    private readonly LaCentralDbContext _context;
+
+    public UsuarioRepositorio(LaCentralDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task CrearAsync(LaCentral.UseCases.Entidades.Usuario usuario, CancellationToken cancellationToken = default)
+    {
+        // Mapeo inverso: Entidad de dominio pura -> Entidad de EF Core
+        var usuarioBd = new LaCentral.Data.Models.Usuario
+        {
+            NombreUsuario = usuario.NombreUsuario,
+            HashContrasena = usuario.HashContrasena,
+            SucursalId = (short)usuario.SucursalId, // Conversión explícita a short
+            RolId = (short)usuario.RolId,           // Conversión explícita a short
+            Activo = usuario.Activo
+        };
+
+        await _context.Usuario.AddAsync(usuarioBd, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<bool> ExisteNombreUsuarioAsync(string nombreUsuario, CancellationToken cancellationToken = default)
+    {
+        // AnyAsync es más eficiente que traer todo el objeto solo para saber si existe
+        return await _context.Usuario
+            .AnyAsync(u => u.NombreUsuario == nombreUsuario, cancellationToken);
+    }
+
+    public async Task<LaCentral.UseCases.Entidades.Usuario?> ObtenerPorNombreAsync(string nombreUsuario, CancellationToken cancellationToken = default)
+    {
+        // 1. Consulta con EF Core usando la entidad scaffoldeada
+        var usuarioBd = await _context.Usuario
+            .SingleOrDefaultAsync(u => u.NombreUsuario == nombreUsuario, cancellationToken);
+
+        if (usuarioBd == null) return null;
+
+        // 2. Mapeo a la entidad pura que exige UseCases
+        return new LaCentral.UseCases.Entidades.Usuario
+        {
+            Id = usuarioBd.Id,
+            NombreUsuario = usuarioBd.NombreUsuario,
+            HashContrasena = usuarioBd.HashContrasena,
+            SucursalId = usuarioBd.SucursalId, 
+            RolId = usuarioBd.RolId,
+            Activo = usuarioBd.Activo,
+            MotivoBaja = usuarioBd.MotivoBaja,
+            FechaBaja = usuarioBd.FechaBaja
+        };
+    }
+
+    public async Task<LaCentral.UseCases.Entidades.Usuario?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var usuarioBd = await _context.Usuario
+            .SingleOrDefaultAsync(u => u.Id == id, cancellationToken);
+
+        if (usuarioBd == null) return null;
+
+        return new LaCentral.UseCases.Entidades.Usuario
+        {
+            Id = usuarioBd.Id,
+            NombreUsuario = usuarioBd.NombreUsuario,
+            HashContrasena = usuarioBd.HashContrasena,
+            SucursalId = usuarioBd.SucursalId,
+            RolId = usuarioBd.RolId,
+            Activo = usuarioBd.Activo,
+            MotivoBaja = usuarioBd.MotivoBaja,
+            FechaBaja = usuarioBd.FechaBaja
+        };
+    }
+
+    public async Task<bool> ActualizarAsync(LaCentral.UseCases.Entidades.Usuario usuario, CancellationToken cancellationToken = default)
+    {
+        var usuarioBd = await _context.Usuario
+            .SingleOrDefaultAsync(u => u.Id == usuario.Id, cancellationToken);
+
+        // Hallazgo 8: En vez de fallar en silencio, reportamos el fracaso.
+        if (usuarioBd == null) return false;
+
+        usuarioBd.NombreUsuario = usuario.NombreUsuario;
+        usuarioBd.HashContrasena = usuario.HashContrasena;
+        usuarioBd.SucursalId = (short)usuario.SucursalId;
+        usuarioBd.RolId = (short)usuario.RolId;
+        
+        // Mapeo de auditoría y baja (CA3 y CA4)
+        usuarioBd.Activo = usuario.Activo;
+        usuarioBd.MotivoBaja = usuario.MotivoBaja;
+        usuarioBd.FechaBaja = usuario.FechaBaja;
+        usuarioBd.UsuarioBajaId = usuario.UsuarioBajaId;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        
+        return true;
+    }
+
+    private const short RolAdministrador = 2;
+
+    public async Task<int> ContarAdministradoresActivosAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Usuario
+            .CountAsync(u => u.RolId == RolAdministrador && u.Activo, cancellationToken);
+    }
+}
