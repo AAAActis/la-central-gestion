@@ -15,5 +15,5 @@ public partial class FacturaVentaDetalle
 
     public virtual Articulo Articulo { get; set; } = null!;
 
-    public virtual FacturaVentum FacturaVenta { get; set; } = null!;
+    public virtual FacturaVenta FacturaVenta { get; set; } = null!;
 }

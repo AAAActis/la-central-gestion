@@ -26,20 +26,51 @@ public partial class Usuario
 
     public DateTime FechaAlta { get; set; }
 
-    public virtual ICollection<FacturaCompra> FacturaCompraUsuarioAnulacions { get; set; } = new List<FacturaCompra>();
+    public int? UsuarioBajaId { get; set; }
 
-    public virtual ICollection<FacturaCompra> FacturaCompraUsuarios { get; set; } = new List<FacturaCompra>();
+    public int? UsuarioAltaId { get; set; }
 
-    public virtual ICollection<FacturaVentum> FacturaVentumUsuarioAnulacions { get; set; } = new List<FacturaVentum>();
+    public virtual ICollection<ArticuloHistorialBaja> ArticuloHistorialBajaUsuarioBaja { get; set; } = new List<ArticuloHistorialBaja>();
 
-    public virtual ICollection<FacturaVentum> FacturaVentumUsuarios { get; set; } = new List<FacturaVentum>();
+    public virtual ICollection<ArticuloHistorialBaja> ArticuloHistorialBajaUsuarioReactivacion { get; set; } = new List<ArticuloHistorialBaja>();
+
+    public virtual ICollection<ClienteHistorialBaja> ClienteHistorialBajaUsuarioBaja { get; set; } = new List<ClienteHistorialBaja>();
+
+    public virtual ICollection<ClienteHistorialBaja> ClienteHistorialBajaUsuarioReactivacion { get; set; } = new List<ClienteHistorialBaja>();
+
+    public virtual ICollection<Cliente> ClienteUsuarioAlta { get; set; } = new List<Cliente>();
+
+    public virtual ICollection<Cliente> ClienteUsuarioBaja { get; set; } = new List<Cliente>();
+
+    public virtual ICollection<FacturaCompra> FacturaCompraUsuario { get; set; } = new List<FacturaCompra>();
+
+    public virtual ICollection<FacturaCompra> FacturaCompraUsuarioAnulacion { get; set; } = new List<FacturaCompra>();
+
+    public virtual ICollection<FacturaVenta> FacturaVentaUsuario { get; set; } = new List<FacturaVenta>();
+
+    public virtual ICollection<FacturaVenta> FacturaVentaUsuarioAnulacion { get; set; } = new List<FacturaVenta>();
+
+    public virtual ICollection<Usuario> InverseUsuarioAlta { get; set; } = new List<Usuario>();
+
+    public virtual ICollection<Usuario> InverseUsuarioBaja { get; set; } = new List<Usuario>();
+
+    public virtual ICollection<ProveedorHistorialBaja> ProveedorHistorialBajaUsuarioBaja { get; set; } = new List<ProveedorHistorialBaja>();
+
+    public virtual ICollection<ProveedorHistorialBaja> ProveedorHistorialBajaUsuarioReactivacion { get; set; } = new List<ProveedorHistorialBaja>();
 
     public virtual Rol Rol { get; set; } = null!;
 
     public virtual Sucursal Sucursal { get; set; } = null!;
 
-    public virtual ICollection<Transferencium> Transferencia { get; set; } = new List<Transferencium>();
+    public virtual ICollection<Transferencia> Transferencia { get; set; } = new List<Transferencia>();
 
-    public int? UsuarioAltaId { get; set; }
-    public int? UsuarioBajaId { get; set; }
+    public virtual Usuario? UsuarioAlta { get; set; }
+
+    public virtual Usuario? UsuarioBaja { get; set; }
+
+    public virtual UsuarioHistorialBaja? UsuarioHistorialBajaUsuario { get; set; }
+
+    public virtual ICollection<UsuarioHistorialBaja> UsuarioHistorialBajaUsuarioBaja { get; set; } = new List<UsuarioHistorialBaja>();
+
+    public virtual ICollection<UsuarioHistorialBaja> UsuarioHistorialBajaUsuarioReactivacion { get; set; } = new List<UsuarioHistorialBaja>();
 }

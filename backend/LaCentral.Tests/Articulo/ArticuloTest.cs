@@ -11,7 +11,7 @@ public class ArticuloTests
         var articulo = new Articulo { CostoVigente = null };
         articulo.Margenes.Add(new MargenModalidad(1, 20m));
         
-        Assert.Null(articulo.ObtenerPrecioEstimado(1));
+        Assert.Null(articulo.CalcularPrecioEstimado(1));
     }
 
     [Fact]
@@ -19,7 +19,7 @@ public class ArticuloTests
     {
         var articulo = new Articulo { CostoVigente = 100m };
         
-        Assert.Null(articulo.ObtenerPrecioEstimado(99));
+        Assert.Null(articulo.CalcularPrecioEstimado(99));
     }
 
     // Regla D1: Costo neto al 0%
@@ -29,7 +29,7 @@ public class ArticuloTests
         var articulo = new Articulo { CostoVigente = 100m };
         articulo.Margenes.Add(new MargenModalidad(1, 0m)); // 0% de margen
 
-        var precio = articulo.ObtenerPrecioEstimado(1);
+        var precio = articulo.CalcularPrecioEstimado(1);
 
         Assert.Equal(100m, precio);
     }
@@ -40,7 +40,7 @@ public class ArticuloTests
         var articulo = new Articulo { CostoVigente = 100m };
         articulo.Margenes.Add(new MargenModalidad(1, 10m)); // 10% de margen
 
-        var precio = articulo.ObtenerPrecioEstimado(1);
+        var precio = articulo.CalcularPrecioEstimado(1);
 
         Assert.Equal(110m, precio);
     }

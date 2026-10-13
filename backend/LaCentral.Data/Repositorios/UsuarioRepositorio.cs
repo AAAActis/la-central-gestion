@@ -25,21 +25,21 @@ public class UsuarioRepositorio : IUsuarioRepositorio
             Activo = usuario.Activo
         };
 
-        await _context.Usuarios.AddAsync(usuarioBd, cancellationToken);
+        await _context.Usuario.AddAsync(usuarioBd, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<bool> ExisteNombreUsuarioAsync(string nombreUsuario, CancellationToken cancellationToken = default)
     {
         // AnyAsync es más eficiente que traer todo el objeto solo para saber si existe
-        return await _context.Usuarios
+        return await _context.Usuario
             .AnyAsync(u => u.NombreUsuario == nombreUsuario, cancellationToken);
     }
 
     public async Task<LaCentral.UseCases.Entidades.Usuario?> ObtenerPorNombreAsync(string nombreUsuario, CancellationToken cancellationToken = default)
     {
         // 1. Consulta con EF Core usando la entidad scaffoldeada
-        var usuarioBd = await _context.Usuarios
+        var usuarioBd = await _context.Usuario
             .SingleOrDefaultAsync(u => u.NombreUsuario == nombreUsuario, cancellationToken);
 
         if (usuarioBd == null) return null;
@@ -60,7 +60,7 @@ public class UsuarioRepositorio : IUsuarioRepositorio
 
     public async Task<LaCentral.UseCases.Entidades.Usuario?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var usuarioBd = await _context.Usuarios
+        var usuarioBd = await _context.Usuario
             .SingleOrDefaultAsync(u => u.Id == id, cancellationToken);
 
         if (usuarioBd == null) return null;
@@ -80,7 +80,7 @@ public class UsuarioRepositorio : IUsuarioRepositorio
 
     public async Task<bool> ActualizarAsync(LaCentral.UseCases.Entidades.Usuario usuario, CancellationToken cancellationToken = default)
     {
-        var usuarioBd = await _context.Usuarios
+        var usuarioBd = await _context.Usuario
             .SingleOrDefaultAsync(u => u.Id == usuario.Id, cancellationToken);
 
         // Hallazgo 8: En vez de fallar en silencio, reportamos el fracaso.
@@ -106,7 +106,7 @@ public class UsuarioRepositorio : IUsuarioRepositorio
 
     public async Task<int> ContarAdministradoresActivosAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Usuarios
+        return await _context.Usuario
             .CountAsync(u => u.RolId == RolAdministrador && u.Activo, cancellationToken);
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LaCentral.Data.Models;
 
-public partial class Transferencium
+public partial class Transferencia
 {
     public int Id { get; set; }
 
@@ -21,7 +21,7 @@ public partial class Transferencium
 
     public virtual Sucursal SucursalOrigen { get; set; } = null!;
 
-    public virtual ICollection<TransferenciaDetalle> TransferenciaDetalles { get; set; } = new List<TransferenciaDetalle>();
+    public virtual ICollection<TransferenciaDetalle> TransferenciaDetalle { get; set; } = new List<TransferenciaDetalle>();
 
     public virtual Usuario Usuario { get; set; } = null!;
 }

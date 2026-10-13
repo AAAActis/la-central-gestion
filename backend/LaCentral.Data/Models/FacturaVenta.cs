@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LaCentral.Data.Models;
 
-public partial class FacturaVentum
+public partial class FacturaVenta
 {
     public int Id { get; set; }
 
@@ -33,7 +33,7 @@ public partial class FacturaVentum
 
     public virtual Cliente Cliente { get; set; } = null!;
 
-    public virtual ICollection<FacturaVentaDetalle> FacturaVentaDetalles { get; set; } = new List<FacturaVentaDetalle>();
+    public virtual ICollection<FacturaVentaDetalle> FacturaVentaDetalle { get; set; } = new List<FacturaVentaDetalle>();
 
     public virtual Sucursal Sucursal { get; set; } = null!;
 

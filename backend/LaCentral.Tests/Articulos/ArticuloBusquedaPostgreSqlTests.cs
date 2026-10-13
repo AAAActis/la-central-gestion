@@ -1,94 +1,67 @@
 using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
+using LaCentral.Tests.Infraestructura;
 using LaCentral.UseCases.Articulos.Dtos;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Xunit.Abstractions;
 
 namespace LaCentral.Tests.Articulos;
 
-public sealed class PostgresBusquedaFactAttribute : FactAttribute
-{
-    public const string VariableConexion = "LA_CENTRAL_TEST_POSTGRES";
-
-    public PostgresBusquedaFactAttribute()
-    {
-        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(VariableConexion)))
-            Skip = "Falta LA_CENTRAL_TEST_POSTGRES: pendiente de PostgreSQL exclusivo por Tailscale.";
-    }
-}
-
+[Trait("Proveedor", "PostgreSQL")]
 public class ArticuloBusquedaPostgreSqlTests
 {
-    [PostgresBusquedaFact]
-    public async Task BusquedaReal_NormalizacionAlternativasPaginacionYUnicidadD2()
+    private readonly ITestOutputHelper _salida;
+    public ArticuloBusquedaPostgreSqlTests(ITestOutputHelper salida) => _salida = salida;
+
+    [PostgreSqlFact]
+    public async Task BusquedaReal_ConEsquemaRealEIdsGenerados_RespetaRankingYUnicidadD2()
     {
-        var conexion = Environment.GetEnvironmentVariable(PostgresBusquedaFactAttribute.VariableConexion)!;
-        var configuracion = new NpgsqlConnectionStringBuilder(conexion);
-        // Evita que un test escriba en la base compartida de demostración.
-        if (configuracion.Database is not string baseTest ||
-            !(baseTest.EndsWith("_test", StringComparison.OrdinalIgnoreCase) ||
-              baseTest.StartsWith("test_", StringComparison.OrdinalIgnoreCase)))
-            throw new InvalidOperationException("La base exclusiva de pruebas debe llamarse test_* o *_test.");
-
-        var esquema = "art02_test_" + Guid.NewGuid().ToString("N");
-        configuracion.SearchPath = esquema;
-        await using var connection = new NpgsqlConnection(configuracion.ConnectionString);
-        await connection.OpenAsync();
-        var creado = false;
-        try
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var articulos = Enumerable.Range(1, 40).Select(n => new Articulo
         {
-            await Ejecutar(connection, $"CREATE SCHEMA {esquema}");
-            creado = true;
-            // Esquema mínimo de lectura, no reemplaza el SQL de D1 ni el scaffold.
-            await Ejecutar(connection, """
-                CREATE TABLE articulo (
-                    id integer PRIMARY KEY, codigo_interno text UNIQUE NOT NULL,
-                    nombre text NOT NULL, activo boolean NOT NULL);
-                CREATE TABLE articulo_codigo_alternativo (
-                    id integer PRIMARY KEY, articulo_id integer REFERENCES articulo(id),
-                    proveedor_id integer NOT NULL, codigo text UNIQUE NOT NULL,
-                    CONSTRAINT un_codigo_por_proveedor UNIQUE (articulo_id, proveedor_id));
-                INSERT INTO articulo
-                    SELECT n, 'ART-' || lpad(n::text, 6, '0'),
-                           'Bujía NGK pequeña modelo ' || lpad(n::text, 2, '0'), n <> 40
-                    FROM generate_series(1, 40) n;
-                UPDATE articulo SET codigo_interno = ' GN-01 ' WHERE id = 3;
-                INSERT INTO articulo_codigo_alternativo VALUES
-                    (1, 1, 1, 'gn-01'), (2, 2, 1, ' GN-01 ');
-                """);
-            var options = new DbContextOptionsBuilder<LaCentralDbContext>()
-                .UseNpgsql(connection).Options;
-            await using var context = new LaCentralDbContext(options);
+            CodigoInterno = $"ART-{n:D6}", Nombre = $"Bujía NGK pequeña modelo {n:D2}", Activo = n != 40,
+            // articulo_baja_coherente (D10): el inactivo necesita motivo y fecha de baja.
+            MotivoBaja = n == 40 ? "Baja de prueba" : null,
+            FechaBaja = n == 40 ? DateTime.UtcNow : null
+        }).ToArray();
+        articulos[2].CodigoInterno = " GN-01 ";
+        var proveedor = new Proveedor { Codigo = "PRV-PG-01", RazonSocial = "Proveedor Test", Activo = true };
+        articulos[0].ArticuloCodigoAlternativo.Add(new() { Codigo = "gn-01", Proveedor = proveedor });
+        articulos[1].ArticuloCodigoAlternativo.Add(new() { Codigo = " GN-01 ", Proveedor = proveedor });
+        await using (var setup = fixture.CrearContexto())
+        {
+            setup.Articulo.AddRange(articulos);
+            await setup.SaveChangesAsync();
+        }
+        Assert.All(articulos, a => Assert.True(a.Id > 0));
+        Assert.Equal(40, articulos.Select(a => a.Id).Distinct().Count());
+        Assert.True(proveedor.Id > 0);
+        await using (var context = fixture.CrearContexto())
+        {
             var repo = new ArticuloRepositorio(context);
-
             var pagina = await repo.BuscarAsync(new("gn-01*bujia ngk", TamanoPagina: 3));
             Assert.Equal(39, pagina.Total);
-            Assert.Equal(new[] { 3, 1, 2 }, pagina.Articulos.Select(a => a.Id));
-            Assert.Equal(new[] { 1, 2, 3 }, Assert.Single(pagina.Conflictos).ArticuloIds);
-
+            Assert.Equal(new[] { articulos[2].Id, articulos[0].Id, articulos[1].Id }, pagina.Articulos.Select(a => a.Id));
+            Assert.Equal(articulos.Take(3).Select(a => a.Id).Order(), Assert.Single(pagina.Conflictos).ArticuloIds);
             var siguiente = await repo.BuscarAsync(new("bujia pequeña", Pagina: 2, TamanoPagina: 3));
-            Assert.Equal(new[] { 4, 5, 6 }, siguiente.Articulos.Select(a => a.Id));
+            Assert.Equal(articulos.Skip(3).Take(3).Select(a => a.Id), siguiente.Articulos.Select(a => a.Id));
             Assert.Equal(40, (await repo.BuscarAsync(new("bujia", IncluirInactivos: true))).Total);
             Assert.Empty((await repo.BuscarAsync(new("%_"))).Articulos);
             Assert.Empty((await repo.BuscarAsync(new("no existe"))).Articulos);
 
-            var duplicado = await Assert.ThrowsAsync<PostgresException>(() => Ejecutar(connection,
-                "INSERT INTO articulo_codigo_alternativo VALUES (3, 1, 1, 'OTRO-CODIGO')"));
-            Assert.Equal(PostgresErrorCodes.UniqueViolation, duplicado.SqlState);
-            Assert.Equal("un_codigo_por_proveedor", duplicado.ConstraintName);
+            var codigos = await context.ArticuloCodigoAlternativo.AsNoTracking().OrderBy(c => c.Codigo).ToListAsync();
+            Assert.All(codigos, c => Assert.True(c.Id > 0));
+            Assert.All(codigos, c => Assert.Equal(proveedor.Id, c.ProveedorId));
+            Assert.Equal(articulos.Take(2).Select(a => a.Id).Order(), codigos.Select(c => c.ArticuloId).Order());
         }
-        finally
+        await using var restriccion = fixture.CrearContexto();
+        // Todos los Id de FK provienen de SaveChanges, no de la posición del fixture.
+        restriccion.ArticuloCodigoAlternativo.Add(new()
         {
-            // Solo el esquema recién generado por este test. No se limpia public.
-            if (creado && esquema.StartsWith("art02_test_", StringComparison.Ordinal) &&
-                Guid.TryParseExact(esquema[11..], "N", out _))
-                await Ejecutar(connection, $"DROP SCHEMA {esquema} CASCADE");
-        }
-    }
-
-    private static async Task Ejecutar(NpgsqlConnection connection, string sql)
-    {
-        await using var command = new NpgsqlCommand(sql, connection);
-        await command.ExecuteNonQueryAsync();
+            ArticuloId = articulos[0].Id, ProveedorId = proveedor.Id, Codigo = "OTRO-CODIGO"
+        });
+        var error = await Assert.ThrowsAsync<DbUpdateException>(() => restriccion.SaveChangesAsync());
+        Assert.Equal(PostgresErrorCodes.UniqueViolation, Assert.IsType<PostgresException>(error.InnerException).SqlState);
     }
 }

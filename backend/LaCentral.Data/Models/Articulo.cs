@@ -33,21 +33,23 @@ public partial class Articulo
 
     public DateTime FechaAlta { get; set; }
 
-    public virtual ICollection<ArticuloCodigoAlternativo> ArticuloCodigoAlternativos { get; set; } = new List<ArticuloCodigoAlternativo>();
+    public virtual ICollection<ArticuloCodigoAlternativo> ArticuloCodigoAlternativo { get; set; } = new List<ArticuloCodigoAlternativo>();
 
-    public virtual ICollection<ArticuloHistorialCompra> ArticuloHistorialCompras { get; set; } = new List<ArticuloHistorialCompra>();
+    public virtual ArticuloHistorialBaja? ArticuloHistorialBaja { get; set; }
 
-    public virtual ICollection<ArticuloMargen> ArticuloMargens { get; set; } = new List<ArticuloMargen>();
+    public virtual ICollection<ArticuloHistorialCompra> ArticuloHistorialCompra { get; set; } = new List<ArticuloHistorialCompra>();
 
-    public virtual ICollection<FacturaCompraDetalle> FacturaCompraDetalles { get; set; } = new List<FacturaCompraDetalle>();
+    public virtual ICollection<ArticuloMargen> ArticuloMargen { get; set; } = new List<ArticuloMargen>();
 
-    public virtual ICollection<FacturaVentaDetalle> FacturaVentaDetalles { get; set; } = new List<FacturaVentaDetalle>();
+    public virtual ICollection<FacturaCompraDetalle> FacturaCompraDetalle { get; set; } = new List<FacturaCompraDetalle>();
 
-    public virtual ICollection<PrecioProveedor> PrecioProveedors { get; set; } = new List<PrecioProveedor>();
+    public virtual ICollection<FacturaVentaDetalle> FacturaVentaDetalle { get; set; } = new List<FacturaVentaDetalle>();
 
-    public virtual ICollection<Stock> Stocks { get; set; } = new List<Stock>();
+    public virtual ICollection<PrecioProveedor> PrecioProveedor { get; set; } = new List<PrecioProveedor>();
 
-    public virtual ICollection<TransferenciaDetalle> TransferenciaDetalles { get; set; } = new List<TransferenciaDetalle>();
+    public virtual ICollection<Stock> Stock { get; set; } = new List<Stock>();
+
+    public virtual ICollection<TransferenciaDetalle> TransferenciaDetalle { get; set; } = new List<TransferenciaDetalle>();
 
     public virtual Proveedor? UltimoProveedor { get; set; }
 }
