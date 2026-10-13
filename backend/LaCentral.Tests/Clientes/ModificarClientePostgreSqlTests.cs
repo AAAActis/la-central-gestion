@@ -82,6 +82,25 @@ public class ModificarClientePostgreSqlTests
         Assert.Equal("Cliente A", (await lectura.Cliente.AsNoTracking().SingleAsync(c => c.Id == a.Id)).RazonSocial);
     }
 
+    // Caracterización: el comportamiento ya existía (ObtenerDetallePorIdAsync → null).
+    // Verificado por mutación quitando el chequeo de null en ModificarClienteUseCase.
+    [PostgreSqlFact]
+    public async Task ModificarConIdInexistente_DevuelveNoEncontradoYNoTocaNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var (a, b) = await SembrarDosClientesAsync(fixture);
+
+        Result resultado;
+        await using (var contexto = fixture.CrearContexto())
+            resultado = await new ModificarClienteUseCase(new ClienteRepositorio(contexto))
+                .EjecutarAsync(a.Id + b.Id + 1000, Pedido(codigo: a.Codigo, razonSocial: "Fantasma"));
+
+        Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
+        await using var lectura = fixture.CrearContexto();
+        Assert.Equal(new[] { "Cliente A", "Cliente B" },
+            await lectura.Cliente.AsNoTracking().OrderBy(c => c.Id).Select(c => c.RazonSocial).ToArrayAsync());
+    }
+
     private static async Task<(ClienteBd A, ClienteBd B)> SembrarDosClientesAsync(PostgreSqlPruebas fixture)
     {
         var a = new ClienteBd { Codigo = "CLI-A", RazonSocial = "Cliente A", Activo = true };
