@@ -2,98 +2,117 @@ using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using LaCentral.UseCases.Articulos.Dtos;
 using Microsoft.EntityFrameworkCore;
+using LaCentral.Tests.Infraestructura;
+using Xunit.Abstractions;
 
 namespace LaCentral.Tests.Articulos;
 
 public class ArticuloRepositorioTests
 {
-    private static LaCentralDbContext CrearContexto()
-        => new(new DbContextOptionsBuilder<LaCentralDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+    private readonly ITestOutputHelper _salida;
+    public ArticuloRepositorioTests(ITestOutputHelper salida) => _salida = salida;
 
-    private static Articulo CrearArticulo(int id, string codigo, string nombre, bool activo = true)
-        => new() { Id = id, CodigoInterno = codigo, Nombre = nombre, Activo = activo };
+    // articulo_baja_coherente (D10): un artículo inactivo exige motivo y fecha de baja.
+    private static Articulo CrearArticulo(string codigo, string nombre, bool activo = true)
+        => new()
+        {
+            CodigoInterno = codigo, Nombre = nombre, Activo = activo,
+            MotivoBaja = activo ? null : "Baja de prueba",
+            FechaBaja = activo ? null : DateTime.UtcNow
+        };
 
-    [Fact]
+    [PostgreSqlFact]
+    [Trait("Proveedor", "PostgreSQL")]
     public async Task Busqueda_OrdenaInternoProveedorYNombreSinDuplicarPorAlternativas()
     {
-        using var context = CrearContexto();
-        var porNombre = CrearArticulo(1, "ART-1", "Mouse GENIUS 01");
-        var porProveedor = CrearArticulo(2, "ART-2", "Mouse GENIUS 01");
-        porProveedor.ArticuloCodigoAlternativo.Add(new() { Id = 1, ProveedorId = 1, Codigo = " gn-01 " });
-        var porInterno = CrearArticulo(3, " GN-01 ", "Mouse GENIUS 01");
-        var inactivo = CrearArticulo(4, "ART-4", "Mouse GENIUS 01", false);
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using var context = fixture.CrearContexto();
+        var porNombre = CrearArticulo("ART-1", "Mouse GENIUS 01");
+        var porProveedor = CrearArticulo("ART-2", "Mouse GENIUS 01");
+        porProveedor.ArticuloCodigoAlternativo.Add(new() { Codigo = " gn-01 ", Proveedor = new() { Codigo = "PRV-01", RazonSocial = "Proveedor Test", Activo = true } });
+        var porInterno = CrearArticulo(" GN-01 ", "Mouse GENIUS 01");
+        var inactivo = CrearArticulo("ART-4", "Mouse GENIUS 01", false);
         context.Articulo.AddRange(porNombre, porProveedor, porInterno, inactivo);
         await context.SaveChangesAsync();
 
         var pagina = await new ArticuloRepositorio(context).BuscarAsync(
             new("gn-01*mouse genius 01*GN-01*"));
 
-        Assert.Equal(new[] { 3, 2, 1 }, pagina.Articulos.Select(a => a.Id));
+        Assert.Equal(new[] { porInterno.Id, porProveedor.Id, porNombre.Id }, pagina.Articulos.Select(a => a.Id));
         Assert.Equal(3, pagina.Total);
         var conflicto = Assert.Single(pagina.Conflictos);
-        Assert.Equal(new[] { 2, 3 }, conflicto.ArticuloIds);
+        Assert.Equal(new[] { porProveedor.Id, porInterno.Id }.Order(), conflicto.ArticuloIds);
     }
 
-    [Fact]
+    [PostgreSqlFact]
+    [Trait("Proveedor", "PostgreSQL")]
     public async Task Busqueda_PaginaDespuesDeUnirAlternativasYConservaTotalYOrdenEstable()
     {
-        using var context = CrearContexto();
-        context.Articulo.AddRange(Enumerable.Range(1, 5)
-            .Select(i => CrearArticulo(i, $"ART-{i}", "Bujía NGK pequeña")));
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using var context = fixture.CrearContexto();
+        var articulos = Enumerable.Range(1, 5).Select(i => CrearArticulo($"ART-{i}", "Bujía NGK pequeña")).ToArray();
+        context.Articulo.AddRange(articulos);
         await context.SaveChangesAsync();
         var repo = new ArticuloRepositorio(context);
         var pagina = await repo.BuscarAsync(new("bujia NGK*bujía pequeña", Pagina: 2, TamanoPagina: 2));
         Assert.Equal(5, pagina.Total);
-        Assert.Equal(new[] { 3, 4 }, pagina.Articulos.Select(a => a.Id));
+        Assert.Equal(articulos.OrderBy(a => a.Id).Skip(2).Take(2).Select(a => a.Id), pagina.Articulos.Select(a => a.Id));
         Assert.Equal(2, pagina.Pagina);
     }
 
-    [Fact]
+    [PostgreSqlFact]
+    [Trait("Proveedor", "PostgreSQL")]
     public async Task Busqueda_PermiteInactivosYNoInterpretaComodinesSQL()
     {
-        using var context = CrearContexto();
-        context.Articulo.AddRange(CrearArticulo(1, "ART-1", "Filtro 100%_original", false),
-            CrearArticulo(2, "ART-2", "Filtro común"));
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using var context = fixture.CrearContexto();
+        var inactivo = CrearArticulo("ART-1", "Filtro 100%_original", false);
+        context.Articulo.AddRange(inactivo,
+            CrearArticulo("ART-2", "Filtro común"));
         await context.SaveChangesAsync();
         var repo = new ArticuloRepositorio(context);
         Assert.Empty((await repo.BuscarAsync(new("100%_original"))).Articulos);
-        Assert.Equal(1, Assert.Single((await repo.BuscarAsync(
+        Assert.Equal(inactivo.Id, Assert.Single((await repo.BuscarAsync(
             new("100%_original", IncluirInactivos: true))).Articulos).Id);
         Assert.Empty((await repo.BuscarAsync(new("inexistente"))).Articulos);
     }
 
-    [Fact]
+    [PostgreSqlFact]
+    [Trait("Proveedor", "PostgreSQL")]
     public async Task Conflictos_IncluyeTodosLosIdsAunqueSeanInactivosOFueraDePagina()
     {
-        using var context = CrearContexto();
-        context.Articulo.AddRange(CrearArticulo(1, " gn-01 ", "Primero"),
-            CrearArticulo(2, "GN-01", "Segundo", false));
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using var context = fixture.CrearContexto();
+        var primero = CrearArticulo(" gn-01 ", "Primero");
+        var segundo = CrearArticulo("GN-01", "Segundo", false);
+        context.Articulo.AddRange(primero, segundo);
         await context.SaveChangesAsync();
         var pagina = await new ArticuloRepositorio(context).BuscarAsync(new("gn-01", TamanoPagina: 1));
         Assert.Single(pagina.Articulos);
-        Assert.Equal(new[] { 1, 2 }, Assert.Single(pagina.Conflictos).ArticuloIds);
+        Assert.Equal(new[] { primero.Id, segundo.Id }.Order(), Assert.Single(pagina.Conflictos).ArticuloIds);
     }
 
-    [Fact]
+    [PostgreSqlFact]
+    [Trait("Proveedor", "PostgreSQL")]
     public async Task Detalle_ConservaCostoNuloOriginalDelCodigoYStockDecimalPorSucursal()
     {
-        using var context = CrearContexto();
-        var articulo = CrearArticulo(1, "ART-1", "Mouse GENIUS");
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using var context = fixture.CrearContexto();
+        var articulo = CrearArticulo("ART-1", "Mouse GENIUS");
         articulo.ArticuloCodigoAlternativo.Add(new()
         {
-            Id = 1, Codigo = " gn-01 ", ProveedorId = 1,
-            Proveedor = new() { Id = 1, Codigo = "PRV-1", RazonSocial = "Proveedor de prueba", Activo = true }
+            Codigo = " gn-01 ",
+            Proveedor = new() { Codigo = "PRV-1", RazonSocial = "Proveedor de prueba", Activo = true }
         });
+        var sucursal = await context.Sucursal.AsNoTracking().OrderBy(s => s.Id).FirstAsync();
         articulo.Stock.Add(new()
         {
-            SucursalId = 1, Cantidad = 1.5m,
-            Sucursal = new() { Id = 1, Codigo = "FR", Nombre = "Fragueiro" }
+            SucursalId = sucursal.Id, Cantidad = 1.5m
         });
         context.Articulo.Add(articulo);
         await context.SaveChangesAsync();
         var repo = new ArticuloRepositorio(context);
-        var detalle = await repo.ObtenerDetallePorIdAsync(1);
+        var detalle = await repo.ObtenerDetallePorIdAsync(articulo.Id);
         Assert.NotNull(detalle);
         Assert.Null(detalle.CostoVigente);
         Assert.Null(detalle.UltimoProveedorId);
@@ -101,7 +120,7 @@ public class ArticuloRepositorioTests
         Assert.Equal(" gn-01 ", Assert.Single(detalle.Codigos).CodigoOriginal);
         Assert.Equal("GN-01", detalle.Codigos[0].ClaveNormalizada);
         Assert.Equal(1.5m, Assert.Single(detalle.Existencias).Cantidad);
-        Assert.Null(await repo.ObtenerDetallePorIdAsync(999));
+        Assert.Null(await repo.ObtenerDetallePorIdAsync(checked(articulo.Id + 1)));
     }
 
     [Theory]

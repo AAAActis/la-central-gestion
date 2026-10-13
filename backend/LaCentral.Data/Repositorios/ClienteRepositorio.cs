@@ -22,8 +22,8 @@ public class ClienteRepositorio : IClienteRepositorio
             RazonSocial = cliente.RazonSocial,
             CuitCuil = cliente.Cuit,
             Activo = cliente.Activo, // La entidad nace activa
-            CondicionFiscal = cliente.CondicionFiscal,
-            CondicionPago = cliente.CondicionPago,
+            CondicionFiscal = VacioANull(cliente.CondicionFiscal),
+            CondicionPago = VacioANull(cliente.CondicionPago),
 
             // El filtrado de vacíos ya se realizó en el Caso de Uso.
             // Solo mapeamos directamente a los modelos de EF Core.
@@ -163,8 +163,8 @@ public class ClienteRepositorio : IClienteRepositorio
     // Actualización de primitivos
     clienteBd.RazonSocial = cliente.RazonSocial;
     clienteBd.CuitCuil = cliente.Cuit;
-    clienteBd.CondicionFiscal = cliente.CondicionFiscal;
-    clienteBd.CondicionPago = cliente.CondicionPago;
+    clienteBd.CondicionFiscal = VacioANull(cliente.CondicionFiscal);
+    clienteBd.CondicionPago = VacioANull(cliente.CondicionPago);
     clienteBd.Codigo = cliente.Codigo;
     clienteBd.Activo = cliente.Activo;
     clienteBd.MotivoBaja = cliente.MotivoBaja;
@@ -213,4 +213,9 @@ public class ClienteRepositorio : IClienteRepositorio
 
     await _context.SaveChangesAsync(ct);
     }
+
+    // El dominio representa "sin dato" como cadena vacía; la base, como NULL.
+    // Los CHECK de condición fiscal/pago aceptan NULL pero no "".
+    private static string? VacioANull(string? valor)
+        => string.IsNullOrWhiteSpace(valor) ? null : valor;
 }

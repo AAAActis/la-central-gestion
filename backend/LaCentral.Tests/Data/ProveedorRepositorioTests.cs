@@ -1,83 +1,89 @@
-using Microsoft.EntityFrameworkCore;
-using Xunit;
 using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
+using LaCentral.Tests.Infraestructura;
 using LaCentral.UseCases.Proveedores;
 using LaCentral.UseCases.Proveedores.Dtos;
-using System;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using Xunit.Abstractions;
 
 namespace LaCentral.Tests.Data;
 
+[Trait("Proveedor", "PostgreSQL")]
 public class ProveedorRepositorioTests
 {
-    private DbContextOptions<LaCentralDbContext> ObtenerOpcionesInMemory() =>
-        new DbContextOptionsBuilder<LaCentralDbContext>()
-            // 1. PARA VOLVER A INMEMORY: Descomentá esta línea y comentá la de UseNpgsql
-            .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
-            
-            // 2. PARA TESTEAR CONTRA POSTGRES: Dejá esta línea activa
-            //.UseNpgsql(Environment.GetEnvironmentVariable("LACENTRAL_TEST_PG"))
-            .Options;
+    private readonly ITestOutputHelper _salida;
+    public ProveedorRepositorioTests(ITestOutputHelper salida) => _salida = salida;
 
-    [Fact]
-    public async Task BajaReactivacionYModificacion_MapeaEstadoYMotivoCorrectamente_EnBaseDeDatos()
+    [PostgreSqlFact]
+    public async Task DosCiclosYModificacion_ConservanEstadoEHistorialConIdsGenerados_PostgreSQL()
     {
-        var opciones = ObtenerOpcionesInMemory();
-        
-        using (var contextoSetup = new LaCentralDbContext(opciones))
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var proveedor = new Proveedor { Codigo = "PRV-PG-01", RazonSocial = "Proveedor Test", Activo = true };
+        await using (var setup = fixture.CrearContexto())
         {
-            // Usamos ID 9999 para no chocar con los datos reales importados
-            var proveedorDb = new Proveedor { Id = 9999, RazonSocial = "Prov Test", Codigo = "PRV-99", Activo = true, FechaAlta = DateTime.UtcNow };
-            contextoSetup.Proveedor.Add(proveedorDb);
-            await contextoSetup.SaveChangesAsync();
+            setup.Proveedor.Add(proveedor);
+            await setup.SaveChangesAsync();
         }
-
-        // 1. BAJA (TODO 1)
-        using (var contextoBaja = new LaCentralDbContext(opciones))
+        Assert.True(proveedor.Id > 0);
+        await using (var baja = fixture.CrearContexto())
+            Assert.True((await new DarDeBajaProveedorUseCase(new ProveedorRepositorio(baja)).EjecutarAsync(
+                proveedor.Id, new DarDeBajaProveedorRequest("Primera baja", proveedor.Codigo))).IsSuccess);
+        ProveedorHistorialBaja primera;
+        await using (var leer = fixture.CrearContexto())
         {
-            var repoBaja = new ProveedorRepositorio(contextoBaja);
-            var casoUsoBaja = new DarDeBajaProveedorUseCase(repoBaja);
-            await casoUsoBaja.EjecutarAsync(9999, new DarDeBajaProveedorRequest("Cierre temporal", "PRV-99"));
+            var fila = await leer.Proveedor.AsNoTracking().SingleAsync(p => p.Id == proveedor.Id);
+            primera = await leer.ProveedorHistorialBaja.AsNoTracking().SingleAsync(h => h.ProveedorId == proveedor.Id);
+            Assert.False(fila.Activo);
+            Assert.Equal("Primera baja", fila.MotivoBaja);
+            Assert.Equal(fila.FechaBaja, primera.FechaBaja);
+            Assert.Equal("Primera baja", primera.Motivo);
+            Assert.Null(primera.FechaReactivacion);
         }
-
-        using (var contextoValidacionBaja = new LaCentralDbContext(opciones))
+        await using (var reactivar = fixture.CrearContexto())
+            Assert.True((await new ReactivarProveedorUseCase(new ProveedorRepositorio(reactivar))
+                .EjecutarAsync(proveedor.Id)).IsSuccess);
+        DateTime? reactivacion;
+        await using (var modificar = fixture.CrearContexto())
         {
-            var filaBaja = await contextoValidacionBaja.Proveedor.FindAsync(9999);
-            Assert.False(filaBaja!.Activo);
-            Assert.Equal("Cierre temporal", filaBaja.MotivoBaja);
-            Assert.NotNull(filaBaja.FechaBaja);
+            var repo = new ProveedorRepositorio(modificar);
+            var detalle = (await repo.ObtenerDetallePorIdAsync(proveedor.Id))!;
+            Assert.True(detalle.Activo);
+            Assert.Equal("Primera baja", detalle.MotivoBaja);
+            detalle.RazonSocial = "Proveedor Modificado";
+            await repo.ActualizarAsync(detalle);
+            var fila = await modificar.Proveedor.AsNoTracking().SingleAsync(p => p.Id == proveedor.Id);
+            Assert.True(fila.Activo);
+            Assert.Equal(primera.FechaBaja, fila.FechaBaja);
+            var cerrada = await modificar.ProveedorHistorialBaja.AsNoTracking().SingleAsync(h => h.Id == primera.Id);
+            reactivacion = cerrada.FechaReactivacion;
+            Assert.NotNull(reactivacion);
+            Assert.Single(await modificar.ProveedorHistorialBaja.ToListAsync());
+            await modificar.Proveedor.Include(p => p.HistorialesBaja).SingleAsync(p => p.Id == proveedor.Id);
+            Assert.True((await new DarDeBajaProveedorUseCase(repo).EjecutarAsync(proveedor.Id,
+                new DarDeBajaProveedorRequest("Segunda baja", proveedor.Codigo))).IsSuccess);
         }
-
-        // 2. REACTIVACIÓN (TODO 2)
-        using (var contextoReactivacion = new LaCentralDbContext(opciones))
+        await using (var final = fixture.CrearContexto())
         {
-            var repoReactivacion = new ProveedorRepositorio(contextoReactivacion);
-            var casoUsoReactivacion = new ReactivarProveedorUseCase(repoReactivacion);
-            await casoUsoReactivacion.EjecutarAsync(9999);
+            var fila = await final.Proveedor.AsNoTracking().SingleAsync(p => p.Id == proveedor.Id);
+            var historial = await final.ProveedorHistorialBaja.AsNoTracking()
+                .Where(h => h.ProveedorId == proveedor.Id).OrderBy(h => h.Id).ToListAsync();
+            Assert.False(fila.Activo);
+            Assert.Equal("Proveedor Modificado", fila.RazonSocial);
+            Assert.Equal(2, historial.Count);
+            Assert.Equal(primera.Id, historial[0].Id);
+            Assert.Equal("Primera baja", historial[0].Motivo);
+            Assert.Equal(primera.FechaBaja, historial[0].FechaBaja);
+            Assert.Equal(reactivacion, historial[0].FechaReactivacion);
+            Assert.Equal("Segunda baja", historial[1].Motivo);
+            Assert.Equal(fila.FechaBaja, historial[1].FechaBaja);
+            Assert.Null(historial[1].FechaReactivacion);
+            Assert.NotEqual(historial[0].Id, historial[1].Id);
         }
-
-        using (var contextoValidacionReactivacion = new LaCentralDbContext(opciones))
-        {
-            var filaReactivada = await contextoValidacionReactivacion.Proveedor.FindAsync(9999);
-            Assert.True(filaReactivada!.Activo);
-            Assert.Equal("Cierre temporal", filaReactivada.MotivoBaja); 
-        }
-
-        // 3. MODIFICACIÓN (TODO 3)
-        using (var contextoModificacion = new LaCentralDbContext(opciones))
-        {
-            var repoModificacion = new ProveedorRepositorio(contextoModificacion);
-            var proveedorModificado = await repoModificacion.ObtenerDetallePorIdAsync(9999);
-            proveedorModificado!.RazonSocial = "Nombre Nuevo";
-            await repoModificacion.ActualizarAsync(proveedorModificado);
-        }
-
-        using (var contextoValidacionModificacion = new LaCentralDbContext(opciones))
-        {
-            var filaModificada = await contextoValidacionModificacion.Proveedor.FindAsync(9999);
-            Assert.True(filaModificada!.Activo); 
-            Assert.Equal("Nombre Nuevo", filaModificada.RazonSocial);
-        }
+        await using var restriccion = fixture.CrearContexto();
+        restriccion.ProveedorHistorialBaja.Add(new()
+            { ProveedorId = proveedor.Id, Motivo = "Duplicada abierta", FechaBaja = DateTime.UtcNow });
+        var error = await Assert.ThrowsAsync<DbUpdateException>(() => restriccion.SaveChangesAsync());
+        Assert.Equal(PostgresErrorCodes.UniqueViolation, Assert.IsType<PostgresException>(error.InnerException).SqlState);
     }
 }
