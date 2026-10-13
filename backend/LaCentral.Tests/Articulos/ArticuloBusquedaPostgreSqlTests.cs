@@ -20,7 +20,10 @@ public class ArticuloBusquedaPostgreSqlTests
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
         var articulos = Enumerable.Range(1, 40).Select(n => new Articulo
         {
-            CodigoInterno = $"ART-{n:D6}", Nombre = $"Bujía NGK pequeña modelo {n:D2}", Activo = n != 40
+            CodigoInterno = $"ART-{n:D6}", Nombre = $"Bujía NGK pequeña modelo {n:D2}", Activo = n != 40,
+            // articulo_baja_coherente (D10): el inactivo necesita motivo y fecha de baja.
+            MotivoBaja = n == 40 ? "Baja de prueba" : null,
+            FechaBaja = n == 40 ? DateTime.UtcNow : null
         }).ToArray();
         articulos[2].CodigoInterno = " GN-01 ";
         var proveedor = new Proveedor { Codigo = "PRV-PG-01", RazonSocial = "Proveedor Test", Activo = true };

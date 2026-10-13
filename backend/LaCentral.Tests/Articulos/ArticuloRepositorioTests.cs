@@ -12,8 +12,14 @@ public class ArticuloRepositorioTests
     private readonly ITestOutputHelper _salida;
     public ArticuloRepositorioTests(ITestOutputHelper salida) => _salida = salida;
 
+    // articulo_baja_coherente (D10): un artículo inactivo exige motivo y fecha de baja.
     private static Articulo CrearArticulo(string codigo, string nombre, bool activo = true)
-        => new() { CodigoInterno = codigo, Nombre = nombre, Activo = activo };
+        => new()
+        {
+            CodigoInterno = codigo, Nombre = nombre, Activo = activo,
+            MotivoBaja = activo ? null : "Baja de prueba",
+            FechaBaja = activo ? null : DateTime.UtcNow
+        };
 
     [PostgreSqlFact]
     [Trait("Proveedor", "PostgreSQL")]
