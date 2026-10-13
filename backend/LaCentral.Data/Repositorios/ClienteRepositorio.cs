@@ -132,7 +132,7 @@ public class ClienteRepositorio : IClienteRepositorio
 
             // Mapeamos leyendo desde ClienteTelefonos y ClienteDireccions
             Telefonos = clienteBd.ClienteTelefono.Select(t => t.Numero).ToList(), 
-            Direcciones = clienteBd.ClienteDireccion.Select(d => d.Calle).ToList() 
+            Direcciones = clienteBd.ClienteDireccion.Select(d => d.Calle ?? string.Empty).ToList()
         };
     }
 
@@ -210,7 +210,7 @@ public class ClienteRepositorio : IClienteRepositorio
     var dirsABorrar = clienteBd.ClienteDireccion.Where(d => !cliente.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
     foreach (var d in dirsABorrar) _context.Remove(d);
 
-    var dirsNuevas = cliente.Direcciones.Where(d => !clienteBd.ClienteDireccion.Any(bd => bd.Calle == d)).ToList();
+    var dirsNuevas = cliente.Direcciones.Where(d => !clienteBd.ClienteDireccion.Any(bd => (bd.Calle ?? string.Empty) == d)).ToList();
     foreach (var d in dirsNuevas) clienteBd.ClienteDireccion.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = d });
 
     await _context.SaveChangesAsync(ct);
