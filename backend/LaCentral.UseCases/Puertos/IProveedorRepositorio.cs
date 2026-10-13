@@ -10,6 +10,9 @@ public interface IProveedorRepositorio
 
     Task<Proveedor?> ObtenerDetallePorIdAsync(int id, CancellationToken ct = default);
     Task<Proveedor?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default);
+
+    /// <summary>ALTO 5: el código es la clave de negocio; devuelve el dueño para informar el conflicto.</summary>
+    Task<Proveedor?> ObtenerPorCodigoAsync(string codigo, CancellationToken ct = default);
     Task ActualizarAsync(Proveedor proveedor, CancellationToken ct = default);
 
     /// <summary>

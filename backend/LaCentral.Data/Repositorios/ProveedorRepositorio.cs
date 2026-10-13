@@ -124,6 +124,9 @@ public class ProveedorRepositorio : IProveedorRepositorio
         };
     }
 
+    public Task<LaCentral.UseCases.Entidades.Proveedor?> ObtenerPorCodigoAsync(string codigo, CancellationToken ct = default)
+        => Task.FromResult<LaCentral.UseCases.Entidades.Proveedor?>(null);
+
     public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Proveedor proveedor, CancellationToken ct = default)
 {
     var bd = await _context.Proveedor

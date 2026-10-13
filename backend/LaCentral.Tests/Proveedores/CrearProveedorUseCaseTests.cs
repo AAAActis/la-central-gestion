@@ -69,4 +69,19 @@ public class CrearProveedorUseCaseTests
         Assert.True(resultado.IsSuccess);
         Assert.NotNull(resultado.Value.Advertencia);
     }
+
+    // ALTO 5: el código es la clave de negocio del proveedor
+    [Fact]
+    public async Task Ejecutar_CodigoYaUsado_DevuelveConflictoInformandoElProveedor()
+    {
+        _repoMock.Setup(r => r.ObtenerPorCodigoAsync("PROV001", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Proveedor { Codigo = "PROV001", RazonSocial = "Repuestos del Centro" });
+
+        var resultado = await CrearCasoDeUso().EjecutarAsync(CrearRequestValido() with { Codigo = " PROV001 " });
+
+        Assert.Equal(TipoError.Conflicto, resultado.Tipo);
+        Assert.Contains("Repuestos del Centro", resultado.Error);
+        Assert.Contains("PROV001", resultado.Error);
+        _repoMock.Verify(r => r.AgregarAsync(It.IsAny<Proveedor>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }
