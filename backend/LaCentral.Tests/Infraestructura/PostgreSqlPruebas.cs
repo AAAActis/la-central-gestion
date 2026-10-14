@@ -46,6 +46,9 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
     private PostgreSqlPruebas(NpgsqlConnection administracion, string esquema, string conexionAislada)
         => (_administracion, _esquema, _conexionAislada) = (administracion, esquema, conexionAislada);
 
+    /// <summary>Cadena con search_path al esquema aislado: para levantar la API contra él.</summary>
+    public string ConexionAislada => _conexionAislada;
+
     public LaCentralDbContext CrearContexto() => new(new DbContextOptionsBuilder<LaCentralDbContext>()
         .UseNpgsql(_conexionAislada).EnableDetailedErrors().Options);
 
