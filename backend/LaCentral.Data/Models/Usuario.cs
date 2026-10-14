@@ -26,13 +26,15 @@ public partial class Usuario
 
     public DateTime FechaAlta { get; set; }
 
-    public int? UsuarioBajaId { get; set; }
-
     public int? UsuarioAltaId { get; set; }
+
+    public int? UsuarioBajaId { get; set; }
 
     public virtual ICollection<ArticuloHistorialBaja> ArticuloHistorialBajaUsuarioBaja { get; set; } = new List<ArticuloHistorialBaja>();
 
     public virtual ICollection<ArticuloHistorialBaja> ArticuloHistorialBajaUsuarioReactivacion { get; set; } = new List<ArticuloHistorialBaja>();
+
+    public virtual ICollection<ArticuloPrecioModalidad> ArticuloPrecioModalidad { get; set; } = new List<ArticuloPrecioModalidad>();
 
     public virtual ICollection<ClienteHistorialBaja> ClienteHistorialBajaUsuarioBaja { get; set; } = new List<ClienteHistorialBaja>();
 

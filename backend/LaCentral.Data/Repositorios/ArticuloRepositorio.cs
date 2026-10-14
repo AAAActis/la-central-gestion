@@ -90,6 +90,7 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
         var articulo = await _context.Articulo.AsNoTracking()
             .Include(a => a.ArticuloCodigoAlternativo).ThenInclude(c => c.Proveedor)
             .Include(a => a.Stock).ThenInclude(s => s.Sucursal)
+            .Include(a => a.ArticuloPrecioModalidad)
             .SingleOrDefaultAsync(a => a.Id == id, ct);
         if (articulo is null) return null;
 
@@ -100,9 +101,12 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
                     c.Codigo, NormalizacionArticulo.Codigo(c.Codigo))).ToArray(),
             articulo.Stock.OrderBy(s => s.SucursalId)
                 .Select(s => new StockSucursalConsultaDto(s.SucursalId, s.Sucursal.Nombre, s.Cantidad)).ToArray(),
-            // D1: el esquema vigente no identifica modalidades. No interpretar
-            // márgenes legados ni calcular una fórmula que el equipo retiró.
-            PreciosPorModalidad: null);
+            // D1: precios estampados en articulo_precio_modalidad, sin recalcular.
+            // Sin filas no se informa nada; la razón de cada ausencia es de HU-ART-02.
+            PreciosPorModalidad: articulo.ArticuloPrecioModalidad.Count == 0 ? null :
+                articulo.ArticuloPrecioModalidad
+                    .Select(p => new PrecioModalidadConsultaDto(ModalidadPersistida.Leer(p.Modalidad), p.Precio))
+                    .OrderBy(p => p.Modalidad).ToArray());
     }
 
     internal sealed class CoincidenciaArticulo

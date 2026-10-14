@@ -19,14 +19,13 @@ public partial class LaCentralDbContext : DbContext
 
     public virtual DbSet<ArticuloHistorialCompra> ArticuloHistorialCompra { get; set; }
 
-    public virtual DbSet<ArticuloMargen> ArticuloMargen { get; set; }
+    public virtual DbSet<ArticuloPrecioModalidad> ArticuloPrecioModalidad { get; set; }
 
     public virtual DbSet<Cliente> Cliente { get; set; }
 
     public virtual DbSet<ClienteDireccion> ClienteDireccion { get; set; }
 
     public virtual DbSet<ClienteHistorialBaja> ClienteHistorialBaja { get; set; }
-
 
     public virtual DbSet<ClienteTelefono> ClienteTelefono { get; set; }
 
@@ -105,9 +104,6 @@ public partial class LaCentralDbContext : DbContext
                 .HasPrecision(14, 2)
                 .HasComment("DENORMALIZACIÓN DELIBERADA: valor derivado del último registro válido de articulo_historial_compra. Se mantiene acá para no recalcularlo en cada consulta del comparador.")
                 .HasColumnName("precio_costo");
-            entity.Property(e => e.PrecioVentaEstimado)
-                .HasPrecision(14, 2)
-                .HasColumnName("precio_venta_estimado");
             entity.Property(e => e.UbicacionDeposito)
                 .HasMaxLength(60)
                 .HasComment("Posición física de referencia en el depósito, en texto libre. Dato informativo: el sistema no gestiona el depósito.")
@@ -225,23 +221,43 @@ public partial class LaCentralDbContext : DbContext
                 .HasConstraintName("articulo_historial_compra_proveedor_id_fkey");
         });
 
-        modelBuilder.Entity<ArticuloMargen>(entity =>
+        modelBuilder.Entity<ArticuloPrecioModalidad>(entity =>
         {
-            entity.HasKey(e => new { e.ArticuloId, e.Numero }).HasName("articulo_margen_pkey");
+            entity.HasKey(e => new { e.ArticuloId, e.Modalidad }).HasName("articulo_precio_modalidad_pkey");
 
-            entity.ToTable("articulo_margen", tb => tb.HasComment("En La Central se usan tres márgenes: 50 %, 40 % y 0,01 %. El último representa precio de venta igual al costo, porque el sistema anterior no admite cargar cero."));
+            entity.ToTable("articulo_precio_modalidad", tb => tb.HasComment("D1: precios de venta por articulo y modalidad, con el porcentaje del que salieron y la fecha en que se estamparon. Reemplaza a articulo_margen. La unica regla de calculo del sistema vive en CalcularPreciosArticuloUseCase."));
 
             entity.Property(e => e.ArticuloId).HasColumnName("articulo_id");
-            entity.Property(e => e.Numero).HasColumnName("numero");
+            entity.Property(e => e.Modalidad)
+                .HasMaxLength(24)
+                .HasComment("Nombre exacto del miembro del enum Modalidad. Seis valores, sin id numerico.")
+                .HasColumnName("modalidad");
+            entity.Property(e => e.CalculoManual)
+                .HasComment("true = lo fijo una persona. El recalculo automatico de la Fase 6 filtra por false y no lo pisa.")
+                .HasColumnName("calculo_manual");
+            entity.Property(e => e.FechaCalculo)
+                .HasComment("Cuando se estampo este precio.")
+                .HasColumnName("fecha_calculo");
             entity.Property(e => e.Porcentaje)
                 .HasPrecision(6, 2)
+                .HasComment("Porcentaje sobre el costo. NULL si no hay formula (CasoEspecial) o la tasa no esta definida (Tarjeta3/Tarjeta6).")
                 .HasColumnName("porcentaje");
+            entity.Property(e => e.Precio)
+                .HasPrecision(12, 2)
+                .HasComment("Precio estampado. NULL cuando no se pudo calcular. Nunca cero por defecto.")
+                .HasColumnName("precio");
+            entity.Property(e => e.UsuarioId)
+                .HasComment("Quien fijo el precio manual. NULL en los calculados.")
+                .HasColumnName("usuario_id");
 
-            entity.HasOne(d => d.Articulo).WithMany(p => p.ArticuloMargen)
+            entity.HasOne(d => d.Articulo).WithMany(p => p.ArticuloPrecioModalidad)
                 .HasForeignKey(d => d.ArticuloId)
-                .HasConstraintName("articulo_margen_articulo_id_fkey");
-        });
+                .HasConstraintName("articulo_precio_modalidad_articulo_fkey");
 
+            entity.HasOne(d => d.Usuario).WithMany(p => p.ArticuloPrecioModalidad)
+                .HasForeignKey(d => d.UsuarioId)
+                .HasConstraintName("articulo_precio_modalidad_usuario_fkey");
+        });
 
         modelBuilder.Entity<Cliente>(entity =>
         {
