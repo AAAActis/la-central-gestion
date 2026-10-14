@@ -105,7 +105,8 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
             // Sin filas no se informa nada; la razón de cada ausencia es de HU-ART-02.
             PreciosPorModalidad: articulo.ArticuloPrecioModalidad.Count == 0 ? null :
                 articulo.ArticuloPrecioModalidad
-                    .Select(p => new PrecioModalidadConsultaDto(ModalidadPersistida.Leer(p.Modalidad), p.Precio))
+                    .Select(p => new PrecioModalidadConsultaDto(ModalidadPersistida.Leer(p.Modalidad),
+                        Base: null, Porcentaje: null, p.Precio, CalculoManual: false, FechaCalculo: null, UsuarioId: null))
                     .OrderBy(p => p.Modalidad).ToArray());
     }
 
