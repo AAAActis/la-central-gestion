@@ -51,7 +51,8 @@ public class ModificarProveedorUseCase
         proveedor.Cuit = request.Cuit.Trim();
         proveedor.UrlReferencia = request.UrlReferencia?.Trim();
         proveedor.Telefonos = (request.Telefonos ?? new List<string>()).Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
-        proveedor.Direcciones = (request.Direcciones ?? new List<string>()).Where(d => !string.IsNullOrWhiteSpace(d)).ToList();
+        // Una dirección sin calle viaja como "": se conserva para no borrar su localidad.
+        proveedor.Direcciones = (request.Direcciones ?? new List<string>()).Select(d => d?.Trim() ?? string.Empty).ToList();
 
         if (!await _proveedorRepositorio.ActualizarAsync(proveedor, ct))
             return Result.Failure(TipoError.NoEncontrado, "El proveedor indicado no existe.");

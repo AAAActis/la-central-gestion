@@ -52,7 +52,8 @@ public class ModificarClienteUseCase
         cliente.CondicionFiscal = request.CondicionFiscal;
         cliente.CondicionPago = request.CondicionPago;
         cliente.Telefonos = (request.Telefonos ?? new List<string>()).Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
-        cliente.Direcciones = (request.Direcciones ?? new List<string>()).Where(d => !string.IsNullOrWhiteSpace(d)).ToList();
+        // Una dirección sin calle viaja como "": se conserva para no borrar su localidad.
+        cliente.Direcciones = (request.Direcciones ?? new List<string>()).Select(d => d?.Trim() ?? string.Empty).ToList();
 
         if (!await _clienteRepositorio.ActualizarAsync(cliente, ct))
             return Result.Failure(TipoError.NoEncontrado, "El cliente indicado no existe.");

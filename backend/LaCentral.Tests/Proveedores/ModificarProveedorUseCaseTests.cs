@@ -37,6 +37,22 @@ public class ModificarProveedorUseCaseTests
         Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
     }
 
+// Una dirección sin calle llega como "" (así la lee el repositorio): filtrarla la borraba con su localidad.
+    [Fact]
+    public async Task Ejecutar_DireccionSinCalle_SeConservaParaElRepositorio()
+    {
+        var proveedor = CrearProveedorBdActivo();
+        proveedor.Direcciones = new List<string> { "", "Ruta 9 km 5" };
+        _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(proveedor);
+        var request = CrearRequestValido() with { Cuit = proveedor.Cuit!, Direcciones = new List<string> { "", "Ruta 9 km 5" } };
+
+        var resultado = await CrearCasoDeUso().EjecutarAsync(1, request);
+
+        Assert.True(resultado.IsSuccess);
+        _repoMock.Verify(r => r.ActualizarAsync(
+            It.Is<Proveedor>(p => p.Direcciones.SequenceEqual(new[] { "", "Ruta 9 km 5" })), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     // CA-004: Proveedor inactivo deniega la modificación
     [Fact]
     public async Task Ejecutar_ProveedorInactivo_DevuelveInvalido()

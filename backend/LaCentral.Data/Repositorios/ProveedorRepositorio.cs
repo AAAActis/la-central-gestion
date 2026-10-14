@@ -171,7 +171,8 @@ public class ProveedorRepositorio : IProveedorRepositorio
     foreach (var d in dirsABorrar) _context.Remove(d);
 
     // Misma convención que la lectura: sin calle en la base (NULL) es "" en el dominio.
-    var dirsNuevas = proveedor.Direcciones.Where(d => !bd.ProveedorDireccion.Any(b => (b.Calle ?? string.Empty) == d)).ToList();
+    // Una dirección sin calle ("") solo se conserva si ya existía: no se crea una fila vacía.
+    var dirsNuevas = proveedor.Direcciones.Where(d => d.Length > 0 && !bd.ProveedorDireccion.Any(b => (b.Calle ?? string.Empty) == d)).ToList();
     foreach (var d in dirsNuevas) bd.ProveedorDireccion.Add(new LaCentral.Data.Models.ProveedorDireccion { Calle = d });
 
     await _context.SaveChangesAsync(ct);

@@ -187,7 +187,8 @@ public class ClienteRepositorio : IClienteRepositorio
     var dirsABorrar = clienteBd.ClienteDireccion.Where(d => !cliente.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
     foreach (var d in dirsABorrar) _context.Remove(d);
 
-    var dirsNuevas = cliente.Direcciones.Where(d => !clienteBd.ClienteDireccion.Any(bd => (bd.Calle ?? string.Empty) == d)).ToList();
+    // Una dirección sin calle ("") solo se conserva si ya existía: no se crea una fila vacía.
+    var dirsNuevas = cliente.Direcciones.Where(d => d.Length > 0 && !clienteBd.ClienteDireccion.Any(bd => (bd.Calle ?? string.Empty) == d)).ToList();
     foreach (var d in dirsNuevas) clienteBd.ClienteDireccion.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = d });
 
     await _context.SaveChangesAsync(ct);

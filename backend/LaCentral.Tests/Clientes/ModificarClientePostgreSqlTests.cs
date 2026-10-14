@@ -101,6 +101,54 @@ public class ModificarClientePostgreSqlTests
             await lectura.Cliente.AsNoTracking().OrderBy(c => c.Id).Select(c => c.RazonSocial).ToArrayAsync());
     }
 
+// Pérdida de datos silenciosa presente en develop: modificar devolviendo lo que se leyó
+    // borraba la dirección sin calle y, con ella, su localidad.
+    [PostgreSqlFact]
+    public async Task ModificarConDireccionSinCalle_LaConservaConSuLocalidad()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var cliente = new ClienteBd { Codigo = "CLI-DIR", RazonSocial = "Cliente Sin Calle", Activo = true };
+        cliente.ClienteDireccion.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = null, Localidad = "Córdoba" });
+        cliente.ClienteDireccion.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = "Av. Colón 100" });
+        await using (var setup = fixture.CrearContexto())
+        {
+            setup.Cliente.Add(cliente);
+            await setup.SaveChangesAsync();
+        }
+        var sinCalleId = cliente.ClienteDireccion.Single(d => d.Calle == null).Id;
+
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var repo = new ClienteRepositorio(contexto);
+            var leido = (await repo.ObtenerDetallePorIdAsync(cliente.Id))!;
+            var resultado = await new ModificarClienteUseCase(repo).EjecutarAsync(cliente.Id,
+                Pedido(cliente.Codigo, "Cliente Renombrado") with { Direcciones = leido.Direcciones });
+            Assert.True(resultado.IsSuccess);
+        }
+
+        await using var lectura = fixture.CrearContexto();
+        var direcciones = await lectura.ClienteDireccion.AsNoTracking().Where(d => d.ClienteId == cliente.Id).ToListAsync();
+        Assert.Equal(2, direcciones.Count);
+        var sinCalle = Assert.Single(direcciones, d => d.Calle == null);
+        Assert.Equal(sinCalleId, sinCalle.Id);
+        Assert.Equal("Córdoba", sinCalle.Localidad);
+    }
+
+    // Conservar no es crear: una dirección vacía que no existía no genera una fila vacía.
+    [PostgreSqlFact]
+    public async Task ModificarConDireccionVaciaNueva_NoCreaUnaFilaVacia()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var (a, _) = await SembrarDosClientesAsync(fixture);
+
+        await using (var contexto = fixture.CrearContexto())
+            Assert.True((await new ModificarClienteUseCase(new ClienteRepositorio(contexto)).EjecutarAsync(a.Id,
+                Pedido(a.Codigo, "Cliente A") with { Direcciones = new List<string> { "  " } })).IsSuccess);
+
+        await using var lectura = fixture.CrearContexto();
+        Assert.False(await lectura.ClienteDireccion.AnyAsync(d => d.ClienteId == a.Id));
+    }
+
     private static async Task<(ClienteBd A, ClienteBd B)> SembrarDosClientesAsync(PostgreSqlPruebas fixture)
     {
         var a = new ClienteBd { Codigo = "CLI-A", RazonSocial = "Cliente A", Activo = true };
