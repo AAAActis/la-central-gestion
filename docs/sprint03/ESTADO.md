@@ -42,7 +42,8 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 | 0 · Línea base | hecha (2026-10-13) | — | — | 108/108, 0 skipped (8 PG real) | — |
 | 1 · Deuda bloqueante | hecha, PR sin abrir (2026-10-13) | `fix/deuda-bloqueante-sprint3` (pusheada, HEAD `108ac1d`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase1-deuda-bloqueante.md` | 129/129, 0 skipped, 0 warnings (17 PG real, +21 tests) | abrir el PR a mano; deuda abajo |
 | 2 · D10 en la aplicación | hecha (2026-10-14). Hallazgos 1, 2 y 3 del auditor arreglados. **Auditor APTO, verificador APTO (segunda pasada)** | `feature/d10-historial-baja` (pusheada; código hasta `d378c0f`, sale de `108ac1d`) | sin abrir: no hay `gh`, se abre a mano desde el link de compare. Cuerpo en `docs/sprint03/pr-fase2-d10-historial-baja.md`, reescrito el 2026-10-14. Base provisoria `fix/deuda-bloqueante-sprint3` | **2026-10-14, en `d378c0f`: 176 total · 176 passed · 0 failed · 0 skipped · 0 warnings (43 PG real)** | abrir el PR a mano; deuda abajo |
-| 3 · HU-ART-01 | **bloqueada**: compuerta de esquema D1 (la resuelve el equipo) | | | | ver PRÓXIMA SESIÓN |
+| D1 · compuerta de esquema en la aplicación | hecha (2026-10-14): re-scaffold, conversión de `Modalidad`, suite en verde. Subagentes: ver "Compuerta de esquema D1" | `feature/d1-precios-modalidad` (sale de `feature/d10-historial-baja`) | sin abrir. Cuerpo en `docs/sprint03/pr-d1-precios-modalidad.md`. Base provisoria `feature/d10-historial-baja` | **179 total · 179 passed · 0 failed · 0 skipped · 0 warnings (46 PG real)** | abrir el PR a mano |
+| 3 · HU-ART-01 | pendiente. **Compuerta D1 CERRADA** el 2026-10-14 | | | | ver PRÓXIMA SESIÓN |
 | 4 · HU-ART-02 | pendiente | | | | |
 | 5 · HU-FCO-01 | pendiente | | | | |
 | 6 · HU-ART-05 + CA5 | pendiente (misma compuerta D1) | | | | |
@@ -67,6 +68,39 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
   inválidos. También siguen los menores del verificador. Los 1, 2 y 3 se arreglan en esta rama.
 - Lo que dice abajo sobre el 28P01 queda como registro de lo que se vio en ese momento. No se
   reescribe: esta sección lo corrige.
+
+## Compuerta de esquema D1 · CERRADA (2026-10-14)
+
+La cerraron dos scripts del equipo, aplicados a mano, que están en `backend/db/rescaffold/`:
+- **`02_Modalidades_Precios.sql`** (en `lacentral_test` y en `lacentral`):
+  - **`articulo_margen` YA NO EXISTE.** Tenía 0 filas en las dos bases, así que no hubo migración. La clave `numero` (las listas 1/2/3) desapareció con ella.
+  - **`articulo.precio_venta_estimado` YA NO EXISTE.**
+  - **Nueva `articulo_precio_modalidad`** `(articulo_id, modalidad, porcentaje, precio, calculo_manual, fecha_calculo, usuario_id)`.
+    - PK `(articulo_id, modalidad)`. FK a `articulo` (ON DELETE CASCADE) y FK a `usuario`.
+    - 13 restricciones: 7 CHECK, la PK, 2 FK y 3 NOT NULL.
+    - `modalidad` es varchar(24), con el CHECK `articulo_precio_modalidad_valida` contra los seis nombres exactos del enum `Modalidad`.
+    - `precio` NULL significa "no se pudo calcular", nunca cero. Con `calculo_manual = true` el recálculo no pisa el precio.
+- **`03_Limpieza_Columnas_Fantasma.sql`** (solo en `lacentral_test`; en `lacentral` no hacía falta):
+  - borra `articulo.codigo`, `descripcion` y `cantidad`, que tenían 0 de 2644 filas con dato.
+  - Después de aplicarlo, `public.articulo` tiene 10 columnas en las dos bases.
+
+En la aplicación (rama `feature/d1-precios-modalidad`):
+- **Re-scaffold** `7801bbd`, contra `lacentral_test`, después de verificar en el catálogo que `articulo` tiene las 10 columnas de los scripts:
+  - se generó `ArticuloPrecioModalidad`;
+  - `ArticuloMargen.cs` se borró a mano, porque `--force` no lo hace;
+  - `Articulo` perdió `PrecioVentaEstimado`;
+  - las personalizaciones 1:N de los historiales siguen intactas.
+- El comando está documentado en `backend/db/rescaffold/README.md`.
+- **Los 42 rojos** tenían una sola causa: EF pedía `precio_venta_estimado`. Después del re-scaffold, la suite dio 176/176 sin tocar nada más. Ningún código C# usaba `PrecioVentaEstimado` ni `ArticuloMargen`.
+- **Conversión texto → `Modalidad`:** `ModalidadPersistida.Leer`, en el mapeo del repositorio (`backend/LaCentral.Data/Repositorios/`).
+  - Compara por nombre exacto y lanza `InvalidOperationException` ante un valor fuera de los seis.
+  - Lo usa `ArticuloRepositorio.ObtenerDetallePorIdAsync`.
+  - Test en rojo `91a705e` (L53 y L94, por aserción). Producción en `d8b6814`.
+  - Mutación con `Enum.TryParse(ignoreCase)`: vuelve a rojo.
+  - El sentido Modalidad → texto todavía no tiene quien escriba: entra con la primera escritura (Fase 3 o 6).
+- **`Articulo.CalcularPrecioEstimado` sobrevive:** calcula en memoria y nunca se persistió. Ni en esta rama ni en ninguna otra, local o remota, hay un repositorio, controlador o caso de uso que escriba `PrecioVentaEstimado`.
+  - Hasta `20e7c22` existió `PrecioVentaEstimado` como propiedad calculada del dominio, nunca mapeada a la columna.
+  - Ojo para la Fase 3: su modelo (`MargenModalidad`, porcentaje sobre costo) sigue sin expresar Efectivo sobre Lista ni CasoEspecial. Ver "Premisas".
 
 ## Arreglos de los hallazgos del auditor (2026-10-14)
 
@@ -238,6 +272,8 @@ prueba que la Fase 2 esté mal.
   - Los hooks `graphify hook-guard` se disparan en Read/Glob y en Bash/Grep.
 - 2026-10-14 · `CLAUDE.md`: rutas corregidas para que sean relativas a la raíz (`backend/LaCentral.Data/Models/`, `backend/LaCentral.Data/LaCentralDbContext.Personalizaciones.cs`, `backend/LaCentral.Tests/Infraestructura/PostgreSqlPruebas.cs`, `backend/LaCentral.Api/Program.cs`, `backend/LaCentral.UseCases/LaCentral.UseCases.csproj`, `graphify-out/GRAPH_REPORT.md`). Además se aclara dónde está la solución y dónde corre dotnet.
 - 2026-10-14 · `.gitignore`: `settings.json` ya estaba versionado (`d348ae4`), pero la regla `.claude/settings.json` lo seguía marcando como ignorado. Se reemplaza por `.claude/settings.local.json`, para los ajustes de cada máquina. Ojo: `settings.json` tiene la ruta absoluta de `graphify.exe` de una sola máquina.
+- 2026-10-14 · **D1, conversión texto ↔ `Modalidad`:** va en el mapeo del repositorio (`ModalidadPersistida`), no como value converter. El modelo scaffoldeado declara `string Modalidad`, y un value converter necesita que la propiedad CLR sea el enum: para eso habría que editar `Models/` o ignorar la propiedad generada y agregar otra a mano. Justificación completa en `docs/sprint03/pr-d1-precios-modalidad.md`.
+- 2026-10-14 · **D1:** `ObtenerDetallePorIdAsync` sin filas en `articulo_precio_modalidad` sigue devolviendo `PreciosPorModalidad = null`. Qué mostrar cuando falta una modalidad, y la razón de la ausencia, lo define HU-ART-02 (Fase 4).
 
 ## Deuda nueva detectada
 (el agente la asienta acá, con archivo y línea)
@@ -251,7 +287,7 @@ prueba que la Fase 2 esté mal.
 - 2026-10-13 · No hay test de falla a mitad de camino en altas y actualizaciones de cliente y proveedor. **Parcial (2026-10-14):** las altas y modificaciones siguen siendo un solo `SaveChanges`, atómico por construcción. La Fase 2 agregó escrituras en baja y reactivación, y solo 2 de esas 6 operaciones tienen test de falla (ver hallazgo 1 del auditor, abajo).
 - 2026-10-13 · `CicloCompletoIntegracionTests` mockea los repositorios: prueba el pipeline HTTP, no la persistencia. El nombre promete más de lo que verifica. El recorrido real contra PostgreSQL es de la Fase 7. **Desde la Fase 2 también mockea el historial y la unidad de trabajo.**
 - 2026-10-13 · La baja de usuario solo tiene tests InMemory o con mocks. **Parcial (2026-10-14):** desde la Fase 2 hay camino feliz PG (`HistorialBajaRepositorioTests`, usuario), todavía sin ejecutar con éxito. Falta el test de falla. `backend/LaCentral.Tests/Data/UsuarioRepositorioTests.cs` sigue en InMemory y solo prueba "Id inexistente → false".
-- 2026-10-13 · **Compuerta de esquema para las Fases 3 y 6:** no hay dónde persistir precios por modalidad con nombre (D1). `articulo_margen` usa la clave `numero` (listas 1/2/3) y hay una sola columna `precio_venta_estimado`. **2026-10-14:** informe de solo lectura en `docs/sprint03/informe-compuerta-d1.md`. El DDL del motor quedó sin obtener (28P01), y las consultas están en `docs/sprint03/consultas-compuerta-d1.sql`.
+- ~~2026-10-13 · **Compuerta de esquema para las Fases 3 y 6:** no hay dónde persistir precios por modalidad con nombre (D1). `articulo_margen` usa la clave `numero` (listas 1/2/3) y hay una sola columna `precio_venta_estimado`.~~ **CERRADA el 2026-10-14** por `02_Modalidades_Precios.sql` y `03_Limpieza_Columnas_Fantasma.sql`. `articulo_margen` ya no existe. Ver "Compuerta de esquema D1 · CERRADA".
 - 2026-10-13 · EF Core difiere entre Data (10.0.11) y Api/Tests (10.0.12, por InMemory y Mvc.Testing). La Api referencia `EntityFrameworkCore.InMemory` en producción.
 - 2026-10-13 · Pendiente de confirmar por el usuario: si existe `ConnectionStrings__Postgres` en el entorno, a qué base apunta. (Confirmado por el equipo el 2026-10-13: no existe. Ver la revisión de la Fase 1.)
 - ~~2026-10-14 · **BLOQUEANTE · conexión de test:** el servidor rechaza la contraseña de `LACENTRAL_TEST_PG` (`28P01`, usuario `lacentral`, base `lacentral_test`, host `100.125.169.91`).~~ Resuelto el 2026-10-14: era una credencial vieja en la variable de entorno, no el contenedor ni el código. La suite da 167/167, con los 34 PG en verde.
@@ -264,12 +300,25 @@ prueba que la Fase 2 esté mal.
   - Auditor: los dobles `ProveedorInactivo()` y `UsuarioInactivo()` de `backend/LaCentral.Tests/Comun/HistorialBajaCasosDeUsoTests.cs` tienen motivo y no tienen fecha, un estado que el CHECK prohíbe.
   - Verificador: los 7 PG de historial vieron su rojo solo contra stubs `NotImplementedException`.
 - 2026-10-14 · Worktree huérfano de una sesión anterior registrado en git: `C:/Users/Santi/AppData/Local/Temp/claude/C--Users-Santi-Desktop-ESCMB-UNC-Tesis-Tesis-backend/9c481e3d-.../scratchpad/wt` (`a105f6d`, detached). No se tocó. Para quitarlo: `git worktree remove --force <ruta>` o, si falla por la ruta larga, borrar la carpeta y `git worktree prune`.
-- 2026-10-14 · `docs/entorno-local.md` está versionado vacío (0 bytes, `d348ae4`).
+- ~~2026-10-14 · `docs/entorno-local.md` está versionado vacío (0 bytes, `d348ae4`).~~ Tiene contenido desde `74f47ed`. Su sección 3 todavía dice "17 tests" en rojo sin la variable; hoy son 46.
+- 2026-10-14 · **DEUDA DE PROCESO · la base de pruebas se fue de los scripts sin que nadie lo notara.**
+  - `lacentral_test` tenía `articulo.codigo`, `descripcion` y `cantidad`, que no estaban en ningún script. Las dejó una carga de Multisoft contra test.
+  - **Producción NO estaba derivada: `lacentral` coincidía con los scripts (10 columnas). La que se fue de los scripts era la base de PRUEBAS.**
+  - El scaffold se hace contra `lacentral_test`. Si test difiere de producción, el modelo generado describe una base que no existe: es la misma clase de error que un test sobre InMemory.
+  - **Regla:** antes de cada re-scaffold, comparar el esquema de test contra el de producción (consulta en `backend/db/rescaffold/README.md`). Si difieren, no se scaffoldea.
+  - Agravante: el fixture de `PostgreSqlPruebas.cs` (`ValidarTablaAsync`) compara en un solo sentido. Detecta columnas que EF mapea y que faltan en la base, pero no columnas que sobran en la base. No es una red para esto.
+  - La deriva apareció solo porque se miró el diff del scaffold.
+- 2026-10-14 · **Código manual dentro de la carpeta generada:** `backend/LaCentral.Data/Models/HistorialesBaja.Personalizaciones.cs`.
+  - Contradice la convención: el código manual va fuera de `Models/` (ver `CLAUDE.md`).
+  - El scaffold no lo toca, pero es fácil borrarlo al limpiar `Models/`.
+  - **No se movió en la rama de D1:** es un cambio aparte.
+- 2026-10-14 · `d8b72c9` dice "limpieza de columnas fantasma" en el mensaje, pero solo renombra el 02. El script 03 se versionó después, en `09f4bc1`.
+- 2026-10-14 · `PrecioModalidadConsultaDto.Modalidad` ahora es el enum. Cuando la Fase 4 lo exponga por HTTP, hay que serializarlo por nombre (`JsonStringEnumConverter`), no como número.
 
 ## Premisas del plan que no coinciden con el código (revisar antes de la fase)
 - 2026-10-13 · **Fase 2:** el plan dice "NINGÚN repositorio escribe en [las tablas de historial]". Falso para cliente y proveedor: `LaCentral.Data/Repositorios/ClienteRepositorio.cs:176-191` y `ProveedorRepositorio.cs:154-169` ya abren y cierran la baja en `*_historial_baja` dentro del repositorio, sin puerto. Lo cubren los tests PG `DosCiclos..._ConservanEstadoEHistorial...`. Artículo y usuario no escriben historial. La Fase 2 pasa a ser extraer un puerto `IHistorialBajaRepositorio` y mover esa lógica, más los usuarios de baja/reactivación desde IContextoUsuario, no construirla desde cero. (Aplicada en la Fase 2.)
 - 2026-10-13 · **Fase 4:** el plan dice que el test del comodín ("100%_original") corre sobre InMemory. Hoy `ArticuloRepositorioTests.Busqueda_PermiteInactivosYNoInterpretaComodinesSQL` es `[PostgreSqlFact]` y corrió contra PostgreSQL real. Verificar si cubre ese caso exacto antes de duplicarlo.
-- 2026-10-14 · **Fases 3, 4 y 6 (D1):** el comentario de `articulo_margen` todavía dice "0,01 % = precio igual al costo", mientras que D1 dice Costo = × 1,00. El modelo "porcentaje sobre costo" de `MargenModalidad`/`CalcularPrecioEstimado` no expresa Efectivo (sobre Lista), CasoEspecial (precio fijo) ni la razón de la ausencia. Detalle en `informe-compuerta-d1.md`.
+- 2026-10-14 · **Fases 3, 4 y 6 (D1):** ~~el comentario de `articulo_margen` todavía dice "0,01 % = precio igual al costo", mientras que D1 dice Costo = × 1,00~~ (la tabla ya no existe, 2026-10-14). **Sigue en pie:** la tabla nueva tiene dónde guardar `precio` y `calculo_manual`, pero el dominio no se alineó todavía: eso es de la Fase 3. Además, el comentario de la tabla nombra un `CalcularPreciosArticuloUseCase` que todavía no existe. El modelo "porcentaje sobre costo" de `MargenModalidad`/`CalcularPrecioEstimado` no expresa Efectivo (sobre Lista), CasoEspecial (precio fijo) ni la razón de la ausencia. Detalle en `informe-compuerta-d1.md`.
 
 ## Revisión de la Fase 1 por el equipo (2026-10-13)
 - Fase 1 verificada contra el grafo (`bf845dbc`): los nueve ítems están. El PR todavía no se abrió (no hay `gh`): abrirlo a mano desde la rama `fix/deuda-bloqueante-sprint3` con el cuerpo de `pr-fase1-deuda-bloqueante.md`.
@@ -289,11 +338,11 @@ bloqueos de abajo. Si alguno sigue abierto, PARAR y reportar.
    - Con la conexión de vuelta, volver a correr los dos subagentes sobre `git diff b95744f~1 a105f6d` y asentar el resultado arriba.
    - Antes, el equipo decide si la deuda de los hallazgos del auditor (1 atomicidad, 2 `usuario_baja_id` de usuario, 3 `fechas_coherentes`) se corrige en esta rama antes del PR o queda como deuda declarada en el cuerpo del PR. Recomendación: corregir el 2 en esta rama (pérdida silenciosa de auditoría) y agregar los tests de falla del 1.
    - Abrir a mano los PR de la Fase 1 y de la Fase 2 (no hay `gh`). El de la Fase 2 va con base provisoria `fix/deuda-bloqueante-sprint3`.
-3. **Bloqueo C · compuerta de esquema D1 (equipo, NO el agente):**
+3. ~~**Bloqueo C · compuerta de esquema D1 (equipo, NO el agente):**~~ **CERRADO el 2026-10-14** (scripts 02 y 03, re-scaffold en `feature/d1-precios-modalidad`).
    - Pegar en `docs/sprint03/informe-compuerta-d1.md` la salida de `consultas-compuerta-d1.sql` contra el motor.
    - El equipo escribe y aplica el script SQL de precios por modalidad con nombre en `backend/db/rescaffold/` y re-scaffoldea.
    - El agente no escribe ese script ni edita `backend/LaCentral.Data/Models/`.
-4. **Base de la rama de la Fase 3:** si las Fases 1 y 2 ya están en develop, `git switch develop && git pull && git switch -c feature/HU-ART-01-alta-articulo`. Si no, PREGUNTAR de qué rama sale.
+4. **Base de la rama de la Fase 3:** la Fase 3 necesita la rama de D1. Si las Fases 1, 2 y D1 ya están en develop, `git switch develop && git pull && git switch -c feature/HU-ART-01-alta-articulo`. Si no, PREGUNTAR de qué rama sale.
 5. **Fase 3, con los bloqueos resueltos** (detalle en `PLAN_SPRINT3.md`, FASE 3):
    - `ArticuloValidaciones` (estática, compartida con la modificación), `CrearArticuloUseCase`, `ArticulosController` con `POST /api/articulos` y el registro en `Program.cs`.
    - El código interno lo genera el sistema, sin MAX+1: dos altas simultáneas desde las dos sucursales no pueden chocar.
