@@ -30,6 +30,18 @@ public static class ReglasPrecioModalidad
         return Math.Round(valorBase.Value * (1m + porcentaje / 100m), 2, MidpointRounding.AwayFromZero);
     }
 
-    public static IReadOnlyList<PrecioModalidad> ConfiguracionInicial()
-        => Array.Empty<PrecioModalidad>();
+    /// <summary>
+    /// Decisión C: las seis filas con que nace un artículo, con precio null. Tarjeta3/6 sin
+    /// base ni porcentaje hasta que existan las tasas: D1 prohíbe inventar un número.
+    /// CasoEspecial es manual y no tiene fórmula. Filas nuevas en cada llamada.
+    /// </summary>
+    public static IReadOnlyList<PrecioModalidad> ConfiguracionInicial() => new PrecioModalidad[]
+    {
+        new() { Modalidad = Modalidad.Lista, Base = BasePrecio.CostoArticulo, Porcentaje = 50m },
+        new() { Modalidad = Modalidad.Tarjeta3 },
+        new() { Modalidad = Modalidad.Tarjeta6 },
+        new() { Modalidad = Modalidad.EfectivoTransferencia, Base = BasePrecio.PrecioLista, Porcentaje = -10m },
+        new() { Modalidad = Modalidad.Costo, Base = BasePrecio.CostoArticulo, Porcentaje = 0m },
+        new() { Modalidad = Modalidad.CasoEspecial, CalculoManual = true },
+    };
 }
