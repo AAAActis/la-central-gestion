@@ -42,7 +42,7 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 | 0 · Línea base | hecha (2026-10-13) | — | — | 108/108, 0 skipped (8 PG real) | — |
 | 1 · Deuda bloqueante | hecha, PR sin abrir (2026-10-13) | `fix/deuda-bloqueante-sprint3` (pusheada, HEAD `108ac1d`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase1-deuda-bloqueante.md` | 129/129, 0 skipped, 0 warnings (17 PG real, +21 tests) | abrir el PR a mano; deuda abajo |
 | 2 · D10 en la aplicación | hecha (2026-10-14). Hallazgos 1, 2 y 3 del auditor arreglados. **Auditor APTO, verificador APTO (segunda pasada)** | `feature/d10-historial-baja` (pusheada; código hasta `d378c0f`, sale de `108ac1d`) | sin abrir: no hay `gh`, se abre a mano desde el link de compare. Cuerpo en `docs/sprint03/pr-fase2-d10-historial-baja.md`, reescrito el 2026-10-14. Base provisoria `fix/deuda-bloqueante-sprint3` | **2026-10-14, en `d378c0f`: 176 total · 176 passed · 0 failed · 0 skipped · 0 warnings (43 PG real)** | abrir el PR a mano; deuda abajo |
-| D1 · compuerta de esquema en la aplicación | hecha (2026-10-14): re-scaffold, conversión de `Modalidad`, suite en verde. Subagentes: ver "Compuerta de esquema D1" | `feature/d1-precios-modalidad` (sale de `feature/d10-historial-baja`) | sin abrir. Cuerpo en `docs/sprint03/pr-d1-precios-modalidad.md`. Base provisoria `feature/d10-historial-baja` | **179 total · 179 passed · 0 failed · 0 skipped · 0 warnings (46 PG real)** | abrir el PR a mano |
+| D1 · compuerta de esquema en la aplicación | hecha (2026-10-14): re-scaffold, conversión de `Modalidad`, suite en verde. **Auditor APTO, verificador APTO** | `feature/d1-precios-modalidad` (sale de `feature/d10-historial-baja`) | sin abrir. Cuerpo en `docs/sprint03/pr-d1-precios-modalidad.md`. Base provisoria `feature/d10-historial-baja` | **179 total · 179 passed · 0 failed · 0 skipped · 0 warnings (46 PG real)** | abrir el PR a mano |
 | 3 · HU-ART-01 | pendiente. **Compuerta D1 CERRADA** el 2026-10-14 | | | | ver PRÓXIMA SESIÓN |
 | 4 · HU-ART-02 | pendiente | | | | |
 | 5 · HU-FCO-01 | pendiente | | | | |
@@ -101,6 +101,23 @@ En la aplicación (rama `feature/d1-precios-modalidad`):
 - **`Articulo.CalcularPrecioEstimado` sobrevive:** calcula en memoria y nunca se persistió. Ni en esta rama ni en ninguna otra, local o remota, hay un repositorio, controlador o caso de uso que escriba `PrecioVentaEstimado`.
   - Hasta `20e7c22` existió `PrecioVentaEstimado` como propiedad calculada del dominio, nunca mapeada a la columna.
   - Ojo para la Fase 3: su modelo (`MargenModalidad`, porcentaje sobre costo) sigue sin expresar Efectivo sobre Lista ni CasoEspecial. Ver "Premisas".
+
+### Subagentes sobre `git diff dabcde4..1351393` (2026-10-14) · **los dos APTO**
+- **verificador-tdd: APTO.** Trabajó en un worktree propio, que después borró.
+  - `91a705e`: rojo en L53 y L94, por aserción y por la razón correcta. `d8b6814`: verde, 3/3.
+  - Mutaciones: `Enum.TryParse(ignoreCase)` y "devolver `default`" dan rojo en L94.
+  - Suite: 179/179, 0 warnings, 46 `[PostgreSqlFact]`.
+  - No reprodujo los 42 rojos previos al re-scaffold. No revisó criterios de aceptación de HU.
+- **auditor-persistencia: APTO.**
+  - Contra el catálogo de `lacentral_test`, el modelo coincide con `articulo_precio_modalidad` y con `articulo` (comparado en las dos direcciones).
+  - Relectura con contexto nuevo, sin Ids sembrados. El `DROP CONSTRAINT` del test no alcanza `public`.
+  - Suite: 179/179.
+  - Sin verificar: `lacentral`, que está fuera de su alcance.
+- **Hallazgos del auditor.** No bloquean esta rama, que solo LEE. **Bloquean la fase que agregue la escritura en `articulo_precio_modalidad`** (Fase 3 o 6):
+  - **H1:** falta test contra el motor de 6 CHECK (`manual_sin_porcentaje`, `calculado_con_porcentaje`, `precio_con_fecha`, `manual_con_usuario` y los dos `*_no_negativo`), de la PK (23505), de las FK (23503) y del ON DELETE CASCADE.
+  - **H2:** `MargenModalidad` (`backend/LaCentral.UseCases/Entidades/Articulo.cs:33-43`) no tiene `Precio`, `CalculoManual`, `FechaCalculo` ni `UsuarioId`. Un repositorio no puede cumplir los CHECK sin inventar datos. `CalcularPrecioEstimado` es una segunda regla de cálculo frente al `CalcularPreciosArticuloUseCase` que nombra la tabla.
+  - **H3:** el test de lectura inserta porcentaje, manual, fecha y usuario, pero no los relee por valor (el DTO no los expone).
+  - Menor: calificar con el esquema el `ALTER TABLE` del test de inválidos.
 
 ## Arreglos de los hallazgos del auditor (2026-10-14)
 
