@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using Microsoft.AspNetCore.TestHost;
 using System.Net.Http.Json;
 using Moq;
+using LaCentral.Tests.Infraestructura;
 using LaCentral.Api.Seguridad;
 using LaCentral.UseCases.Puertos;
 using LaCentral.UseCases.Entidades;
@@ -126,6 +127,8 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
         var http = CrearClienteAutenticado(services =>
         {
             services.AddScoped(_ => repoMock.Object);
+            services.AddScoped(_ => new Mock<IHistorialBajaRepositorio>().Object);
+            services.AddScoped(_ => DoblesBaja.UnidadQueEjecuta().Object);
             services.AddScoped(_ => contextoMock.Object);
         });
 
@@ -247,6 +250,8 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
         var http = CrearClienteAutenticado(services =>
         {
             services.AddScoped(_ => repoMock.Object);
+            services.AddScoped(_ => new Mock<IHistorialBajaRepositorio>().Object);
+            services.AddScoped(_ => DoblesBaja.UnidadQueEjecuta().Object);
         });
 
         // 1. Alta — HU-PRO-01

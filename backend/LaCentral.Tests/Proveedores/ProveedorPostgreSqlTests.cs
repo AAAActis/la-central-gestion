@@ -50,7 +50,7 @@ public class ProveedorPostgreSqlTests
 
         var antes = DateTime.UtcNow;
         await using (var contexto = fixture.CrearContexto())
-            Assert.True((await new DarDeBajaProveedorUseCase(new ProveedorRepositorio(contexto))
+            Assert.True((await CasosDeBajaPostgreSql.DarDeBajaProveedor(contexto, await fixture.CrearUsuarioAsync())
                 .EjecutarAsync(id, new DarDeBajaProveedorRequest("Cerró el local", "PRV-200"))).IsSuccess);
 
         await using var lectura = fixture.CrearContexto();

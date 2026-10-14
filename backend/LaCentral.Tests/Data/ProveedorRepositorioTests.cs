@@ -19,6 +19,7 @@ public class ProveedorRepositorioTests
     public async Task DosCiclosYModificacion_ConservanEstadoEHistorialConIdsGenerados_PostgreSQL()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var usuarioId = await fixture.CrearUsuarioAsync();
         var proveedor = new Proveedor { Codigo = "PRV-PG-01", RazonSocial = "Proveedor Test", Activo = true };
         await using (var setup = fixture.CrearContexto())
         {
@@ -27,7 +28,7 @@ public class ProveedorRepositorioTests
         }
         Assert.True(proveedor.Id > 0);
         await using (var baja = fixture.CrearContexto())
-            Assert.True((await new DarDeBajaProveedorUseCase(new ProveedorRepositorio(baja)).EjecutarAsync(
+            Assert.True((await CasosDeBajaPostgreSql.DarDeBajaProveedor(baja, usuarioId).EjecutarAsync(
                 proveedor.Id, new DarDeBajaProveedorRequest("Primera baja", proveedor.Codigo))).IsSuccess);
         ProveedorHistorialBaja primera;
         await using (var leer = fixture.CrearContexto())
@@ -41,7 +42,7 @@ public class ProveedorRepositorioTests
             Assert.Null(primera.FechaReactivacion);
         }
         await using (var reactivar = fixture.CrearContexto())
-            Assert.True((await new ReactivarProveedorUseCase(new ProveedorRepositorio(reactivar))
+            Assert.True((await CasosDeBajaPostgreSql.ReactivarProveedor(reactivar, usuarioId)
                 .EjecutarAsync(proveedor.Id)).IsSuccess);
         DateTime? reactivacion;
         await using (var modificar = fixture.CrearContexto())
@@ -60,7 +61,7 @@ public class ProveedorRepositorioTests
             Assert.NotNull(reactivacion);
             Assert.Single(await modificar.ProveedorHistorialBaja.ToListAsync());
             await modificar.Proveedor.Include(p => p.HistorialesBaja).SingleAsync(p => p.Id == proveedor.Id);
-            Assert.True((await new DarDeBajaProveedorUseCase(repo).EjecutarAsync(proveedor.Id,
+            Assert.True((await CasosDeBajaPostgreSql.DarDeBajaProveedor(modificar, usuarioId).EjecutarAsync(proveedor.Id,
                 new DarDeBajaProveedorRequest("Segunda baja", proveedor.Codigo))).IsSuccess);
         }
         await using (var final = fixture.CrearContexto())

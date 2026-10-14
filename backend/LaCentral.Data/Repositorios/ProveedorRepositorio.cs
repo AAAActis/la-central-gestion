@@ -159,32 +159,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
     bd.MotivoBaja = proveedor.MotivoBaja;
     bd.FechaBaja = proveedor.FechaBaja;
 
-    // LÓGICA D10: Gestión del Historial de Baja
-    if (!bd.Activo)
-    {
-        var bajaAbierta = await _context.ProveedorHistorialBaja
-            .FirstOrDefaultAsync(h => h.ProveedorId == bd.Id && h.FechaReactivacion == null, ct);
-        
-        if (bajaAbierta == null)
-        {
-            _context.ProveedorHistorialBaja.Add(new LaCentral.Data.Models.ProveedorHistorialBaja
-            {
-                ProveedorId = bd.Id,
-                Motivo = bd.MotivoBaja ?? "Baja lógica",
-                FechaBaja = bd.FechaBaja ?? DateTime.UtcNow
-            });
-        }
-    }
-    else
-    {
-        var bajaAbierta = await _context.ProveedorHistorialBaja
-            .FirstOrDefaultAsync(h => h.ProveedorId == bd.Id && h.FechaReactivacion == null, ct);
-        
-        if (bajaAbierta != null)
-        {
-            bajaAbierta.FechaReactivacion = DateTime.UtcNow;
-        }
-    }
+    // El historial D10 lo escribe IHistorialBajaRepositorio, desde el caso de uso.
 
     var telsABorrar = bd.ProveedorTelefono.Where(t => !proveedor.Telefonos.Contains(t.Numero ?? string.Empty)).ToList();
     foreach (var t in telsABorrar) _context.Remove(t);

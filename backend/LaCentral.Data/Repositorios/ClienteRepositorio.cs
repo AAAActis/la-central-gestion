@@ -129,6 +129,7 @@ public class ClienteRepositorio : IClienteRepositorio
             Activo = clienteBd.Activo,
             MotivoBaja = clienteBd.MotivoBaja,
             FechaBaja = clienteBd.FechaBaja,
+            UsuarioBajaId = clienteBd.UsuarioBajaId,
 
             // Mapeamos leyendo desde ClienteTelefonos y ClienteDireccions
             Telefonos = clienteBd.ClienteTelefono.Select(t => t.Numero).ToList(), 
@@ -171,33 +172,9 @@ public class ClienteRepositorio : IClienteRepositorio
     clienteBd.Activo = cliente.Activo;
     clienteBd.MotivoBaja = cliente.MotivoBaja;
     clienteBd.FechaBaja = cliente.FechaBaja;
+    clienteBd.UsuarioBajaId = cliente.UsuarioBajaId;
 
-    // LÓGICA D10: Gestión del Historial de Baja
-    if (!clienteBd.Activo)
-    {
-        var bajaAbierta = await _context.ClienteHistorialBaja
-            .FirstOrDefaultAsync(h => h.ClienteId == clienteBd.Id && h.FechaReactivacion == null, ct);
-        
-        if (bajaAbierta == null)
-        {
-            _context.ClienteHistorialBaja.Add(new LaCentral.Data.Models.ClienteHistorialBaja
-            {
-                ClienteId = clienteBd.Id,
-                Motivo = clienteBd.MotivoBaja ?? "Baja lógica",
-                FechaBaja = clienteBd.FechaBaja ?? DateTime.UtcNow
-            });
-        }
-    }
-    else
-    {
-        var bajaAbierta = await _context.ClienteHistorialBaja
-            .FirstOrDefaultAsync(h => h.ClienteId == clienteBd.Id && h.FechaReactivacion == null, ct);
-        
-        if (bajaAbierta != null)
-        {
-            bajaAbierta.FechaReactivacion = DateTime.UtcNow;
-        }
-    }
+    // El historial D10 lo escribe IHistorialBajaRepositorio, desde el caso de uso.
 
     // Sincronización inteligente de Teléfonos
     var telsABorrar = clienteBd.ClienteTelefono.Where(t => !cliente.Telefonos.Contains(t.Numero)).ToList();

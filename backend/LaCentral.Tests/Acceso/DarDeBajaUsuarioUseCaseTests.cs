@@ -1,4 +1,5 @@
 using Moq;
+using LaCentral.Tests.Infraestructura;
 using Xunit;
 using LaCentral.UseCases;
 using LaCentral.UseCases.Puertos;
@@ -13,7 +14,8 @@ public class DarDeBajaUsuarioUseCaseTests
     private readonly Mock<IContextoUsuario> _contextoMock = new();
 
     private DarDeBajaUsuarioUseCase CrearCasoDeUso() => 
-        new DarDeBajaUsuarioUseCase(_repoMock.Object, _contextoMock.Object);
+        new DarDeBajaUsuarioUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object,
+            DoblesBaja.UnidadQueEjecuta().Object, _contextoMock.Object);
         
 
     [Fact]

@@ -1,4 +1,5 @@
 using Moq;
+using LaCentral.Tests.Infraestructura;
 using Xunit;
 using LaCentral.UseCases;
 using LaCentral.UseCases.Comun;
@@ -15,7 +16,7 @@ public class ReactivarClienteUseCaseTests
     public ReactivarClienteUseCaseTests()
     {
         _repositorioMock = new Mock<IClienteRepositorio>();
-        _useCase = new ReactivarClienteUseCase(_repositorioMock.Object);
+        _useCase = new ReactivarClienteUseCase(_repositorioMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
     }
 
     [Fact]

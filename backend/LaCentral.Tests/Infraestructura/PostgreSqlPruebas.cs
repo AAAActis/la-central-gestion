@@ -141,6 +141,26 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Siembra un usuario real en el esquema aislado (rol y sucursal copiados de los
+    /// catálogos) y devuelve el Id que generó la base. Lo exigen las FK de auditoría.
+    /// </summary>
+    public async Task<int> CrearUsuarioAsync(string nombreUsuario = "auditor")
+    {
+        await using var contexto = CrearContexto();
+        var usuario = new Usuario
+        {
+            NombreUsuario = nombreUsuario,
+            HashContrasena = "hash-de-prueba",
+            RolId = await contexto.Rol.OrderBy(r => r.Id).Select(r => r.Id).FirstAsync(),
+            SucursalId = await contexto.Sucursal.OrderBy(s => s.Id).Select(s => s.Id).FirstAsync(),
+            Activo = true
+        };
+        contexto.Usuario.Add(usuario);
+        await contexto.SaveChangesAsync();
+        return usuario.Id;
+    }
+
     private async Task ValidarTablaAsync(string origen, IEntityType entidad)
     {
         var tabla = entidad.GetTableName()!;

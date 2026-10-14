@@ -1,4 +1,5 @@
 using Moq;
+using LaCentral.Tests.Infraestructura;
 using Xunit;
 using LaCentral.UseCases;
 using LaCentral.UseCases.Comun;
@@ -15,7 +16,7 @@ public class DarDeBajaClienteUseCaseTests
     public DarDeBajaClienteUseCaseTests()
     {
         _repositorioMock = new Mock<IClienteRepositorio>();
-        _useCase = new DarDeBajaClienteUseCase(_repositorioMock.Object);
+        _useCase = new DarDeBajaClienteUseCase(_repositorioMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
     }
 
     [Fact]
