@@ -12,14 +12,48 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
 
     public ArticuloRepositorio(LaCentralDbContext context) => _context = context;
 
-    public Task<int> AgregarAsync(LaCentral.UseCases.Entidades.Articulo articulo, CancellationToken ct = default)
-        => Task.FromResult(0);
+    /// <summary>
+    /// Un solo SaveChanges para artículo, códigos, stock y precios. codigo_interno es NOT NULL
+    /// y único: entra un provisional irrepetible hasta que el caso de uso asigna el definitivo,
+    /// derivado del Id, en la misma transacción.
+    /// </summary>
+    public async Task<int> AgregarAsync(LaCentral.UseCases.Entidades.Articulo articulo, CancellationToken ct = default)
+    {
+        var fila = new Articulo
+        {
+            CodigoInterno = "TMP-" + Guid.NewGuid().ToString("N"),
+            Nombre = articulo.Nombre,
+            UbicacionDeposito = articulo.UbicacionDeposito,
+            PrecioCosto = articulo.CostoVigente,
+            Activo = articulo.Activo,
+            MotivoBaja = articulo.MotivoBaja,
+            FechaBaja = articulo.FechaBaja,
+            ArticuloCodigoAlternativo = articulo.CodigosAlternativos
+                .Select(c => new ArticuloCodigoAlternativo { Codigo = c.Codigo, ProveedorId = c.ProveedorId }).ToList(),
+            Stock = articulo.Existencias
+                .Select(e => new Stock { SucursalId = checked((short)e.SucursalId), Cantidad = e.Cantidad }).ToList(),
+            ArticuloPrecioModalidad = articulo.Precios.Select(p => new ArticuloPrecioModalidad
+            {
+                Modalidad = ModalidadPersistida.Escribir(p.Modalidad),
+                Base = ModalidadPersistida.EscribirBase(p.Base),
+                Porcentaje = p.Porcentaje,
+                Precio = p.Precio,
+                CalculoManual = p.CalculoManual,
+                FechaCalculo = p.FechaCalculo,
+                UsuarioId = p.UsuarioId
+            }).ToList()
+        };
+        _context.Articulo.Add(fila);
+        await _context.SaveChangesAsync(ct);
+        return fila.Id;
+    }
 
-    public Task<bool> AsignarCodigoInternoAsync(int id, string codigoInterno, CancellationToken ct = default)
-        => Task.FromResult(false);
+    public async Task<bool> AsignarCodigoInternoAsync(int id, string codigoInterno, CancellationToken ct = default)
+        => await _context.Articulo.Where(a => a.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(a => a.CodigoInterno, codigoInterno), ct) == 1;
 
-    public Task<IReadOnlyList<short>> ObtenerSucursalesAsync(CancellationToken ct = default)
-        => Task.FromResult<IReadOnlyList<short>>(Array.Empty<short>());
+    public async Task<IReadOnlyList<short>> ObtenerSucursalesAsync(CancellationToken ct = default)
+        => await _context.Sucursal.AsNoTracking().OrderBy(s => s.Id).Select(s => s.Id).ToListAsync(ct);
 
     // Query completo antes de paginar, expuesto a los tests de traducción SQL.
     internal IQueryable<CoincidenciaArticulo> CrearCoincidencias(ConsultaArticulos consulta)

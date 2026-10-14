@@ -24,6 +24,17 @@ internal static class ModalidadPersistida
     public static BasePrecio? LeerBase(string? valor) =>
         valor is null ? null : Convertir(BasePorNombre, valor, "base");
 
+    public static string Escribir(Modalidad modalidad) => Nombre(modalidad);
+
+    public static string? EscribirBase(BasePrecio? basePrecio) =>
+        basePrecio is { } valor ? Nombre(valor) : null;
+
+    // (Modalidad)99 daría "99": el CHECK lo rechazaría, pero se corta antes, sin default.
+    private static string Nombre<T>(T valor) where T : struct, Enum =>
+        Enum.IsDefined(valor)
+            ? valor.ToString()
+            : throw new InvalidOperationException($"{typeof(T).Name} sin nombre: {valor}.");
+
     private static Dictionary<string, T> PorNombre<T>() where T : struct, Enum =>
         Enum.GetValues<T>().ToDictionary(m => m.ToString(), StringComparer.Ordinal);
 
