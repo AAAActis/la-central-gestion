@@ -96,6 +96,41 @@ public class RestriccionesUnicasPostgreSqlTests
         Assert.Equal(enOrigen, enCopia);
     }
 
+    // Tres restricciones únicas del esquema real que el manejador no reconocía: su
+    // violación salía como 500.
+    [PostgreSqlFact]
+    public async Task TelefonosYFacturaDeVentaDuplicados_ElManejadorLosReconoceComoConflicto()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var usuarioId = await fixture.CrearUsuarioAsync();
+        var cliente = new Cliente { Codigo = "CLI-TEL", RazonSocial = "Cliente", Activo = true };
+        var proveedor = new Proveedor { Codigo = "PRV-TEL", RazonSocial = "Proveedor", Activo = true };
+        cliente.ClienteTelefono.Add(new ClienteTelefono { Numero = "351-555-0001" });
+        proveedor.ProveedorTelefono.Add(new ProveedorTelefono { Numero = "351-555-0002" });
+        short sucursalId;
+        await using (var setup = fixture.CrearContexto())
+        {
+            sucursalId = await setup.Sucursal.OrderBy(s => s.Id).Select(s => s.Id).FirstAsync();
+            setup.AddRange(cliente, proveedor);
+            setup.FacturaVenta.Add(new FacturaVenta { Cliente = cliente, Numero = "0001-00000001", Fecha = new DateOnly(2026, 10, 1),
+                SucursalId = sucursalId, Estado = "ACTIVA", UsuarioId = usuarioId });
+            await setup.SaveChangesAsync();
+        }
+
+        async Task<string?> MensajeAlDuplicarAsync(Action<LaCentralDbContext> duplicar)
+        {
+            await using var contexto = fixture.CrearContexto();
+            duplicar(contexto);
+            return ManejadorExcepcionesGlobal.MensajeDeConflicto(
+                await Assert.ThrowsAsync<DbUpdateException>(() => contexto.SaveChangesAsync()));
+        }
+
+        Assert.NotNull(await MensajeAlDuplicarAsync(c => c.ClienteTelefono.Add(new ClienteTelefono { ClienteId = cliente.Id, Numero = "351-555-0001" })));
+        Assert.NotNull(await MensajeAlDuplicarAsync(c => c.ProveedorTelefono.Add(new ProveedorTelefono { ProveedorId = proveedor.Id, Numero = "351-555-0002" })));
+        Assert.NotNull(await MensajeAlDuplicarAsync(c => c.FacturaVenta.Add(new FacturaVenta { ClienteId = cliente.Id, Numero = "0001-00000001",
+            Fecha = new DateOnly(2026, 10, 2), SucursalId = sucursalId, Estado = "ACTIVA", UsuarioId = usuarioId })));
+    }
+
     [PostgreSqlFact]
     public async Task BajaAbiertaDuplicada_ElManejadorLaReconoceComoConflicto()
     {
