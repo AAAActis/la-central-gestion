@@ -41,6 +41,9 @@ public class Articulo
     public string? MotivoBaja { get; set; }
     public DateTime? FechaBaja { get; set; }
     
+    // Texto libre e informativo: el sistema no gestiona el depósito.
+    public string? UbicacionDeposito { get; set; }
+
     public decimal? CostoVigente { get; set; }
 
     public List<CodigoAlternativo> CodigosAlternativos { get; set; } = new();
