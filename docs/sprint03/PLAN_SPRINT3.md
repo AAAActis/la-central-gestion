@@ -129,6 +129,13 @@ COMPUERTAS — dónde PARÁS y reportás
 Al terminar cada fase: PARÁS, mostrás el resumen (tests agregados, archivos tocados,
 rama, link del PR, pendientes) y ESPERÁS confirmación antes de la siguiente.
 
+REQUISITO PERMANENTE (agregado 2026-10-14, a pedido del equipo):
+  Toda fase que agregue endpoints cierra con un ENTREGABLE VISIBLE en frontend/, no
+  solo con tests. Un endpoint que nadie puede usar desde la interfaz no cierra la HU.
+  El PR de la fase dice qué pantalla o flujo de frontend/ lo usa.
+  Al 2026-10-14 frontend/ NO existe en el repo. La Fase 3 (POST /api/articulos) se
+  cerró antes de este requisito y quedó sin entregable visible: ver ESTADO.md.
+
 PARÁS INMEDIATAMENTE, sin intentar workarounds, si:
   · Un test que debería fallar pasa a la primera. Tu test está mal.
   · Para resolver algo necesitás agregar una referencia de proyecto a UseCases.
@@ -258,6 +265,13 @@ rama: feature/HU-ART-01-alta-articulo
   códigos ni stock a medio guardar); D2 violado → Conflicto; código ya usado por
   otro artículo → Conflicto informando CUÁL; proveedor inactivo → Invalido;
   201 con Id y Location.
+
+  [Hecho 2026-10-14, rama feature/HU-ART-01-alta-articulo] Además, por pedido del
+  equipo: script 04 (base de cálculo), PrecioModalidad + BasePrecio en el dominio,
+  ReglasPrecioModalidad como única regla de cálculo, las seis filas de precio en el
+  alta, y los hallazgos H1 y H3 del auditor. Código interno = LC-{id:D6} desde la
+  identidad. "Sucursal habilitada": la tabla sucursal no tiene esa marca; el stock
+  cero va a TODAS las sucursales. Sin entregable en frontend/ (no existe).
 
 ──────── FASE 4 · HU-ART-02 · Búsqueda y endpoints · Issue #15 ────────
 rama: feature/HU-ART-02-consultar-articulos
