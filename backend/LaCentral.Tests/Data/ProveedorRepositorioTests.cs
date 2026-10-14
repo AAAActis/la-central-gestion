@@ -87,4 +87,33 @@ public class ProveedorRepositorioTests
         var error = await Assert.ThrowsAsync<DbUpdateException>(() => restriccion.SaveChangesAsync());
         Assert.Equal(PostgresErrorCodes.UniqueViolation, Assert.IsType<PostgresException>(error.InnerException).SqlState);
     }
+
+    // El mismo bug que la 1.9 corrigió en cliente: una dirección importada sin calle
+    // viaja como "" y el ciclo baja → reactivación no la duplica ni la borra.
+    [PostgreSqlFact]
+    public async Task DireccionSinCalle_SeLeeComoVaciaYNoSeDuplicaAlActualizar_PostgreSQL()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var usuarioId = await fixture.CrearUsuarioAsync();
+        var proveedor = new Proveedor { Codigo = "PRV-DIR", RazonSocial = "Proveedor Sin Calle", Activo = true };
+        proveedor.ProveedorDireccion.Add(new ProveedorDireccion { Calle = null, Localidad = "Córdoba" });
+        await using (var setup = fixture.CrearContexto())
+        {
+            setup.Proveedor.Add(proveedor);
+            await setup.SaveChangesAsync();
+        }
+
+        await using (var leer = fixture.CrearContexto())
+            Assert.Equal(new[] { string.Empty }, (await new ProveedorRepositorio(leer).ObtenerDetallePorIdAsync(proveedor.Id))!.Direcciones);
+        await using (var baja = fixture.CrearContexto())
+            Assert.True((await CasosDeBajaPostgreSql.DarDeBajaProveedor(baja, usuarioId).EjecutarAsync(
+                proveedor.Id, new DarDeBajaProveedorRequest("Baja con dirección sin calle", proveedor.Codigo))).IsSuccess);
+        await using (var reactivar = fixture.CrearContexto())
+            Assert.True((await CasosDeBajaPostgreSql.ReactivarProveedor(reactivar, usuarioId).EjecutarAsync(proveedor.Id)).IsSuccess);
+
+        await using var final = fixture.CrearContexto();
+        var direccion = Assert.Single(await final.ProveedorDireccion.AsNoTracking().Where(d => d.ProveedorId == proveedor.Id).ToListAsync());
+        Assert.Null(direccion.Calle);
+        Assert.Equal("Córdoba", direccion.Localidad);
+    }
 }

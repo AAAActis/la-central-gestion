@@ -170,7 +170,8 @@ public class ProveedorRepositorio : IProveedorRepositorio
     var dirsABorrar = bd.ProveedorDireccion.Where(d => !proveedor.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
     foreach (var d in dirsABorrar) _context.Remove(d);
 
-    var dirsNuevas = proveedor.Direcciones.Where(d => !bd.ProveedorDireccion.Any(b => b.Calle == d)).ToList();
+    // Misma convención que la lectura: sin calle en la base (NULL) es "" en el dominio.
+    var dirsNuevas = proveedor.Direcciones.Where(d => !bd.ProveedorDireccion.Any(b => (b.Calle ?? string.Empty) == d)).ToList();
     foreach (var d in dirsNuevas) bd.ProveedorDireccion.Add(new LaCentral.Data.Models.ProveedorDireccion { Calle = d });
 
     await _context.SaveChangesAsync(ct);
