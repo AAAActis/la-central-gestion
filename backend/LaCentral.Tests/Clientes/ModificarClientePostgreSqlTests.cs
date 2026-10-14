@@ -33,6 +33,7 @@ public class ModificarClientePostgreSqlTests
 
         Assert.Equal(TipoError.Conflicto, resultado.Tipo);
         Assert.Contains(b.Codigo, resultado.Error);
+        Assert.Contains(b.RazonSocial, resultado.Error);
         await using var lectura = fixture.CrearContexto();
         var filaB = await lectura.Cliente.AsNoTracking().SingleAsync(c => c.Id == b.Id);
         var filaA = await lectura.Cliente.AsNoTracking().SingleAsync(c => c.Id == a.Id);
@@ -147,6 +148,23 @@ public class ModificarClientePostgreSqlTests
 
         await using var lectura = fixture.CrearContexto();
         Assert.False(await lectura.ClienteDireccion.AnyAsync(d => d.ClienteId == a.Id));
+    }
+
+[PostgreSqlFact]
+    public async Task DosAltasConElMismoCodigo_LaSegundaDaConflictoIdentificandoAlPrimero()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var (a, _) = await SembrarDosClientesAsync(fixture);
+
+        Result resultado;
+        await using (var contexto = fixture.CrearContexto())
+            resultado = await new CrearClienteUseCase(new ClienteRepositorio(contexto), DoblesBaja.Contexto(await fixture.CrearUsuarioAsync()).Object).EjecutarAsync(
+                new CrearClienteRequest(a.Codigo, "Otro Cliente", null, "CONSUMIDOR_FINAL", "Contado", null, null));
+
+        Assert.Equal(TipoError.Conflicto, resultado.Tipo);
+        Assert.Contains(a.RazonSocial, resultado.Error);
+        await using var lectura = fixture.CrearContexto();
+        Assert.Equal("Cliente A", Assert.Single(await lectura.Cliente.AsNoTracking().Where(c => c.Codigo == a.Codigo).ToListAsync()).RazonSocial);
     }
 
     private static async Task<(ClienteBd A, ClienteBd B)> SembrarDosClientesAsync(PostgreSqlPruebas fixture)

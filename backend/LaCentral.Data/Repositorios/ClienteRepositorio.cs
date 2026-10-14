@@ -40,10 +40,19 @@ public class ClienteRepositorio : IClienteRepositorio
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<bool> ExisteCodigoAsync(string codigo, CancellationToken cancellationToken = default)
+    public async Task<LaCentral.UseCases.Entidades.Cliente?> ObtenerPorCodigoAsync(string codigo, CancellationToken ct = default)
     {
-        return await _context.Cliente
-            .AnyAsync(c => c.Codigo == codigo, cancellationToken);
+        var c = await _context.Cliente.AsNoTracking().FirstOrDefaultAsync(x => x.Codigo == codigo, ct);
+        if (c == null) return null;
+
+        return new LaCentral.UseCases.Entidades.Cliente
+        {
+            Id = c.Id,
+            Codigo = c.Codigo,
+            RazonSocial = c.RazonSocial,
+            Cuit = c.CuitCuil,
+            Activo = c.Activo
+        };
     }
 
     public Task<bool> ExisteCuitAsync(string cuit, CancellationToken ct = default)

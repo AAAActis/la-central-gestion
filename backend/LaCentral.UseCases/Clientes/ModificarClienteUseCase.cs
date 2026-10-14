@@ -32,8 +32,11 @@ public class ModificarClienteUseCase
 
         // CRÍTICO 3: el código nuevo no puede ser el de otro cliente. El índice
         // único cliente_codigo_key lo garantiza ante dos modificaciones simultáneas.
-        if (request.Codigo != cliente.Codigo && await _clienteRepositorio.ExisteCodigoAsync(request.Codigo, ct))
-            return Result.Failure(TipoError.Conflicto, $"El código {request.Codigo} ya pertenece a otro cliente.");
+        if (request.Codigo != cliente.Codigo &&
+            await _clienteRepositorio.ObtenerPorCodigoAsync(request.Codigo, ct) is { } duenioDelCodigo &&
+            duenioDelCodigo.Id != cliente.Id)
+            return Result.Failure(TipoError.Conflicto,
+                $"El código {request.Codigo} ya pertenece al cliente: {duenioDelCodigo.RazonSocial}.");
 
         // 4. CA-003: CUIT duplicado informa a quién pertenece
         if (!string.IsNullOrWhiteSpace(request.Cuit) && request.Cuit != cliente.Cuit)

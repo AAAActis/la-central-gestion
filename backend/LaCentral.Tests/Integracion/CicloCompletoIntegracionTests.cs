@@ -103,8 +103,8 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
         contextoMock.SetupGet(c => c.NombreUsuario).Returns("test.integracion");
         contextoMock.SetupGet(c => c.SucursalId).Returns((short)1);
 
-        repoMock.Setup(r => r.ExisteCodigoAsync(codigoClientePrueba, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => clienteGuardado != null);
+        repoMock.Setup(r => r.ObtenerPorCodigoAsync(codigoClientePrueba, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => clienteGuardado);
         repoMock.Setup(r => r.ExisteCuitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         repoMock.Setup(r => r.ExisteRazonSocialAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
