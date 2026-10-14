@@ -102,6 +102,26 @@ Los hashes de esta tabla son los de la rama. Ver `git log develop..HEAD`.
 - **Tests reapuntados:** `ArticuloPrecioEstimadoTests` conserva sus 8 casos. "SinMargenes" pasa a ser Tarjeta sin tasa, y "ModalidadSinMargenCargado" pasa a ser CasoEspecial manual. Ninguno se borró.
 - **Regla de esta fase** (instrucción del equipo, que reemplaza a la compuerta "test que pasa a la primera → parar" del plan): lo que pasa a la primera se declara y se verifica con una mutación no commiteada.
 
+### Subagentes sobre `git diff f3c6705..fb90b32` (2026-10-14) · **verificador NO APTO, auditor APTO** → se PARÓ
+- **verificador-tdd: NO APTO.** Reprodujo todos los rojos, verdes y mutaciones declarados. El orden test → producción se cumple y no se borró ningún test. Bloquean cuatro mutaciones suyas que sobreviven con la suite en verde:
+  1. `ArticulosController.Crear`: `CodigosProveedor ?? new List<>()` no tiene test. Falta un POST sin `codigosProveedor` → 201.
+  2. `CrearArticuloUseCase.cs:96-98`: la rama `creado is null` no tiene test. `Alta_EscriturasDentroDeLaUnidadDeTrabajo` no afirma el resultado.
+  3. `ModalidadPersistida.Nombre<T>`: el guard `Enum.IsDefined` no tiene test.
+  4. `CrearArticuloRequest` (HTTP): `[Required]`/`[MaxLength]` entraron en un commit "sin comportamiento" (`127ab20`) y no tienen test de 400.
+  5. Una de sus tres corridas completas dio 17 fallas `53300 too many clients`. Las otras dos dieron 226/226.
+  - Menor: `ProveedorId <= 0` en `ArticuloValidaciones` no tiene test (el proveedor 0 igual cae en "no existe").
+- **auditor-persistencia: APTO.** H1, H2 y H3 cerrados en el código y en el motor. Atomicidad real de las cuatro tablas, relectura con contexto nuevo, sin Ids sembrados, el `DROP CONSTRAINT` no alcanza `public` y el test HTTP pega contra PostgreSQL. Hallazgos no bloqueantes:
+  1. **53300 `too many clients`:** con dos corridas a la vez contra el mismo servidor (`max_connections=100`), la primera corrida suya dio 47 fallas. Causa:
+     - `PostgreSqlPruebas` abre un pool por esquema y no lo vacía en `DisposeAsync`;
+     - las fábricas de `WithWebHostBuilder` no se liberan.
+     - Los dos subagentes corrieron en paralelo y cada uno vio la corrida del otro.
+     - **El 226/226 vale solo con el servidor libre.**
+  2. Entre `codigo_interno` (`LC-nnnnnn`) y `articulo_codigo_alternativo.codigo`, la unicidad solo la controla la aplicación: no hay restricción entre tablas. Hoy hay 0 casos.
+  3. No hay test de dos altas simultáneas con el mismo código de proveedor (lo cierra `codigo_unico_global` → 409). `DosAltasSimultaneas` no fuerza el intercalado.
+  4. El comentario de la tabla nombra `CalcularPreciosArticuloUseCase`, que no existe: la regla está en `ReglasPrecioModalidad.Calcular`.
+  5. **Entorno:** el rol `lacentral` de `LACENTRAL_TEST_PG` es SUPERUSER y es el mismo que usa la base principal en el mismo servidor. Las dos bases solo las separa `ValidarBase`, que mira el nombre.
+- **Estado:** NO se hizo push. `docs/sprint03/pr-fase3-hu-art-01.md` queda como borrador sin commitear, sin los veredictos. Nada de esto se arregló: lo decide el equipo.
+
 **Sin entregable en `frontend/`:** la carpeta no existe. El requisito permanente se agregó al plan en esta sesión, después de cerrar la fase. Lo decide el equipo.
 
 ## Compuerta de esquema D1 · CERRADA (2026-10-14)
