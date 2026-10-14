@@ -32,12 +32,12 @@ public class Existencia
 // 2. D1: Márgenes persistidos por modalidad
 public class MargenModalidad
 {
-    public int ModalidadId { get; set; }
+    public Modalidad Modalidad { get; set; }
     public decimal Porcentaje { get; set; }
 
-    public MargenModalidad(int modalidadId, decimal porcentaje)
+    public MargenModalidad(Modalidad modalidad, decimal porcentaje)
     {
-        ModalidadId = modalidadId;
+        Modalidad = modalidad;
         Porcentaje = porcentaje;
     }
 }
@@ -48,6 +48,11 @@ public class Articulo
     public string CodigoInterno { get; set; } = string.Empty;
     public string Nombre { get; set; } = string.Empty;
     public bool Activo { get; set; }
+
+    // El CHECK articulo_baja_coherente exige motivo Y fecha cuando activo = false;
+    // una fila activa puede conservarlos como rastro de su última baja (D10).
+    public string? MotivoBaja { get; set; }
+    public DateTime? FechaBaja { get; set; }
     
     public decimal? CostoVigente { get; set; }
 
@@ -57,7 +62,7 @@ public class Articulo
     
     public List<MargenModalidad> Margenes { get; set; } = new();
 
-    public decimal? CalcularPrecioEstimado(int modalidadId)
+    public decimal? CalcularPrecioEstimado(Modalidad modalidad)
     {
         // TODO 1: Sin precio de costo -> null
         if (CostoVigente is null)
@@ -65,7 +70,7 @@ public class Articulo
             return null;
         }
 
-        var margen = Margenes.FirstOrDefault(m => m.ModalidadId == modalidadId);
+        var margen = Margenes.FirstOrDefault(m => m.Modalidad == modalidad);
         
         // TODO 2: Sin márgenes cargados para la modalidad -> null
         if (margen is null)

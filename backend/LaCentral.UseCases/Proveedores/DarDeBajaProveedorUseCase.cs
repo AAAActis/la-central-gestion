@@ -44,7 +44,8 @@ public class DarDeBajaProveedorUseCase
         
         proveedor.Activo = false;
         proveedor.MotivoBaja = request.MotivoBaja;
-        
+        proveedor.FechaBaja = DateTime.UtcNow;
+
         await _repositorio.ActualizarAsync(proveedor, ct);
 
         return Result.Success();

@@ -67,4 +67,20 @@ public class BajaYReactivacionProveedorTests
         Assert.NotNull(proveedor.MotivoBaja);
         _repoMock.Verify(r => r.ActualizarAsync(proveedor, It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    // 1.4: la fecha la fija el caso de uso, no el repositorio por su cuenta
+    [Fact]
+    public async Task DarDeBaja_CamposValidos_LaEntidadTransportaLaFechaDeBaja()
+    {
+        var proveedor = CrearProveedorBase(activo: true);
+        _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(proveedor);
+        var antes = DateTime.UtcNow;
+
+        var resultado = await new DarDeBajaProveedorUseCase(_repoMock.Object)
+            .EjecutarAsync(1, new DarDeBajaProveedorRequest("Cese de actividades", "PRV-001"));
+
+        Assert.True(resultado.IsSuccess);
+        Assert.NotNull(proveedor.FechaBaja);
+        Assert.InRange(proveedor.FechaBaja!.Value, antes, DateTime.UtcNow);
+    }
 }

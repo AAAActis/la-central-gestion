@@ -55,4 +55,30 @@ public class ModificarClienteUseCaseTests
         Assert.Equal(TipoError.Conflicto, resultado.Tipo);
         Assert.Contains("ya pertenece", resultado.Error);
     }
+
+    [Fact]
+    public async Task Ejecutar_CodigoDeOtroCliente_DevuelveConflictoSinActualizar()
+    {
+        _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(CrearClienteBdActivo());
+        _repoMock.Setup(r => r.ExisteCodigoAsync("CLI-002", It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+        var resultado = await CrearCasoDeUso().EjecutarAsync(1, CrearRequestValido() with { Codigo = "CLI-002" });
+
+        Assert.Equal(TipoError.Conflicto, resultado.Tipo);
+        Assert.Contains("CLI-002", resultado.Error);
+        _repoMock.Verify(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Ejecutar_LaFilaDesaparecioAntesDeActualizar_DevuelveNoEncontrado()
+    {
+        _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(CrearClienteBdActivo());
+        _repoMock.Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        var resultado = await CrearCasoDeUso().EjecutarAsync(1, CrearRequestValido() with { Cuit = null });
+
+        Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
+    }
 }

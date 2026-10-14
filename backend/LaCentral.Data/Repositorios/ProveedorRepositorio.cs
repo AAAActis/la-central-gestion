@@ -104,6 +104,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
             UrlReferencia = bd.UrlReferencia,
             Activo = bd.Activo,
             MotivoBaja = bd.MotivoBaja, // <--- FALTABA ESTA LÍNEA
+            FechaBaja = bd.FechaBaja,
             Telefonos = bd.ProveedorTelefono.Select(t => t.Numero ?? string.Empty).ToList(),
             Direcciones = bd.ProveedorDireccion.Select(d => d.Calle ?? string.Empty).ToList()
         };
@@ -112,6 +113,21 @@ public class ProveedorRepositorio : IProveedorRepositorio
     public async Task<LaCentral.UseCases.Entidades.Proveedor?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default)
     {
         var bd = await _context.Proveedor.FirstOrDefaultAsync(p => p.Cuit == cuit, ct);
+        if (bd == null) return null;
+
+        return new LaCentral.UseCases.Entidades.Proveedor
+        {
+            Id = bd.Id,
+            Codigo = bd.Codigo,
+            RazonSocial = bd.RazonSocial,
+            Cuit = bd.Cuit,
+            Activo = bd.Activo
+        };
+    }
+
+    public async Task<LaCentral.UseCases.Entidades.Proveedor?> ObtenerPorCodigoAsync(string codigo, CancellationToken ct = default)
+    {
+        var bd = await _context.Proveedor.AsNoTracking().FirstOrDefaultAsync(p => p.Codigo == codigo, ct);
         if (bd == null) return null;
 
         return new LaCentral.UseCases.Entidades.Proveedor
@@ -137,16 +153,11 @@ public class ProveedorRepositorio : IProveedorRepositorio
     bd.Cuit = proveedor.Cuit;
     bd.UrlReferencia = proveedor.UrlReferencia;
 
-    // FIX CRÍTICO 2: Mapeo de estado y motivo
-    bool estadoAnterior = bd.Activo;
+    // FIX CRÍTICO 2: Mapeo de estado y motivo. La fecha la fija el caso de uso:
+    // el repositorio ya no la estampa por su cuenta.
     bd.Activo = proveedor.Activo;
     bd.MotivoBaja = proveedor.MotivoBaja;
-
-    // Si transiciona de Activo a Inactivo, estampa la fecha
-    if (estadoAnterior && !proveedor.Activo)
-    {
-        bd.FechaBaja = DateTime.UtcNow;
-    }
+    bd.FechaBaja = proveedor.FechaBaja;
 
     // LÓGICA D10: Gestión del Historial de Baja
     if (!bd.Activo)

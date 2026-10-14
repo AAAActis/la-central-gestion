@@ -7,6 +7,7 @@ using LaCentral.UseCases.Proveedores;
 using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using LaCentral.Api.Middleware;
 using LaCentral.Api.Seguridad;
 using System.Text;
 
@@ -72,7 +73,15 @@ builder.Services.AddOpenApi(opciones =>
 });
 builder.Services.AddControllers();
 
+// ALTO 6: ninguna excepción sale con stack trace ni detalles internos.
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ManejadorExcepcionesGlobal>();
+
 var app = builder.Build();
+
+// Primero en el pipeline: tiene que envolver a todo lo demás. También gana
+// sobre la página de excepciones del desarrollador en Development.
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {

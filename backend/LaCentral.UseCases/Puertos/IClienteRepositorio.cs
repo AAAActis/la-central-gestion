@@ -23,5 +23,5 @@ public interface IClienteRepositorio
     Task<Cliente?> ObtenerDetallePorIdAsync(int id, CancellationToken ct = default);
 
     Task<Cliente?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default);
-    Task ActualizarAsync(Cliente cliente, CancellationToken ct = default);
+    Task<bool> ActualizarAsync(Cliente cliente, CancellationToken ct = default);
 }
