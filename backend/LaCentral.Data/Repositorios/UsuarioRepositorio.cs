@@ -54,7 +54,8 @@ public class UsuarioRepositorio : IUsuarioRepositorio
             RolId = usuarioBd.RolId,
             Activo = usuarioBd.Activo,
             MotivoBaja = usuarioBd.MotivoBaja,
-            FechaBaja = usuarioBd.FechaBaja
+            FechaBaja = usuarioBd.FechaBaja,
+            UsuarioBajaId = usuarioBd.UsuarioBajaId
         };
     }
 
@@ -74,7 +75,8 @@ public class UsuarioRepositorio : IUsuarioRepositorio
             RolId = usuarioBd.RolId,
             Activo = usuarioBd.Activo,
             MotivoBaja = usuarioBd.MotivoBaja,
-            FechaBaja = usuarioBd.FechaBaja
+            FechaBaja = usuarioBd.FechaBaja,
+            UsuarioBajaId = usuarioBd.UsuarioBajaId
         };
     }
 

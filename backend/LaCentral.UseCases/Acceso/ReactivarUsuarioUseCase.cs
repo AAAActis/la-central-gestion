@@ -44,10 +44,11 @@ public class ReactivarUsuarioUseCase
         if (usuarioId <= 0)
             return Result.Failure(TipoError.NoAutorizado, "No se pudo determinar el usuario que ejecuta la operación.");
 
-        // La fila se limpia; el motivo y la fecha de la baja quedan en el historial D10.
+        // La fila se limpia; el motivo, la fecha y quién dio de baja quedan en el historial D10.
         usuario.Activo = true;
         usuario.MotivoBaja = null;
         usuario.FechaBaja = null;
+        usuario.UsuarioBajaId = null;
 
         return await _unidadDeTrabajo.EjecutarAsync(async ct =>
         {
