@@ -41,12 +41,32 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 |---|---|---|---|---|---|
 | 0 · Línea base | hecha (2026-10-13) | — | — | 108/108, 0 skipped (8 PG real) | — |
 | 1 · Deuda bloqueante | hecha, PR sin abrir (2026-10-13) | `fix/deuda-bloqueante-sprint3` (pusheada, HEAD `108ac1d`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase1-deuda-bloqueante.md` | 129/129, 0 skipped, 0 warnings (17 PG real, +21 tests) | abrir el PR a mano; deuda abajo |
-| 2 · D10 en la aplicación | código hecho (2026-10-13). **NO APTA para PR (2026-10-14): la parte PostgreSQL no se pudo re-verificar** | `feature/d10-historial-baja` (pusheada; código hasta `a105f6d`, sale de `108ac1d`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase2-d10-historial-baja.md`. Base provisoria `fix/deuda-bloqueante-sprint3` | Declarado el 2026-10-13: 167/167, 0 skipped, 0 warnings (34 PG real, +38 tests). **Re-corrida 2026-10-14: 167 · 133 passed · 34 failed (los 34 PG, todos por 28P01) · 0 skipped** | reparar la credencial de test, volver a correr los 34 PG y los dos subagentes; deuda abajo |
+| 2 · D10 en la aplicación | código hecho (2026-10-13). Suite re-verificada el 2026-10-14 con la credencial corregida (ver "Corrección 2026-10-14") | `feature/d10-historial-baja` (pusheada; código hasta `a105f6d`, sale de `108ac1d`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase2-d10-historial-baja.md`. Base provisoria `fix/deuda-bloqueante-sprint3` | **2026-10-14: 167 total · 167 passed · 0 failed · 0 skipped (34 PG real)**. La corrida anterior del mismo día (133 passed · 34 failed) fue por 28P01, credencial vieja | arreglar los hallazgos 1, 2 y 3 del auditor; volver a correr los dos subagentes; deuda abajo |
 | 3 · HU-ART-01 | **bloqueada**: compuerta de esquema D1 (la resuelve el equipo) | | | | ver PRÓXIMA SESIÓN |
 | 4 · HU-ART-02 | pendiente | | | | |
 | 5 · HU-FCO-01 | pendiente | | | | |
 | 6 · HU-ART-05 + CA5 | pendiente (misma compuerta D1) | | | | |
 | 7 · HU-ART-03 | pendiente | | | | |
+
+## Corrección 2026-10-14 · el 28P01 era una credencial, no código
+
+- El `28P01` venía de una **credencial vieja en la variable de entorno** `LACENTRAL_TEST_PG`.
+  No era un problema del contenedor ni del código. El equipo la corrigió.
+- Suite verificada hoy:
+  - corrida del equipo: **167 total · 167 correcto · 0 con errores · 0 omitido · 51,6 s**;
+  - re-corrida del agente desde `backend/` (`dotnet test LaCentral.slnx`, HEAD `365a686`):
+    **167 · 167 passed · 0 failed · 0 skipped · 44 s**.
+  - Los **34 `[PostgreSqlFact]` pasan** contra PostgreSQL real.
+- El **NO APTO del verificador-tdd** de abajo tenía **dos causas**. Una se cayó:
+  1. ~~Los 34 PG en rojo, 0 PG aprobados~~. **Se cae:** era un artefacto del entorno (28P01).
+  2. **Sigue en pie:** el orden test → producción no se puede verificar desde git. En 7 de los 8
+     commits el test y la producción vinieron juntos. Además, los 7 PG de historial vieron su rojo
+     solo contra stubs `NotImplementedException`.
+- **Siguen en pie** todos los hallazgos del auditor-persistencia: 1 atomicidad, 2
+  `usuario_baja_id` de usuario, 3 `fechas_coherentes`, 4 concurrencia en transacción y 5 dobles
+  inválidos. También siguen los menores del verificador. Los 1, 2 y 3 se arreglan en esta rama.
+- Lo que dice abajo sobre el 28P01 queda como registro de lo que se vio en ese momento. No se
+  reescribe: esta sección lo corrige.
 
 ## Verificación de la Fase 2 por los subagentes (2026-10-14)
 
@@ -147,7 +167,7 @@ prueba que la Fase 2 esté mal.
 - 2026-10-13 · **Compuerta de esquema para las Fases 3 y 6:** no hay dónde persistir precios por modalidad con nombre (D1). `articulo_margen` usa la clave `numero` (listas 1/2/3) y hay una sola columna `precio_venta_estimado`. **2026-10-14:** informe de solo lectura en `docs/sprint03/informe-compuerta-d1.md`. El DDL del motor quedó sin obtener (28P01), y las consultas están en `docs/sprint03/consultas-compuerta-d1.sql`.
 - 2026-10-13 · EF Core difiere entre Data (10.0.11) y Api/Tests (10.0.12, por InMemory y Mvc.Testing). La Api referencia `EntityFrameworkCore.InMemory` en producción.
 - 2026-10-13 · Pendiente de confirmar por el usuario: si existe `ConnectionStrings__Postgres` en el entorno, a qué base apunta. (Confirmado por el equipo el 2026-10-13: no existe. Ver la revisión de la Fase 1.)
-- 2026-10-14 · **BLOQUEANTE · conexión de test:** el servidor rechaza la contraseña de `LACENTRAL_TEST_PG` (`28P01`, usuario `lacentral`, base `lacentral_test`, host `100.125.169.91`). Toda la suite PG está en rojo y ninguna fase se puede verificar. Responsable: el equipo (credencial o usuario del contenedor).
+- ~~2026-10-14 · **BLOQUEANTE · conexión de test:** el servidor rechaza la contraseña de `LACENTRAL_TEST_PG` (`28P01`, usuario `lacentral`, base `lacentral_test`, host `100.125.169.91`).~~ Resuelto el 2026-10-14: era una credencial vieja en la variable de entorno, no el contenedor ni el código. La suite da 167/167, con los 34 PG en verde.
 - 2026-10-14 · **Fase 2, auditor 1 · atomicidad:** sin test PG de falla intermedia en `ReactivarClienteUseCase` (L42-49), `DarDeBajaProveedorUseCase` (L63-71), `DarDeBajaUsuarioUseCase` (L98-110) y `ReactivarUsuarioUseCase` (L52-59). Los tests Moq `*_EscriturasOcurrenDentroDeLaUnidadDeTrabajo` prueban que se pasa por la unidad, no que se revierta.
 - 2026-10-14 · **Fase 2, auditor 2 · pérdida silenciosa de auditoría:** `backend/LaCentral.Data/Repositorios/UsuarioRepositorio.cs`, lecturas en L56 y L76 sin `UsuarioBajaId`. `ActualizarAsync` (L98) lo escribe. Cualquier actualización de un usuario inactivo pone `usuario.usuario_baja_id` en NULL, por ejemplo `RestablecerContrasenaUseCase.cs:43`. `ReactivarUsuario` lo anula por accidente del mapeo, no por decisión. Ningún test PG relee esa columna. El historial sí conserva el dato.
 - 2026-10-14 · **Fase 2, auditor 3:** `CerrarAsync` (`backend/LaCentral.Data/Repositorios/HistorialBajaRepositorio.cs:50`) no valida `fecha_reactivacion >= fecha_baja`. Con una `fecha_baja` futura (backfill de Multisoft o desfase de reloj), el CHECK `*_hist_fechas_coherentes` da 23514, que hoy sale como 500. Ni este CHECK ni `*_hist_motivo_no_vacio` tienen test contra el motor.
