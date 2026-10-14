@@ -1,11 +1,15 @@
 # La Central · reglas del proyecto
 
+Las rutas de este archivo son relativas a la raíz del repo (raíz de git y del grafo).
+La solución .NET está en `backend/LaCentral.slnx`: `dotnet build` y `dotnet test` se
+corren desde `backend/`.
+
 ## Graphify
 Hay un grafo de conocimiento en `graphify-out/`. Para preguntas sobre el código,
 `graphify query "<pregunta>"` ANTES de leer archivos de a uno o grepear.
 `graphify path "A" "B"` para relaciones, `graphify explain "X"` para un concepto.
-`GRAPH_REPORT.md` solo para revisión amplia de arquitectura.
-Después de modificar código: `graphify update .`
+`graphify-out/GRAPH_REPORT.md` solo para revisión amplia de arquitectura.
+Después de modificar código: `graphify update .` desde la raíz del repo.
 
 ## Arquitectura Core-Driven
 - `LaCentral.Api` controladores, DTOs HTTP, seguridad, composition root
@@ -13,16 +17,18 @@ Después de modificar código: `graphify update .`
 - `LaCentral.Data` DbContext, modelos scaffoldeados, repositorios
 
 REGLA DE ORO: `LaCentral.UseCases` NO referencia ningún otro proyecto. Su `.csproj`
-no tiene un solo `PackageReference`. Si para resolver algo hace falta agregarle una
-referencia, lo que falta es un puerto.
+(`backend/LaCentral.UseCases/LaCentral.UseCases.csproj`) no tiene un solo
+`PackageReference`. Si para resolver algo hace falta agregarle una referencia, lo que
+falta es un puerto.
 
-El acoplamiento `Api → Data` existe SOLO en `Program.cs`. Ningún controlador importa
-`LaCentral.Data`.
+El acoplamiento `Api → Data` existe SOLO en `backend/LaCentral.Api/Program.cs`. Ningún
+controlador importa `LaCentral.Data`.
 
 ## Prohibiciones
-- `dotnet ef migrations`. El esquema es Database First: script SQL + re-scaffold.
-- Editar archivos de `LaCentral.Data/Models/` — son generados. El código manual va en
-  `LaCentralDbContext.Personalizaciones.cs` (partial).
+- `dotnet ef migrations`. El esquema es Database First: script SQL (`backend/db/`) +
+  re-scaffold.
+- Editar archivos de `backend/LaCentral.Data/Models/` — son generados. El código manual
+  va en `backend/LaCentral.Data/LaCentralDbContext.Personalizaciones.cs` (partial).
 - Excepciones para flujo de negocio. Se usa `Result<T>` con
   `TipoError { Ninguno, NoEncontrado, Conflicto, Invalido, NoAutorizado }`.
 - Devolver entidades o modelos de persistencia desde la API. Solo DTOs, vía
@@ -35,7 +41,7 @@ El acoplamiento `Api → Data` existe SOLO en `Program.cs`. Ningún controlador 
 - Lógica de casos de uso y guardas → Moq.
 - Mapeo de repositorio, índices, transacciones, CHECK constraints, atomicidad,
   búsqueda con pg_trgm → PostgreSQL REAL, vía
-  `LaCentral.Tests/Infraestructura/PostgreSqlPruebas.cs` y `[PostgreSqlFact]`.
+  `backend/LaCentral.Tests/Infraestructura/PostgreSqlPruebas.cs` y `[PostgreSqlFact]`.
 - Recorridos HTTP → `WebApplicationFactory`.
 
 Un mock prueba la lógica del caso de uso, NO prueba que la fila se escriba. InMemory no
