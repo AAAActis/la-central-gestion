@@ -12,6 +12,8 @@ public class ModificarProveedorUseCaseTests
 {
     private readonly Mock<IProveedorRepositorio> _repoMock = new();
 
+    public ModificarProveedorUseCaseTests() => _repoMock.Setup(r => r.ActualizarAsync(It.IsAny<Proveedor>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
     private ModificarProveedorUseCase CrearCasoDeUso() => new(_repoMock.Object);
 
     private ModificarProveedorRequest CrearRequestValido() => new(
@@ -21,6 +23,19 @@ public class ModificarProveedorUseCaseTests
     {
         Id = 1, RazonSocial = "Original", Cuit = "30-00000000-0", Activo = true
     };
+
+// CRÍTICO 3 en proveedor: la fila desaparece entre la lectura y la escritura.
+    [Fact]
+    public async Task Ejecutar_FilaInexistenteAlActualizar_DevuelveNoEncontrado()
+    {
+        var proveedor = CrearProveedorBdActivo();
+        _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(proveedor);
+        _repoMock.Setup(r => r.ActualizarAsync(proveedor, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        var resultado = await CrearCasoDeUso().EjecutarAsync(1, CrearRequestValido());
+
+        Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
+    }
 
     // CA-004: Proveedor inactivo deniega la modificación
     [Fact]

@@ -245,7 +245,7 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
         repoMock.Setup(r => r.ObtenerPorCuitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Proveedor?)null);
         repoMock.Setup(r => r.ActualizarAsync(It.IsAny<Proveedor>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync((Proveedor p, CancellationToken _) => tabla.Any(x => x.Id == p.Id));
 
         var http = CrearClienteAutenticado(services =>
         {

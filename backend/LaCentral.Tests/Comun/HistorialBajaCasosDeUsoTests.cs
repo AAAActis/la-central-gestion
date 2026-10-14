@@ -21,6 +21,8 @@ public class HistorialBajaCasosDeUsoTests
     private readonly Mock<IProveedorRepositorio> _proveedores = new();
     private readonly Mock<IUsuarioRepositorio> _usuarios = new();
 
+    public HistorialBajaCasosDeUsoTests() => _proveedores.Setup(r => r.ActualizarAsync(It.IsAny<Proveedor>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
     private static Cliente ClienteActivo() => new() { Id = 10, Codigo = "CLI-010", Activo = true };
     private static Cliente ClienteInactivo() => new()
         { Id = 10, Codigo = "CLI-010", Activo = false, MotivoBaja = "Anterior", FechaBaja = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) };

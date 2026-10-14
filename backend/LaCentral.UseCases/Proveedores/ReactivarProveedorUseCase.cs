@@ -44,7 +44,9 @@ public class ReactivarProveedorUseCase
 
         return await _unidadDeTrabajo.EjecutarAsync(async c =>
         {
-            await _repositorio.ActualizarAsync(proveedor, c);
+            if (!await _repositorio.ActualizarAsync(proveedor, c))
+                return Result.Failure(TipoError.NoEncontrado, "El proveedor solicitado no existe.");
+
             await _historial.CerrarAsync(EntidadConHistorialBaja.Proveedor, proveedor.Id, DateTime.UtcNow, usuarioId, c);
             return Result.Success();
         }, ct);

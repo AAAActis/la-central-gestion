@@ -53,7 +53,8 @@ public class ModificarProveedorUseCase
         proveedor.Telefonos = (request.Telefonos ?? new List<string>()).Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
         proveedor.Direcciones = (request.Direcciones ?? new List<string>()).Where(d => !string.IsNullOrWhiteSpace(d)).ToList();
 
-        await _proveedorRepositorio.ActualizarAsync(proveedor, ct);
+        if (!await _proveedorRepositorio.ActualizarAsync(proveedor, ct))
+            return Result.Failure(TipoError.NoEncontrado, "El proveedor indicado no existe.");
 
         return Result.Success();
     }

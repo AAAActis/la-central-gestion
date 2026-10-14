@@ -63,6 +63,28 @@ public class ProveedorPostgreSqlTests
         Assert.InRange(proveedor.FechaBaja!.Value, antes.AddSeconds(-5), DateTime.UtcNow.AddSeconds(5));
     }
 
+// CRÍTICO 3 en proveedor: un Id inexistente no sale en silencio ni pisa otra fila.
+    [PostgreSqlFact]
+    public async Task ActualizarConIdInexistente_DevuelveFalseYNoTocaNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using (var contexto = fixture.CrearContexto())
+            Assert.True((await new CrearProveedorUseCase(new ProveedorRepositorio(contexto))
+                .EjecutarAsync(Alta("PRV-300", "Proveedor Real"))).IsSuccess);
+        int id;
+        await using (var contexto = fixture.CrearContexto())
+            id = (await contexto.Proveedor.AsNoTracking().SingleAsync(p => p.Codigo == "PRV-300")).Id;
+
+        bool actualizado;
+        await using (var contexto = fixture.CrearContexto())
+            actualizado = await new ProveedorRepositorio(contexto).ActualizarAsync(new LaCentral.UseCases.Entidades.Proveedor
+                { Id = id + 1000, Codigo = "PRV-300", RazonSocial = "Fantasma", Activo = true });
+
+        Assert.False(actualizado);
+        await using var lectura = fixture.CrearContexto();
+        Assert.Equal("Proveedor Real", Assert.Single(await lectura.Proveedor.AsNoTracking().ToListAsync()).RazonSocial);
+    }
+
     private static CrearProveedorRequest Alta(string codigo, string razonSocial) =>
         new(codigo, razonSocial, null, null, null, null);
 }

@@ -15,6 +15,39 @@ public class BajaYReactivacionProveedorTests
 {
     private readonly Mock<IProveedorRepositorio> _repoMock = new();
 
+    public BajaYReactivacionProveedorTests() => _repoMock.Setup(r => r.ActualizarAsync(It.IsAny<Proveedor>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+// CRÍTICO 3 en proveedor: ActualizarAsync devuelve false si la fila ya no existe.
+    [Fact]
+    public async Task DarDeBaja_FilaInexistenteAlActualizar_DevuelveNoEncontrado()
+    {
+        var proveedor = CrearProveedorBase(activo: true);
+        _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(proveedor);
+        _repoMock.Setup(r => r.ActualizarAsync(proveedor, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        var historial = new Mock<IHistorialBajaRepositorio>();
+        var casoUso = new DarDeBajaProveedorUseCase(_repoMock.Object, historial.Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
+
+        var resultado = await casoUso.EjecutarAsync(1, new DarDeBajaProveedorRequest("Cierre empresa", "PRV-001"));
+
+        Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
+        historial.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Reactivar_FilaInexistenteAlActualizar_DevuelveNoEncontrado()
+    {
+        var proveedor = CrearProveedorBase(activo: false);
+        _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(proveedor);
+        _repoMock.Setup(r => r.ActualizarAsync(proveedor, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        var historial = new Mock<IHistorialBajaRepositorio>();
+        var casoUso = new ReactivarProveedorUseCase(_repoMock.Object, historial.Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
+
+        var resultado = await casoUso.EjecutarAsync(1);
+
+        Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
+        historial.VerifyNoOtherCalls();
+    }
+
     private Proveedor CrearProveedorBase(bool activo = true) => new Proveedor
     {
         Id = 1,

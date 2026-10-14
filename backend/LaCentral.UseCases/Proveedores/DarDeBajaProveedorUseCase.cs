@@ -62,7 +62,9 @@ public class DarDeBajaProveedorUseCase
         // D10: la fila y su historial, juntos o ninguno.
         return await _unidadDeTrabajo.EjecutarAsync(async c =>
         {
-            await _repositorio.ActualizarAsync(proveedor, c);
+            if (!await _repositorio.ActualizarAsync(proveedor, c))
+                return Result.Failure(TipoError.NoEncontrado, "El proveedor solicitado no existe.");
+
             await _historial.AbrirAsync(EntidadConHistorialBaja.Proveedor, proveedor.Id, request.MotivoBaja,
                 proveedor.FechaBaja.Value, usuarioId, c);
             return Result.Success();

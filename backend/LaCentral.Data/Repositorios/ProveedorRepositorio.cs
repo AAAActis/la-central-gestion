@@ -140,14 +140,14 @@ public class ProveedorRepositorio : IProveedorRepositorio
         };
     }
 
-    public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Proveedor proveedor, CancellationToken ct = default)
+    public async Task<bool> ActualizarAsync(LaCentral.UseCases.Entidades.Proveedor proveedor, CancellationToken ct = default)
 {
     var bd = await _context.Proveedor
         .Include(p => p.ProveedorTelefono)
         .Include(p => p.ProveedorDireccion)
         .SingleOrDefaultAsync(p => p.Id == proveedor.Id, ct);
 
-    if (bd == null) return;
+    if (bd == null) return false;
 
     bd.RazonSocial = proveedor.RazonSocial;
     bd.Cuit = proveedor.Cuit;
@@ -174,5 +174,6 @@ public class ProveedorRepositorio : IProveedorRepositorio
     foreach (var d in dirsNuevas) bd.ProveedorDireccion.Add(new LaCentral.Data.Models.ProveedorDireccion { Calle = d });
 
     await _context.SaveChangesAsync(ct);
+    return true;
     }  
 }
