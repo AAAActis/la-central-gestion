@@ -122,6 +122,45 @@ Los hashes de esta tabla son los de la rama. Ver `git log develop..HEAD`.
   5. **Entorno:** el rol `lacentral` de `LACENTRAL_TEST_PG` es SUPERUSER y es el mismo que usa la base principal en el mismo servidor. Las dos bases solo las separa `ValidarBase`, que mira el nombre.
 - **Estado:** NO se hizo push. `docs/sprint03/pr-fase3-hu-art-01.md` queda como borrador sin commitear, sin los veredictos. Nada de esto se arregló: lo decide el equipo.
 
+### Verificación pedida por el equipo · `AsignarCodigoInternoAsync` (2026-10-14, `c6dc60b`)
+- Ya verificaba el conteo: `ExecuteUpdateAsync(...) == 1`. Si da false, el caso de uso devuelve NoEncontrado y la unidad revierte.
+- Faltaba el test PG del repositorio real con un Id que no existe, y la afirmación de que ningún `TMP-` sobrevive. Se agregaron los dos en `c6dc60b`: el primero como test propio y el segundo en el camino feliz, en las dos altas simultáneas y en todas las fallas a mitad de camino.
+- No hubo commit de producción. Los tests pasan a la primera y se verificaron con dos mutaciones: `>= 0` y "true sin actualizar". Las dos dan rojo.
+
+### Subagentes sobre `git diff f3c6705..c6dc60b` (2026-10-14, segunda pasada, de a uno) · **verificador NO APTO, auditor APTO** → se PARÓ
+Corrieron uno después del otro, sin otra suite en paralelo, para no repetir el 53300 de la primera pasada.
+
+**verificador-tdd · NO APTO**
+- Qué verificó, en su propio worktree:
+  - build `--no-incremental` con 0 warnings;
+  - suite en `c6dc60b`: 227 total · 227 passed · 0 failed · 0 skipped;
+  - 72 `[PostgreSqlFact]`, y ningún 53300 en 7 corridas completas y 6 filtradas.
+- Orden test → producción: se respeta en los 6 pares. Los 6 commits de test no tocan nada fuera de `Tests/`, según `git diff-tree`.
+- Hizo checkout de cada commit rojo: todos fallan por aserción, ninguno por compilación ni NRE.
+- Las mutaciones declaradas de `c6dc60b` (`>= 0` y "true sin actualizar") dan rojo, tal como dice el commit.
+- **Bloquean 4 mutaciones que sobreviven, ya informadas en la primera pasada y sin arreglar:**
+  1. `ArticulosController.cs:38`: con `CodigosProveedor!` en lugar de `?? new List<>()`, la suite sigue en verde. Falta un test HTTP de alta sin códigos que espere 201.
+  2. `CrearArticuloUseCase.cs:96-97`: con la rama `creado is null` devolviendo `Success`, la suite sigue en verde. Falta un test, o decidir si la rama tiene que existir.
+  3. `ModalidadPersistida.cs:34`: con `Enum.IsDefined` → `true`, la suite sigue en verde. Falta un test de que escribir `(Modalidad)99` falla.
+  4. `Dtos/CrearArticuloRequest.cs`: sin los 5 `[Required]`/`[MaxLength]` (del chore `127ab20`), la suite sigue en verde. La regla ya la cubre `ArticuloValidaciones`, pero cambia la forma del cuerpo del 400. Hace falta un test HTTP de 400 o sacar los atributos.
+- Menor: `Post_Alta_201ConIdYLocation` no compara `CodigoInterno` en la relectura.
+- Sin verificar: no revisó el rojo de `9d43f88` (H1) ni mapeó los criterios de aceptación de la HU contra los tests.
+
+**auditor-persistencia · APTO**
+- Qué verificó:
+  - suite en su worktree: 227/227, 70 tests con esquema aislado según el TRX;
+  - catálogo de `lacentral_test`, en una sesión de solo lectura: después de la suite quedan 0 esquemas `pr110_test_*` huérfanos y 0 artículos con `TMP-`;
+  - las restricciones de `articulo_precio_modalidad`, `articulo`, los índices de códigos y la PK de stock coinciden con el modelo, y no hay triggers;
+  - repitió las dos mutaciones de `c6dc60b`: las dos dan rojo.
+- Confirma que ningún camino deja un `TMP-` persistido, ni el feliz, ni la excepción, ni el fallo devuelto. Confirma también la atomicidad de las cuatro tablas, la relectura con contexto nuevo, que no hay Ids sembrados contra PG, que los DROP no salen del esquema aislado y que el test HTTP pega contra PostgreSQL.
+- Hallazgos no bloqueantes:
+  1. `ArticulosApiPostgreSqlTests.cs:91-94` no compara `CodigoInterno` en la relectura.
+  2. Después del `ExecuteUpdate`, el contexto sigue rastreando la entidad con `TMP-`. Si una operación futura reusa el contexto y guarda, podría reescribirlo: es un riesgo latente.
+  3. Siguen en pie los de la primera pasada: el rol SUPERUSER compartido con la base principal; la unicidad entre `codigo_interno` y los códigos alternativos, que solo controla la aplicación; que no hay test de carrera con el mismo código de proveedor (409); y el comentario de la tabla que nombra `CalcularPreciosArticuloUseCase`.
+- Sin verificar: la base principal, por diseño; el 409 en una carrera HTTP; y el 53300 con corridas simultáneas.
+
+**Estado:** se PARÓ en el punto 2 de la instrucción. NO se tocaron los puntos 3 (cambios al plan), 4 (borrar las 17 ramas viejas) y 5 (push). Arreglar las 4 mutaciones lo decide el equipo.
+
 **Sin entregable en `frontend/`:** la carpeta no existe. El requisito permanente se agregó al plan en esta sesión, después de cerrar la fase. Lo decide el equipo.
 
 ## Compuerta de esquema D1 · CERRADA (2026-10-14)
