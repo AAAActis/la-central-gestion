@@ -6,11 +6,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LaCentral.Data.Repositorios;
 
-public class ArticuloRepositorio : IConsultaArticulosRepositorio
+public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepositorio
 {
     private readonly LaCentralDbContext _context;
 
     public ArticuloRepositorio(LaCentralDbContext context) => _context = context;
+
+    public Task<int> AgregarAsync(LaCentral.UseCases.Entidades.Articulo articulo, CancellationToken ct = default)
+        => Task.FromResult(0);
+
+    public Task<bool> AsignarCodigoInternoAsync(int id, string codigoInterno, CancellationToken ct = default)
+        => Task.FromResult(false);
+
+    public Task<IReadOnlyList<short>> ObtenerSucursalesAsync(CancellationToken ct = default)
+        => Task.FromResult<IReadOnlyList<short>>(Array.Empty<short>());
 
     // Query completo antes de paginar, expuesto a los tests de traducción SQL.
     internal IQueryable<CoincidenciaArticulo> CrearCoincidencias(ConsultaArticulos consulta)
