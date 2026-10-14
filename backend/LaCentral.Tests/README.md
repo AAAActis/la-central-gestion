@@ -53,6 +53,10 @@ scripts de `db/rescaffold/`). El fixture (`Infraestructura/PostgreSqlPruebas.cs`
 
 1. Verifica que cada tabla y columna mapeada por EF exista en la plantilla con el mismo
    tipo, nulabilidad e identidad. Si no coinciden, falla **antes** de crear nada.
+   La comparación va en un solo sentido: una columna que existe en la base y que el
+   modelo no mapea **no** se detecta. Así pasaron inadvertidas `articulo.codigo`,
+   `descripcion` y `cantidad`, que solo estaban en `lacentral_test`
+   (ver `db/rescaffold/03_Limpieza_Columnas_Fantasma.sql`).
 2. Crea un esquema aislado `pr110_test_<guid>` por test, copia la estructura (`LIKE ...
    INCLUDING ALL` más las FK) y los catálogos `rol` y `sucursal`.
 3. Al terminar, borra **solo** ese esquema aislado.
