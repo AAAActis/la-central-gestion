@@ -1,3 +1,5 @@
+using LaCentral.UseCases.Entidades;
+
 namespace LaCentral.UseCases.Articulos.Dtos;
 
 public sealed record ConsultaArticulos(
@@ -30,7 +32,7 @@ public sealed record CodigoProveedorConsultaDto(
 
 public sealed record StockSucursalConsultaDto(short SucursalId, string Sucursal, decimal Cantidad);
 
-public sealed record PrecioModalidadConsultaDto(string Modalidad, decimal? Valor);
+public sealed record PrecioModalidadConsultaDto(Modalidad Modalidad, decimal? Valor);
 
 public sealed record ArticuloDetalleConsultaDto(
     int Id, string CodigoInterno, string Nombre, bool Activo, decimal? CostoVigente,
