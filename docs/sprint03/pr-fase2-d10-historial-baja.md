@@ -38,7 +38,7 @@
 - **Contra PostgreSQL real: 43 tests** (la base tenía 17). Son 42 con esquema aislado y 1 de catálogo. Todo se relee con un contexto nuevo.
 - Los dos subagentes corrieron sobre `git diff 108ac1d d378c0f`. Los veredictos y el detalle están en `docs/sprint03/ESTADO.md`:
   - **auditor-persistencia: APTO.** Cierra sus hallazgos 1, 2 y 3. Verificó el esquema contra el motor (catálogo de `lacentral_test`).
-  - **verificador-tdd:** su NO APTO anterior era por este cuerpo de PR. El veredicto sobre esta versión está en ESTADO.md.
+  - **verificador-tdd: APTO** sobre esta versión (`c4bbfd2`). Su NO APTO anterior era por el cuerpo del PR, que se reescribió.
 - Hasta el 2026-10-14 la suite PG no se pudo correr por un `28P01`. Era una credencial vieja en la variable de entorno, no el código.
 
 ## TDD: lo que el historial muestra y lo que no
@@ -82,7 +82,7 @@ Las 6 operaciones de baja y reactivación tienen un test contra PostgreSQL que p
 | Reactivar proveedor | forzada (mock) | `Reactivar_FallaAlCerrarHistorial_LaFilaSigueInactiva` |
 | Reactivar usuario | forzada (mock). El rollback devuelve motivo, fecha y `usuario_baja_id` | `ReactivarUsuario_FallaAlCerrarHistorial_...` |
 
-En los casos forzados, el repositorio de la entidad, la unidad de trabajo y el contexto son reales. Solo el historial es un doble.
+En los casos forzados, el repositorio de la entidad, la unidad de trabajo y el DbContext son reales. Los dobles son el historial que lanza y la sesión (`IContextoUsuario`), igual que en todos los tests PG de casos de uso.
 
 **Lo que NO cubren:**
 - Reactivar proveedor y usuario no tienen una falla real del motor, solo la excepción del mock. Alcanza para probar el rollback del UPDATE, pero no ejercita un error de PostgreSQL en el `ExecuteUpdate`.

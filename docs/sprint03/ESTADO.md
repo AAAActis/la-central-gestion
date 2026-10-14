@@ -41,7 +41,7 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 |---|---|---|---|---|---|
 | 0 · Línea base | hecha (2026-10-13) | — | — | 108/108, 0 skipped (8 PG real) | — |
 | 1 · Deuda bloqueante | hecha, PR sin abrir (2026-10-13) | `fix/deuda-bloqueante-sprint3` (pusheada, HEAD `108ac1d`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase1-deuda-bloqueante.md` | 129/129, 0 skipped, 0 warnings (17 PG real, +21 tests) | abrir el PR a mano; deuda abajo |
-| 2 · D10 en la aplicación | código hecho. Hallazgos 1, 2 y 3 del auditor arreglados el 2026-10-14. **Re-verificación: auditor APTO, verificador NO APTO (por el cuerpo del PR, no por el código). PARADA a la espera del equipo** | `feature/d10-historial-baja` (código hasta `d378c0f`, sale de `108ac1d`; los commits del 2026-10-14 están SIN pushear) | sin abrir. Cuerpo en `docs/sprint03/pr-fase2-d10-historial-baja.md`, **desactualizado** (ver re-verificación). Base provisoria `fix/deuda-bloqueante-sprint3` | **2026-10-14, en `d378c0f`: 176 total · 176 passed · 0 failed · 0 skipped · 0 warnings (43 PG real)** | reescribir el cuerpo del PR (lo bloquea el NO APTO); push y PR; deuda abajo |
+| 2 · D10 en la aplicación | hecha (2026-10-14). Hallazgos 1, 2 y 3 del auditor arreglados. **Auditor APTO, verificador APTO (segunda pasada)** | `feature/d10-historial-baja` (pusheada; código hasta `d378c0f`, sale de `108ac1d`) | sin abrir: no hay `gh`, se abre a mano desde el link de compare. Cuerpo en `docs/sprint03/pr-fase2-d10-historial-baja.md`, reescrito el 2026-10-14. Base provisoria `fix/deuda-bloqueante-sprint3` | **2026-10-14, en `d378c0f`: 176 total · 176 passed · 0 failed · 0 skipped · 0 warnings (43 PG real)** | abrir el PR a mano; deuda abajo |
 | 3 · HU-ART-01 | **bloqueada**: compuerta de esquema D1 (la resuelve el equipo) | | | | ver PRÓXIMA SESIÓN |
 | 4 · HU-ART-02 | pendiente | | | | |
 | 5 · HU-FCO-01 | pendiente | | | | |
@@ -130,6 +130,30 @@ Los dos corrieron como `subagent_type` real, cada uno en su worktree. Los dos bo
 **Estado:** se PARÓ en el punto 3, como indica la instrucción ante un NO APTO.
 - No se reescribió el cuerpo del PR (punto 4).
 - No se hizo push ni se abrió el PR (punto 7).
+
+### verificador-tdd, segunda pasada (2026-10-14, sobre `git diff 108ac1d c4bbfd2`) · **APTO**
+El equipo confirmó que se reescribiera el cuerpo del PR (`c4bbfd2`).
+- El código no cambió desde `d378c0f`: el diff entre los dos commits toca solo 3 archivos de docs.
+- Suite en `c4bbfd2`, en un worktree propio que después borró: 176 · 176 passed · 0 skipped. Build con 0 warnings. 43 `[PostgreSqlFact]`.
+- Revisó el cuerpo del PR afirmación por afirmación y no encontró nada falso.
+  - Volvió a correr hoy la mutación de `b789b0e` (`UnidadDeTrabajo` sin transacción): rojo en L237, L261, L286 y L311.
+  - Comprobó con `git show --stat` la clasificación de los 8 commits originales.
+- Marcó dos imprecisiones, ya corregidas en el cuerpo:
+  - "solo el historial es un doble": la sesión (`IContextoUsuario`) también lo es;
+  - el veredicto sin asentar.
+- No repitió las mutaciones anteriores, porque el código es el mismo.
+
+**Fase 2: los dos subagentes dan APTO.** Desbloqueado el push y el PR.
+
+### Limpieza (2026-10-14)
+- Se eliminaron el worktree huérfano `.../9c481e3d-.../scratchpad/wt` (`git worktree remove --force` + `prune`) y los worktrees de los subagentes. Queda solo el principal.
+- Se borró el esquema huérfano `pr110_test_e68bcde698414f5996fd57e4ddf46ef4` de `lacentral_test`. Antes se verificó lo siguiente:
+  - el nombre cumple `^pr110_test_[0-9a-f]{32}$`;
+  - la base es `lacentral_test`;
+  - las 22 tablas son copias de tablas de `public`;
+  - no tenía locks activos;
+  - las únicas dependencias externas eran sus 9 tablas TOAST, sin FKs entre esquemas.
+  - El borrado se hizo con `DROP SCHEMA ... CASCADE`, en una transacción con `lock_timeout`. Después de borrarlo quedan 0 esquemas `pr110_test_*`.
 
 ## Verificación de la Fase 2 por los subagentes (2026-10-14)
 
