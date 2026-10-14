@@ -1,0 +1,79 @@
+# La Central · reglas del proyecto
+
+## Graphify
+Hay un grafo de conocimiento en `graphify-out/`. Para preguntas sobre el código,
+`graphify query "<pregunta>"` ANTES de leer archivos de a uno o grepear.
+`graphify path "A" "B"` para relaciones, `graphify explain "X"` para un concepto.
+`GRAPH_REPORT.md` solo para revisión amplia de arquitectura.
+Después de modificar código: `graphify update .`
+
+## Arquitectura Core-Driven
+- `LaCentral.Api` controladores, DTOs HTTP, seguridad, composition root
+- `LaCentral.UseCases` entidades, casos de uso, puertos, Result<T>
+- `LaCentral.Data` DbContext, modelos scaffoldeados, repositorios
+
+REGLA DE ORO: `LaCentral.UseCases` NO referencia ningún otro proyecto. Su `.csproj`
+no tiene un solo `PackageReference`. Si para resolver algo hace falta agregarle una
+referencia, lo que falta es un puerto.
+
+El acoplamiento `Api → Data` existe SOLO en `Program.cs`. Ningún controlador importa
+`LaCentral.Data`.
+
+## Prohibiciones
+- `dotnet ef migrations`. El esquema es Database First: script SQL + re-scaffold.
+- Editar archivos de `LaCentral.Data/Models/` — son generados. El código manual va en
+  `LaCentralDbContext.Personalizaciones.cs` (partial).
+- Excepciones para flujo de negocio. Se usa `Result<T>` con
+  `TipoError { Ninguno, NoEncontrado, Conflicto, Invalido, NoAutorizado }`.
+- Devolver entidades o modelos de persistencia desde la API. Solo DTOs, vía
+  `MapeoResultado.AResultadoHttp()`.
+- Sembrar Ids en los tests. Los genera la base: `GENERATED ALWAYS AS IDENTITY`.
+  Un Id a mano da error 428C9 contra PostgreSQL.
+- MediatR. Interfaces para casos de uso — solo para puertos de infraestructura.
+
+## Pruebas
+- Lógica de casos de uso y guardas → Moq.
+- Mapeo de repositorio, índices, transacciones, CHECK constraints, atomicidad,
+  búsqueda con pg_trgm → PostgreSQL REAL, vía
+  `LaCentral.Tests/Infraestructura/PostgreSqlPruebas.cs` y `[PostgreSqlFact]`.
+- Recorridos HTTP → `WebApplicationFactory`.
+
+Un mock prueba la lógica del caso de uso, NO prueba que la fila se escriba. InMemory no
+implementa CHECK constraints, ni índices únicos parciales, ni columnas de identidad.
+Este equipo perdió una semana por eso: dos bugs críticos pasaron con la suite en verde.
+Todo lo que toque persistencia se verifica releyendo la fila CON UN CONTEXTO NUEVO.
+
+## Seguridad de datos
+El contenedor de Tailscale tiene datos reales de la empresa: 124 proveedores y 2108
+clientes. `PostgreSqlSeguridadTests` impide apuntar a la base principal: no lo
+desactives ni lo eludas. Ningún `TRUNCATE` ni `DROP` fuera del esquema de pruebas.
+
+## Decisiones de negocio vigentes
+- D1 Precios por modalidad persistidos: Lista, Tarjeta3, Tarjeta6,
+  EfectivoTransferencia, Costo, CasoEspecial. Lista = costo × 1,50. Costo = × 1,00 (0%).
+  Efectivo = lista × 0,90. Tarjeta3/6: tasas configurables SIN DEFINIR — no inventar un
+  número. Costo desconocido es null, nunca cero.
+- D2 Un código vigente por proveedor y artículo. Más la unicidad global de códigos.
+- D3 HU-FCO-01 antes que HU-ART-05.
+- D7 Todo en pesos. Sin moneda ni cotización.
+- D8 Son PERCEPCIONES: `factura_compra.percepcion_{iva, iibb, municipal, ganancias}`.
+- D9 Destino de stock POR LÍNEA: `factura_compra_detalle.sucursal_id`.
+- D10 Historial de baja en tablas 1:N con índice único parcial sobre la entidad
+  `WHERE fecha_reactivacion IS NULL`. El CHECK es
+  `activo OR (motivo IS NOT NULL AND fecha IS NOT NULL)`: una fila ACTIVA puede
+  conservar motivo y fecha — es el rastro de su última baja (HU-CLI-05 CA-003).
+
+## Permisos
+Se leen de la sesión autenticada (`IContextoUsuario`), NUNCA del cuerpo de la petición.
+- Alta y modificación de datos comunes: ADMINISTRADOR y OPERADOR.
+- Cambiar el código interno de un artículo: SOLO ADMINISTRADOR.
+- Retirar un código de proveedor: SOLO ADMINISTRADOR, operación explícita. Omitir un
+  código en una modificación ordinaria NO lo elimina.
+
+## Idioma
+Todo en español: clases, métodos, variables, mensajes, commits.
+
+## Estado del sprint
+`docs/sprint03/ESTADO.md` es la memoria entre fases. Leelo al empezar, actualizalo al
+terminar cada fase. Si el contexto se pierde, ese archivo es la única fuente de verdad
+sobre qué está hecho.

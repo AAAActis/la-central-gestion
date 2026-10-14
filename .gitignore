@@ -145,5 +145,6 @@ $RECYCLE.BIN/
 # Herramientas locales (Claude Code / graphify)
 # ---------------------------------------------------------------
 # settings.json contiene rutas absolutas de cada máquina (hooks de graphify).
-.claude/
+.claude/settings.json
 graphify-out/
+claude-mods-computer-use-threads/
