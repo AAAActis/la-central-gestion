@@ -106,7 +106,8 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
             PreciosPorModalidad: articulo.ArticuloPrecioModalidad.Count == 0 ? null :
                 articulo.ArticuloPrecioModalidad
                     .Select(p => new PrecioModalidadConsultaDto(ModalidadPersistida.Leer(p.Modalidad),
-                        Base: null, Porcentaje: null, p.Precio, CalculoManual: false, FechaCalculo: null, UsuarioId: null))
+                        ModalidadPersistida.LeerBase(p.Base), p.Porcentaje, p.Precio,
+                        p.CalculoManual, p.FechaCalculo, p.UsuarioId))
                     .OrderBy(p => p.Modalidad).ToArray());
     }
 
