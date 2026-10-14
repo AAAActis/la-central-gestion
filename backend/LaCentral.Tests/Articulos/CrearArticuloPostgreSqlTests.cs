@@ -40,9 +40,20 @@ public class CrearArticuloPostgreSqlTests
         return proveedor.Id;
     }
 
+    /// <summary>
+    /// El código provisional TMP-<guid> no puede sobrevivir: si AsignarCodigoInterno no pegara
+    /// (ExecuteUpdate con 0 filas no falla), el artículo quedaría con él y el alta diría éxito.
+    /// </summary>
+    private static async Task SinCodigosProvisionalesAsync(PostgreSqlPruebas fixture)
+    {
+        await using var relectura = fixture.CrearContexto();
+        Assert.False(await relectura.Articulo.AnyAsync(a => a.CodigoInterno.StartsWith("TMP-")));
+    }
+
     private static async Task NoQuedoNadaAsync(PostgreSqlPruebas fixture, string nombre, int? articuloId = null)
     {
         await using var relectura = fixture.CrearContexto();
+        await SinCodigosProvisionalesAsync(fixture);
         Assert.False(await relectura.Articulo.AnyAsync(a => a.Nombre == nombre));
         if (articuloId is { } id)
         {
@@ -75,6 +86,7 @@ public class CrearArticuloPostgreSqlTests
             .Include(a => a.ArticuloCodigoAlternativo).Include(a => a.Stock).Include(a => a.ArticuloPrecioModalidad)
             .SingleAsync(a => a.Id == id);
         Assert.Equal($"LC-{id:D6}", articulo.CodigoInterno);
+        await SinCodigosProvisionalesAsync(fixture);
         Assert.Equal("Bujía NGK BPR6ES", articulo.Nombre);
         Assert.Equal("Estante 4", articulo.UbicacionDeposito);
         Assert.True(articulo.Activo);
@@ -240,6 +252,30 @@ public class CrearArticuloPostgreSqlTests
         await NoQuedoNadaAsync(fixture, "Artículo con inactivo");
     }
 
+    // El patrón del Crítico 3: un ExecuteUpdate que no encuentra la fila devuelve 0 y no falla.
+    // El repositorio real tiene que informarlo (false) y no tocar ninguna otra fila.
+    [PostgreSqlFact]
+    public async Task AsignarCodigoInterno_IdInexistente_DevuelveFalseYNoTocaNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        int existente;
+        await using (var setup = fixture.CrearContexto())
+        {
+            var articulo = new Articulo { CodigoInterno = "TMP-SIN-ASIGNAR", Nombre = "Provisional", Activo = true };
+            setup.Articulo.Add(articulo);
+            await setup.SaveChangesAsync();
+            existente = articulo.Id;
+        }
+
+        await using (var contexto = fixture.CrearContexto())
+            Assert.False(await new ArticuloRepositorio(contexto)
+                .AsignarCodigoInternoAsync(existente + 1000, "LC-999999"));
+
+        await using var relectura = fixture.CrearContexto();
+        Assert.Equal("TMP-SIN-ASIGNAR", (await relectura.Articulo.SingleAsync(a => a.Id == existente)).CodigoInterno);
+        Assert.False(await relectura.Articulo.AnyAsync(a => a.CodigoInterno == "LC-999999"));
+    }
+
     // Sin MAX+1: dos altas a la vez, cada una con su conexión, no chocan.
     [PostgreSqlFact]
     public async Task DosAltasSimultaneas_CodigosInternosDistintos()
@@ -258,5 +294,6 @@ public class CrearArticuloPostgreSqlTests
         await using var relectura = fixture.CrearContexto();
         foreach (var r in resultados)
             Assert.Equal($"LC-{r.Value.Id:D6}", (await relectura.Articulo.SingleAsync(a => a.Id == r.Value.Id)).CodigoInterno);
+        await SinCodigosProvisionalesAsync(fixture);
     }
 }
