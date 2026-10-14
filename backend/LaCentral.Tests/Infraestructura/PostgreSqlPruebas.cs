@@ -92,6 +92,7 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
             fixture._creado = true;
             foreach (var tabla in tablas)
                 await fixture.EjecutarAsync($"CREATE TABLE {Q(esquema)}.{Q(tabla)} (LIKE {Q(origen)}.{Q(tabla)} INCLUDING ALL)");
+            await fixture.RestaurarNombresDeIndicesAsync(origen, tablas);
 
             // LIKE conserva tipos, defaults, CHECK, índices e identity (con
             // secuencias nuevas), pero NO copia las FK: se agregan explícitamente.
@@ -139,6 +140,63 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
             await fixture.DisposeAsync();
             throw;
         }
+    }
+
+    /// <summary>
+    /// LIKE ... INCLUDING ALL genera nombres nuevos para los índices (y las restricciones
+    /// UNIQUE que los respaldan). El manejador global reconoce las violaciones por nombre,
+    /// así que la copia tiene que llevar los del origen. Se aparean por tabla, unicidad y
+    /// definición; ALTER INDEX también renombra la restricción asociada.
+    /// </summary>
+    private async Task RestaurarNombresDeIndicesAsync(string origen, string[] tablas)
+    {
+        async Task<List<(string Tabla, string Nombre, string Firma)>> IndicesAsync(string esquema)
+        {
+            var indices = new List<(string, string, string)>();
+            await using var comando = new NpgsqlCommand("""
+                SELECT t.relname, ix.relname,
+                       i.indisunique::text || ' ' || regexp_replace(pg_get_indexdef(i.indexrelid), '^.* USING ', '')
+                FROM pg_index i JOIN pg_class ix ON ix.oid = i.indexrelid
+                JOIN pg_class t ON t.oid = i.indrelid JOIN pg_namespace n ON n.oid = t.relnamespace
+                WHERE n.nspname = @schema AND t.relname = ANY(@tablas)
+                """, _administracion);
+            comando.Parameters.AddWithValue("schema", esquema);
+            comando.Parameters.AddWithValue("tablas", tablas);
+            await using var reader = await comando.ExecuteReaderAsync();
+            while (await reader.ReadAsync()) indices.Add((reader.GetString(0), reader.GetString(1), reader.GetString(2)));
+            return indices;
+        }
+
+        var originales = await IndicesAsync(origen);
+        var copiados = await IndicesAsync(_esquema);
+        foreach (var original in originales)
+        {
+            var candidatos = copiados.Where(c => c.Tabla == original.Tabla && c.Firma == original.Firma).ToList();
+            if (candidatos.Count != 1 || originales.Count(o => o.Tabla == original.Tabla && o.Firma == original.Firma) != 1)
+                throw new InvalidOperationException($"No se pudo aparear sin ambigüedad el índice {original.Tabla}.{original.Nombre} en la copia.");
+            if (candidatos[0].Nombre != original.Nombre)
+                await EjecutarAsync($"ALTER INDEX {Q(_esquema)}.{Q(candidatos[0].Nombre)} RENAME TO {Q(original.Nombre)}");
+        }
+    }
+
+    /// <summary>
+    /// Siembra un usuario real en el esquema aislado (rol y sucursal copiados de los
+    /// catálogos) y devuelve el Id que generó la base. Lo exigen las FK de auditoría.
+    /// </summary>
+    public async Task<int> CrearUsuarioAsync(string nombreUsuario = "auditor")
+    {
+        await using var contexto = CrearContexto();
+        var usuario = new Usuario
+        {
+            NombreUsuario = nombreUsuario,
+            HashContrasena = "hash-de-prueba",
+            RolId = await contexto.Rol.OrderBy(r => r.Id).Select(r => r.Id).FirstAsync(),
+            SucursalId = await contexto.Sucursal.OrderBy(s => s.Id).Select(s => s.Id).FirstAsync(),
+            Activo = true
+        };
+        contexto.Usuario.Add(usuario);
+        await contexto.SaveChangesAsync();
+        return usuario.Id;
     }
 
     private async Task ValidarTablaAsync(string origen, IEntityType entidad)

@@ -50,7 +50,7 @@ public class ProveedorPostgreSqlTests
 
         var antes = DateTime.UtcNow;
         await using (var contexto = fixture.CrearContexto())
-            Assert.True((await new DarDeBajaProveedorUseCase(new ProveedorRepositorio(contexto))
+            Assert.True((await CasosDeBajaPostgreSql.DarDeBajaProveedor(contexto, await fixture.CrearUsuarioAsync())
                 .EjecutarAsync(id, new DarDeBajaProveedorRequest("Cerró el local", "PRV-200"))).IsSuccess);
 
         await using var lectura = fixture.CrearContexto();
@@ -61,6 +61,81 @@ public class ProveedorPostgreSqlTests
         Assert.NotNull(proveedor.FechaBaja);
         Assert.Equal(fila.FechaBaja, proveedor.FechaBaja);
         Assert.InRange(proveedor.FechaBaja!.Value, antes.AddSeconds(-5), DateTime.UtcNow.AddSeconds(5));
+    }
+
+// CRÍTICO 3 en proveedor: un Id inexistente no sale en silencio ni pisa otra fila.
+    [PostgreSqlFact]
+    public async Task ActualizarConIdInexistente_DevuelveFalseYNoTocaNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using (var contexto = fixture.CrearContexto())
+            Assert.True((await new CrearProveedorUseCase(new ProveedorRepositorio(contexto))
+                .EjecutarAsync(Alta("PRV-300", "Proveedor Real"))).IsSuccess);
+        int id;
+        await using (var contexto = fixture.CrearContexto())
+            id = (await contexto.Proveedor.AsNoTracking().SingleAsync(p => p.Codigo == "PRV-300")).Id;
+
+        bool actualizado;
+        await using (var contexto = fixture.CrearContexto())
+            actualizado = await new ProveedorRepositorio(contexto).ActualizarAsync(new LaCentral.UseCases.Entidades.Proveedor
+                { Id = id + 1000, Codigo = "PRV-300", RazonSocial = "Fantasma", Activo = true });
+
+        Assert.False(actualizado);
+        await using var lectura = fixture.CrearContexto();
+        Assert.Equal("Proveedor Real", Assert.Single(await lectura.Proveedor.AsNoTracking().ToListAsync()).RazonSocial);
+    }
+
+// Pérdida de datos silenciosa presente en develop: modificar devolviendo lo que se leyó
+    // borraba la dirección sin calle y, con ella, su localidad.
+    [PostgreSqlFact]
+    public async Task ModificarConDireccionSinCalle_LaConservaConSuLocalidad()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var proveedor = new LaCentral.Data.Models.Proveedor { Codigo = "PRV-DIR", RazonSocial = "Proveedor Sin Calle", Cuit = "30-11111111-1", Activo = true };
+        proveedor.ProveedorDireccion.Add(new LaCentral.Data.Models.ProveedorDireccion { Calle = null, Localidad = "Córdoba" });
+        proveedor.ProveedorDireccion.Add(new LaCentral.Data.Models.ProveedorDireccion { Calle = "Ruta 9 km 5" });
+        await using (var setup = fixture.CrearContexto())
+        {
+            setup.Proveedor.Add(proveedor);
+            await setup.SaveChangesAsync();
+        }
+        var sinCalleId = proveedor.ProveedorDireccion.Single(d => d.Calle == null).Id;
+
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var repo = new ProveedorRepositorio(contexto);
+            var leido = (await repo.ObtenerDetallePorIdAsync(proveedor.Id))!;
+            var resultado = await new ModificarProveedorUseCase(repo).EjecutarAsync(proveedor.Id,
+                new ModificarProveedorRequest("Proveedor Renombrado", leido.Cuit!, null, null, leido.Direcciones));
+            Assert.True(resultado.IsSuccess);
+        }
+
+        await using var lectura = fixture.CrearContexto();
+        var direcciones = await lectura.ProveedorDireccion.AsNoTracking().Where(d => d.ProveedorId == proveedor.Id).ToListAsync();
+        Assert.Equal(2, direcciones.Count);
+        var sinCalle = Assert.Single(direcciones, d => d.Calle == null);
+        Assert.Equal(sinCalleId, sinCalle.Id);
+        Assert.Equal("Córdoba", sinCalle.Localidad);
+    }
+
+    // Conservar no es crear: una dirección vacía que no existía no genera una fila vacía.
+    [PostgreSqlFact]
+    public async Task ModificarConDireccionVaciaNueva_NoCreaUnaFilaVacia()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using (var contexto = fixture.CrearContexto())
+            Assert.True((await new CrearProveedorUseCase(new ProveedorRepositorio(contexto))
+                .EjecutarAsync(Alta("PRV-400", "Proveedor Sin Direcciones") with { Cuit = "30-22222222-2" })).IsSuccess);
+        int id;
+        await using (var contexto = fixture.CrearContexto())
+            id = (await contexto.Proveedor.AsNoTracking().SingleAsync(p => p.Codigo == "PRV-400")).Id;
+
+        await using (var contexto = fixture.CrearContexto())
+            Assert.True((await new ModificarProveedorUseCase(new ProveedorRepositorio(contexto)).EjecutarAsync(id,
+                new ModificarProveedorRequest("Proveedor Sin Direcciones", "30-22222222-2", null, null, new List<string> { "  " }))).IsSuccess);
+
+        await using var lectura = fixture.CrearContexto();
+        Assert.False(await lectura.ProveedorDireccion.AnyAsync(d => d.ProveedorId == id));
     }
 
     private static CrearProveedorRequest Alta(string codigo, string razonSocial) =>

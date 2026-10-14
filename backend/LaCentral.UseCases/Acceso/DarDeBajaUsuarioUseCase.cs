@@ -1,4 +1,5 @@
 using LaCentral.UseCases.Comun;
+using LaCentral.UseCases.Entidades;
 using LaCentral.UseCases.Puertos;
 
 namespace LaCentral.UseCases;
@@ -12,15 +13,20 @@ namespace LaCentral.UseCases;
 public class DarDeBajaUsuarioUseCase
 {
     private readonly IUsuarioRepositorio _usuarios;
+    private readonly IHistorialBajaRepositorio _historial;
+    private readonly IUnidadDeTrabajo _unidadDeTrabajo;
     private readonly IContextoUsuario _contexto;
 
     // rol_id 2 = ADMINISTRADOR. Anotado para la retro: debería salir de la
     // tabla `rol` y no de una constante.
     private const int RolAdministrador = 2;
 
-    public DarDeBajaUsuarioUseCase(IUsuarioRepositorio usuarios, IContextoUsuario contexto)
+    public DarDeBajaUsuarioUseCase(IUsuarioRepositorio usuarios, IHistorialBajaRepositorio historial,
+        IUnidadDeTrabajo unidadDeTrabajo, IContextoUsuario contexto)
     {
         _usuarios = usuarios;
+        _historial = historial;
+        _unidadDeTrabajo = unidadDeTrabajo;
         _contexto = contexto;
     }
 
@@ -86,17 +92,21 @@ public class DarDeBajaUsuarioUseCase
         usuario.Activo = false;
         usuario.MotivoBaja = motivo.Trim();
         usuario.FechaBaja = DateTime.UtcNow; 
-        usuario.UsuarioBajaId = _contexto.UsuarioId;
+        usuario.UsuarioBajaId = idEnSesion;
 
-        // ACÁ ESTÁ LA CORRECCIÓN DEL HALLAZGO 8
-        bool actualizado = await _usuarios.ActualizarAsync(usuario, cancellationToken);
-        
-        if (!actualizado)
+        // D10: la fila y su historial, juntos o ninguno.
+        return await _unidadDeTrabajo.EjecutarAsync(async ct =>
         {
-            return Result.Failure(TipoError.NoEncontrado, 
-                "El registro del usuario no se encontró en la base de datos al intentar actualizar.");
-        }
+            // ACÁ ESTÁ LA CORRECCIÓN DEL HALLAZGO 8
+            if (!await _usuarios.ActualizarAsync(usuario, ct))
+            {
+                return Result.Failure(TipoError.NoEncontrado,
+                    "El registro del usuario no se encontró en la base de datos al intentar actualizar.");
+            }
 
-        return Result.Success();
+            await _historial.AbrirAsync(EntidadConHistorialBaja.Usuario, usuario.Id, usuario.MotivoBaja,
+                usuario.FechaBaja.Value, idEnSesion, ct);
+            return Result.Success();
+        }, cancellationToken);
     }
 }

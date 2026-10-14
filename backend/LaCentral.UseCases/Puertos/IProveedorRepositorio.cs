@@ -13,7 +13,8 @@ public interface IProveedorRepositorio
 
     /// <summary>ALTO 5: el código es la clave de negocio; devuelve el dueño para informar el conflicto.</summary>
     Task<Proveedor?> ObtenerPorCodigoAsync(string codigo, CancellationToken ct = default);
-    Task ActualizarAsync(Proveedor proveedor, CancellationToken ct = default);
+    /// <summary>CRÍTICO 3: por Id; false si la fila no existe.</summary>
+    Task<bool> ActualizarAsync(Proveedor proveedor, CancellationToken ct = default);
 
     /// <summary>
     /// HU-PRO-02: busca proveedores por Razón Social (coincidencia difusa) o CUIT

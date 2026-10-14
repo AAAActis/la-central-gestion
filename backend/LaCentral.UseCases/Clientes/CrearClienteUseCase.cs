@@ -35,9 +35,12 @@ public class CrearClienteUseCase
         }
 
         // 2. CA-001: Código duplicado
-        if (await _clienteRepositorio.ExisteCodigoAsync(request.Codigo, ct))
+        // El índice cliente_codigo_key garantiza la unicidad ante dos altas simultáneas.
+        var duenioDelCodigo = await _clienteRepositorio.ObtenerPorCodigoAsync(request.Codigo, ct);
+        if (duenioDelCodigo is not null)
         {
-            return Result<CrearClienteResponse>.Failure(TipoError.Conflicto, "Ya existe un cliente registrado con este código.");
+            return Result<CrearClienteResponse>.Failure(TipoError.Conflicto,
+                $"El código {request.Codigo} ya pertenece al cliente: {duenioDelCodigo.RazonSocial}.");
         }
 
         // 3. CUIT duplicado

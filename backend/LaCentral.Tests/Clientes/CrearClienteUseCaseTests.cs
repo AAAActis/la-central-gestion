@@ -4,6 +4,7 @@ using LaCentral.UseCases.Clientes;
 using LaCentral.UseCases.Clientes.Dtos;
 using LaCentral.UseCases.Puertos;
 using LaCentral.UseCases.Comun;
+using LaCentral.UseCases.Entidades;
 
 namespace LaCentral.Tests.Clientes;
 
@@ -50,8 +51,8 @@ public class CrearClienteUseCaseTests
     public async Task Ejecutar_CodigoDuplicado_DevuelveConflicto()
     {
         // Arrange
-        _repoMock.Setup(r => r.ExisteCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        _repoMock.Setup(r => r.ObtenerPorCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Cliente { Id = 9, Codigo = "CLI-001", RazonSocial = "Existente" });
             
         var caso = CrearCasoDeUso();
 
@@ -64,12 +65,26 @@ public class CrearClienteUseCaseTests
         Assert.Contains("código", resultado.Error);
     }
 
+// Igual que proveedor (1.3): el conflicto informa CUÁL cliente ya tiene el código.
+    [Fact]
+    public async Task Ejecutar_CodigoDuplicado_InformaElClienteEnConflicto()
+    {
+        var request = CrearRequestValido();
+        _repoMock.Setup(r => r.ObtenerPorCodigoAsync(request.Codigo, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Cliente { Id = 5, Codigo = request.Codigo, RazonSocial = "Repuestos Pérez" });
+
+        var resultado = await CrearCasoDeUso().EjecutarAsync(request);
+
+        Assert.Equal(TipoError.Conflicto, resultado.Tipo);
+        Assert.Contains("Repuestos Pérez", resultado.Error);
+        Assert.Contains(request.Codigo, resultado.Error);
+        _repoMock.Verify(r => r.AgregarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     [Fact]
     public async Task Ejecutar_RazonSocialRepetida_DevuelveExitoConAdvertencia()
     {
         // Arrange
-        _repoMock.Setup(r => r.ExisteCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
             
         // Simulamos que la razón social ya está registrada
         _repoMock.Setup(r => r.ExisteRazonSocialAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -91,8 +106,6 @@ public class CrearClienteUseCaseTests
     public async Task Ejecutar_DatosValidos_DevuelveExitoSinAdvertencia()
     {
         // Arrange
-        _repoMock.Setup(r => r.ExisteCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
         _repoMock.Setup(r => r.ExisteRazonSocialAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
             
@@ -193,7 +206,6 @@ public class CrearClienteUseCaseTests
     public async Task Ejecutar_ColeccionesNulas_DevuelveExitoSinExcepcion()
     {
         // Arrange
-        _repoMock.Setup(r => r.ExisteCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
         _repoMock.Setup(r => r.ExisteRazonSocialAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
         var caso = CrearCasoDeUso();
         

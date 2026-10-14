@@ -32,8 +32,11 @@ public class ModificarClienteUseCase
 
         // CRÍTICO 3: el código nuevo no puede ser el de otro cliente. El índice
         // único cliente_codigo_key lo garantiza ante dos modificaciones simultáneas.
-        if (request.Codigo != cliente.Codigo && await _clienteRepositorio.ExisteCodigoAsync(request.Codigo, ct))
-            return Result.Failure(TipoError.Conflicto, $"El código {request.Codigo} ya pertenece a otro cliente.");
+        if (request.Codigo != cliente.Codigo &&
+            await _clienteRepositorio.ObtenerPorCodigoAsync(request.Codigo, ct) is { } duenioDelCodigo &&
+            duenioDelCodigo.Id != cliente.Id)
+            return Result.Failure(TipoError.Conflicto,
+                $"El código {request.Codigo} ya pertenece al cliente: {duenioDelCodigo.RazonSocial}.");
 
         // 4. CA-003: CUIT duplicado informa a quién pertenece
         if (!string.IsNullOrWhiteSpace(request.Cuit) && request.Cuit != cliente.Cuit)
@@ -52,7 +55,8 @@ public class ModificarClienteUseCase
         cliente.CondicionFiscal = request.CondicionFiscal;
         cliente.CondicionPago = request.CondicionPago;
         cliente.Telefonos = (request.Telefonos ?? new List<string>()).Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
-        cliente.Direcciones = (request.Direcciones ?? new List<string>()).Where(d => !string.IsNullOrWhiteSpace(d)).ToList();
+        // Una dirección sin calle viaja como "": se conserva para no borrar su localidad.
+        cliente.Direcciones = (request.Direcciones ?? new List<string>()).Select(d => d?.Trim() ?? string.Empty).ToList();
 
         if (!await _clienteRepositorio.ActualizarAsync(cliente, ct))
             return Result.Failure(TipoError.NoEncontrado, "El cliente indicado no existe.");

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using LaCentral.Data;
 using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using LaCentral.UseCases;
@@ -21,6 +22,8 @@ builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 builder.Services.AddScoped<IConsultaArticulosRepositorio, ArticuloRepositorio>();
+builder.Services.AddScoped<IHistorialBajaRepositorio, HistorialBajaRepositorio>();
+builder.Services.AddScoped<IUnidadDeTrabajo, UnidadDeTrabajo>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
 
 builder.Services.AddHttpContextAccessor();

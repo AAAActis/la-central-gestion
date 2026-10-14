@@ -13,6 +13,8 @@ namespace LaCentral.Api.Middleware;
 ///   · violación de unicidad de una restricción reconocida → 409. Es la carrera
 ///     que el núcleo no puede evitar (dos altas simultáneas pasan la validación
 ///     previa y el índice rechaza la segunda).
+///   · violación de un CHECK reconocido → 409. Es un dato existente que choca con
+///     la operación (una baja con fecha futura que no admite la reactivación).
 ///   · cualquier otra cosa → 500 genérico.
 /// Ninguna respuesta lleva el mensaje, el tipo ni el stack de la excepción.
 /// </summary>
@@ -35,11 +37,30 @@ public sealed class ManejadorExcepcionesGlobal : IExceptionHandler
             ["codigo_unico_global"] = "Ese código ya está asignado a otro artículo.",
             ["un_codigo_por_proveedor"] = "El artículo ya tiene un código vigente de ese proveedor.",
             ["ux_factura_compra_numero_activa"] = "Ya existe una factura de compra activa con ese número para el proveedor.",
+            ["ux_factura_venta_numero_activa"] = "Ya existe una factura de venta activa con ese número.",
+            ["cliente_telefono_cliente_id_numero_key"] = "El cliente ya tiene registrado ese teléfono.",
+            ["proveedor_telefono_proveedor_id_numero_key"] = "El proveedor ya tiene registrado ese teléfono.",
             ["ux_cliente_hist_abierta"] = "El cliente ya tiene una baja abierta.",
             ["ux_proveedor_hist_abierta"] = "El proveedor ya tiene una baja abierta.",
             ["ux_articulo_hist_abierta"] = "El artículo ya tiene una baja abierta.",
             ["ux_usuario_hist_abierta"] = "El usuario ya tiene una baja abierta."
         };
+
+    /// <summary>
+    /// CHECK del esquema real (23514) con su mensaje. Igual que con la unicidad, un
+    /// CHECK que no está acá se informa como 500.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string> RestriccionesCheckReconocidas =
+        new Dictionary<string, string>
+        {
+            ["cliente_hist_fechas_coherentes"] = MensajeReactivacionAnterior,
+            ["proveedor_hist_fechas_coherentes"] = MensajeReactivacionAnterior,
+            ["articulo_hist_fechas_coherentes"] = MensajeReactivacionAnterior,
+            ["usuario_hist_fechas_coherentes"] = MensajeReactivacionAnterior
+        };
+
+    private const string MensajeReactivacionAnterior =
+        "La fecha de reactivación no puede ser anterior a la fecha de la baja.";
 
     private readonly IProblemDetailsService _problemDetails;
     private readonly ILogger<ManejadorExcepcionesGlobal> _logger;
@@ -55,7 +76,7 @@ public sealed class ManejadorExcepcionesGlobal : IExceptionHandler
         ProblemDetails problema;
         if (MensajeDeConflicto(excepcion) is { } mensaje)
         {
-            _logger.LogWarning(excepcion, "Violación de unicidad traducida a 409.");
+            _logger.LogWarning(excepcion, "Violación de restricción reconocida traducida a 409.");
             problema = new ProblemDetails
             {
                 Status = StatusCodes.Status409Conflict,
@@ -83,14 +104,25 @@ public sealed class ManejadorExcepcionesGlobal : IExceptionHandler
         });
     }
 
-    /// <summary>El mensaje para el usuario si es una violación de unicidad reconocida; si no, null.</summary>
+    /// <summary>El mensaje para el usuario si es una violación reconocida (unicidad o CHECK); si no, null.</summary>
     public static string? MensajeDeConflicto(Exception excepcion)
     {
-        if (excepcion is not DbUpdateException { InnerException: PostgresException pg } ||
-            pg.SqlState != PostgresErrorCodes.UniqueViolation ||
-            pg.ConstraintName is null)
+        // SaveChanges envuelve la PostgresException en DbUpdateException; ExecuteUpdate no.
+        var pg = excepcion switch
+        {
+            DbUpdateException { InnerException: PostgresException interna } => interna,
+            PostgresException directa => directa,
+            _ => null
+        };
+        if (pg?.ConstraintName is null)
             return null;
 
-        return RestriccionesUnicasReconocidas.TryGetValue(pg.ConstraintName, out var mensaje) ? mensaje : null;
+        var reconocidas = pg.SqlState switch
+        {
+            PostgresErrorCodes.UniqueViolation => RestriccionesUnicasReconocidas,
+            PostgresErrorCodes.CheckViolation => RestriccionesCheckReconocidas,
+            _ => null
+        };
+        return reconocidas is not null && reconocidas.TryGetValue(pg.ConstraintName, out var mensaje) ? mensaje : null;
     }
 }

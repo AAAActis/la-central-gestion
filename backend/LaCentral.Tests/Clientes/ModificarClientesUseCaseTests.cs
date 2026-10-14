@@ -22,6 +22,23 @@ public class ModificarClienteUseCaseTests
         Codigo = "CLI-001", RazonSocial = "Original", Cuit = "30-00000000-0", Activo = true
     };
 
+// Una dirección sin calle llega como "" (así la lee el repositorio): filtrarla la borraba con su localidad.
+    [Fact]
+    public async Task Ejecutar_DireccionSinCalle_SeConservaParaElRepositorio()
+    {
+        var cliente = CrearClienteBdActivo();
+        cliente.Direcciones = new List<string> { "", "Av. Colón 100" };
+        _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+        _repoMock.Setup(r => r.ActualizarAsync(cliente, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        var request = CrearRequestValido() with { Cuit = cliente.Cuit, Direcciones = new List<string> { "", "Av. Colón 100" } };
+
+        var resultado = await CrearCasoDeUso().EjecutarAsync(1, request);
+
+        Assert.True(resultado.IsSuccess);
+        _repoMock.Verify(r => r.ActualizarAsync(
+            It.Is<Cliente>(c => c.Direcciones.SequenceEqual(new[] { "", "Av. Colón 100" })), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     [Fact]
     public async Task Ejecutar_ClienteInactivo_DevuelveInvalido()
     {
@@ -61,12 +78,28 @@ public class ModificarClienteUseCaseTests
     {
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
                  .ReturnsAsync(CrearClienteBdActivo());
-        _repoMock.Setup(r => r.ExisteCodigoAsync("CLI-002", It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _repoMock.Setup(r => r.ObtenerPorCodigoAsync("CLI-002", It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(new Cliente { Id = 2, Codigo = "CLI-002", RazonSocial = "Otro" });
 
         var resultado = await CrearCasoDeUso().EjecutarAsync(1, CrearRequestValido() with { Codigo = "CLI-002" });
 
         Assert.Equal(TipoError.Conflicto, resultado.Tipo);
         Assert.Contains("CLI-002", resultado.Error);
+        _repoMock.Verify(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+[Fact]
+    public async Task Ejecutar_CodigoDeOtroCliente_InformaElClienteEnConflicto()
+    {
+        _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(CrearClienteBdActivo());
+        _repoMock.Setup(r => r.ObtenerPorCodigoAsync("CLI-002", It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(new Cliente { Id = 2, Codigo = "CLI-002", RazonSocial = "Lubricentro Sur" });
+
+        var resultado = await CrearCasoDeUso().EjecutarAsync(1, CrearRequestValido() with { Codigo = "CLI-002" });
+
+        Assert.Equal(TipoError.Conflicto, resultado.Tipo);
+        Assert.Contains("Lubricentro Sur", resultado.Error);
         _repoMock.Verify(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

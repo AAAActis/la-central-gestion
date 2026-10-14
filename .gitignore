@@ -144,6 +144,9 @@ $RECYCLE.BIN/
 # ---------------------------------------------------------------
 # Herramientas locales (Claude Code / graphify)
 # ---------------------------------------------------------------
-# settings.json contiene rutas absolutas de cada máquina (hooks de graphify).
-.claude/
+# .claude/agents/ y .claude/settings.json SE VERSIONAN (subagentes y hooks de graphify).
+# Ojo: settings.json tiene la ruta absoluta de graphify.exe de una máquina; los ajustes
+# propios de cada máquina van en .claude/settings.local.json, que no se versiona.
+.claude/settings.local.json
 graphify-out/
+claude-mods-computer-use-threads/

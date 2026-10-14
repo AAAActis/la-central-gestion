@@ -1,4 +1,5 @@
 using Moq;
+using LaCentral.Tests.Infraestructura;
 using Xunit;
 using LaCentral.UseCases.Proveedores;
 using LaCentral.UseCases.Proveedores.Dtos;
@@ -14,6 +15,39 @@ public class BajaYReactivacionProveedorTests
 {
     private readonly Mock<IProveedorRepositorio> _repoMock = new();
 
+    public BajaYReactivacionProveedorTests() => _repoMock.Setup(r => r.ActualizarAsync(It.IsAny<Proveedor>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+// CRÍTICO 3 en proveedor: ActualizarAsync devuelve false si la fila ya no existe.
+    [Fact]
+    public async Task DarDeBaja_FilaInexistenteAlActualizar_DevuelveNoEncontrado()
+    {
+        var proveedor = CrearProveedorBase(activo: true);
+        _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(proveedor);
+        _repoMock.Setup(r => r.ActualizarAsync(proveedor, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        var historial = new Mock<IHistorialBajaRepositorio>();
+        var casoUso = new DarDeBajaProveedorUseCase(_repoMock.Object, historial.Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
+
+        var resultado = await casoUso.EjecutarAsync(1, new DarDeBajaProveedorRequest("Cierre empresa", "PRV-001"));
+
+        Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
+        historial.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Reactivar_FilaInexistenteAlActualizar_DevuelveNoEncontrado()
+    {
+        var proveedor = CrearProveedorBase(activo: false);
+        _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(proveedor);
+        _repoMock.Setup(r => r.ActualizarAsync(proveedor, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        var historial = new Mock<IHistorialBajaRepositorio>();
+        var casoUso = new ReactivarProveedorUseCase(_repoMock.Object, historial.Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
+
+        var resultado = await casoUso.EjecutarAsync(1);
+
+        Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
+        historial.VerifyNoOtherCalls();
+    }
+
     private Proveedor CrearProveedorBase(bool activo = true) => new Proveedor
     {
         Id = 1,
@@ -28,7 +62,7 @@ public class BajaYReactivacionProveedorTests
     {
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(999, It.IsAny<CancellationToken>()))
                  .ReturnsAsync((Proveedor?)null);
-        var casoUso = new DarDeBajaProveedorUseCase(_repoMock.Object);
+        var casoUso = new DarDeBajaProveedorUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
 
         var resultado = await casoUso.EjecutarAsync(999, new DarDeBajaProveedorRequest("Cierre empresa", "PRV-001"));
 
@@ -42,7 +76,7 @@ public class BajaYReactivacionProveedorTests
     {
         var proveedor = CrearProveedorBase(activo: true);
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(proveedor);
-        var casoUso = new DarDeBajaProveedorUseCase(_repoMock.Object);
+        var casoUso = new DarDeBajaProveedorUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
 
         var resultado = await casoUso.EjecutarAsync(1, new DarDeBajaProveedorRequest("Cese de actividades", "PRV-001"));
 
@@ -58,7 +92,7 @@ public class BajaYReactivacionProveedorTests
         var proveedor = CrearProveedorBase(activo: false);
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(proveedor);
         _repoMock.Setup(r => r.ExisteCuitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
-        var casoUso = new ReactivarProveedorUseCase(_repoMock.Object);
+        var casoUso = new ReactivarProveedorUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
 
         var resultado = await casoUso.EjecutarAsync(1);
 
@@ -76,7 +110,7 @@ public class BajaYReactivacionProveedorTests
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(proveedor);
         var antes = DateTime.UtcNow;
 
-        var resultado = await new DarDeBajaProveedorUseCase(_repoMock.Object)
+        var resultado = await new DarDeBajaProveedorUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object)
             .EjecutarAsync(1, new DarDeBajaProveedorRequest("Cese de actividades", "PRV-001"));
 
         Assert.True(resultado.IsSuccess);

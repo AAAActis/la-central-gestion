@@ -33,6 +33,7 @@ public class ModificarClientePostgreSqlTests
 
         Assert.Equal(TipoError.Conflicto, resultado.Tipo);
         Assert.Contains(b.Codigo, resultado.Error);
+        Assert.Contains(b.RazonSocial, resultado.Error);
         await using var lectura = fixture.CrearContexto();
         var filaB = await lectura.Cliente.AsNoTracking().SingleAsync(c => c.Id == b.Id);
         var filaA = await lectura.Cliente.AsNoTracking().SingleAsync(c => c.Id == a.Id);
@@ -99,6 +100,71 @@ public class ModificarClientePostgreSqlTests
         await using var lectura = fixture.CrearContexto();
         Assert.Equal(new[] { "Cliente A", "Cliente B" },
             await lectura.Cliente.AsNoTracking().OrderBy(c => c.Id).Select(c => c.RazonSocial).ToArrayAsync());
+    }
+
+// Pérdida de datos silenciosa presente en develop: modificar devolviendo lo que se leyó
+    // borraba la dirección sin calle y, con ella, su localidad.
+    [PostgreSqlFact]
+    public async Task ModificarConDireccionSinCalle_LaConservaConSuLocalidad()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var cliente = new ClienteBd { Codigo = "CLI-DIR", RazonSocial = "Cliente Sin Calle", Activo = true };
+        cliente.ClienteDireccion.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = null, Localidad = "Córdoba" });
+        cliente.ClienteDireccion.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = "Av. Colón 100" });
+        await using (var setup = fixture.CrearContexto())
+        {
+            setup.Cliente.Add(cliente);
+            await setup.SaveChangesAsync();
+        }
+        var sinCalleId = cliente.ClienteDireccion.Single(d => d.Calle == null).Id;
+
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var repo = new ClienteRepositorio(contexto);
+            var leido = (await repo.ObtenerDetallePorIdAsync(cliente.Id))!;
+            var resultado = await new ModificarClienteUseCase(repo).EjecutarAsync(cliente.Id,
+                Pedido(cliente.Codigo, "Cliente Renombrado") with { Direcciones = leido.Direcciones });
+            Assert.True(resultado.IsSuccess);
+        }
+
+        await using var lectura = fixture.CrearContexto();
+        var direcciones = await lectura.ClienteDireccion.AsNoTracking().Where(d => d.ClienteId == cliente.Id).ToListAsync();
+        Assert.Equal(2, direcciones.Count);
+        var sinCalle = Assert.Single(direcciones, d => d.Calle == null);
+        Assert.Equal(sinCalleId, sinCalle.Id);
+        Assert.Equal("Córdoba", sinCalle.Localidad);
+    }
+
+    // Conservar no es crear: una dirección vacía que no existía no genera una fila vacía.
+    [PostgreSqlFact]
+    public async Task ModificarConDireccionVaciaNueva_NoCreaUnaFilaVacia()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var (a, _) = await SembrarDosClientesAsync(fixture);
+
+        await using (var contexto = fixture.CrearContexto())
+            Assert.True((await new ModificarClienteUseCase(new ClienteRepositorio(contexto)).EjecutarAsync(a.Id,
+                Pedido(a.Codigo, "Cliente A") with { Direcciones = new List<string> { "  " } })).IsSuccess);
+
+        await using var lectura = fixture.CrearContexto();
+        Assert.False(await lectura.ClienteDireccion.AnyAsync(d => d.ClienteId == a.Id));
+    }
+
+[PostgreSqlFact]
+    public async Task DosAltasConElMismoCodigo_LaSegundaDaConflictoIdentificandoAlPrimero()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var (a, _) = await SembrarDosClientesAsync(fixture);
+
+        Result resultado;
+        await using (var contexto = fixture.CrearContexto())
+            resultado = await new CrearClienteUseCase(new ClienteRepositorio(contexto), DoblesBaja.Contexto(await fixture.CrearUsuarioAsync()).Object).EjecutarAsync(
+                new CrearClienteRequest(a.Codigo, "Otro Cliente", null, "CONSUMIDOR_FINAL", "Contado", null, null));
+
+        Assert.Equal(TipoError.Conflicto, resultado.Tipo);
+        Assert.Contains(a.RazonSocial, resultado.Error);
+        await using var lectura = fixture.CrearContexto();
+        Assert.Equal("Cliente A", Assert.Single(await lectura.Cliente.AsNoTracking().Where(c => c.Codigo == a.Codigo).ToListAsync()).RazonSocial);
     }
 
     private static async Task<(ClienteBd A, ClienteBd B)> SembrarDosClientesAsync(PostgreSqlPruebas fixture)
