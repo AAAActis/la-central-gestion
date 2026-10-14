@@ -41,7 +41,7 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 |---|---|---|---|---|---|
 | 0 · Línea base | hecha (2026-10-13) | — | — | 108/108, 0 skipped (8 PG real) | — |
 | 1 · Deuda bloqueante | hecha, PR sin abrir (2026-10-13) | `fix/deuda-bloqueante-sprint3` (pusheada, HEAD `108ac1d`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase1-deuda-bloqueante.md` | 129/129, 0 skipped, 0 warnings (17 PG real, +21 tests) | abrir el PR a mano; deuda abajo |
-| 2 · D10 en la aplicación | código hecho (2026-10-13). Suite re-verificada el 2026-10-14 con la credencial corregida (ver "Corrección 2026-10-14") | `feature/d10-historial-baja` (pusheada; código hasta `a105f6d`, sale de `108ac1d`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase2-d10-historial-baja.md`. Base provisoria `fix/deuda-bloqueante-sprint3` | **2026-10-14: 167 total · 167 passed · 0 failed · 0 skipped (34 PG real)**. La corrida anterior del mismo día (133 passed · 34 failed) fue por 28P01, credencial vieja | arreglar los hallazgos 1, 2 y 3 del auditor; volver a correr los dos subagentes; deuda abajo |
+| 2 · D10 en la aplicación | código hecho. Hallazgos 1, 2 y 3 del auditor arreglados el 2026-10-14. **Re-verificación: auditor APTO, verificador NO APTO (por el cuerpo del PR, no por el código). PARADA a la espera del equipo** | `feature/d10-historial-baja` (código hasta `d378c0f`, sale de `108ac1d`; los commits del 2026-10-14 están SIN pushear) | sin abrir. Cuerpo en `docs/sprint03/pr-fase2-d10-historial-baja.md`, **desactualizado** (ver re-verificación). Base provisoria `fix/deuda-bloqueante-sprint3` | **2026-10-14, en `d378c0f`: 176 total · 176 passed · 0 failed · 0 skipped · 0 warnings (43 PG real)** | reescribir el cuerpo del PR (lo bloquea el NO APTO); push y PR; deuda abajo |
 | 3 · HU-ART-01 | **bloqueada**: compuerta de esquema D1 (la resuelve el equipo) | | | | ver PRÓXIMA SESIÓN |
 | 4 · HU-ART-02 | pendiente | | | | |
 | 5 · HU-FCO-01 | pendiente | | | | |
@@ -67,6 +67,69 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
   inválidos. También siguen los menores del verificador. Los 1, 2 y 3 se arreglan en esta rama.
 - Lo que dice abajo sobre el 28P01 queda como registro de lo que se vio en ese momento. No se
   reescribe: esta sección lo corrige.
+
+## Arreglos de los hallazgos del auditor (2026-10-14)
+
+Cada arreglo lleva un commit `test(...)` con el rojo verificado y después un commit de producción.
+La excepción es 2.2, que se explica en su punto.
+- **2.1 · hallazgo 2, `usuario_baja_id`:** `a516caa` (test, rojo en L37 y L63: `Expected 1, Actual null`) → `83f0f7c` (fix).
+  - Las dos lecturas de `UsuarioRepositorio` mapean `UsuarioBajaId`.
+  - `ReactivarUsuarioUseCase` lo limpia de forma explícita, por decisión 2.2.
+  - El tercer test (`Reactivar_LimpiaLaFila...`) es de caracterización: pasó en el commit de test.
+- **2.2 · hallazgo 1, atomicidad:** `b789b0e`. Son 4 tests PG: DarDeBajaProveedor, DarDeBajaUsuario, ReactivarCliente y ReactivarUsuario.
+  - **No hubo rojo contra el código actual, y no hay commit de producción.** `UnidadDeTrabajo` ya revertía. No se inventó un cambio para simular el rojo.
+  - Los tests discriminan por mutación no commiteada: con `UnidadDeTrabajo` sin transacción, los 4 dan rojo por aserción.
+  - Esto contradice el "dos commits por arreglo, sin excepción" de la instrucción. Se declara.
+- **2.3 · hallazgo 3, `*_hist_fechas_coherentes`:** `f00a0ae` (test, rojo en L340 y L369) → `d378c0f` (fix).
+  - La lista blanca suma los 4 CHECK (23514 → 409).
+  - `MensajeDeConflicto` acepta la `PostgresException` directa de `ExecuteUpdate`.
+  - `*_hist_motivo_no_vacio` **no** se tocó.
+- **D1:** `aef1f83` agrega el DDL del motor a `informe-compuerta-d1.md` (ver ese archivo).
+
+## Re-verificación de la Fase 2 por los subagentes (2026-10-14, sobre `git diff 108ac1d d378c0f`)
+
+Los dos corrieron como `subagent_type` real, cada uno en su worktree. Los dos borraron su worktree al terminar.
+
+### auditor-persistencia · **APTO**
+- Suite en `d378c0f`: 176 · 176 passed · 0 skipped. Hay 43 tests contra el motor real: 42 con esquema aislado, confirmados por StdOut en el `.trx`, y 1 de catálogo.
+- Verificó contra el motor (catálogo, solo lectura, `lacentral_test`):
+  - `*_baja_coherente`, `*_hist_fechas_coherentes`, `*_hist_motivo_no_vacio` y `ux_*_hist_abierta`;
+  - identidad `GENERATED ALWAYS`.
+  - Todo coincide con `01_Ajustes_Sprint3.sql`. `base_completa.sql` no tiene las tablas de historial.
+- Hallazgos 1, 2 y 3: **cerrados**. Las 6 operaciones tienen test PG de falla a mitad de camino:
+  - las 3 bajas, con un 23505 real del motor;
+  - las 3 reactivaciones, con una excepción forzada por un historial mockeado (repositorio, unidad de trabajo y contexto son reales);
+  - además, ReactivarCliente tiene un 23514 real.
+- No hizo mutaciones: la consigna no le permitía tocar código.
+- Nuevos, ninguno bloqueante:
+  - (1) Falta un test de que un CHECK **no** reconocido siga dando 500. Falta también un test HTTP de CHECK → 409.
+  - (2) `DarDeBajaClienteUseCase.cs:49` y `DarDeBajaProveedorUseCase.cs:59` no hacen `Trim()` del motivo; usuario sí.
+  - (3) En `lacentral_test` quedó un esquema huérfano, `pr110_test_e68bcde698414f5996fd57e4ddf46ef4` (22 tablas), de una corrida abortada. No se tocó.
+- Sin verificar: que la base principal tenga aplicado `01_Ajustes_Sprint3.sql`.
+
+### verificador-tdd · **NO APTO**: una sola causa, de documentación
+- **Bloqueante:** `docs/sprint03/pr-fase2-d10-historial-baja.md` L46-50.
+  - Afirma que "cada test nuevo se vio fallar por aserción antes del código de producción". Para los 8 commits originales, git no lo puede verificar.
+  - La L50 admite el rojo contra stubs `NotImplementedException`, y eso contradice la L46.
+  - No declara que el orden no se puede verificar.
+  - No menciona los 5 commits nuevos, ni que `b789b0e` no tiene commit de producción.
+  - Los conteos están desactualizados: dice 34 PG y hoy son 43.
+  - Con eso corregido, el veredicto es APTO.
+- Commits nuevos, verificados en worktree:
+  - `a516caa`: rojo en L37 y L63, por aserción y por la razón correcta. `83f0f7c`: verde. Si se comenta `UsuarioBajaId = null` en la reactivación, el test de caracterización da rojo en L86: protege esa línea.
+  - `f00a0ae`: rojo en L340 y L369. `d378c0f`: verde. Mutaciones del manejador: quitar un nombre o quitar la rama `PostgresException` directa → rojo.
+  - `b789b0e`: el tratamiento le parece **aceptable**. Rojo con `UnidadDeTrabajo` sin transacción, y también con una mutación por caso de uso (cada uno saltea la unidad): cada test discrimina su propio caso de uso.
+- Los 7 PG viejos de historial: **rojo comprobado por mutación hoy**.
+  - Mutaciones: `AbrirAsync` que no escribe, `CerrarAsync` que devuelve true sin escribir, y `Rollback` cambiado por `Commit`.
+  - Salvedad: en las dos primeras solo miró el [FAIL], no la causa.
+- Orden test → producción de los 8 originales: sigue sin poder verificarse. b95744f es el único commit solo de test; e6a2d3b mezcla el test con el fixture; los otros 6 traen test y producción juntos.
+  - Por sí solo **no** le impide dar APTO, si se declara en el PR.
+- Build `--no-incremental`: 0 warnings. Suite: 176/176, 43 PG, sin `Skip`.
+- No bloqueante: `*_hist_motivo_no_vacio` sin test ni lista blanca (o se cierra, o se declara). No hay test HTTP del 409 por CHECK.
+
+**Estado:** se PARÓ en el punto 3, como indica la instrucción ante un NO APTO.
+- No se reescribió el cuerpo del PR (punto 4).
+- No se hizo push ni se abrió el PR (punto 7).
 
 ## Verificación de la Fase 2 por los subagentes (2026-10-14)
 
