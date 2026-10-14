@@ -213,6 +213,108 @@ public class HistorialBajaRepositorioTests
         Assert.Null((await lectura.ProveedorHistorialBaja.AsNoTracking().SingleAsync(h => h.ProveedorId == proveedorId)).FechaReactivacion);
     }
 
+    // Hallazgo 1 del auditor: las otras cuatro operaciones de baja y reactivación.
+
+    [PostgreSqlFact]
+    public async Task DarDeBajaProveedor_FallaAlAbrirHistorial_LaFilaNoQuedaInactiva()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var usuarioId = await fixture.CrearUsuarioAsync();
+        var proveedorId = await SembrarAsync(fixture, EntidadConHistorialBaja.Proveedor);
+        // Baja abierta huérfana: el historial choca contra el índice parcial después de actualizar la fila.
+        await using (var setup = fixture.CrearContexto())
+        {
+            setup.ProveedorHistorialBaja.Add(new ProveedorHistorialBaja { ProveedorId = proveedorId, Motivo = "Huérfana", FechaBaja = PrimeraBaja });
+            await setup.SaveChangesAsync();
+        }
+
+        await using (var contexto = fixture.CrearContexto())
+            await Assert.ThrowsAsync<DbUpdateException>(() => CasosDeBajaPostgreSql.DarDeBajaProveedor(contexto, usuarioId)
+                .EjecutarAsync(proveedorId, new DarDeBajaProveedorRequest("Mudanza", $"PRV-{proveedorId}")));
+
+        await using var lectura = fixture.CrearContexto();
+        var proveedor = await lectura.Proveedor.AsNoTracking().SingleAsync(p => p.Id == proveedorId);
+        Assert.True(proveedor.Activo);
+        Assert.Null(proveedor.MotivoBaja);
+        Assert.Null(proveedor.FechaBaja);
+        Assert.Equal("Huérfana", (await lectura.ProveedorHistorialBaja.AsNoTracking().SingleAsync(h => h.ProveedorId == proveedorId)).Motivo);
+    }
+
+    [PostgreSqlFact]
+    public async Task DarDeBajaUsuario_FallaAlAbrirHistorial_LaFilaNoQuedaInactiva()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var quienDaDeBaja = await fixture.CrearUsuarioAsync();
+        var usuarioId = await SembrarAsync(fixture, EntidadConHistorialBaja.Usuario);
+        await using (var setup = fixture.CrearContexto())
+        {
+            setup.UsuarioHistorialBaja.Add(new UsuarioHistorialBaja { UsuarioId = usuarioId, Motivo = "Huérfana", FechaBaja = PrimeraBaja });
+            await setup.SaveChangesAsync();
+        }
+
+        await using (var contexto = fixture.CrearContexto())
+            await Assert.ThrowsAsync<DbUpdateException>(() =>
+                CasosDeBajaPostgreSql.DarDeBajaUsuario(contexto, quienDaDeBaja).EjecutarAsync(usuarioId, "Licencia"));
+
+        await using var lectura = fixture.CrearContexto();
+        var usuario = await lectura.Usuario.AsNoTracking().SingleAsync(u => u.Id == usuarioId);
+        Assert.True(usuario.Activo);
+        Assert.Null(usuario.MotivoBaja);
+        Assert.Null(usuario.FechaBaja);
+        Assert.Null(usuario.UsuarioBajaId);
+        Assert.Equal("Huérfana", (await lectura.UsuarioHistorialBaja.AsNoTracking().SingleAsync(h => h.UsuarioId == usuarioId)).Motivo);
+    }
+
+    [PostgreSqlFact]
+    public async Task ReactivarCliente_FallaAlCerrarHistorial_LaFilaSigueInactiva()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var usuarioId = await fixture.CrearUsuarioAsync();
+        var clienteId = await SembrarAsync(fixture, EntidadConHistorialBaja.Cliente);
+        await using (var c = fixture.CrearContexto())
+            Assert.True((await CasosDeBajaPostgreSql.DarDeBajaCliente(c, usuarioId).EjecutarAsync(clienteId, $"CLI-{clienteId}", "Mudanza")).IsSuccess);
+
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var caso = new LaCentral.UseCases.ReactivarClienteUseCase(new ClienteRepositorio(contexto),
+                HistorialQueFallaAlCerrar().Object, new UnidadDeTrabajo(contexto), DoblesBaja.Contexto(usuarioId).Object);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => caso.EjecutarAsync(clienteId));
+        }
+
+        await using var lectura = fixture.CrearContexto();
+        var cliente = await lectura.Cliente.AsNoTracking().SingleAsync(c => c.Id == clienteId);
+        Assert.False(cliente.Activo);
+        Assert.Equal("Mudanza", cliente.MotivoBaja);
+        Assert.Equal(usuarioId, cliente.UsuarioBajaId);
+        Assert.Null((await lectura.ClienteHistorialBaja.AsNoTracking().SingleAsync(h => h.ClienteId == clienteId)).FechaReactivacion);
+    }
+
+    [PostgreSqlFact]
+    public async Task ReactivarUsuario_FallaAlCerrarHistorial_LaFilaSigueInactiva()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var quienDaDeBaja = await fixture.CrearUsuarioAsync();
+        var usuarioId = await SembrarAsync(fixture, EntidadConHistorialBaja.Usuario);
+        await using (var c = fixture.CrearContexto())
+            Assert.True((await CasosDeBajaPostgreSql.DarDeBajaUsuario(c, quienDaDeBaja).EjecutarAsync(usuarioId, "Licencia")).IsSuccess);
+
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var caso = new LaCentral.UseCases.ReactivarUsuarioUseCase(new UsuarioRepositorio(contexto),
+                HistorialQueFallaAlCerrar().Object, new UnidadDeTrabajo(contexto), DoblesBaja.Contexto(quienDaDeBaja).Object);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => caso.EjecutarAsync(usuarioId));
+        }
+
+        // La reactivación limpia motivo, fecha y usuario de la fila: el rollback los tiene que devolver.
+        await using var lectura = fixture.CrearContexto();
+        var usuario = await lectura.Usuario.AsNoTracking().SingleAsync(u => u.Id == usuarioId);
+        Assert.False(usuario.Activo);
+        Assert.Equal("Licencia", usuario.MotivoBaja);
+        Assert.NotNull(usuario.FechaBaja);
+        Assert.Equal(quienDaDeBaja, usuario.UsuarioBajaId);
+        Assert.Null((await lectura.UsuarioHistorialBaja.AsNoTracking().SingleAsync(h => h.UsuarioId == usuarioId)).FechaReactivacion);
+    }
+
     [PostgreSqlFact]
     public async Task UnidadDeTrabajo_OperacionQueDevuelveFallo_DescartaLoEscrito()
     {
@@ -234,6 +336,15 @@ public class HistorialBajaRepositorioTests
     }
 
     // ---------- Apoyo ----------
+
+    private static Mock<IHistorialBajaRepositorio> HistorialQueFallaAlCerrar()
+    {
+        var historial = new Mock<IHistorialBajaRepositorio>();
+        historial.Setup(h => h.CerrarAsync(It.IsAny<EntidadConHistorialBaja>(), It.IsAny<int>(),
+                It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Falla forzada después de actualizar la fila."));
+        return historial;
+    }
 
     private static async Task<Exception?> Intentar(Func<Task> accion)
     {
