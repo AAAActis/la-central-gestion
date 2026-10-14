@@ -315,6 +315,66 @@ public class HistorialBajaRepositorioTests
         Assert.Null((await lectura.UsuarioHistorialBaja.AsNoTracking().SingleAsync(h => h.UsuarioId == usuarioId)).FechaReactivacion);
     }
 
+    // ---------- Hallazgo 3: reactivación anterior a la baja (CHECK *_hist_fechas_coherentes) ----------
+
+    [PostgreSqlFact]
+    public async Task ReactivacionAnteriorALaBaja_EnLasCuatroTablas_ElManejadorLaReconoce()
+    {
+        // Una fecha_baja futura (backfill de Multisoft o reloj desfasado) hace que el CHECK
+        // rechace la reactivación con 23514. Sin reconocerla, el manejador devuelve 500.
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var usuarioId = await fixture.CrearUsuarioAsync();
+        var bajaFutura = DateTime.UtcNow.AddDays(30);
+
+        foreach (var entidad in Entidades)
+        {
+            var id = await SembrarAsync(fixture, entidad);
+            await using (var contexto = fixture.CrearContexto())
+                await new HistorialBajaRepositorio(contexto).AbrirAsync(entidad, id, "Baja futura", bajaFutura, usuarioId);
+
+            await using (var contexto = fixture.CrearContexto())
+            {
+                var error = await Assert.ThrowsAnyAsync<Exception>(() =>
+                    new HistorialBajaRepositorio(contexto).CerrarAsync(entidad, id, bajaFutura.AddDays(-1), usuarioId));
+                _salida.WriteLine($"{entidad}: {error.GetType().Name} {(error as PostgresException ?? error.InnerException as PostgresException)?.ConstraintName}");
+                Assert.NotNull(LaCentral.Api.Middleware.ManejadorExcepcionesGlobal.MensajeDeConflicto(error));
+            }
+
+            await using var lectura = fixture.CrearContexto();
+            Assert.Null(Assert.Single(await new HistorialBajaRepositorio(lectura).ObtenerAsync(entidad, id)).FechaReactivacion);
+        }
+    }
+
+    [PostgreSqlFact]
+    public async Task ReactivarCliente_ConBajaFutura_ElManejadorLaReconoceYLaFilaSigueInactiva()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var usuarioId = await fixture.CrearUsuarioAsync();
+        var clienteId = await SembrarAsync(fixture, EntidadConHistorialBaja.Cliente);
+        var bajaFutura = DateTime.UtcNow.AddDays(30);
+        await using (var setup = fixture.CrearContexto())
+        {
+            var fila = await setup.Cliente.SingleAsync(c => c.Id == clienteId);
+            fila.Activo = false;
+            fila.MotivoBaja = "Baja futura";
+            fila.FechaBaja = bajaFutura;
+            setup.ClienteHistorialBaja.Add(new ClienteHistorialBaja { ClienteId = clienteId, Motivo = "Baja futura", FechaBaja = bajaFutura, UsuarioBajaId = usuarioId });
+            await setup.SaveChangesAsync();
+        }
+
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var error = await Assert.ThrowsAnyAsync<Exception>(() =>
+                CasosDeBajaPostgreSql.ReactivarCliente(contexto, usuarioId).EjecutarAsync(clienteId));
+            Assert.Equal("La fecha de reactivación no puede ser anterior a la fecha de la baja.",
+                LaCentral.Api.Middleware.ManejadorExcepcionesGlobal.MensajeDeConflicto(error));
+        }
+
+        await using var lectura = fixture.CrearContexto();
+        Assert.False((await lectura.Cliente.AsNoTracking().SingleAsync(c => c.Id == clienteId)).Activo);
+        Assert.Null((await lectura.ClienteHistorialBaja.AsNoTracking().SingleAsync(h => h.ClienteId == clienteId)).FechaReactivacion);
+    }
+
     [PostgreSqlFact]
     public async Task UnidadDeTrabajo_OperacionQueDevuelveFallo_DescartaLoEscrito()
     {
