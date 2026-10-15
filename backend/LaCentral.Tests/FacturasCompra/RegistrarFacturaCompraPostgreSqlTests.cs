@@ -233,6 +233,40 @@ public class RegistrarFacturaCompraPostgreSqlTests
         Assert.Equal(antes, await FotografiarAsync(fixture));
     }
 
+    /// <summary>
+    /// La cantidad entra en NUMERIC(12,3), pero sumada al stock existente no: el motor
+    /// no puede guardarla (22003). Tiene que ser Invalido, no un 500, y la primera línea
+    /// (que ya escribió) se descarta con todo lo demás.
+    /// </summary>
+    [PostgreSqlFact]
+    public async Task StockQueDesbordaSuColumna_InvalidoYNoQuedaNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        var antes = await FotografiarAsync(fixture);
+        var compra = Compra(e) with
+        {
+            Lineas = new[]
+            {
+                new LineaFacturaCompraRequest(e.Comprado2, e.Sucursal2, 2.5m, 80m, 0m),
+                new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal1, 999_999_999.999m, 1m, 0m)
+            }
+        };
+
+        Exception? error = null;
+        Result<RegistrarFacturaCompraResponse>? resultado = null;
+        await using (var contexto = fixture.CrearContexto())
+        {
+            try { resultado = await Caso(contexto, e).EjecutarAsync(compra); }
+            catch (Exception excepcion) { error = excepcion; }
+        }
+
+        Assert.Null(error);
+        Assert.Equal(TipoError.Invalido, resultado!.Tipo);
+        Assert.Contains($"{e.Comprado1}", resultado.Error);
+        Assert.Equal(antes, await FotografiarAsync(fixture));
+    }
+
     [PostgreSqlFact]
     public Task Atomicidad_FallaAlInsertarLaCabecera_NoQuedaNada() =>
         AfirmarQueNoQuedaNadaAsync("factura_compra", "INSERT", e => $"NEW.proveedor_id = {e.Proveedor}");

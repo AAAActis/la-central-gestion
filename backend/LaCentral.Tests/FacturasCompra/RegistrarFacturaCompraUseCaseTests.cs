@@ -306,6 +306,24 @@ public class RegistrarFacturaCompraUseCaseTests
     }
 
     [Fact]
+    public async Task RepositorioRechazaElStockDeUnDestino_DevuelveSuFalloParaQueSeDescarteTodo()
+    {
+        _facturas.Setup(f => f.RegistrarConEfectosAsync(It.IsAny<FacturaCompra>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<int>.Failure(TipoError.Invalido, "El stock no entra."));
+        Result? devueltoALaUnidad = null;
+        _unidad.Setup(u => u.EjecutarAsync(It.IsAny<Func<CancellationToken, Task<Result>>>(), It.IsAny<CancellationToken>()))
+            .Returns(async (Func<CancellationToken, Task<Result>> operacion, CancellationToken ct) => devueltoALaUnidad = await operacion(ct));
+
+        var resultado = await Caso().EjecutarAsync(Request());
+
+        // La unidad de trabajo recibe el fallo (y por eso revierte), y el caso de uso lo informa.
+        Assert.NotNull(devueltoALaUnidad);
+        Assert.False(devueltoALaUnidad.IsSuccess);
+        AssertFallo(resultado, TipoError.Invalido);
+        Assert.Equal("El stock no entra.", resultado.Error);
+    }
+
+    [Fact]
     public async Task Valida_ElRegistroOcurreDentroDeLaUnidadDeTrabajo()
     {
         _unidad = DoblesBaja.UnidadQueNoEjecuta();
