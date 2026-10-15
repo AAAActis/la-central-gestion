@@ -1,10 +1,10 @@
 # PR · Fase 5 Sprint 3 — HU-FCO-01 · Factura de compra
 
-**Rama:** `feature/HU-FCO-01-factura-compra` → base provisoria **`feature/HU-ART-02-consultar-articulos`**
+**Rama:** `feature/HU-FCO-01-factura-compra` → **`develop`**
 **Título sugerido:** `feat: registro manual de factura de compra con stock por linea, costo e historial, atomico (HU-FCO-01)`
 **Issue:** Refs #32 (**no lo cierra**: CA5, el recálculo de precios, llega con la Fase 6)
 
-> Orden de merge: Fase 3 (#117, ya en `develop`) → Fase 4 (#118) → esta. **Cambiar la base a `develop` cuando entre #118.** Mientras tanto, el diff contra `develop` mezcla las Fases 4 y 5.
+> Las Fases 3 (#117) y 4 (#118) ya están en `develop`: el diff contra `develop` es solo la Fase 5.
 
 ## Qué hace
 
@@ -52,12 +52,16 @@ Mutaciones sin commitear: `UnidadDeTrabajo` sin transacción → 3 de 6 en rojo 
 | 2 · auditor | — | **APTO** sobre `f34bbc4..b4fca2f` |
 | 2 · verificador NO APTO | M11: `<` → `<=` en el WHERE del upsert sobrevivía | — |
 | 3 (autorizada por el equipo) | test de borde: stock 0,001 + 999.999.999,999 → Invalido, sin escritura | `0190052` (con `<=` da 22003 → rojo) |
-| 3 · verificador NO APTO | M11 cerrado; sobrevive M12 (`LimiteStock` una milésima menos): falta el lado aceptado del borde | pendiente de autorización del equipo |
+| 3 · verificador NO APTO | M11 cerrado; sobrevive M12 (`LimiteStock` una milésima menos): falta el lado aceptado del borde | — |
+| 4 (autorizada por el equipo, solo M12) | test del lado aceptado: stock 0,001 + 999.999.999,998 → se registra, relectura = 999.999.999,999 | `f424771` (con M12 da Invalido → rojo) |
+| 4 · verificador | M12 muere por aserción; M11 sigue muriendo | **APTO** sobre `26c02fc..f424771` |
+
+El borde de `stock.cantidad` queda fijado por los dos lados: `0190052` (suma = 1e9 → Invalido) y `f424771` (suma = 999.999.999,999 → se guarda).
 
 ## Cómo se verificó
-2026-10-15, HEAD de código `0190052`.
+2026-10-15, HEAD de código `f424771` (corrida del verificador en su worktree).
 - `dotnet build --no-incremental`: 0 advertencias, 0 errores.
-- `dotnet test`: **324 total · 324 passed · 0 failed · 0 omitidos**, **109 `[PostgreSqlFact]`** contra PostgreSQL real (rol `lacentral_tests`). La Fase 4 tenía 258.
+- `dotnet test`: **325 total · 325 passed · 0 failed · 0 omitidos**, **109 `[PostgreSqlFact]`** contra PostgreSQL real (rol `lacentral_tests`). La Fase 4 tenía 258.
 - `LaCentral.UseCases.csproj` sigue sin referencias. Ningún controlador importa `LaCentral.Data`.
 - Prueba de humo del frontend por el proxy con el rol `lacentral_tests`, **solo lecturas** (proveedores, ficha, POST sin token → 401, POST sin líneas → 400). `public.factura_compra` sigue con 0 filas.
 

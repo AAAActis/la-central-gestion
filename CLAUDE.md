@@ -101,3 +101,8 @@ Todo en español: clases, métodos, variables, mensajes, commits.
 `docs/sprint03/ESTADO.md` es la memoria entre fases. Leelo al empezar, actualizalo al
 terminar cada fase. Si el contexto se pierde, ese archivo es la única fuente de verdad
 sobre qué está hecho.
+
+REGLA: ESTADO.md se actualiza ANTES del push de cada fase, nunca después, y va en el
+mismo push: la tabla de fases, los PRs y merges, las decisiones con fecha, la deuda y
+"PRÓXIMA SESIÓN". Ya quedó desactualizado tres veces; una sesión que lo lee mal rehace
+trabajo hecho.
