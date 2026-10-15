@@ -300,6 +300,34 @@ public class RegistrarFacturaCompraPostgreSqlTests
         Assert.Equal(antes, await FotografiarAsync(fixture));
     }
 
+    /// <summary>
+    /// El otro lado del borde: 0,001 + 999.999.999,998 = 999.999.999,999, el máximo que
+    /// guarda NUMERIC(12,3). Tiene que entrar. Fija el valor de <c>LimiteStock</c>: si
+    /// bajara una milésima, esta compra daría Invalido.
+    /// </summary>
+    [PostgreSqlFact]
+    public async Task StockQueQuedaEnElMaximoDeSuColumna_SeRegistraYSeGuarda()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        await using (var contexto = fixture.CrearContexto())
+            await contexto.Stock.Where(s => s.ArticuloId == e.Comprado1 && s.SucursalId == e.Sucursal1)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Cantidad, 0.001m));
+        var compra = Compra(e) with
+        {
+            Lineas = new[] { new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal1, 999_999_999.998m, 1m, 0m) }
+        };
+
+        Result<RegistrarFacturaCompraResponse> resultado;
+        await using (var contexto = fixture.CrearContexto())
+            resultado = await Caso(contexto, e).EjecutarAsync(compra);
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        await using var relectura = fixture.CrearContexto();
+        Assert.Equal(999_999_999.999m, (await StockAsync(relectura))[(e.Comprado1, e.Sucursal1)]);
+        Assert.Equal(resultado.Value.Id, (await relectura.FacturaCompra.AsNoTracking().SingleAsync()).Id);
+    }
+
     [PostgreSqlFact]
     public Task Atomicidad_FallaAlInsertarLaCabecera_NoQuedaNada() =>
         AfirmarQueNoQuedaNadaAsync("factura_compra", "INSERT", e => $"NEW.proveedor_id = {e.Proveedor}");
