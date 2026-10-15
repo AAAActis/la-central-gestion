@@ -2,20 +2,22 @@ using LaCentral.UseCases.Entidades;
 
 namespace LaCentral.UseCases.Puertos;
 
+/// <summary>
+/// Escritura del catálogo (HU-ART-01). La lectura y la búsqueda están en
+/// IConsultaArticulosRepositorio.
+/// </summary>
 public interface IArticuloRepositorio
 {
-    // Devuelven el Articulo completo (o un DTO ligero si prefieren) para poder 
-    // leer el Nombre y armar el mensaje de error: "El código pertenece a: {articulo.Nombre}"
-    Task<Articulo?> ObtenerPorCodigoInternoAsync(string codigoInterno, CancellationToken ct = default);
-    Task<Articulo?> ObtenerPorCodigoAlternativoAsync(string codigoAlternativo, CancellationToken ct = default);
-    
-    Task<Articulo?> ObtenerDetallePorIdAsync(int id, CancellationToken ct = default);
-    
-    // Búsqueda cruzada para HU-ART-02
-    Task<IReadOnlyList<Articulo>> BuscarAsync(string texto, CancellationToken ct = default);
+    /// <summary>
+    /// Persiste el artículo con sus códigos, existencias y precios por modalidad, y
+    /// devuelve el Id que generó la base. El código interno queda provisional hasta
+    /// AsignarCodigoInternoAsync, en la misma unidad de trabajo.
+    /// </summary>
+    Task<int> AgregarAsync(Articulo articulo, CancellationToken ct = default);
 
-    Task AgregarAsync(Articulo articulo, CancellationToken ct = default);
-    
-    // Hallazgo 11: Retorna bool para confirmar que el registro existía y se pisó correctamente
-    Task<bool> ActualizarAsync(Articulo articulo, CancellationToken ct = default);
+    /// <summary>false si no existe un artículo con ese Id.</summary>
+    Task<bool> AsignarCodigoInternoAsync(int id, string codigoInterno, CancellationToken ct = default);
+
+    /// <summary>Las sucursales en las que un artículo nuevo tiene stock (en cero).</summary>
+    Task<IReadOnlyList<short>> ObtenerSucursalesAsync(CancellationToken ct = default);
 }

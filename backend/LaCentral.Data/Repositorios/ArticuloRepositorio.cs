@@ -6,11 +6,54 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LaCentral.Data.Repositorios;
 
-public class ArticuloRepositorio : IConsultaArticulosRepositorio
+public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepositorio
 {
     private readonly LaCentralDbContext _context;
 
     public ArticuloRepositorio(LaCentralDbContext context) => _context = context;
+
+    /// <summary>
+    /// Un solo SaveChanges para artículo, códigos, stock y precios. codigo_interno es NOT NULL
+    /// y único: entra un provisional irrepetible hasta que el caso de uso asigna el definitivo,
+    /// derivado del Id, en la misma transacción.
+    /// </summary>
+    public async Task<int> AgregarAsync(LaCentral.UseCases.Entidades.Articulo articulo, CancellationToken ct = default)
+    {
+        var fila = new Articulo
+        {
+            CodigoInterno = "TMP-" + Guid.NewGuid().ToString("N"),
+            Nombre = articulo.Nombre,
+            UbicacionDeposito = articulo.UbicacionDeposito,
+            PrecioCosto = articulo.CostoVigente,
+            Activo = articulo.Activo,
+            MotivoBaja = articulo.MotivoBaja,
+            FechaBaja = articulo.FechaBaja,
+            ArticuloCodigoAlternativo = articulo.CodigosAlternativos
+                .Select(c => new ArticuloCodigoAlternativo { Codigo = c.Codigo, ProveedorId = c.ProveedorId }).ToList(),
+            Stock = articulo.Existencias
+                .Select(e => new Stock { SucursalId = checked((short)e.SucursalId), Cantidad = e.Cantidad }).ToList(),
+            ArticuloPrecioModalidad = articulo.Precios.Select(p => new ArticuloPrecioModalidad
+            {
+                Modalidad = ModalidadPersistida.Escribir(p.Modalidad),
+                Base = ModalidadPersistida.EscribirBase(p.Base),
+                Porcentaje = p.Porcentaje,
+                Precio = p.Precio,
+                CalculoManual = p.CalculoManual,
+                FechaCalculo = p.FechaCalculo,
+                UsuarioId = p.UsuarioId
+            }).ToList()
+        };
+        _context.Articulo.Add(fila);
+        await _context.SaveChangesAsync(ct);
+        return fila.Id;
+    }
+
+    public async Task<bool> AsignarCodigoInternoAsync(int id, string codigoInterno, CancellationToken ct = default)
+        => await _context.Articulo.Where(a => a.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(a => a.CodigoInterno, codigoInterno), ct) == 1;
+
+    public async Task<IReadOnlyList<short>> ObtenerSucursalesAsync(CancellationToken ct = default)
+        => await _context.Sucursal.AsNoTracking().OrderBy(s => s.Id).Select(s => s.Id).ToListAsync(ct);
 
     // Query completo antes de paginar, expuesto a los tests de traducción SQL.
     internal IQueryable<CoincidenciaArticulo> CrearCoincidencias(ConsultaArticulos consulta)
@@ -105,7 +148,9 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
             // Sin filas no se informa nada; la razón de cada ausencia es de HU-ART-02.
             PreciosPorModalidad: articulo.ArticuloPrecioModalidad.Count == 0 ? null :
                 articulo.ArticuloPrecioModalidad
-                    .Select(p => new PrecioModalidadConsultaDto(ModalidadPersistida.Leer(p.Modalidad), p.Precio))
+                    .Select(p => new PrecioModalidadConsultaDto(ModalidadPersistida.Leer(p.Modalidad),
+                        ModalidadPersistida.LeerBase(p.Base), p.Porcentaje, p.Precio,
+                        p.CalculoManual, p.FechaCalculo, p.UsuarioId))
                     .OrderBy(p => p.Modalidad).ToArray());
     }
 

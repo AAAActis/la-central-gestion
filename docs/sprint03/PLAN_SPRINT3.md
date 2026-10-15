@@ -129,6 +129,13 @@ COMPUERTAS — dónde PARÁS y reportás
 Al terminar cada fase: PARÁS, mostrás el resumen (tests agregados, archivos tocados,
 rama, link del PR, pendientes) y ESPERÁS confirmación antes de la siguiente.
 
+REQUISITO PERMANENTE (agregado 2026-10-14, a pedido del equipo):
+  Toda fase que agregue endpoints cierra con un ENTREGABLE VISIBLE en frontend/, no
+  solo con tests. Un endpoint que nadie puede usar desde la interfaz no cierra la HU.
+  El PR de la fase dice qué pantalla o flujo de frontend/ lo usa.
+  Al 2026-10-14 frontend/ NO existe en el repo. La Fase 3 (POST /api/articulos) se
+  cerró antes de este requisito y quedó sin entregable visible: ver ESTADO.md.
+
 PARÁS INMEDIATAMENTE, sin intentar workarounds, si:
   · Un test que debería fallar pasa a la primera. Tu test está mal.
   · Para resolver algo necesitás agregar una referencia de proyecto a UseCases.
@@ -141,6 +148,24 @@ PARÁS INMEDIATAMENTE, sin intentar workarounds, si:
 
 En todos esos casos: explicá qué encontraste, qué opciones ves y qué recomendás.
 No decidas vos.
+
+REGLA PERMANENTE (agregada 2026-10-14, a pedido del equipo) · NO APTO de un subagente:
+  Ante un NO APTO de un subagente, NO se para: se arregla y se vuelve a verificar,
+  hasta 3 rondas. Lo único que se modifica es código de producción y tests.
+  PROHIBIDO, para llegar a APTO:
+    - cambiar la definición de un subagente o aflojar su criterio;
+    - reescribir el cuerpo del PR para que el hallazgo deje de aplicar;
+    - declarar como excepción algo que se puede arreglar;
+    - escribir un test que alcanza una rama con un doble absurdo en lugar de probar
+      producción.
+  Después de 3 rondas sin APTO: PARÁS y reportás qué probaste en cada una.
+  SIGUEN PARANDO, como siempre: un NO APTO que exija cambiar el esquema de la base,
+  o que venga de criterios de aceptación contradictorios o de una regla de negocio
+  que falta. Eso lo decide el equipo, no vos.
+  Criterio para una guarda sin test: si es ALCANZABLE en producción, va un test en
+  rojo que la alcance por un camino real, en un commit separado del de producción. Si
+  NO es alcanzable, se BORRA y queda el test que demuestra que el caso no puede ocurrir
+  por otra vía.
 
 ═══════════════════════════════════════════════════════════════════════
 LAS FASES
@@ -258,6 +283,13 @@ rama: feature/HU-ART-01-alta-articulo
   códigos ni stock a medio guardar); D2 violado → Conflicto; código ya usado por
   otro artículo → Conflicto informando CUÁL; proveedor inactivo → Invalido;
   201 con Id y Location.
+
+  [Hecho 2026-10-14, rama feature/HU-ART-01-alta-articulo] Además, por pedido del
+  equipo: script 04 (base de cálculo), PrecioModalidad + BasePrecio en el dominio,
+  ReglasPrecioModalidad como única regla de cálculo, las seis filas de precio en el
+  alta, y los hallazgos H1 y H3 del auditor. Código interno = LC-{id:D6} desde la
+  identidad. "Sucursal habilitada": la tabla sucursal no tiene esa marca; el stock
+  cero va a TODAS las sucursales. Sin entregable en frontend/ (no existe).
 
 ──────── FASE 4 · HU-ART-02 · Búsqueda y endpoints · Issue #15 ────────
 rama: feature/HU-ART-02-consultar-articulos

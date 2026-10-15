@@ -395,6 +395,45 @@ public class HistorialBajaRepositorioTests
         Assert.False(await lectura.Cliente.AnyAsync(c => c.Codigo == "CLI-DESCARTADO"));
     }
 
+    // Los casos de uso leen lo que la operación produjo solo si la unidad devolvió éxito
+    // (CrearArticuloUseCase, el Id y el código interno). La implementación real no tiene
+    // un éxito sin operación: ejecuta la operación una vez y devuelve SU resultado, tanto
+    // con la transacción propia como anidada en otra.
+    [PostgreSqlFact]
+    public async Task UnidadDeTrabajo_DevuelveElResultadoDeLaOperacionYLaEjecutaUnaVez()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using var contexto = fixture.CrearContexto();
+        var unidad = new UnidadDeTrabajo(contexto);
+        var ejecuciones = 0;
+        Func<CancellationToken, Task<Result>> Operacion(Result devuelve) => _ =>
+        {
+            ejecuciones++;
+            return Task.FromResult(devuelve);
+        };
+
+        var exito = await unidad.EjecutarAsync(Operacion(Result.Success()));
+        Assert.True(exito.IsSuccess);
+        Assert.Equal(1, ejecuciones);
+
+        var fallo = await unidad.EjecutarAsync(Operacion(Result.Failure(TipoError.Invalido, "falló")));
+        Assert.Equal(TipoError.Invalido, fallo.Tipo);
+        Assert.Equal("falló", fallo.Error);
+        Assert.Equal(2, ejecuciones);
+
+        Result anidadaExito = Result.Failure(TipoError.Conflicto, "sin ejecutar");
+        Result anidadaFallo = Result.Success();
+        await unidad.EjecutarAsync(async ct =>
+        {
+            anidadaExito = await unidad.EjecutarAsync(Operacion(Result.Success()), ct);
+            anidadaFallo = await unidad.EjecutarAsync(Operacion(Result.Failure(TipoError.NoEncontrado, "anidada")), ct);
+            return Result.Success();
+        });
+        Assert.True(anidadaExito.IsSuccess);
+        Assert.Equal(TipoError.NoEncontrado, anidadaFallo.Tipo);
+        Assert.Equal(4, ejecuciones);
+    }
+
     // ---------- Apoyo ----------
 
     private static Mock<IHistorialBajaRepositorio> HistorialQueFallaAlCerrar()

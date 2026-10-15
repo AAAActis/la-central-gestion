@@ -32,7 +32,10 @@ public sealed record CodigoProveedorConsultaDto(
 
 public sealed record StockSucursalConsultaDto(short SucursalId, string Sucursal, decimal Cantidad);
 
-public sealed record PrecioModalidadConsultaDto(Modalidad Modalidad, decimal? Valor);
+/// <summary>Fila de articulo_precio_modalidad tal como está guardada (H3: todo por valor).</summary>
+public sealed record PrecioModalidadConsultaDto(
+    Modalidad Modalidad, BasePrecio? Base, decimal? Porcentaje, decimal? Valor,
+    bool CalculoManual, DateTime? FechaCalculo, int? UsuarioId);
 
 public sealed record ArticuloDetalleConsultaDto(
     int Id, string CodigoInterno, string Nombre, bool Activo, decimal? CostoVigente,

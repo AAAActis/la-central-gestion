@@ -3,6 +3,7 @@ using LaCentral.Data;
 using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using LaCentral.UseCases;
+using LaCentral.UseCases.Articulos;
 using LaCentral.UseCases.Clientes;
 using LaCentral.UseCases.Proveedores;
 using LaCentral.UseCases.Puertos;
@@ -22,6 +23,7 @@ builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 builder.Services.AddScoped<IConsultaArticulosRepositorio, ArticuloRepositorio>();
+builder.Services.AddScoped<IArticuloRepositorio, ArticuloRepositorio>();
 builder.Services.AddScoped<IHistorialBajaRepositorio, HistorialBajaRepositorio>();
 builder.Services.AddScoped<IUnidadDeTrabajo, UnidadDeTrabajo>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
@@ -48,6 +50,7 @@ builder.Services.AddScoped<ReactivarProveedorUseCase>();
 builder.Services.AddScoped<ModificarClienteUseCase>();
 builder.Services.AddScoped<DarDeBajaClienteUseCase>();
 builder.Services.AddScoped<ReactivarClienteUseCase>();
+builder.Services.AddScoped<CrearArticuloUseCase>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

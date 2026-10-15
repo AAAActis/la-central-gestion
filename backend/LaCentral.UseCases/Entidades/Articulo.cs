@@ -29,19 +29,6 @@ public class Existencia
     }
 }
 
-// 2. D1: Márgenes persistidos por modalidad
-public class MargenModalidad
-{
-    public Modalidad Modalidad { get; set; }
-    public decimal Porcentaje { get; set; }
-
-    public MargenModalidad(Modalidad modalidad, decimal porcentaje)
-    {
-        Modalidad = modalidad;
-        Porcentaje = porcentaje;
-    }
-}
-
 public class Articulo
 {
     public int Id { get; set; }
@@ -54,35 +41,16 @@ public class Articulo
     public string? MotivoBaja { get; set; }
     public DateTime? FechaBaja { get; set; }
     
+    // Texto libre e informativo: el sistema no gestiona el depósito.
+    public string? UbicacionDeposito { get; set; }
+
     public decimal? CostoVigente { get; set; }
 
     public List<CodigoAlternativo> CodigosAlternativos { get; set; } = new();
     
     public List<Existencia> Existencias { get; set; } = new();
     
-    public List<MargenModalidad> Margenes { get; set; } = new();
-
-    public decimal? CalcularPrecioEstimado(Modalidad modalidad)
-    {
-        // TODO 1: Sin precio de costo -> null
-        if (CostoVigente is null)
-        {
-            return null;
-        }
-
-        var margen = Margenes.FirstOrDefault(m => m.Modalidad == modalidad);
-        
-        // TODO 2: Sin márgenes cargados para la modalidad -> null
-        if (margen is null)
-        {
-            return null;
-        }
-
-        // TODO 3: Fórmula según D1
-        decimal factor = 1m + (margen.Porcentaje / 100m);
-        decimal precioCalculado = CostoVigente.Value * factor;
-
-        // TODO 4: Redondeo explícito a 2 decimales, forzando la mitad hacia arriba
-        return Math.Round(precioCalculado, 2, MidpointRounding.AwayFromZero);
-    }
+    // D1: las seis filas de articulo_precio_modalidad. La fórmula vive en
+    // ReglasPrecioModalidad, no en la entidad.
+    public List<PrecioModalidad> Precios { get; set; } = new();
 }

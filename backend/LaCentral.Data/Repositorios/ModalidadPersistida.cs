@@ -3,25 +3,41 @@ using LaCentral.UseCases.Entidades;
 namespace LaCentral.Data.Repositorios;
 
 /// <summary>
-/// D1: articulo_precio_modalidad.modalidad guarda el nombre EXACTO del miembro del enum.
-/// La conversión vive en el mapeo del repositorio porque el modelo scaffoldeado declara
-/// la columna como string y no se edita.
+/// D1: articulo_precio_modalidad guarda la modalidad y la base como el nombre EXACTO del
+/// miembro del enum. La conversión vive en el mapeo del repositorio porque el modelo
+/// scaffoldeado declara las columnas como string y no se edita.
 /// </summary>
 internal static class ModalidadPersistida
 {
     // Comparación exacta, sin Enum.Parse: Parse acepta "3", espacios alrededor y
     // (con ignoreCase) "lista". Ninguno de esos es un valor del esquema.
-    private static readonly Dictionary<string, Modalidad> PorNombre =
-        Enum.GetValues<Modalidad>().ToDictionary(m => m.ToString(), StringComparer.Ordinal);
+    private static readonly Dictionary<string, Modalidad> ModalidadPorNombre = PorNombre<Modalidad>();
+    private static readonly Dictionary<string, BasePrecio> BasePorNombre = PorNombre<BasePrecio>();
 
     /// <summary>
     /// Un valor fuera de los seis es un dato corrupto, no un caso de negocio: falla en vez
     /// de devolver un default. Un enum con default silencioso es un precio en cero.
     /// </summary>
-    public static Modalidad Leer(string valor) =>
-        PorNombre.TryGetValue(valor, out var modalidad)
-            ? modalidad
+    public static Modalidad Leer(string valor) => Convertir(ModalidadPorNombre, valor, "modalidad");
+
+    /// <summary>NULL es "sin fórmula". Cualquier texto fuera de los dos nombres falla.</summary>
+    public static BasePrecio? LeerBase(string? valor) =>
+        valor is null ? null : Convertir(BasePorNombre, valor, "base");
+
+    // Los valores que se escriben salen de miembros del enum (ReglasPrecioModalidad.
+    // ConfiguracionInicial; ningún DTO HTTP recibe una modalidad ni una base). Un valor sin
+    // nombre daría "99", y lo rechazan los CHECK modalidad_valida y base_valida.
+    public static string Escribir(Modalidad modalidad) => modalidad.ToString();
+
+    public static string? EscribirBase(BasePrecio? basePrecio) => basePrecio?.ToString();
+
+    private static Dictionary<string, T> PorNombre<T>() where T : struct, Enum =>
+        Enum.GetValues<T>().ToDictionary(m => m.ToString(), StringComparer.Ordinal);
+
+    private static T Convertir<T>(Dictionary<string, T> porNombre, string valor, string columna) =>
+        porNombre.TryGetValue(valor, out var convertido)
+            ? convertido
             : throw new InvalidOperationException(
-                $"articulo_precio_modalidad.modalidad = '{valor}' no es una Modalidad válida " +
-                $"({string.Join(", ", PorNombre.Keys)}).");
+                $"articulo_precio_modalidad.{columna} = '{valor}' no es un {typeof(T).Name} válido " +
+                $"({string.Join(", ", porNombre.Keys)}).");
 }

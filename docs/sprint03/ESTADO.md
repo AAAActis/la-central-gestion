@@ -43,7 +43,8 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 | 1 · Deuda bloqueante | hecha, PR sin abrir (2026-10-13) | `fix/deuda-bloqueante-sprint3` (pusheada, HEAD `108ac1d`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase1-deuda-bloqueante.md` | 129/129, 0 skipped, 0 warnings (17 PG real, +21 tests) | abrir el PR a mano; deuda abajo |
 | 2 · D10 en la aplicación | hecha (2026-10-14). Hallazgos 1, 2 y 3 del auditor arreglados. **Auditor APTO, verificador APTO (segunda pasada)** | `feature/d10-historial-baja` (pusheada; código hasta `d378c0f`, sale de `108ac1d`) | sin abrir: no hay `gh`, se abre a mano desde el link de compare. Cuerpo en `docs/sprint03/pr-fase2-d10-historial-baja.md`, reescrito el 2026-10-14. Base provisoria `fix/deuda-bloqueante-sprint3` | **2026-10-14, en `d378c0f`: 176 total · 176 passed · 0 failed · 0 skipped · 0 warnings (43 PG real)** | abrir el PR a mano; deuda abajo |
 | D1 · compuerta de esquema en la aplicación | hecha (2026-10-14): re-scaffold, conversión de `Modalidad`, suite en verde. **Auditor APTO, verificador APTO** | `feature/d1-precios-modalidad` (sale de `feature/d10-historial-baja`) | sin abrir. Cuerpo en `docs/sprint03/pr-d1-precios-modalidad.md`. Base provisoria `feature/d10-historial-baja` | **179 total · 179 passed · 0 failed · 0 skipped · 0 warnings (46 PG real)** | abrir el PR a mano |
-| 3 · HU-ART-01 | pendiente. **Compuerta D1 CERRADA** el 2026-10-14 | | | | ver PRÓXIMA SESIÓN |
+| — · Merge | **Fases 1, 2 y D1 mergeadas en develop** (2026-10-14): `a276272` (#113), `b0819a9` (#114), `f3c6705` (#115). Ramas borradas, locales y remotas | | | | |
+| 3 · HU-ART-01 | **cerrada (2026-10-14)**, con el script 04, las decisiones A-D y H1/H3. Ronda 1 de arreglos: **verificador APTO**, auditor APTO (pasada anterior). Ver "Fase 3" | `feature/HU-ART-01-alta-articulo` (sale de develop `f3c6705`, pusheada; código hasta `a9e7410`) | sin abrir: no hay `gh`, se abre a mano desde el link de compare. Cuerpo en `docs/sprint03/pr-fase3-hu-art-01.md`. Base `develop` | **234 total · 234 passed · 0 failed · 0 skipped · 0 warnings (77 `[PostgreSqlFact]`), en `a9e7410`** | el entregable en `frontend/` lo cubre la Fase 4 (pantalla de alta incluida) |
 | 4 · HU-ART-02 | pendiente | | | | |
 | 5 · HU-FCO-01 | pendiente | | | | |
 | 6 · HU-ART-05 + CA5 | pendiente (misma compuerta D1) | | | | |
@@ -68,6 +69,130 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
   inválidos. También siguen los menores del verificador. Los 1, 2 y 3 se arreglan en esta rama.
 - Lo que dice abajo sobre el 28P01 queda como registro de lo que se vio en ese momento. No se
   reescribe: esta sección lo corrige.
+
+## Fase 3 · HU-ART-01 · Alta de artículo (2026-10-14)
+
+Rama `feature/HU-ART-01-alta-articulo`, desde develop `f3c6705`.
+
+**Esquema · script 04** (`backend/db/rescaffold/04_Modalidades_Base_Calculo.sql`, aplicado por el equipo en las dos bases):
+- `articulo_precio_modalidad.base` varchar(16) NULL, con valores `CostoArticulo` o `PrecioLista`. OJO: `CostoArticulo` es el costo del artículo, NO la modalidad Costo.
+- `porcentaje_no_negativo` se reemplazó por `porcentaje_rango` (>= -100), y se agregaron `base_valida`, `base_coherente` (`(porcentaje IS NULL) = (base IS NULL)`) y `base_sin_autorreferencia` (Lista no se calcula sobre PrecioLista). En total, **10 CHECK**.
+- Fórmula: `precio = valor_de_la_base × (1 + porcentaje/100)`. Lista +50 sobre CostoArticulo; Costo 0 sobre CostoArticulo; Efectivo -10 sobre PrecioLista; Tarjeta3/6 y CasoEspecial sin base ni porcentaje.
+- Antes de scaffoldear se comparó la huella md5 del esquema `public` (columnas, restricciones e índices) de `lacentral_test` contra la de `lacentral`. Dieron lo mismo: `14665b6c6902a9cecdb3a4c38a230ea4`. La de producción la corrió el equipo. Re-scaffold en `d9ff67d`: solo `Base` y los comentarios.
+
+**Commits, por unidad** (cada rojo verificado por aserción, la producción en un commit aparte):
+
+| Unidad | estructura → test (rojo) → producción | Notas |
+|---|---|---|
+| H3 + D (base texto ↔ `BasePrecio`) | `e2bc35f` → `413308a` (L58, L101) → `362b870` | Mutación `Enum.TryParse(ignoreCase)` → rojo |
+| B (fórmula) + A (`PrecioModalidad`) | `1d96eb0` → `fce502c` (9/13 rojos) → `7677fb8` | 4 tests que esperan null pasan contra el esqueleto: 3 mutaciones los ponen en rojo |
+| C (`ConfiguracionInicial`) | (estructura en `1d96eb0`) → `eb22ab0` (L17, L33, L47) → `d8a1064` | Mutación "misma instancia" → rojo |
+| H1 (13 restricciones) | `9d43f88` | Caracterización: pasan a la primera. Mutación "quitar la restricción en el esquema aislado" → los 13 en rojo |
+| Caso de uso (Moq) | `568a29b` → `db51be9` (17 rojos) → `442aeff` | |
+| Repositorio (PG) | `c0ff00d` → `c133b8f` (4 rojos) → `2bb8266` | D2, código de otro artículo y proveedor inactivo pasan a la primera (los resuelve el caso de uso): 3 mutaciones → rojo |
+| Controlador (HTTP + PG) | `127ab20` → `ef3b6a8` (2 rojos) → `d9ae80f` | El 403 pasa a la primera: mutación `[Authorize]` sin roles → rojo |
+
+Los hashes de esta tabla son los de la rama. Ver `git log develop..HEAD`.
+
+**Decisiones de esta fase:**
+- **Código interno = `LC-{id:D6}`**, derivado de la identidad. Sin MAX+1 y sin cambiar el esquema. El alta inserta con un `TMP-<guid>` provisional y en la misma transacción hace `ExecuteUpdate` al definitivo. Ningún código importado de Multisoft empieza con `LC-` (verificado en `lacentral_test`). Test PG con dos altas simultáneas.
+- **"Sucursal habilitada":** `sucursal` no tiene esa marca. El stock cero va a TODAS las sucursales (hoy FR y SV).
+- La validación previa de códigos no cierra la carrera. La cierran `codigo_unico_global` y `un_codigo_por_proveedor`, que ya están en la lista blanca del manejador (409).
+- `GET /api/articulos/{id}` es de la Fase 4. El `Location` del 201 ya apunta a esa ruta.
+- **Tests reapuntados:** `ArticuloPrecioEstimadoTests` conserva sus 8 casos. "SinMargenes" pasa a ser Tarjeta sin tasa, y "ModalidadSinMargenCargado" pasa a ser CasoEspecial manual. Ninguno se borró.
+- **Regla de esta fase** (instrucción del equipo, que reemplaza a la compuerta "test que pasa a la primera → parar" del plan): lo que pasa a la primera se declara y se verifica con una mutación no commiteada.
+
+### Subagentes sobre `git diff f3c6705..fb90b32` (2026-10-14) · **verificador NO APTO, auditor APTO** → se PARÓ
+- **verificador-tdd: NO APTO.** Reprodujo todos los rojos, verdes y mutaciones declarados. El orden test → producción se cumple y no se borró ningún test. Bloquean cuatro mutaciones suyas que sobreviven con la suite en verde:
+  1. `ArticulosController.Crear`: `CodigosProveedor ?? new List<>()` no tiene test. Falta un POST sin `codigosProveedor` → 201.
+  2. `CrearArticuloUseCase.cs:96-98`: la rama `creado is null` no tiene test. `Alta_EscriturasDentroDeLaUnidadDeTrabajo` no afirma el resultado.
+  3. `ModalidadPersistida.Nombre<T>`: el guard `Enum.IsDefined` no tiene test.
+  4. `CrearArticuloRequest` (HTTP): `[Required]`/`[MaxLength]` entraron en un commit "sin comportamiento" (`127ab20`) y no tienen test de 400.
+  5. Una de sus tres corridas completas dio 17 fallas `53300 too many clients`. Las otras dos dieron 226/226.
+  - Menor: `ProveedorId <= 0` en `ArticuloValidaciones` no tiene test (el proveedor 0 igual cae en "no existe").
+- **auditor-persistencia: APTO.** H1, H2 y H3 cerrados en el código y en el motor. Atomicidad real de las cuatro tablas, relectura con contexto nuevo, sin Ids sembrados, el `DROP CONSTRAINT` no alcanza `public` y el test HTTP pega contra PostgreSQL. Hallazgos no bloqueantes:
+  1. **53300 `too many clients`:** con dos corridas a la vez contra el mismo servidor (`max_connections=100`), la primera corrida suya dio 47 fallas. Causa:
+     - `PostgreSqlPruebas` abre un pool por esquema y no lo vacía en `DisposeAsync`;
+     - las fábricas de `WithWebHostBuilder` no se liberan.
+     - Los dos subagentes corrieron en paralelo y cada uno vio la corrida del otro.
+     - **El 226/226 vale solo con el servidor libre.**
+  2. Entre `codigo_interno` (`LC-nnnnnn`) y `articulo_codigo_alternativo.codigo`, la unicidad solo la controla la aplicación: no hay restricción entre tablas. Hoy hay 0 casos.
+  3. No hay test de dos altas simultáneas con el mismo código de proveedor (lo cierra `codigo_unico_global` → 409). `DosAltasSimultaneas` no fuerza el intercalado.
+  4. El comentario de la tabla nombra `CalcularPreciosArticuloUseCase`, que no existe: la regla está en `ReglasPrecioModalidad.Calcular`.
+  5. **Entorno:** el rol `lacentral` de `LACENTRAL_TEST_PG` es SUPERUSER y es el mismo que usa la base principal en el mismo servidor. Las dos bases solo las separa `ValidarBase`, que mira el nombre.
+- **Estado:** NO se hizo push. `docs/sprint03/pr-fase3-hu-art-01.md` queda como borrador sin commitear, sin los veredictos. Nada de esto se arregló: lo decide el equipo.
+
+### Verificación pedida por el equipo · `AsignarCodigoInternoAsync` (2026-10-14, `c6dc60b`)
+- Ya verificaba el conteo: `ExecuteUpdateAsync(...) == 1`. Si da false, el caso de uso devuelve NoEncontrado y la unidad revierte.
+- Faltaba el test PG del repositorio real con un Id que no existe, y la afirmación de que ningún `TMP-` sobrevive. Se agregaron los dos en `c6dc60b`: el primero como test propio y el segundo en el camino feliz, en las dos altas simultáneas y en todas las fallas a mitad de camino.
+- No hubo commit de producción. Los tests pasan a la primera y se verificaron con dos mutaciones: `>= 0` y "true sin actualizar". Las dos dan rojo.
+
+### Subagentes sobre `git diff f3c6705..c6dc60b` (2026-10-14, segunda pasada, de a uno) · **verificador NO APTO, auditor APTO** → se PARÓ
+Corrieron uno después del otro, sin otra suite en paralelo, para no repetir el 53300 de la primera pasada.
+
+**verificador-tdd · NO APTO**
+- Qué verificó, en su propio worktree:
+  - build `--no-incremental` con 0 warnings;
+  - suite en `c6dc60b`: 227 total · 227 passed · 0 failed · 0 skipped;
+  - 72 `[PostgreSqlFact]`, y ningún 53300 en 7 corridas completas y 6 filtradas.
+- Orden test → producción: se respeta en los 6 pares. Los 6 commits de test no tocan nada fuera de `Tests/`, según `git diff-tree`.
+- Hizo checkout de cada commit rojo: todos fallan por aserción, ninguno por compilación ni NRE.
+- Las mutaciones declaradas de `c6dc60b` (`>= 0` y "true sin actualizar") dan rojo, tal como dice el commit.
+- **Bloquean 4 mutaciones que sobreviven, ya informadas en la primera pasada y sin arreglar:**
+  1. `ArticulosController.cs:38`: con `CodigosProveedor!` en lugar de `?? new List<>()`, la suite sigue en verde. Falta un test HTTP de alta sin códigos que espere 201.
+  2. `CrearArticuloUseCase.cs:96-97`: con la rama `creado is null` devolviendo `Success`, la suite sigue en verde. Falta un test, o decidir si la rama tiene que existir.
+  3. `ModalidadPersistida.cs:34`: con `Enum.IsDefined` → `true`, la suite sigue en verde. Falta un test de que escribir `(Modalidad)99` falla.
+  4. `Dtos/CrearArticuloRequest.cs`: sin los 5 `[Required]`/`[MaxLength]` (del chore `127ab20`), la suite sigue en verde. La regla ya la cubre `ArticuloValidaciones`, pero cambia la forma del cuerpo del 400. Hace falta un test HTTP de 400 o sacar los atributos.
+- Menor: `Post_Alta_201ConIdYLocation` no compara `CodigoInterno` en la relectura.
+- Sin verificar: no revisó el rojo de `9d43f88` (H1) ni mapeó los criterios de aceptación de la HU contra los tests.
+
+**auditor-persistencia · APTO**
+- Qué verificó:
+  - suite en su worktree: 227/227, 70 tests con esquema aislado según el TRX;
+  - catálogo de `lacentral_test`, en una sesión de solo lectura: después de la suite quedan 0 esquemas `pr110_test_*` huérfanos y 0 artículos con `TMP-`;
+  - las restricciones de `articulo_precio_modalidad`, `articulo`, los índices de códigos y la PK de stock coinciden con el modelo, y no hay triggers;
+  - repitió las dos mutaciones de `c6dc60b`: las dos dan rojo.
+- Confirma que ningún camino deja un `TMP-` persistido, ni el feliz, ni la excepción, ni el fallo devuelto. Confirma también la atomicidad de las cuatro tablas, la relectura con contexto nuevo, que no hay Ids sembrados contra PG, que los DROP no salen del esquema aislado y que el test HTTP pega contra PostgreSQL.
+- Hallazgos no bloqueantes:
+  1. `ArticulosApiPostgreSqlTests.cs:91-94` no compara `CodigoInterno` en la relectura.
+  2. Después del `ExecuteUpdate`, el contexto sigue rastreando la entidad con `TMP-`. Si una operación futura reusa el contexto y guarda, podría reescribirlo: es un riesgo latente.
+  3. Siguen en pie los de la primera pasada: el rol SUPERUSER compartido con la base principal; la unicidad entre `codigo_interno` y los códigos alternativos, que solo controla la aplicación; que no hay test de carrera con el mismo código de proveedor (409); y el comentario de la tabla que nombra `CalcularPreciosArticuloUseCase`.
+- Sin verificar: la base principal, por diseño; el 409 en una carrera HTTP; y el 53300 con corridas simultáneas.
+
+**Estado:** se PARÓ en el punto 2 de la instrucción. NO se tocaron los puntos 3 (cambios al plan), 4 (borrar las 17 ramas viejas) y 5 (push). Arreglar las 4 mutaciones lo decide el equipo.
+
+**Sin entregable en `frontend/`:** la carpeta no existe. El requisito permanente se agregó al plan en esta sesión, después de cerrar la fase. Lo decide el equipo.
+
+### Ronda 1 de arreglos (2026-10-14, `f05cee4`..`a9e7410`) y verificación acotada · **verificador APTO** → Fase 3 CERRADA
+Arreglos, según la regla de CLAUDE.md "NO APTO de un subagente":
+
+| Commit | Qué |
+|---|---|
+| `f05cee4` | test: POST sin códigos → 201, y 400 por las DataAnnotations del DTO HTTP (caracterización, verificada con 6 mutaciones) |
+| `f480418` | test: `proveedorId` 0 o negativo → Invalido sin consultar proveedores (caracterización) |
+| `f581dac` | test: la unidad de trabajo real devuelve el resultado de la operación y la ejecuta una vez (caracterización) |
+| `7c7d5c4` → `e4f0f21` | test en rojo: una modalidad o base sin nombre la rechaza el CHECK del motor → se borra el guard `Enum.IsDefined` de `ModalidadPersistida` (inalcanzable: lo cubre el motor) |
+| `f581dac` → `a9e7410` | se borra la rama `creado is null` de `CrearArticuloUseCase` (inalcanzable: la unidad de trabajo devuelve el resultado de la operación) |
+| `ace11ee` | definiciones de subagentes: el verificador nuevo (lo escribió el equipo) y R1-R5 + PRESUPUESTO copiados al auditor. Sin código |
+
+**Corrida del equipo sobre `a9e7410`:** 234 total · 234 correcto · 0 con errores · 0 omitido · 109 s.
+
+**verificador-tdd · APTO.** Un solo agente, en worktree propio, con el alcance acotado a los commits posteriores a `903e0fd`. Usó 13 corridas filtradas y 1 suite.
+- Orden: `7c7d5c4` (solo test) → `e4f0f21` (solo producción); `f581dac` (solo test) → `a9e7410` (solo producción). `f05cee4`, `f480418` y `f581dac` son de caracterización, declarados así en el commit.
+- Reprodujo el rojo de `7c7d5c4` por aserción, en `ArticuloPrecioModalidadPostgreSqlTests.cs:188`: esperaba `DbUpdateException` y llegó `InvalidOperationException "Modalidad sin nombre: 99."`.
+- Las 4 mutaciones que sobrevivían ahora mueren:
+  - `CodigosProveedor!` → 500 en `Post_SinCodigosProveedor_201YSeGuardaSinCodigos`;
+  - quitar cualquiera de los 5 atributos del DTO → rojo en los tests de 400;
+  - las ramas `creado is null` e `Enum.IsDefined` ya no existen, y nada las necesitaba.
+  - También mueren la mutación de `ProveedorId <= 0` y dos de la unidad de trabajo (M8 y M9).
+- Suite sobre HEAD: build `--no-incremental` con 0 warnings; **234 · 234 passed · 0 failed · 0 skipped**; **77 `[PostgreSqlFact]`** contra PostgreSQL real.
+- No bloqueantes:
+  - `Post_NombreDeMasDe200` mata la mutación con un `KeyNotFoundException`, no con una aserción (`ArticulosApiPostgreSqlTests.cs:156`);
+  - en `ProveedorNoIndicado_...` solo discrimina el `Verify(Times.Never)` (`CrearArticuloUseCaseTests.cs:168`);
+  - `creado!` depende del contrato de la unidad de trabajo;
+  - hubo una falla pasajera en `PostgreSqlPruebas.CrearAsync` (L79): se repitió y se descartó.
+- Borró su worktree (con `rm -rf`, por "Filename too long") y corrió `git worktree prune`: solo queda el principal.
+- **El auditor no se volvió a correr en esta ronda**, porque el equipo no lo pidió: su APTO es el de `c6dc60b`. Esta ronda agrega tests PG (`7c7d5c4` y `f581dac`) y no toca repositorios.
 
 ## Compuerta de esquema D1 · CERRADA (2026-10-14)
 
@@ -113,7 +238,7 @@ En la aplicación (rama `feature/d1-precios-modalidad`):
   - Relectura con contexto nuevo, sin Ids sembrados. El `DROP CONSTRAINT` del test no alcanza `public`.
   - Suite: 179/179.
   - Sin verificar: `lacentral`, que está fuera de su alcance.
-- **Hallazgos del auditor.** No bloquean esta rama, que solo LEE. **Bloquean la fase que agregue la escritura en `articulo_precio_modalidad`** (Fase 3 o 6):
+- **Hallazgos del auditor.** No bloquean esta rama, que solo LEE. **Bloquean la fase que agregue la escritura en `articulo_precio_modalidad`** (Fase 3 o 6). **Los tres quedaron resueltos en la Fase 3 (2026-10-14): H1 `9d43f88`, H2 decisiones A y B, H3 `413308a`→`362b870`.**
   - **H1:** falta test contra el motor de 6 CHECK (`manual_sin_porcentaje`, `calculado_con_porcentaje`, `precio_con_fecha`, `manual_con_usuario` y los dos `*_no_negativo`), de la PK (23505), de las FK (23503) y del ON DELETE CASCADE.
   - **H2:** `MargenModalidad` (`backend/LaCentral.UseCases/Entidades/Articulo.cs:33-43`) no tiene `Precio`, `CalculoManual`, `FechaCalculo` ni `UsuarioId`. Un repositorio no puede cumplir los CHECK sin inventar datos. `CalcularPrecioEstimado` es una segunda regla de cálculo frente al `CalcularPreciosArticuloUseCase` que nombra la tabla.
   - **H3:** el test de lectura inserta porcentaje, manual, fecha y usuario, pero no los relee por valor (el DTO no los expone).
@@ -330,12 +455,17 @@ prueba que la Fase 2 esté mal.
   - El scaffold no lo toca, pero es fácil borrarlo al limpiar `Models/`.
   - **No se movió en la rama de D1:** es un cambio aparte.
 - 2026-10-14 · `d8b72c9` dice "limpieza de columnas fantasma" en el mensaje, pero solo renombra el 02. El script 03 se versionó después, en `09f4bc1`.
-- 2026-10-14 · `PrecioModalidadConsultaDto.Modalidad` ahora es el enum. Cuando la Fase 4 lo exponga por HTTP, hay que serializarlo por nombre (`JsonStringEnumConverter`), no como número.
+- 2026-10-14 · `PrecioModalidadConsultaDto.Modalidad` ahora es el enum. Cuando la Fase 4 lo exponga por HTTP, hay que serializarlo por nombre (`JsonStringEnumConverter`), no como número. **Desde la Fase 3 también `Base` (`BasePrecio`).**
+- 2026-10-14 · **Fase 3 · sin entregable visible:** `POST /api/articulos` no tiene pantalla, porque `frontend/` no existe en el repo. El requisito permanente del plan, agregado el mismo día, no se cumple para esta fase.
+- 2026-10-14 · **Fase 3:** no hay un endpoint para fijar el precio de CasoEspecial ni las tasas de Tarjeta3/6. Las filas nacen con precio null y `calculo_manual` en true o con base NULL. Quedan para una HU que nadie tomó todavía.
+- 2026-10-14 · **Fase 3:** el plan dice "PARÁS si un test pasa a la primera". El equipo lo reemplazó en esta fase por "se declara y se verifica con mutación". Hay que decidir si el plan cambia o si fue una excepción.
+- 2026-10-14 · Hay 17 ramas locales viejas, mergeadas en develop, que no son de este sprint (`feature/hu-cli-*`, `test/*`, `fix/auditoria-*`, etc.). No se borraron.
+- 2026-10-14 · La comparación test/producción del 04 se hizo con la huella md5 que corrió el equipo. El agente no tiene acceso a `lacentral`, así que esa comparación siempre depende del equipo.
 
 ## Premisas del plan que no coinciden con el código (revisar antes de la fase)
 - 2026-10-13 · **Fase 2:** el plan dice "NINGÚN repositorio escribe en [las tablas de historial]". Falso para cliente y proveedor: `LaCentral.Data/Repositorios/ClienteRepositorio.cs:176-191` y `ProveedorRepositorio.cs:154-169` ya abren y cierran la baja en `*_historial_baja` dentro del repositorio, sin puerto. Lo cubren los tests PG `DosCiclos..._ConservanEstadoEHistorial...`. Artículo y usuario no escriben historial. La Fase 2 pasa a ser extraer un puerto `IHistorialBajaRepositorio` y mover esa lógica, más los usuarios de baja/reactivación desde IContextoUsuario, no construirla desde cero. (Aplicada en la Fase 2.)
 - 2026-10-13 · **Fase 4:** el plan dice que el test del comodín ("100%_original") corre sobre InMemory. Hoy `ArticuloRepositorioTests.Busqueda_PermiteInactivosYNoInterpretaComodinesSQL` es `[PostgreSqlFact]` y corrió contra PostgreSQL real. Verificar si cubre ese caso exacto antes de duplicarlo.
-- 2026-10-14 · **Fases 3, 4 y 6 (D1):** ~~el comentario de `articulo_margen` todavía dice "0,01 % = precio igual al costo", mientras que D1 dice Costo = × 1,00~~ (la tabla ya no existe, 2026-10-14). **Sigue en pie:** la tabla nueva tiene dónde guardar `precio` y `calculo_manual`, pero el dominio no se alineó todavía: eso es de la Fase 3. Además, el comentario de la tabla nombra un `CalcularPreciosArticuloUseCase` que todavía no existe. El modelo "porcentaje sobre costo" de `MargenModalidad`/`CalcularPrecioEstimado` no expresa Efectivo (sobre Lista), CasoEspecial (precio fijo) ni la razón de la ausencia. Detalle en `informe-compuerta-d1.md`.
+- 2026-10-14 · **Fases 3, 4 y 6 (D1):** ~~el comentario de `articulo_margen` todavía dice "0,01 % = precio igual al costo", mientras que D1 dice Costo = × 1,00~~ (la tabla ya no existe, 2026-10-14). **Resuelto en la Fase 3 (2026-10-14):** `MargenModalidad` y `CalcularPrecioEstimado` ya no existen. Ahora están `PrecioModalidad`, `BasePrecio` y `ReglasPrecioModalidad`, con Efectivo sobre PrecioLista y CasoEspecial manual. `CalcularPreciosArticuloUseCase` sigue sin existir: es de la Fase 6. Lo que sigue es el texto original. **Seguía en pie:** la tabla nueva tiene dónde guardar `precio` y `calculo_manual`, pero el dominio no se alineó todavía: eso es de la Fase 3. Además, el comentario de la tabla nombra un `CalcularPreciosArticuloUseCase` que todavía no existe. El modelo "porcentaje sobre costo" de `MargenModalidad`/`CalcularPrecioEstimado` no expresa Efectivo (sobre Lista), CasoEspecial (precio fijo) ni la razón de la ausencia. Detalle en `informe-compuerta-d1.md`.
 
 ## Revisión de la Fase 1 por el equipo (2026-10-13)
 - Fase 1 verificada contra el grafo (`bf845dbc`): los nueve ítems están. El PR todavía no se abrió (no hay `gh`): abrirlo a mano desde la rama `fix/deuda-bloqueante-sprint3` con el cuerpo de `pr-fase1-deuda-bloqueante.md`.
@@ -345,31 +475,20 @@ prueba que la Fase 2 esté mal.
 - Los subagentes y los hooks de graphify se copiaron a `backend/.claude/` (agents/ y settings.json). En la sesión de la Fase 1 NO cargaron, porque se leen al iniciar la sesión: `Agent type 'verificador-tdd' not found`. Se reinicia la sesión antes de la Fase 2. (Superado el 2026-10-14: la configuración vive en la raíz y carga.)
 
 ## PRÓXIMA SESIÓN — arrancar acá
-Arrancar en la **raíz del repo**. Objetivo: **Fase 3 · HU-ART-01 · Alta de artículo (Issue #14)**,
-rama `feature/HU-ART-01-alta-articulo`. **NO arranca** hasta que estén resueltos los tres
-bloqueos de abajo. Si alguno sigue abierto, PARAR y reportar.
+Arrancar en la **raíz del repo**. Objetivo: **Fase 4 · HU-ART-02 · Búsqueda y endpoints (Issue #15)**,
+rama `feature/HU-ART-02-consultar-articulos`.
 
-0. **Al empezar:** confirmar que `verificador-tdd` y `auditor-persistencia` cargan como `subagent_type` y que los hooks de graphify se disparan.
-1. **Bloqueo A · conexión de test (equipo):** la credencial de `LACENTRAL_TEST_PG` tiene que estar reparada. Comprobarlo con `dotnet test` desde `backend/`: los 34 `[PostgreSqlFact]` en verde, 0 skipped. Mientras falle con 28P01, no se verifica nada que toque persistencia.
-2. **Bloqueo B · cerrar la Fase 2:**
-   - Con la conexión de vuelta, volver a correr los dos subagentes sobre `git diff b95744f~1 a105f6d` y asentar el resultado arriba.
-   - Antes, el equipo decide si la deuda de los hallazgos del auditor (1 atomicidad, 2 `usuario_baja_id` de usuario, 3 `fechas_coherentes`) se corrige en esta rama antes del PR o queda como deuda declarada en el cuerpo del PR. Recomendación: corregir el 2 en esta rama (pérdida silenciosa de auditoría) y agregar los tests de falla del 1.
-   - Abrir a mano los PR de la Fase 1 y de la Fase 2 (no hay `gh`). El de la Fase 2 va con base provisoria `fix/deuda-bloqueante-sprint3`.
-3. ~~**Bloqueo C · compuerta de esquema D1 (equipo, NO el agente):**~~ **CERRADO el 2026-10-14** (scripts 02 y 03, re-scaffold en `feature/d1-precios-modalidad`).
-   - Pegar en `docs/sprint03/informe-compuerta-d1.md` la salida de `consultas-compuerta-d1.sql` contra el motor.
-   - El equipo escribe y aplica el script SQL de precios por modalidad con nombre en `backend/db/rescaffold/` y re-scaffoldea.
-   - El agente no escribe ese script ni edita `backend/LaCentral.Data/Models/`.
-4. **Base de la rama de la Fase 3:** la Fase 3 necesita la rama de D1. Si las Fases 1, 2 y D1 ya están en develop, `git switch develop && git pull && git switch -c feature/HU-ART-01-alta-articulo`. Si no, PREGUNTAR de qué rama sale.
-5. **Fase 3, con los bloqueos resueltos** (detalle en `PLAN_SPRINT3.md`, FASE 3):
-   - `ArticuloValidaciones` (estática, compartida con la modificación), `CrearArticuloUseCase`, `ArticulosController` con `POST /api/articulos` y el registro en `Program.cs`.
-   - El código interno lo genera el sistema, sin MAX+1: dos altas simultáneas desde las dos sucursales no pueden chocar.
-   - Cada código alternativo exige un proveedor existente y ACTIVO. Aplica D2, más la unicidad global.
-   - `NormalizacionArticulo`: la misma función al guardar y al buscar.
-   - Stock cero por sucursal habilitada. Costo y precios derivados en null, nunca cero.
-   - Tests PG:
-     - alta atómica con falla forzada a mitad de camino;
-     - D2 violado → Conflicto;
-     - código de otro artículo → Conflicto informando CUÁL;
-     - proveedor inactivo → Invalido;
-     - 201 con Id y Location.
+0. **Al empezar:** confirmar que `verificador-tdd` y `auditor-persistencia` cargan como `subagent_type`, que los hooks de graphify se disparan y que `dotnet test` da 226/226 con 70 PG.
+1. **Antes de la rama:** ¿el PR de la Fase 3 (`feature/HU-ART-01-alta-articulo`) ya está en develop? Si no, PREGUNTAR de qué rama sale la Fase 4: necesita el alta, `PrecioModalidad` y el DTO con la base.
+2. **Decisión pendiente del equipo · frontend:** el plan exige desde el 2026-10-14 un entregable visible en `frontend/` para toda fase que agregue endpoints. `frontend/` no existe. La Fase 4 agrega `GET /api/articulos` y `GET /api/articulos/{id}`. **Antes de empezar, PREGUNTAR** qué stack y qué carpeta usar, y si la Fase 4 también cubre la pantalla de alta de la Fase 3.
+3. **Fase 4** (detalle en `PLAN_SPRINT3.md`, FASE 4):
+   - `ConsultarArticulosUseCase` y `ObtenerArticuloDetalleUseCase`. `ConsultaArticulos.Validar()` pasa del repositorio al caso de uso, con `Result`.
+   - La ficha muestra los precios por modalidad y la RAZÓN de la ausencia. Desde la Fase 3 el alta crea las seis filas, así que se distinguen:
+     - sin fila = sin configuración;
+     - precio NULL con costo NULL = sin costo;
+     - precio NULL con `calculo_manual` = caso especial no fijado;
+     - Tarjeta3/6 sin base = tasa sin definir.
+   - Serializar `Modalidad` y `BasePrecio` por nombre (`JsonStringEnumConverter`).
+   - Hoy `PreciosPorModalidad` es null cuando no hay filas: decidir si se mantiene.
+   - Verificar el caso exacto "100%_original" del comodín (ver "Premisas").
    - Al cerrar: los dos subagentes (APTO los dos), el PR, este archivo, y PARAR.

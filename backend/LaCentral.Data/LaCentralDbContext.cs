@@ -225,13 +225,17 @@ public partial class LaCentralDbContext : DbContext
         {
             entity.HasKey(e => new { e.ArticuloId, e.Modalidad }).HasName("articulo_precio_modalidad_pkey");
 
-            entity.ToTable("articulo_precio_modalidad", tb => tb.HasComment("D1: precios de venta por articulo y modalidad, con el porcentaje del que salieron y la fecha en que se estamparon. Reemplaza a articulo_margen. La unica regla de calculo del sistema vive en CalcularPreciosArticuloUseCase."));
+            entity.ToTable("articulo_precio_modalidad", tb => tb.HasComment("D1: precios de venta por articulo y modalidad. Formula: precio = valor_de_la_base * (1 + porcentaje/100). Lista = +50% sobre CostoArticulo. Costo = 0% sobre CostoArticulo. EfectivoTransferencia = -10% sobre PrecioLista. Tarjeta3/Tarjeta6: base y porcentaje NULL hasta que la tasa este definida. CasoEspecial: sin formula, precio manual. La unica regla de calculo del sistema vive en CalcularPreciosArticuloUseCase."));
 
             entity.Property(e => e.ArticuloId).HasColumnName("articulo_id");
             entity.Property(e => e.Modalidad)
                 .HasMaxLength(24)
                 .HasComment("Nombre exacto del miembro del enum Modalidad. Seis valores, sin id numerico.")
                 .HasColumnName("modalidad");
+            entity.Property(e => e.Base)
+                .HasMaxLength(16)
+                .HasComment("Sobre que se aplica el porcentaje: CostoArticulo (el campo costo del articulo) o PrecioLista (el precio de la modalidad Lista del mismo articulo). NULL cuando no hay formula. OJO: CostoArticulo NO es la modalidad Costo.")
+                .HasColumnName("base");
             entity.Property(e => e.CalculoManual)
                 .HasComment("true = lo fijo una persona. El recalculo automatico de la Fase 6 filtra por false y no lo pisa.")
                 .HasColumnName("calculo_manual");
@@ -240,7 +244,7 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("fecha_calculo");
             entity.Property(e => e.Porcentaje)
                 .HasPrecision(6, 2)
-                .HasComment("Porcentaje sobre el costo. NULL si no hay formula (CasoEspecial) o la tasa no esta definida (Tarjeta3/Tarjeta6).")
+                .HasComment("Porcentaje sobre el valor de `base`. Admite negativos hasta -100: EfectivoTransferencia es un descuento (-10) sobre PrecioLista. NULL si no hay formula (CasoEspecial) o la tasa no esta definida (Tarjeta3/Tarjeta6).")
                 .HasColumnName("porcentaje");
             entity.Property(e => e.Precio)
                 .HasPrecision(12, 2)
