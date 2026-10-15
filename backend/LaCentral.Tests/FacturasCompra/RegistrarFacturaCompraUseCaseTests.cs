@@ -123,6 +123,16 @@ public class RegistrarFacturaCompraUseCaseTests
         NoSeEscribioNada();
     }
 
+    [Fact]
+    public async Task VencimientoElMismoDiaDeLaEmision_Registra()
+    {
+        var resultado = await Caso().EjecutarAsync(Request(
+            emision: new DateOnly(2026, 10, 10), vencimiento: new DateOnly(2026, 10, 10)));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(new DateOnly(2026, 10, 10), _registrada!.FechaVencimiento);
+    }
+
     [Theory]
     [InlineData(-0.01, 0, 0, 0)]
     [InlineData(0, -1, 0, 0)]
@@ -207,7 +217,8 @@ public class RegistrarFacturaCompraUseCaseTests
         var resultado = await Caso().EjecutarAsync(Request(new[] { Linea(100), Linea(999) }));
 
         AssertFallo(resultado, TipoError.Invalido);
-        Assert.Contains("999", resultado.Error);
+        // Inexistente no es lo mismo que dado de baja: el mensaje no puede pedir reactivarlo.
+        Assert.Equal("El artículo 999 no existe.", resultado.Error);
         NoSeEscribioNada();
     }
 

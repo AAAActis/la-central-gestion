@@ -20,8 +20,12 @@ namespace LaCentral.Tests.FacturasCompra;
 ///
 /// La atomicidad es el test más importante del sprint: por cada punto de escritura hay
 /// un test que hace fallar AL MOTOR ahí (un trigger en el esquema aislado que lanza una
-/// excepción en la segunda línea, cuando la primera ya escribió) y afirma que no quedó
-/// cabecera, detalle, stock, costo, último proveedor ni historial.
+/// excepción) y afirma que no quedó cabecera, detalle, stock, costo, último proveedor ni
+/// historial. En detalle, stock, artículo e historial el trigger salta en la SEGUNDA
+/// línea, cuando la primera ya escribió. La cabecera es una sola fila: su falla (trigger
+/// o índice de número activo) ocurre antes de cualquier escritura, y esos tests cuidan que
+/// nada se escriba antes que ella. Los de stock, artículo e historial son los que dependen
+/// de la transacción de IUnidadDeTrabajo: sin ella quedan en rojo.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
 public class RegistrarFacturaCompraPostgreSqlTests
