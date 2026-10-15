@@ -32,7 +32,10 @@ public class FacturaCompraDetalle
 
     /// <summary>
     /// El costo unitario que pasa a ser el costo vigente del artículo y queda en su
-    /// historial de compra.
+    /// historial de compra: el precio neto del descuento de la línea, en centavos como
+    /// articulo.precio_costo (NUMERIC(14,2)). El medio centavo se aleja del cero, como
+    /// redondea PostgreSQL. Las percepciones son de la cabecera y no entran (D8).
     /// </summary>
-    public decimal CostoUnitario => 0m;
+    public decimal CostoUnitario =>
+        Math.Round(PrecioUnitario * (100m - DescuentoPorcentaje) / 100m, 2, MidpointRounding.AwayFromZero);
 }
