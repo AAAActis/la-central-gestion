@@ -155,6 +155,7 @@ public class RegistrarFacturaCompraUseCaseTests
         var resultado = await Caso().EjecutarAsync(Request(proveedorId: 999));
 
         AssertFallo(resultado, TipoError.Invalido);
+        Assert.Equal("El proveedor 999 no existe.", resultado.Error);
         NoSeEscribioNada();
     }
 
