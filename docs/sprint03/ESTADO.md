@@ -46,7 +46,7 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 | — · Merge | **Fases 1, 2 y D1 mergeadas en develop** (2026-10-14): `a276272` (#113), `b0819a9` (#114), `f3c6705` (#115). Ramas borradas, locales y remotas | | | | |
 | 3 · HU-ART-01 | **cerrada (2026-10-14)**, con el script 04, las decisiones A-D y H1/H3. Ronda 1 de arreglos: **verificador APTO**, auditor APTO (pasada anterior). Ver "Fase 3" | `feature/HU-ART-01-alta-articulo` (sale de develop `f3c6705`, pusheada; código hasta `a9e7410`) | sin abrir: no hay `gh`, se abre a mano desde el link de compare. Cuerpo en `docs/sprint03/pr-fase3-hu-art-01.md`. Base `develop` | **234 total · 234 passed · 0 failed · 0 skipped · 0 warnings (77 `[PostgreSqlFact]`), en `a9e7410`** | el entregable en `frontend/` lo cubre la Fase 4 (pantalla de alta incluida) |
 | 4 · HU-ART-02 | **hecha (2026-10-15)**: búsqueda, ficha con las seis modalidades y su razón, GET por HTTP, enums por nombre y `frontend/` en Angular. **Verificador APTO, auditor APTO (ronda 1)**. Ver "Fase 4" | `feature/HU-ART-02-consultar-articulos` (sale de `feature/HU-ART-01-alta-articulo` `ca84eae`, pusheada; HEAD de código `d44bab7`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase4-hu-art-02.md`. Base provisoria `feature/HU-ART-01-alta-articulo`: **cambiar a `develop` cuando entre la Fase 3** | **258 total · 258 passed · 0 failed · 0 skipped · 0 warnings (86 `[PostgreSqlFact]`), en `d44bab7`** | abrir los PR de las Fases 3 y 4 a mano; deuda abajo |
-| 5 · HU-FCO-01 | pendiente | | | | |
+| 5 · HU-FCO-01 | en compuerta (2026-10-15). Ver "Fase 5" | `feature/HU-FCO-01-factura-compra` (sale de `a23bb26`) | base provisoria `feature/HU-ART-02-consultar-articulos` | **309/309 (105 PG)** | subagentes |
 | 6 · HU-ART-05 + CA5 | pendiente (misma compuerta D1) | | | | |
 | 7 · HU-ART-03 | pendiente | | | | |
 
@@ -541,6 +541,43 @@ prueba que la Fase 2 esté mal.
 - 2026-10-13 · **Fase 2:** el plan dice "NINGÚN repositorio escribe en [las tablas de historial]". Falso para cliente y proveedor: `LaCentral.Data/Repositorios/ClienteRepositorio.cs:176-191` y `ProveedorRepositorio.cs:154-169` ya abren y cierran la baja en `*_historial_baja` dentro del repositorio, sin puerto. Lo cubren los tests PG `DosCiclos..._ConservanEstadoEHistorial...`. Artículo y usuario no escriben historial. La Fase 2 pasa a ser extraer un puerto `IHistorialBajaRepositorio` y mover esa lógica, más los usuarios de baja/reactivación desde IContextoUsuario, no construirla desde cero. (Aplicada en la Fase 2.)
 - 2026-10-13 · **Fase 4:** el plan dice que el test del comodín ("100%_original") corre sobre InMemory. Hoy `ArticuloRepositorioTests.Busqueda_PermiteInactivosYNoInterpretaComodinesSQL` es `[PostgreSqlFact]` y corrió contra PostgreSQL real. Verificar si cubre ese caso exacto antes de duplicarlo. **Resuelto en la Fase 4 (2026-10-15):** usaba el texto exacto pero no discriminaba. Se agregó `Busqueda_100PorcientoGuionBajoOriginal_TraeSoloElLiteral`.
 - 2026-10-14 · **Fases 3, 4 y 6 (D1):** ~~el comentario de `articulo_margen` todavía dice "0,01 % = precio igual al costo", mientras que D1 dice Costo = × 1,00~~ (la tabla ya no existe, 2026-10-14). **Resuelto en la Fase 3 (2026-10-14):** `MargenModalidad` y `CalcularPrecioEstimado` ya no existen. Ahora están `PrecioModalidad`, `BasePrecio` y `ReglasPrecioModalidad`, con Efectivo sobre PrecioLista y CasoEspecial manual. `CalcularPreciosArticuloUseCase` sigue sin existir: es de la Fase 6. Lo que sigue es el texto original. **Seguía en pie:** la tabla nueva tiene dónde guardar `precio` y `calculo_manual`, pero el dominio no se alineó todavía: eso es de la Fase 3. Además, el comentario de la tabla nombra un `CalcularPreciosArticuloUseCase` que todavía no existe. El modelo "porcentaje sobre costo" de `MargenModalidad`/`CalcularPrecioEstimado` no expresa Efectivo (sobre Lista), CasoEspecial (precio fijo) ni la razón de la ausencia. Detalle en `informe-compuerta-d1.md`.
+
+## Decisiones
+- 2026-10-15 · **Rol de test `lacentral_tests`.** La suite corre con un rol sin superusuario: CONNECT + CREATE sobre `lacentral_test`, solo SELECT en `public`, sin acceso a `lacentral`. Lo aplicó el equipo y quedó versionado en `backend/db/rescaffold/05_rol_tests.sql` (sin contraseña), reconstruido leyendo el catálogo. Con este rol: 261/261, ningún 42501.
+- 2026-10-15 · **`LACENTRAL_TEST_PG` del proceso estaba vieja.** El valor del ámbito User apunta a `lacentral_tests`, pero el proceso de la sesión heredaba uno anterior con `lacentral`. Las corridas toman el valor del ámbito User y abortan si no es `lacentral_tests`.
+- 2026-10-15 · **Ramas.** Las Fases 3 y 4 NO están en `develop` (`develop` = `f3c6705`). La Fase 5 sale del HEAD de `feature/HU-ART-02-consultar-articulos` (`a23bb26`), con esa rama como base provisoria del PR. Las Fases 6 y 7 se apilan sobre la anterior.
+- 2026-10-15 · **PRs con `gh`.** `gh` está instalado en `C:\Program Files\GitHub CLI\` (fuera del PATH de bash) y autenticado: desde la Fase 5, los PRs los abre el agente.
+- 2026-10-15 · **PR #117 (para el equipo):** el head es `feature/HU-ART-01-alta-articulo` (Fase 3), pero el título describe HU-ART-02 (Fase 4). La rama de la Fase 4 no tiene PR. No se tocó.
+
+## PASO 0 de la sesión de Fases 5-7 (2026-10-15)
+- `git worktree list`: solo el principal. `core.longpaths true`. El esquema `pr110_test_d4b8a811...` **ya no existe** (lo borró el equipo). Hay un esquema `staging` que no es de la suite: no se tocó.
+- Línea base con `lacentral_tests`: 253/258. Los 5 que fallaron eran 53300; ninguno 42501.
+- **Causa del 53300 (TDD, `1473f77` estructura → `3037344` rojo → `fix` siguiente):** (a) si la conexión de administración se cortaba a mitad de la creación, el esquema quedaba huérfano (`DisposeAsync` solo borraba con la conexión abierta); (b) cada esquema tiene su propia cadena y, por lo tanto, su propio pool, que nunca se vaciaba; (c) las fábricas de `WithWebHostBuilder` vivían hasta el final de la clase. Arreglo: creación en UNA transacción (el DDL de PostgreSQL es transaccional), `ClearPool` y `Liberar()` en `DisposeAsync`, y reapertura de la conexión de administración antes del DROP. Tests: `PostgreSqlPruebasLimpiezaTests` (3 PG, rojo por aserción).
+- **Compuerta:** dos corridas completas seguidas, **261/261 (89 PG)**, sin 53300. Al terminar: 0 conexiones idle de `lacentral_tests` y 0 esquemas `pr110_test_*`.
+- Hook de graphify: `graphify` por PATH, verificado (se dispara). El grafo se actualiza solo con el hook post-commit.
+
+## Fase 5 · HU-FCO-01 · Factura de compra (2026-10-15)
+Rama `feature/HU-FCO-01-factura-compra`, sale de `a23bb26` (HEAD de la Fase 4). Suite al cerrar la unidad HTTP + frontend: **309/309, 105 `[PostgreSqlFact]`**, 0 warnings.
+
+**Premisas contrastadas con el código:**
+- El plan nombra `ExisteNumeroActivoAsync`. CA2 pide informar CON QUÉ factura choca, así que el puerto es `ObtenerNumeroActivoAsync` y devuelve `FacturaCompraExistente(Id, Numero, FechaEmision)`, o null.
+- `ux_factura_compra_numero_activa` ya existe y el manejador global ya lo reconocía (409).
+- `IContextoUsuario` NO expone el rol (solo `UsuarioId`, `NombreUsuario`, `SucursalId`). Eso importa para la Fase 7.
+- `factura_compra.percepcion_*` tienen DEFAULT 0. Las cuatro van siempre, con 0 si no se informan.
+
+**Decisiones técnicas (2026-10-15):**
+- **Costo de la línea = precio unitario neto del descuento de la línea**, redondeado a centavos con el medio centavo lejos del cero (el criterio de PostgreSQL para NUMERIC). Las percepciones son de la cabecera y no se prorratean al costo (D8: datos sin lógica financiera). Vive en un solo lugar: `FacturaCompraDetalle.CostoUnitario`. **Para que lo confirme el equipo:** si el costo tuviera que ser el precio bruto, se cambia esa propiedad y sus 6 casos de test.
+- Un artículo **dado de baja** no admite compras (`Invalido`, "reactivalo antes"), igual que el proveedor inactivo (CA1). Confirmar con el equipo.
+- Validaciones del núcleo: número 1-30 caracteres, vencimiento ≥ emisión, percepciones ≥ 0, y por línea cantidad > 0, precio ≥ 0, descuento 0-100, un artículo por línea (es la PK del detalle) y sucursal real (D9).
+- Stock: `INSERT ... ON CONFLICT DO UPDATE SET cantidad = stock.cantidad + EXCLUDED.cantidad`. El motor hace el incremento (dos compras simultáneas no se pisan) y crea la fila si no existía.
+- 201 con `Location: /api/facturas-compra/{id}`, sin GET (la consulta de facturas es otra HU), con el mismo precedente que la Fase 3.
+- CA5: el punto de integración quedó marcado dentro de la unidad de trabajo de `RegistrarFacturaCompraUseCase`. **#32 NO se cierra hasta la Fase 6.**
+
+**Atomicidad (el test más importante del sprint).** En `RegistrarFacturaCompraPostgreSqlTests` hay un test PG por punto de falla. Cada uno fuerza al MOTOR a fallar con un trigger en el esquema aislado, en la segunda línea, cuando la primera ya escribió. Puntos: índice de número activo (carrera real), cabecera, detalle, stock, artículo (costo y último proveedor) e historial. Todos afirman con un contexto nuevo que no quedó cabecera, detalle, stock, costo, último proveedor ni historial. Mutaciones sin commitear: `UnidadDeTrabajo` sin transacción → 3 de 6 en rojo (los otros 3 caen dentro del primer SaveChanges, que ya es atómico); si además se escribe el stock antes que la cabecera → 6 de 6 en rojo.
+
+**Commits (TDD por unidad):** `2dda597` estructura → `05241ab` rojo Moq (31 rojos; `CostoUnitario(100,100)` pasa a la primera, se verificó con mutación) → `42cad4a` caso de uso → `ba4044c` rojo PG (10) → `97cdbea` repositorio → `f760405` rojo HTTP (5) → `c69ca86` controlador → `f7f8b27` 400 sin emisión (pasa a la primera; sin `[Required]` da 500) → `cdee847` frontend.
+
+**Frontend:** `frontend/src/app/factura-compra.ts`, una pestaña nueva en el header. No calcula costos: al registrar, relee la ficha de cada artículo comprado. Prueba de humo por el proxy, API con el rol `lacentral_tests` (solo SELECT en public), **solo lecturas**: proveedores sin token → 401; proveedores "a" → 200 con 4; ficha → 6 modalidades y 2 sucursales; POST sin token → 401; POST sin líneas → 400 (valida antes de escribir). `public.factura_compra` sigue con 0 filas.
 
 ## Revisión de la Fase 1 por el equipo (2026-10-13)
 - Fase 1 verificada contra el grafo (`bf845dbc`): los nueve ítems están. El PR todavía no se abrió (no hay `gh`): abrirlo a mano desde la rama `fix/deuda-bloqueante-sprint3` con el cuerpo de `pr-fase1-deuda-bloqueante.md`.
