@@ -162,4 +162,38 @@ public class ArticuloPrecioModalidadPostgreSqlTests
         await using var relectura = fixture.CrearContexto();
         Assert.False(await relectura.ArticuloPrecioModalidad.AnyAsync(p => p.ArticuloId == articulo.Id));
     }
+
+    // Escribir no valida que el enum tenga nombre: los valores salen de miembros del enum
+    // (ReglasPrecioModalidad.ConfiguracionInicial) y ningún DTO HTTP recibe una modalidad
+    // ni una base. Si igual llegara uno sin nombre, se escribiría "99" o "9" y el motor lo
+    // rechaza: no queda ni el artículo ni ninguna de sus filas.
+    [PostgreSqlFact]
+    public async Task Alta_ModalidadOBaseSinNombre_LaRechazaElCheckYNoQuedaNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var casos = new (PrecioModalidad Precio, string Restriccion)[]
+        {
+            (new() { Modalidad = (Modalidad)99 }, "articulo_precio_modalidad_valida"),
+            (new() { Modalidad = Modalidad.Costo, Base = (BasePrecio)9, Porcentaje = 0m }, "articulo_precio_modalidad_base_valida"),
+        };
+
+        foreach (var (precio, restriccion) in casos)
+        {
+            await using var contexto = fixture.CrearContexto();
+            var articulo = new LaCentral.UseCases.Entidades.Articulo
+            {
+                Nombre = $"Artículo {restriccion}", Activo = true, Precios = new List<PrecioModalidad> { precio }
+            };
+
+            var error = await Assert.ThrowsAsync<DbUpdateException>(
+                () => new ArticuloRepositorio(contexto).AgregarAsync(articulo));
+            var postgres = Assert.IsType<PostgresException>(error.InnerException);
+            Assert.Equal(PostgresErrorCodes.CheckViolation, postgres.SqlState);
+            Assert.Equal(restriccion, postgres.ConstraintName);
+        }
+
+        await using var relectura = fixture.CrearContexto();
+        Assert.False(await relectura.Articulo.AnyAsync());
+        Assert.False(await relectura.ArticuloPrecioModalidad.AnyAsync());
+    }
 }
