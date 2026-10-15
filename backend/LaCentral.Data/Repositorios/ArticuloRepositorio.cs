@@ -58,7 +58,6 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
     // Query completo antes de paginar, expuesto a los tests de traducción SQL.
     internal IQueryable<CoincidenciaArticulo> CrearCoincidencias(ConsultaArticulos consulta)
     {
-        consulta.Validar();
         var articulos = _context.Articulo.AsNoTracking();
         if (!consulta.IncluirInactivos)
             articulos = articulos.Where(a => a.Activo);

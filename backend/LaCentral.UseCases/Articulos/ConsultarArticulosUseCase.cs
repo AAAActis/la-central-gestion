@@ -14,6 +14,16 @@ public class ConsultarArticulosUseCase
         _consulta = consulta;
     }
 
+    /// <summary>
+    /// Texto vacío o paginación inválida: Invalido, sin tocar la base. Sin resultados NO es
+    /// un error: es una página vacía.
+    /// </summary>
     public async Task<Result<PaginaArticulosDto>> EjecutarAsync(ConsultaArticulos consulta, CancellationToken ct = default)
-        => Result<PaginaArticulosDto>.Success(await _consulta.BuscarAsync(consulta, ct));
+    {
+        var validacion = consulta.Validar();
+        if (!validacion.IsSuccess)
+            return Result<PaginaArticulosDto>.Failure(validacion.Tipo, validacion.Error);
+
+        return Result<PaginaArticulosDto>.Success(await _consulta.BuscarAsync(consulta, ct));
+    }
 }

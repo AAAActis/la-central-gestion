@@ -1,3 +1,4 @@
+using LaCentral.UseCases.Comun;
 using LaCentral.UseCases.Entidades;
 
 namespace LaCentral.UseCases.Articulos.Dtos;
@@ -5,17 +6,19 @@ namespace LaCentral.UseCases.Articulos.Dtos;
 public sealed record ConsultaArticulos(
     string Texto, bool IncluirInactivos = false, int Pagina = 1, int TamanoPagina = 20)
 {
-    public void Validar()
+    /// <summary>Regla de negocio de la búsqueda: la aplica el caso de uso, no el repositorio.</summary>
+    public Result Validar()
     {
         if (string.IsNullOrWhiteSpace(Texto) || Texto.Length > 500)
-            throw new ArgumentException("Ingresá una búsqueda de 1 a 500 caracteres.", nameof(Texto));
+            return Result.Failure(TipoError.Invalido, "Ingresá una búsqueda de 1 a 500 caracteres.");
         var alternativas = NormalizacionArticulo.Alternativas(Texto);
         if (alternativas.Count == 0 || alternativas.Count > 10 ||
             alternativas.Any(a => NormalizacionArticulo.Palabras(a).Count == 0))
-            throw new ArgumentException("Ingresá entre 1 y 10 alternativas de búsqueda.", nameof(Texto));
+            return Result.Failure(TipoError.Invalido, "Ingresá entre 1 y 10 alternativas de búsqueda.");
         if (Pagina < 1 || TamanoPagina is < 1 or > 100 ||
             (long)(Pagina - 1) * TamanoPagina > int.MaxValue)
-            throw new ArgumentOutOfRangeException(nameof(Pagina), "La página o su tamaño no son válidos.");
+            return Result.Failure(TipoError.Invalido, "La página o su tamaño no son válidos.");
+        return Result.Success();
     }
 }
 
