@@ -162,7 +162,10 @@ public class ArticuloRepositorioTests
         });
         context.Articulo.Add(articulo);
         await context.SaveChangesAsync();
-        var repo = new ArticuloRepositorio(context);
+        // Contexto NUEVO: con el de la siembra, el change tracker devolvería las instancias
+        // cargadas aunque la consulta no trajera los códigos ni el stock de la base.
+        await using var lectura = fixture.CrearContexto();
+        var repo = new ArticuloRepositorio(lectura);
         var detalle = await repo.ObtenerDetallePorIdAsync(articulo.Id);
         Assert.NotNull(detalle);
         Assert.Null(detalle.CostoVigente);
@@ -172,7 +175,9 @@ public class ArticuloRepositorioTests
         Assert.Empty(detalle.PreciosPorModalidad);
         Assert.Equal(" gn-01 ", Assert.Single(detalle.Codigos).CodigoOriginal);
         Assert.Equal("GN-01", detalle.Codigos[0].ClaveNormalizada);
+        Assert.Equal("Proveedor de prueba", detalle.Codigos[0].RazonSocial);
         Assert.Equal(1.5m, Assert.Single(detalle.Existencias).Cantidad);
+        Assert.Equal(sucursal.Nombre, detalle.Existencias[0].Sucursal);
         Assert.Null(await repo.ObtenerDetallePorIdAsync(checked(articulo.Id + 1)));
     }
 
