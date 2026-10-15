@@ -1,3 +1,4 @@
+using LaCentral.UseCases.Comun;
 using LaCentral.UseCases.Entidades;
 using LaCentral.UseCases.FacturasCompra.Dtos;
 
@@ -19,7 +20,9 @@ public interface IFacturaCompraRepositorio
     /// Escribe la cabecera y el detalle, incrementa el stock del destino de cada línea
     /// (D9), actualiza costo y último proveedor y agrega el historial de compra, SOLO
     /// de los artículos comprados. Se llama dentro de IUnidadDeTrabajo: si algo falla,
-    /// no queda nada. Devuelve el Id que generó la base.
+    /// no queda nada. Devuelve el Id que generó la base, o Invalido si el stock de un
+    /// destino no entra en su columna: el caso de uso lo devuelve y la unidad de trabajo
+    /// descarta lo escrito.
     /// </summary>
-    Task<int> RegistrarConEfectosAsync(FacturaCompra factura, CancellationToken ct = default);
+    Task<Result<int>> RegistrarConEfectosAsync(FacturaCompra factura, CancellationToken ct = default);
 }

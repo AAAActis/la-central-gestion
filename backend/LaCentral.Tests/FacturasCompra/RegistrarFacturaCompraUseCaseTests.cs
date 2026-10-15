@@ -43,7 +43,7 @@ public class RegistrarFacturaCompraUseCaseTests
             .ReturnsAsync((FacturaCompraExistente?)null);
         _facturas.Setup(f => f.RegistrarConEfectosAsync(It.IsAny<FacturaCompra>(), It.IsAny<CancellationToken>()))
             .Callback((FacturaCompra f, CancellationToken _) => _registrada = f)
-            .ReturnsAsync(IdGenerado);
+            .ReturnsAsync(Result<int>.Success(IdGenerado));
     }
 
     private RegistrarFacturaCompraUseCase Caso() =>

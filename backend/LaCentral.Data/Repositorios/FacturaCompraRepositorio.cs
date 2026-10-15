@@ -1,4 +1,5 @@
 using LaCentral.Data.Models;
+using LaCentral.UseCases.Comun;
 using LaCentral.UseCases.FacturasCompra.Dtos;
 using LaCentral.UseCases.Puertos;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +32,7 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
     /// solo porque el caso de uso las ejecuta dentro de IUnidadDeTrabajo, que abre UNA
     /// transacción sobre este mismo DbContext.
     /// </summary>
-    public async Task<int> RegistrarConEfectosAsync(LaCentral.UseCases.Entidades.FacturaCompra factura, CancellationToken ct = default)
+    public async Task<Result<int>> RegistrarConEfectosAsync(LaCentral.UseCases.Entidades.FacturaCompra factura, CancellationToken ct = default)
     {
         var fila = new FacturaCompra
         {
@@ -88,6 +89,6 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
         }
         await _context.SaveChangesAsync(ct);
 
-        return fila.Id;
+        return Result<int>.Success(fila.Id);
     }
 }
