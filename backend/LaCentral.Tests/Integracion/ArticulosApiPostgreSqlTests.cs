@@ -91,7 +91,70 @@ public class ArticulosApiPostgreSqlTests : IClassFixture<WebApplicationFactory<P
         var articulo = await relectura.Articulo.AsNoTracking().Include(a => a.ArticuloCodigoAlternativo)
             .SingleAsync(a => a.Id == id);
         Assert.Equal("Filtro de aceite", articulo.Nombre);
+        // El código de la respuesta tiene que ser el persistido, no un TMP- que quedó.
+        Assert.Equal($"LC-{id:D6}", articulo.CodigoInterno);
         Assert.Equal("FA-100", Assert.Single(articulo.ArticuloCodigoAlternativo).Codigo);
+    }
+
+    // Un artículo sin códigos de proveedor es válido: el cuerpo puede omitir la lista.
+    [PostgreSqlFact]
+    public async Task Post_SinCodigosProveedor_201YSeGuardaSinCodigos()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        using var cliente = Cliente(fixture, "OPERADOR");
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/articulos", new { nombre = "Artículo sin códigos" });
+
+        Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
+        var id = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        await using var relectura = fixture.CrearContexto();
+        var articulo = await relectura.Articulo.AsNoTracking().Include(a => a.ArticuloCodigoAlternativo)
+            .SingleAsync(a => a.Id == id);
+        Assert.Equal("Artículo sin códigos", articulo.Nombre);
+        Assert.Empty(articulo.ArticuloCodigoAlternativo);
+    }
+
+    // El contrato del 400 por formato: ValidationProblemDetails con el error POR CAMPO,
+    // que el caso de uso (un ProblemDetails con un solo detalle) no da.
+    [PostgreSqlFact]
+    public async Task Post_FormatoInvalido_400ConErroresPorCampoYNoSeEscribe()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        using var cliente = Cliente(fixture, "OPERADOR");
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/articulos", new
+        {
+            ubicacionDeposito = new string('u', 61),
+            codigosProveedor = new object[]
+            {
+                new { proveedorId = 1, codigo = new string('c', 61) },
+                new { proveedorId = 1 }
+            }
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        var errores = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("errors");
+        var campos = errores.EnumerateObject().Select(e => e.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        Assert.Contains("Nombre", campos);
+        Assert.Contains("UbicacionDeposito", campos);
+        Assert.Contains("CodigosProveedor[0].Codigo", campos);
+        Assert.Contains("CodigosProveedor[1].Codigo", campos);
+
+        await using var relectura = fixture.CrearContexto();
+        Assert.False(await relectura.Articulo.AnyAsync());
+    }
+
+    [PostgreSqlFact]
+    public async Task Post_NombreDeMasDe200_400ConErrorDeNombre()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        using var cliente = Cliente(fixture, "OPERADOR");
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/articulos", new { nombre = new string('n', 201) });
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        var errores = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("errors");
+        Assert.Contains("Nombre", errores.EnumerateObject().Select(e => e.Name), StringComparer.OrdinalIgnoreCase);
     }
 
     [PostgreSqlFact]
