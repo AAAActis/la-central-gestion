@@ -148,6 +148,34 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
         Assert.False(await relectura.FacturaCompra.AnyAsync());
     }
 
+    // La base guarda 3 decimales de cantidad: 0,0004 se redondearía a 0 y violaría
+    // fcd_cantidad_positiva (23514), que el manejador global informa como 500.
+    [PostgreSqlFact]
+    public Task Post_CantidadQueLaColumnaNoGuarda_400YNoEscribe() =>
+        AfirmarRechazoSinEscrituraAsync(s => ("cantidad", 0.0004m));
+
+    // Sin la validación del núcleo, la FK de sucursal (23503) sale como 500.
+    [PostgreSqlFact]
+    public Task Post_SucursalInexistente_400YNoEscribe() =>
+        AfirmarRechazoSinEscrituraAsync(s => ("sucursalId", (decimal)short.MaxValue));
+
+    private async Task AfirmarRechazoSinEscrituraAsync(Func<Sembrado, (string Campo, decimal Valor)> cambio)
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        var cuerpo = JsonSerializer.SerializeToNode(Cuerpo(s))!.AsObject();
+        var (campo, valor) = cambio(s);
+        cuerpo["lineas"]![0]![campo] = valor;
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra", cuerpo);
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        await using var relectura = fixture.CrearContexto();
+        Assert.False(await relectura.FacturaCompra.AnyAsync());
+        Assert.Equal(1m, await relectura.Stock.Where(x => x.ArticuloId == s.ArticuloId).SumAsync(x => x.Cantidad));
+    }
+
     [PostgreSqlFact]
     public async Task Post_NumeroActivoRepetido_409QueInformaLaFacturaEnConflicto()
     {

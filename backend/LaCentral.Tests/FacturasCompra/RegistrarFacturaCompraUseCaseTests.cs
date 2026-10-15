@@ -138,7 +138,11 @@ public class RegistrarFacturaCompraUseCaseTests
     [InlineData(0, -1, 0, 0)]
     [InlineData(0, 0, -1, 0)]
     [InlineData(0, 0, 0, -1)]
-    public async Task PercepcionNegativa_Invalido(double iva, double iibb, double municipal, double ganancias)
+    [InlineData(0.001, 0, 0, 0)]
+    [InlineData(0, 1000000000000, 0, 0)]
+    [InlineData(0, 0, 0.005, 0)]
+    [InlineData(0, 0, 0, 1000000000000)]
+    public async Task PercepcionNegativaOFueraDeLaColumna_Invalido(double iva, double iibb, double municipal, double ganancias)
     {
         var resultado = await Caso().EjecutarAsync(Request(
             iva: (decimal)iva, iibb: (decimal)iibb, municipal: (decimal)municipal, ganancias: (decimal)ganancias));
@@ -194,6 +198,12 @@ public class RegistrarFacturaCompraUseCaseTests
     [InlineData(5, -0.01, 0)]
     [InlineData(5, 200, -0.01)]
     [InlineData(5, 200, 100.01)]
+    // Escala y rango de NUMERIC(12,3) / NUMERIC(14,2) / NUMERIC(6,2): lo que la base no guarda es Invalido, no 500.
+    [InlineData(0.0004, 200, 0)]
+    [InlineData(1000000000, 200, 0)]
+    [InlineData(5, 200.001, 0)]
+    [InlineData(5, 1000000000000, 0)]
+    [InlineData(5, 200, 10.005)]
     public async Task LineaConValoresFueraDeRango_Invalido(double cantidad, double precio, double descuento)
     {
         var resultado = await Caso().EjecutarAsync(Request(new[]
