@@ -46,7 +46,7 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 | — · Merge | **Fases 1, 2 y D1 mergeadas en develop** (2026-10-14): `a276272` (#113), `b0819a9` (#114), `f3c6705` (#115). Ramas borradas, locales y remotas | | | | |
 | 3 · HU-ART-01 | **cerrada (2026-10-14)**, con el script 04, las decisiones A-D y H1/H3. Ronda 1 de arreglos: **verificador APTO**, auditor APTO (pasada anterior). Ver "Fase 3" | `feature/HU-ART-01-alta-articulo` (sale de develop `f3c6705`, pusheada; código hasta `a9e7410`) | sin abrir: no hay `gh`, se abre a mano desde el link de compare. Cuerpo en `docs/sprint03/pr-fase3-hu-art-01.md`. Base `develop` | **234 total · 234 passed · 0 failed · 0 skipped · 0 warnings (77 `[PostgreSqlFact]`), en `a9e7410`** | el entregable en `frontend/` lo cubre la Fase 4 (pantalla de alta incluida) |
 | 4 · HU-ART-02 | **hecha (2026-10-15)**: búsqueda, ficha con las seis modalidades y su razón, GET por HTTP, enums por nombre y `frontend/` en Angular. **Verificador APTO, auditor APTO (ronda 1)**. Ver "Fase 4" | `feature/HU-ART-02-consultar-articulos` (sale de `feature/HU-ART-01-alta-articulo` `ca84eae`, pusheada; HEAD de código `d44bab7`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase4-hu-art-02.md`. Base provisoria `feature/HU-ART-01-alta-articulo`: **cambiar a `develop` cuando entre la Fase 3** | **258 total · 258 passed · 0 failed · 0 skipped · 0 warnings (86 `[PostgreSqlFact]`), en `d44bab7`** | abrir los PR de las Fases 3 y 4 a mano; deuda abajo |
-| 5 · HU-FCO-01 | en compuerta (2026-10-15). Ver "Fase 5" | `feature/HU-FCO-01-factura-compra` (sale de `a23bb26`) | base provisoria `feature/HU-ART-02-consultar-articulos` | **309/309 (105 PG)** | subagentes |
+| 5 · HU-FCO-01 | **PARADA en la compuerta (2026-10-15)**: auditor APTO, verificador NO APTO (M11) tras 2 rondas. Ver "Compuerta de la Fase 5" | `feature/HU-FCO-01-factura-compra` (sale de `a23bb26`) | base provisoria `feature/HU-ART-02-consultar-articulos` | **323/323 (108 PG)**, HEAD `b4fca2f` | decide el equipo |
 | 6 · HU-ART-05 + CA5 | pendiente (misma compuerta D1) | | | | |
 | 7 · HU-ART-03 | pendiente | | | | |
 
@@ -579,6 +579,28 @@ Rama `feature/HU-FCO-01-factura-compra`, sale de `a23bb26` (HEAD de la Fase 4). 
 
 **Frontend:** `frontend/src/app/factura-compra.ts`, una pestaña nueva en el header. No calcula costos: al registrar, relee la ficha de cada artículo comprado. Prueba de humo por el proxy, API con el rol `lacentral_tests` (solo SELECT en public), **solo lecturas**: proveedores sin token → 401; proveedores "a" → 200 con 4; ficha → 6 modalidades y 2 sucursales; POST sin token → 401; POST sin líneas → 400 (valida antes de escribir). `public.factura_compra` sigue con 0 filas.
 
+### Compuerta de la Fase 5 (2026-10-15), subagentes de a uno, cada uno en su worktree · **SE PARÓ**
+| Pasada | Alcance | Veredicto | Qué |
+|---|---|---|---|
+| verificador | `a23bb26..505301c` | NO APTO | B1: sin la guarda "no existe", el test solo miraba "999". B2: `<` → `<=` en el vencimiento no lo detectaba nada. 20 mutaciones más murieron. |
+| ronda 1 (tests) | `12480a2` (+ `10a0f0b` no bloqueante) | — | mensaje exacto de "no existe"; vencimiento el mismo día de la emisión; el proveedor inexistente afirma su mensaje. |
+| verificador | `505301c..12480a2` | **APTO** | B1/B2 y 8 mutaciones extra en rojo. 310/310. |
+| auditor | `a23bb26..10a0f0b` | NO APTO | H1: el núcleo aceptaba valores que NUMERIC no guarda (cantidad 0,0004 → 23514; 1e10 → 22003) → 500. |
+| ronda 1 (producción) | `3e110cb` rojo → `f34bbc4` | — | `EntraEnColumna`: (12,3) cantidad, (14,2) precio y percepciones, (6,2) descuento. |
+| auditor | `10a0f0b..f34bbc4` | NO APTO | H1 cerrado. Residuo: la suma al stock existente puede desbordar `stock.cantidad` (22003 → 500). |
+| ronda 2 (producción) | `0b7da32` estructura → `163b2cc` rojo → `b4fca2f` | — | upsert con `WHERE stock.cantidad + EXCLUDED.cantidad < 1e9`; 0 filas → Invalido, el caso de uso lo propaga, la UoW revierte. |
+| auditor | `f34bbc4..b4fca2f` | **APTO** | residuo cerrado contra el motor: borde exacto, stock negativo previo, sin fila previa y dos compras simultáneas (una 201, otra 400). 323/323. |
+| verificador | `10a0f0b..b4fca2f` | **NO APTO** | M11: `<` → `<=` en el WHERE del upsert sobrevive (65/65 en verde). El test de desborde usa una suma muy por encima del límite y no fija el borde. Las otras 10 mutaciones murieron. 323/323. |
+
+**Por qué se paró:** la consigna de la sesión dice "PARÁS si después de dos rondas de arreglos sigue habiendo un NO APTO". Las dos rondas ya se hicieron (ronda 1: B1/B2 + H1; ronda 2: el desborde de stock) y el verificador dio NO APTO sobre el código de la ronda 2. No se hizo push ni se abrió el PR.
+
+**Lo que haría falta para APTO (solo un test, sin cambios de producción):** un caso PG en el borde, con stock previo 0,001 y una línea de 999.999.999,999 (suma exacta de 1e9) que espere Invalido, foto igual y ninguna excepción. Con `<=` la suma pasaría el WHERE y daría 22003, y el test quedaría en rojo. El auditor ya probó a mano que, con `<`, ese caso da 400 sin escritura (sonda S2b). Si el equipo autoriza una tercera ronda (CLAUDE.md admite hasta 3), es ese único commit de test, seguido de la verificación acotada del verificador.
+
+**Deuda nueva (la decide el equipo):**
+- **NUL en un texto → 500 (todo el proyecto).** El auditor lo encontró: POST `/api/facturas-compra` con `numero = "A\u0000B"` da 22021 (`invalid byte sequence for encoding "UTF8": 0x00`) y termina en 500, sin escribir nada. Ningún caso de uso ni el manejador global trata el 22021, así que muy probablemente pase en todo endpoint con texto (solo se probó en facturas de compra). La decisión es si se traduce el 22021 a 400 de forma global, o si se rechazan los caracteres de control al recibir el JSON.
+- Después de un fallo de `RegistrarConEfectosAsync`, el DbContext conserva entidades rastreadas. Hoy no tiene efecto, porque el contexto vive lo que dura la petición; habría que limpiarlo si algún día se reutiliza.
+- El rango de `EntraEnColumna` para el descuento (|x| < 10.000) es inalcanzable: antes corre la guarda 0-100. No es una guarda propia: es la función compartida.
+
 ## Revisión de la Fase 1 por el equipo (2026-10-13)
 - Fase 1 verificada contra el grafo (`bf845dbc`): los nueve ítems están. El PR todavía no se abrió (no hay `gh`): abrirlo a mano desde la rama `fix/deuda-bloqueante-sprint3` con el cuerpo de `pr-fase1-deuda-bloqueante.md`.
 - Confirmado: 1.7 (sin `LA_CENTRAL_REQUIRE_POSTGRES`), 1.3 (`ObtenerPorCodigoAsync`) y 1.9 (era `ClienteDireccion.Calle`).
@@ -587,17 +609,26 @@ Rama `feature/HU-FCO-01-factura-compra`, sale de `a23bb26` (HEAD de la Fase 4). 
 - Los subagentes y los hooks de graphify se copiaron a `backend/.claude/` (agents/ y settings.json). En la sesión de la Fase 1 NO cargaron, porque se leen al iniciar la sesión: `Agent type 'verificador-tdd' not found`. Se reinicia la sesión antes de la Fase 2. (Superado el 2026-10-14: la configuración vive en la raíz y carga.)
 
 ## PRÓXIMA SESIÓN — arrancar acá
-Arrancar en la **raíz del repo**. Objetivo: **Fase 5 · HU-FCO-01 · Factura de compra (Issue #32)**, rama `feature/HU-FCO-01-factura-compra`.
+Arrancar en la **raíz del repo**. Estado al 2026-10-15: **Fase 5 PARADA en la compuerta** (ver "Compuerta de la Fase 5").
 
-0. **Al empezar:**
-   - confirmar que `git worktree list` muestra solo el principal;
-   - confirmar que `dotnet test` da 258/258 con 86 PG;
-   - ¿el equipo borró el esquema huérfano `pr110_test_d4b8a811...`? (ver "Deuda").
-1. **PRs abiertos a mano, sin `gh`:**
-   - Fase 3, `feature/HU-ART-01-alta-articulo` → `develop`. Cuerpo en `pr-fase3-hu-art-01.md`.
-   - Fase 4, `feature/HU-ART-02-consultar-articulos` → base provisoria Fase 3. Cuerpo en `pr-fase4-hu-art-02.md`. **Cambiar la base a `develop` cuando entre la Fase 3.**
-2. **Antes de la rama:** ¿las Fases 3 y 4 ya están en develop? Si no, PREGUNTAR de qué rama sale la Fase 5. Necesita al menos el alta de artículo de la Fase 3.
-3. **Fase 5** (detalle en `PLAN_SPRINT3.md`, FASE 5):
-   - es la fase con el test de atomicidad más importante del sprint;
-   - entregable visible en `frontend/` (ya existe: Angular, ver `frontend/README.md`).
-   - Al cerrar: los dos subagentes (APTO los dos), el PR, este archivo, y PARAR.
+- Rama `feature/HU-FCO-01-factura-compra`, HEAD `b4fca2f` (más este commit de docs), **sin push**. Sale de `a23bb26` (Fase 4).
+- Suite: **323/323, 108 `[PostgreSqlFact]`**, con el rol `lacentral_tests`. Sin 53300, sin esquemas huérfanos.
+- Veredictos sobre el último código: **auditor-persistencia APTO** (`f34bbc4..b4fca2f`); **verificador-tdd NO APTO** (M11, borde del WHERE del upsert de stock).
+
+0. **Decide el equipo:**
+   - ¿se autoriza una 3ª ronda para la Fase 5? Es UN test PG de borde (stock 0,001 + 999.999.999,999 → Invalido). CLAUDE.md permite 3 rondas; la consigna de la sesión cortaba en 2;
+   - ¿costo de la línea neto del descuento? (decisión técnica asentada en "Fase 5"; la alternativa es el precio bruto);
+   - ¿se rechaza la compra de un artículo dado de baja?;
+   - el NUL → 500 (deuda nueva).
+1. Si se autoriza la 3ª ronda: el test, el verificador acotado (de a uno, en su worktree), y con los dos en APTO:
+   - push;
+   - cuerpo del PR en `docs/sprint03/pr-fase5-hu-fco-01.md` (mismo formato que el de la Fase 4);
+   - `"/c/Program Files/GitHub CLI/gh.exe" pr create --base feature/HU-ART-02-consultar-articulos` (`gh` está autenticado, fuera del PATH de bash). **No cerrar #32**: CA5 es de la Fase 6.
+2. **PRs pendientes del equipo:** el #117 tiene head `feature/HU-ART-01-alta-articulo` (Fase 3), pero el título es de HU-ART-02 (Fase 4); la rama de la Fase 4 no tiene PR. Las Fases 3 y 4 no están en `develop`.
+3. **Después, Fases 6 y 7** (`PLAN_SPRINT3.md`), apiladas sobre la 5. Notas ya relevadas para la Fase 6:
+   - el comentario de `articulo_precio_modalidad` nombra `CalcularPreciosArticuloUseCase`. Plan: mover ahí la fórmula `ReglasPrecioModalidad.Calcular` (con los tests reapuntados) para que el nombre coincida;
+   - `calculo_manual = true` no se pisa (el CHECK ya obliga a que porcentaje sea null en filas manuales);
+   - el punto de integración está marcado en `RegistrarFacturaCompraUseCase`, dentro de la unidad de trabajo.
+   Para la Fase 7: `IContextoUsuario` **no expone el rol**.
+4. **Cómo correr los tests:** la `LACENTRAL_TEST_PG` del proceso puede estar vieja (apuntaba a `lacentral`). Exportá la del ámbito User antes de `dotnet test`:
+   `export LACENTRAL_TEST_PG="$(powershell.exe -NoProfile -Command "[Environment]::GetEnvironmentVariable('LACENTRAL_TEST_PG','User')" | tr -d '\r')"`
