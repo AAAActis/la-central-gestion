@@ -149,6 +149,24 @@ PARÁS INMEDIATAMENTE, sin intentar workarounds, si:
 En todos esos casos: explicá qué encontraste, qué opciones ves y qué recomendás.
 No decidas vos.
 
+REGLA PERMANENTE (agregada 2026-10-14, a pedido del equipo) · NO APTO de un subagente:
+  Ante un NO APTO de un subagente, NO se para: se arregla y se vuelve a verificar,
+  hasta 3 rondas. Lo único que se modifica es código de producción y tests.
+  PROHIBIDO, para llegar a APTO:
+    - cambiar la definición de un subagente o aflojar su criterio;
+    - reescribir el cuerpo del PR para que el hallazgo deje de aplicar;
+    - declarar como excepción algo que se puede arreglar;
+    - escribir un test que alcanza una rama con un doble absurdo en lugar de probar
+      producción.
+  Después de 3 rondas sin APTO: PARÁS y reportás qué probaste en cada una.
+  SIGUEN PARANDO, como siempre: un NO APTO que exija cambiar el esquema de la base,
+  o que venga de criterios de aceptación contradictorios o de una regla de negocio
+  que falta. Eso lo decide el equipo, no vos.
+  Criterio para una guarda sin test: si es ALCANZABLE en producción, va un test en
+  rojo que la alcance por un camino real, en un commit separado del de producción. Si
+  NO es alcanzable, se BORRA y queda el test que demuestra que el caso no puede ocurrir
+  por otra vía.
+
 ═══════════════════════════════════════════════════════════════════════
 LAS FASES
 ═══════════════════════════════════════════════════════════════════════
