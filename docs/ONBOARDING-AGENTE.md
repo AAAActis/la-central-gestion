@@ -154,10 +154,11 @@ dotnet build --no-incremental
 dotnet test
 ```
 
-Tiene que dar **0 warnings y 0 omitidos**. Al 15/10/2026 son **234 tests, 234
-correctos**, de los cuales más de 70 corren contra PostgreSQL real. Si ves omitidos, te
-falta la variable del punto 2.3. Si ves warnings, avisá: la suite se dejó en cero a
-propósito y un warning nuevo es deuda que entró sin que nadie la viera.
+Tiene que dar **0 warnings y 0 omitidos**. Sobre `develop` al 15/10/2026 son **258
+tests, 258 correctos**, de los cuales **86** corren contra PostgreSQL real.
+
+Si el número no coincide, mirá primero `ESTADO.md`: puede haber entrado una fase nueva.
+Lo que no puede pasar nunca es que haya omitidos o warnings.
 
 ---
 
@@ -430,22 +431,29 @@ esquema equivocado.
 
 # 9 · Lo que falta construir
 
-Detalle en `docs/sprint03/PLAN_SPRINT3.md`. Estado al día en `ESTADO.md`.
+Detalle en `docs/sprint03/PLAN_SPRINT3.md`. **Estado al día en `ESTADO.md`**: si esta
+tabla y ese archivo se contradicen, gana `ESTADO.md`.
 
 | Fase | Qué | Estado al 15/10/2026 |
 |---|---|---|
-| 0–2, D1 | Línea base, deuda bloqueante, historial de bajas D10, compuerta de esquema de precios | **hechas y mergeadas** |
-| 3 | HU-ART-01 · Alta de artículo | hecha, PR en revisión |
-| **4** | **HU-ART-02 · Búsqueda y endpoints (#15)** | **la que sigue** |
-| 5 | HU-FCO-01 · Factura de compra (#32) | pendiente |
-| 6 | HU-ART-05 · Precios por modalidad + FCO-01 CA5 (#22) | pendiente |
+| 0–2, D1 | Línea base, deuda bloqueante, historial de bajas D10, compuerta de esquema de precios | mergeadas (#113, #114, #115) |
+| 3 | HU-ART-01 · Alta de artículo | mergeada (#117) |
+| 4 | HU-ART-02 · Búsqueda, ficha y pantalla en Angular (#15) | mergeada (#118) |
+| 5 | HU-FCO-01 · Factura de compra (#32) | **hecha, PARADA en la compuerta**: auditor APTO, verificador NO APTO por un borde de stock sin su lado aceptado. No está en develop. |
+| **6** | **HU-ART-05 · Precios por modalidad + FCO-01 CA5 (#22)** | **la que sigue, después de cerrar la 5** |
 | 7 | HU-ART-03 · Modificación y códigos (#17) | pendiente |
 | 8 | Cierre: informe final del sprint | pendiente |
 
+**La Fase 5 no cierra el Issue #32**: le falta CA5, el recálculo de precios, que llega
+con la Fase 6.
+
+**La Fase 6 arranca bloqueada por una decisión de negocio**: las tasas de Tarjeta3 y
+Tarjeta6 no están definidas. No se inventa un número. Y el precio de CasoEspecial no se
+pisa en el recálculo: eso requiere política explícita.
+
 Dos cosas que están en el esquema pero **no** en el plan del Sprint 3, y que alguien va
 a tener que tomar: **ventas** (`factura_venta`) y **transferencias entre sucursales**
-(`transferencia`). Y las **tasas de Tarjeta3 y Tarjeta6**, que no las define el código:
-las define Alfredo.
+(`transferencia`).
 
 ---
 
