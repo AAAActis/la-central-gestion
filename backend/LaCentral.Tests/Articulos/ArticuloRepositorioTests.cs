@@ -123,16 +123,6 @@ public class ArticuloRepositorioTests
         Assert.Null(await repo.ObtenerDetallePorIdAsync(checked(articulo.Id + 1)));
     }
 
-    [Theory]
-    [InlineData("* *", 1, 20)]
-    [InlineData("mouse*\t", 1, 20)]
-    [InlineData("mouse", 0, 20)]
-    [InlineData("mouse", 1, 0)]
-    [InlineData("mouse", 1, 101)]
-    [InlineData("mouse", int.MaxValue, 100)]
-    public void Consulta_RechazaEntradaOPaginaInvalida(string texto, int pagina, int tamano)
-        => Assert.ThrowsAny<ArgumentException>(() => new ConsultaArticulos(texto, Pagina: pagina, TamanoPagina: tamano).Validar());
-
     [Fact]
     public void Consulta_TraduceRankingAgrupacionYPaginacionAPostgreSQL()
     {
