@@ -45,7 +45,7 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 | D1 · compuerta de esquema en la aplicación | hecha (2026-10-14): re-scaffold, conversión de `Modalidad`, suite en verde. **Auditor APTO, verificador APTO** | `feature/d1-precios-modalidad` (sale de `feature/d10-historial-baja`) | sin abrir. Cuerpo en `docs/sprint03/pr-d1-precios-modalidad.md`. Base provisoria `feature/d10-historial-baja` | **179 total · 179 passed · 0 failed · 0 skipped · 0 warnings (46 PG real)** | abrir el PR a mano |
 | — · Merge | **Fases 1, 2 y D1 mergeadas en develop** (2026-10-14): `a276272` (#113), `b0819a9` (#114), `f3c6705` (#115). Ramas borradas, locales y remotas | | | | |
 | 3 · HU-ART-01 | **cerrada (2026-10-14)**, con el script 04, las decisiones A-D y H1/H3. Ronda 1 de arreglos: **verificador APTO**, auditor APTO (pasada anterior). Ver "Fase 3" | `feature/HU-ART-01-alta-articulo` (sale de develop `f3c6705`, pusheada; código hasta `a9e7410`) | sin abrir: no hay `gh`, se abre a mano desde el link de compare. Cuerpo en `docs/sprint03/pr-fase3-hu-art-01.md`. Base `develop` | **234 total · 234 passed · 0 failed · 0 skipped · 0 warnings (77 `[PostgreSqlFact]`), en `a9e7410`** | el entregable en `frontend/` lo cubre la Fase 4 (pantalla de alta incluida) |
-| 4 · HU-ART-02 | pendiente | | | | |
+| 4 · HU-ART-02 | **hecha (2026-10-15)**: búsqueda, ficha con las seis modalidades y su razón, GET por HTTP, enums por nombre y `frontend/` en Angular. **Verificador APTO, auditor APTO (ronda 1)**. Ver "Fase 4" | `feature/HU-ART-02-consultar-articulos` (sale de `feature/HU-ART-01-alta-articulo` `ca84eae`, pusheada; HEAD de código `d44bab7`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase4-hu-art-02.md`. Base provisoria `feature/HU-ART-01-alta-articulo`: **cambiar a `develop` cuando entre la Fase 3** | **258 total · 258 passed · 0 failed · 0 skipped · 0 warnings (86 `[PostgreSqlFact]`), en `d44bab7`** | abrir los PR de las Fases 3 y 4 a mano; deuda abajo |
 | 5 · HU-FCO-01 | pendiente | | | | |
 | 6 · HU-ART-05 + CA5 | pendiente (misma compuerta D1) | | | | |
 | 7 · HU-ART-03 | pendiente | | | | |
@@ -193,6 +193,74 @@ Arreglos, según la regla de CLAUDE.md "NO APTO de un subagente":
   - hubo una falla pasajera en `PostgreSqlPruebas.CrearAsync` (L79): se repitió y se descartó.
 - Borró su worktree (con `rm -rf`, por "Filename too long") y corrió `git worktree prune`: solo queda el principal.
 - **El auditor no se volvió a correr en esta ronda**, porque el equipo no lo pidió: su APTO es el de `c6dc60b`. Esta ronda agrega tests PG (`7c7d5c4` y `f581dac`) y no toca repositorios.
+
+## Fase 4 · HU-ART-02 · Consulta de artículos (2026-10-15)
+
+Rama `feature/HU-ART-02-consultar-articulos`, que sale de `feature/HU-ART-01-alta-articulo` (`ca84eae`): la Fase 3 todavía no está en develop. **El PR tiene base provisoria en la rama de la Fase 3: cambiarla a `develop` cuando entre la Fase 3.**
+
+**Qué entró:**
+- `ConsultarArticulosUseCase`: `ConsultaArticulos.Validar()` devuelve `Result` y la llama el caso de uso. El repositorio ya no valida ni lanza `ArgumentException`.
+  - Texto vacío, en blanco o ausente → 400.
+  - Más de 10 alternativas, o página / tamaño fuera de rango → 400.
+  - Sin resultados → 200 con lista vacía.
+- `ObtenerArticuloDetalleUseCase`: la ficha devuelve SIEMPRE las seis modalidades, con `RazonAusenciaPrecio` cuando falta el precio. El orden de evaluación es:
+  1. sin fila → `SinConfiguracion`;
+  2. manual → `CasoEspecialNoFijado`;
+  3. sin base → `TasaSinDefinir`;
+  4. con base → `SinCosto`.
+- `ArticuloRepositorio`:
+  - cada resultado de la búsqueda trae sus códigos de proveedor, en una consulta aparte por Id;
+  - `PreciosPorModalidad` deja de ser anulable: sin filas, devuelve una lista vacía.
+- `GET /api/articulos` (con `texto`, `incluirInactivos`, `pagina` y `tamanoPagina` explícitos) y `GET /api/articulos/{id}`, para ADMINISTRADOR y OPERADOR. `JsonStringEnumConverter` global.
+- `frontend/` en Angular 20 mínimo:
+  - login con el token solo en memoria;
+  - buscador y lista con código interno, nombre y códigos de proveedor;
+  - ficha con las seis modalidades y su razón;
+  - alta, que cubre también la pantalla que le faltaba a la Fase 3.
+
+  Se levanta con dos comandos, en el puerto 4200 (ver `frontend/README.md`). Prueba de humo por el proxy contra `lacentral_test`, **solo lecturas**:
+  - login malo → 401;
+  - sin token → 401;
+  - texto vacío → 400;
+  - búsqueda "filtro" → 200 con 79 resultados;
+  - ficha → seis modalidades por nombre.
+
+  El POST de alta por la pantalla no se probó contra la base, para no escribir en `public`. Lo cubren los tests HTTP.
+
+**Comodín "100%_original":** `Busqueda_PermiteInactivosYNoInterpretaComodinesSQL` usaba el texto exacto, pero NO discriminaba: con LIKE sigue en verde. Se agregó `Busqueda_100PorcientoGuionBajoOriginal_TraeSoloElLiteral`, con señuelos que solo coinciden si `%` y `_` se interpretan. Con la mutación a `EF.Functions.Like`, da rojo con 3 resultados.
+
+**Commits, por unidad:**
+
+| Unidad | estructura → test (rojo) → producción |
+|---|---|
+| Estructura | `07c418a` |
+| Validación en el caso de uso (Moq) | `cac377e` (9 rojos) → `9bdf1ea` |
+| Repositorio (PG) | `a5dc91a` (2 rojos) → `beb618f` |
+| Ficha y razones (Moq) | `0f542a9` (8 rojos) → `85894da` |
+| HTTP (WebApplicationFactory + PG) | `0c095d9` (7 rojos) → `633713d` |
+| Frontend | `e794370` |
+| Hallazgo del verificador: límite de 10 alternativas | `1d6afc1` (caracterización + 2 mutaciones) |
+| H1 del auditor: relectura con contexto nuevo | `d44bab7` |
+
+La Theory `Consulta_RechazaEntradaOPaginaInvalida` se **movió** del repositorio al caso de uso: conserva sus 6 casos y suma texto vacío y en blanco.
+
+### Subagentes (2026-10-15, de a uno, cada uno en su worktree)
+**verificador-tdd sobre `ca84eae..e794370` · APTO.**
+- El orden test → producción se respeta en las cuatro unidades. Los rojos se reprodujeron por aserción.
+- 17 mutaciones: 16 dan rojo, entre ellas todas las declaradas.
+- Sobrevivía una sola: quitar el límite de 10 alternativas (`ConsultaArticulos.cs:15`). La línea venía igual de la Fase 3, así que no la contó como bloqueante. **Se arregló igual** en `1d6afc1`: sin el límite → rojo en L52, y con `> 9` → rojo.
+- Suite: 257/257, 0 omitidos, 0 warnings, 86 PG.
+- No bloqueantes:
+  - los 8 rojos de la ficha caen en `IsSuccess` (las razones las respaldan las mutaciones);
+  - `BuscarAsync` sin alternativas tira NRE, pero solo lo llama el caso de uso, que valida antes;
+  - no reprodujo 4 de las mutaciones declaradas tal cual: probó variantes sobre las mismas líneas.
+- **No re-verificó `1d6afc1` ni `d44bab7`**, que solo tocan tests: cada uno se verificó con mutación, y la suite final del auditor corre sobre `d44bab7`.
+
+**auditor-persistencia sobre `ca84eae..1d6afc1` · NO APTO → ronda 1 → APTO sobre `d44bab7`.**
+- **H1:** `Detalle_ConservaCostoNulo...` releía con el contexto de la siembra. La mutación que saca `AsNoTracking` y los `Include` de códigos y precios sobrevivía, porque el change tracker devolvía las instancias. **Arreglo `d44bab7`:** el test lee con un contexto nuevo y afirma la razón social y la sucursal. Ahora esa mutación da rojo ("collection was empty"). Quitar solo el `Include` de precios rompe 4 tests.
+- No hay Ids sembrados. La búsqueda proyecta a DTO, así que el change tracker no la afecta. Los HTTP usan un contexto por request. El esquema de test es el real, `PostgreSqlSeguridadTests` sigue activo (8/8) y no hay `TRUNCATE`/`DROP` nuevos. Los conteos de `public` (124 / 2108 / 2644) no cambiaron con la suite.
+- **Suite final sobre `d44bab7`: 258 total · 258 passed · 0 failed · 0 skipped · 0 warnings · 86 `[PostgreSqlFact]`.**
+- Worktrees: los tres subagentes borraron el suyo a mano ("Filename too long") y corrieron `prune`. Solo queda el principal.
 
 ## Compuerta de esquema D1 · CERRADA (2026-10-14)
 
@@ -461,10 +529,17 @@ prueba que la Fase 2 esté mal.
 - 2026-10-14 · **Fase 3:** el plan dice "PARÁS si un test pasa a la primera". El equipo lo reemplazó en esta fase por "se declara y se verifica con mutación". Hay que decidir si el plan cambia o si fue una excepción.
 - 2026-10-14 · Hay 17 ramas locales viejas, mergeadas en develop, que no son de este sprint (`feature/hu-cli-*`, `test/*`, `fix/auditoria-*`, etc.). No se borraron.
 - 2026-10-14 · La comparación test/producción del 04 se hizo con la huella md5 que corrió el equipo. El agente no tiene acceso a `lacentral`, así que esa comparación siempre depende del equipo.
+- ~~2026-10-14 · Fase 3 · sin entregable visible~~ y ~~`Modalidad`/`Base` por nombre~~: resueltos en la Fase 4 (`frontend/`, `JsonStringEnumConverter`).
+- 2026-10-15 · **Fase 4 · `SinCosto` cubre "con base y sin precio".** Hoy eso solo pasa cuando falta el costo. Si alguna vez aparece un artículo con costo y una modalidad con base pero sin precio (un recálculo que no corrió), la ficha lo mostraría como `SinCosto`. En `lacentral_test` hay 0 casos: 2644 artículos, ninguno con costo ni con filas de precio, consultado en solo lectura. **La Fase 6 tiene que garantizar que una compra recalcule en la misma operación.**
+- 2026-10-15 · **Fase 4:** `ArticuloRepositorio.BuscarAsync` (L88) ya no valida. Con una consulta sin alternativas, `coincidencias!` es null y tira NRE. Hoy no se alcanza: el único llamador es el caso de uso, que valida antes. El contrato del puerto no lo dice.
+- 2026-10-15 · **Auditor · esquema huérfano en `lacentral_test`:** `pr110_test_d4b8a811bf274559bf658b967f26eb7a`, con 1 tabla. Ya estaba antes de la corrida del auditor; probablemente es un fixture cortado a mitad de la creación. No se borró (R3). Lo borra el equipo a mano.
+- 2026-10-15 · **Auditor · seguridad de datos:** `lacentral_test.public` tiene 124 proveedores y 2108 clientes, los mismos conteos que `CLAUDE.md` da para los datos reales. Parece una copia de datos reales, en el mismo servidor y con el mismo rol `lacentral` (SUPERUSER) que la base principal. `ValidarBase` solo mira el nombre de la base. La suite no modifica `public`. Lo decide el equipo.
+- 2026-10-15 · Los subagentes no pueden borrar su worktree con `git worktree remove` en Windows ("Filename too long", por la ruta larga del scratchpad): lo borran a mano y corren `prune`. Habría que usar una ruta más corta o activar `core.longpaths`.
+- 2026-10-15 · `.claude/agents/verificador-tdd.md`, encabezado de PRESUPUESTO: dice "la suite es caraCorrer", le falta un salto de línea. No se tocó porque la definición es del equipo.
 
 ## Premisas del plan que no coinciden con el código (revisar antes de la fase)
 - 2026-10-13 · **Fase 2:** el plan dice "NINGÚN repositorio escribe en [las tablas de historial]". Falso para cliente y proveedor: `LaCentral.Data/Repositorios/ClienteRepositorio.cs:176-191` y `ProveedorRepositorio.cs:154-169` ya abren y cierran la baja en `*_historial_baja` dentro del repositorio, sin puerto. Lo cubren los tests PG `DosCiclos..._ConservanEstadoEHistorial...`. Artículo y usuario no escriben historial. La Fase 2 pasa a ser extraer un puerto `IHistorialBajaRepositorio` y mover esa lógica, más los usuarios de baja/reactivación desde IContextoUsuario, no construirla desde cero. (Aplicada en la Fase 2.)
-- 2026-10-13 · **Fase 4:** el plan dice que el test del comodín ("100%_original") corre sobre InMemory. Hoy `ArticuloRepositorioTests.Busqueda_PermiteInactivosYNoInterpretaComodinesSQL` es `[PostgreSqlFact]` y corrió contra PostgreSQL real. Verificar si cubre ese caso exacto antes de duplicarlo.
+- 2026-10-13 · **Fase 4:** el plan dice que el test del comodín ("100%_original") corre sobre InMemory. Hoy `ArticuloRepositorioTests.Busqueda_PermiteInactivosYNoInterpretaComodinesSQL` es `[PostgreSqlFact]` y corrió contra PostgreSQL real. Verificar si cubre ese caso exacto antes de duplicarlo. **Resuelto en la Fase 4 (2026-10-15):** usaba el texto exacto pero no discriminaba. Se agregó `Busqueda_100PorcientoGuionBajoOriginal_TraeSoloElLiteral`.
 - 2026-10-14 · **Fases 3, 4 y 6 (D1):** ~~el comentario de `articulo_margen` todavía dice "0,01 % = precio igual al costo", mientras que D1 dice Costo = × 1,00~~ (la tabla ya no existe, 2026-10-14). **Resuelto en la Fase 3 (2026-10-14):** `MargenModalidad` y `CalcularPrecioEstimado` ya no existen. Ahora están `PrecioModalidad`, `BasePrecio` y `ReglasPrecioModalidad`, con Efectivo sobre PrecioLista y CasoEspecial manual. `CalcularPreciosArticuloUseCase` sigue sin existir: es de la Fase 6. Lo que sigue es el texto original. **Seguía en pie:** la tabla nueva tiene dónde guardar `precio` y `calculo_manual`, pero el dominio no se alineó todavía: eso es de la Fase 3. Además, el comentario de la tabla nombra un `CalcularPreciosArticuloUseCase` que todavía no existe. El modelo "porcentaje sobre costo" de `MargenModalidad`/`CalcularPrecioEstimado` no expresa Efectivo (sobre Lista), CasoEspecial (precio fijo) ni la razón de la ausencia. Detalle en `informe-compuerta-d1.md`.
 
 ## Revisión de la Fase 1 por el equipo (2026-10-13)
@@ -475,20 +550,17 @@ prueba que la Fase 2 esté mal.
 - Los subagentes y los hooks de graphify se copiaron a `backend/.claude/` (agents/ y settings.json). En la sesión de la Fase 1 NO cargaron, porque se leen al iniciar la sesión: `Agent type 'verificador-tdd' not found`. Se reinicia la sesión antes de la Fase 2. (Superado el 2026-10-14: la configuración vive en la raíz y carga.)
 
 ## PRÓXIMA SESIÓN — arrancar acá
-Arrancar en la **raíz del repo**. Objetivo: **Fase 4 · HU-ART-02 · Búsqueda y endpoints (Issue #15)**,
-rama `feature/HU-ART-02-consultar-articulos`.
+Arrancar en la **raíz del repo**. Objetivo: **Fase 5 · HU-FCO-01 · Factura de compra (Issue #32)**, rama `feature/HU-FCO-01-factura-compra`.
 
-0. **Al empezar:** confirmar que `verificador-tdd` y `auditor-persistencia` cargan como `subagent_type`, que los hooks de graphify se disparan y que `dotnet test` da 226/226 con 70 PG.
-1. **Antes de la rama:** ¿el PR de la Fase 3 (`feature/HU-ART-01-alta-articulo`) ya está en develop? Si no, PREGUNTAR de qué rama sale la Fase 4: necesita el alta, `PrecioModalidad` y el DTO con la base.
-2. **Decisión pendiente del equipo · frontend:** el plan exige desde el 2026-10-14 un entregable visible en `frontend/` para toda fase que agregue endpoints. `frontend/` no existe. La Fase 4 agrega `GET /api/articulos` y `GET /api/articulos/{id}`. **Antes de empezar, PREGUNTAR** qué stack y qué carpeta usar, y si la Fase 4 también cubre la pantalla de alta de la Fase 3.
-3. **Fase 4** (detalle en `PLAN_SPRINT3.md`, FASE 4):
-   - `ConsultarArticulosUseCase` y `ObtenerArticuloDetalleUseCase`. `ConsultaArticulos.Validar()` pasa del repositorio al caso de uso, con `Result`.
-   - La ficha muestra los precios por modalidad y la RAZÓN de la ausencia. Desde la Fase 3 el alta crea las seis filas, así que se distinguen:
-     - sin fila = sin configuración;
-     - precio NULL con costo NULL = sin costo;
-     - precio NULL con `calculo_manual` = caso especial no fijado;
-     - Tarjeta3/6 sin base = tasa sin definir.
-   - Serializar `Modalidad` y `BasePrecio` por nombre (`JsonStringEnumConverter`).
-   - Hoy `PreciosPorModalidad` es null cuando no hay filas: decidir si se mantiene.
-   - Verificar el caso exacto "100%_original" del comodín (ver "Premisas").
+0. **Al empezar:**
+   - confirmar que `git worktree list` muestra solo el principal;
+   - confirmar que `dotnet test` da 258/258 con 86 PG;
+   - ¿el equipo borró el esquema huérfano `pr110_test_d4b8a811...`? (ver "Deuda").
+1. **PRs abiertos a mano, sin `gh`:**
+   - Fase 3, `feature/HU-ART-01-alta-articulo` → `develop`. Cuerpo en `pr-fase3-hu-art-01.md`.
+   - Fase 4, `feature/HU-ART-02-consultar-articulos` → base provisoria Fase 3. Cuerpo en `pr-fase4-hu-art-02.md`. **Cambiar la base a `develop` cuando entre la Fase 3.**
+2. **Antes de la rama:** ¿las Fases 3 y 4 ya están en develop? Si no, PREGUNTAR de qué rama sale la Fase 5. Necesita al menos el alta de artículo de la Fase 3.
+3. **Fase 5** (detalle en `PLAN_SPRINT3.md`, FASE 5):
+   - es la fase con el test de atomicidad más importante del sprint;
+   - entregable visible en `frontend/` (ya existe: Angular, ver `frontend/README.md`).
    - Al cerrar: los dos subagentes (APTO los dos), el PR, este archivo, y PARAR.

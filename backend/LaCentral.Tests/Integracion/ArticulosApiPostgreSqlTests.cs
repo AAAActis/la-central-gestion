@@ -193,4 +193,160 @@ public class ArticulosApiPostgreSqlTests : IClassFixture<WebApplicationFactory<P
         await using var relectura = fixture.CrearContexto();
         Assert.False(await relectura.Articulo.AnyAsync(a => a.Nombre == "Sin permiso"));
     }
+
+    // ---- HU-ART-02 · GET /api/articulos y GET /api/articulos/{id} ----
+
+    private static async Task<int> AltaAsync(HttpClient cliente, object cuerpo)
+    {
+        var respuesta = await cliente.PostAsJsonAsync("/api/articulos", cuerpo);
+        Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
+        return (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+    }
+
+    [PostgreSqlFact]
+    public async Task Get_Busqueda_200ConIdCodigoInternoNombreYCodigosDeProveedor()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var proveedor = await CrearProveedorAsync(fixture, "PRV-API");
+        using var cliente = Cliente(fixture, "OPERADOR");
+        var id = await AltaAsync(cliente, new
+        {
+            nombre = "Filtro de aceite",
+            codigosProveedor = new[] { new { proveedorId = proveedor, codigo = "fa-100" } }
+        });
+
+        var respuesta = await cliente.GetAsync("/api/articulos?texto=filtro");
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        var pagina = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(1, pagina.GetProperty("total").GetInt32());
+        Assert.Equal(1, pagina.GetProperty("pagina").GetInt32());
+        Assert.Equal(20, pagina.GetProperty("tamanoPagina").GetInt32());
+        var articulo = Assert.Single(pagina.GetProperty("articulos").EnumerateArray());
+        Assert.Equal(id, articulo.GetProperty("id").GetInt32());
+        Assert.Equal($"LC-{id:D6}", articulo.GetProperty("codigoInterno").GetString());
+        Assert.Equal("Filtro de aceite", articulo.GetProperty("nombre").GetString());
+        var codigo = Assert.Single(articulo.GetProperty("codigosProveedor").EnumerateArray());
+        Assert.Equal(proveedor, codigo.GetProperty("proveedorId").GetInt32());
+        Assert.Equal("Proveedor PRV-API", codigo.GetProperty("razonSocial").GetString());
+        Assert.Equal("FA-100", codigo.GetProperty("codigo").GetString());
+    }
+
+    [PostgreSqlFact]
+    public async Task Get_TextoVacioOAusente_400()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        using var cliente = Cliente(fixture, "OPERADOR");
+
+        foreach (var url in new[] { "/api/articulos?texto=", "/api/articulos?texto=%20%20", "/api/articulos" })
+            Assert.Equal(HttpStatusCode.BadRequest, (await cliente.GetAsync(url)).StatusCode);
+    }
+
+    [PostgreSqlFact]
+    public async Task Get_SinResultados_200ConListaVaciaNunca404()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        using var cliente = Cliente(fixture, "ADMINISTRADOR");
+
+        var respuesta = await cliente.GetAsync("/api/articulos?texto=inexistente");
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        var pagina = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(0, pagina.GetProperty("articulos").GetArrayLength());
+        Assert.Equal(0, pagina.GetProperty("total").GetInt32());
+    }
+
+    [PostgreSqlFact]
+    public async Task Get_PaginacionYFiltroDeActivosExplicitos()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using (var setup = fixture.CrearContexto())
+        {
+            for (var i = 1; i <= 3; i++)
+                setup.Articulo.Add(new Articulo { CodigoInterno = $"BUJ-{i}", Nombre = "Bujía", Activo = true });
+            setup.Articulo.Add(new Articulo
+            {
+                CodigoInterno = "BUJ-4", Nombre = "Bujía", Activo = false,
+                MotivoBaja = "Discontinuada", FechaBaja = DateTime.UtcNow
+            });
+            await setup.SaveChangesAsync();
+        }
+        using var cliente = Cliente(fixture, "OPERADOR");
+
+        var segunda = await cliente.GetAsync("/api/articulos?texto=bujia&pagina=2&tamanoPagina=2");
+        var conInactivos = await cliente.GetAsync("/api/articulos?texto=bujia&incluirInactivos=true");
+
+        Assert.Equal(HttpStatusCode.OK, segunda.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, conInactivos.StatusCode);
+        var paginaDos = await segunda.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(3, paginaDos.GetProperty("total").GetInt32());
+        Assert.Equal(2, paginaDos.GetProperty("pagina").GetInt32());
+        Assert.Equal(2, paginaDos.GetProperty("tamanoPagina").GetInt32());
+        Assert.Equal(1, paginaDos.GetProperty("articulos").GetArrayLength());
+        Assert.Equal(4, (await conInactivos.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("total").GetInt32());
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await cliente.GetAsync("/api/articulos?texto=bujia&tamanoPagina=101")).StatusCode);
+    }
+
+    // Modalidad, Base y RazonAusencia viajan por NOMBRE, no como número.
+    [PostgreSqlFact]
+    public async Task Get_Ficha_200ConLasSeisModalidadesPorNombreYSuRazon()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        using var cliente = Cliente(fixture, "ADMINISTRADOR");
+        var id = await AltaAsync(cliente, new { nombre = "Correa" });
+
+        var respuesta = await cliente.GetAsync($"/api/articulos/{id}");
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        var ficha = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(id, ficha.GetProperty("id").GetInt32());
+        Assert.Equal($"LC-{id:D6}", ficha.GetProperty("codigoInterno").GetString());
+        Assert.Equal(JsonValueKind.Null, ficha.GetProperty("costoVigente").ValueKind);
+        var precios = ficha.GetProperty("precios").EnumerateArray()
+            .Select(p => (
+                Modalidad: p.GetProperty("modalidad").ToString(),
+                Base: p.GetProperty("base").ToString(),
+                Precio: p.GetProperty("precio").ValueKind,
+                Razon: p.GetProperty("razonAusencia").ToString()))
+            .ToArray();
+        Assert.Equal(new (string, string, JsonValueKind, string)[]
+        {
+            ("Lista", "CostoArticulo", JsonValueKind.Null, "SinCosto"),
+            ("Tarjeta3", "", JsonValueKind.Null, "TasaSinDefinir"),
+            ("Tarjeta6", "", JsonValueKind.Null, "TasaSinDefinir"),
+            ("EfectivoTransferencia", "PrecioLista", JsonValueKind.Null, "SinCosto"),
+            ("Costo", "CostoArticulo", JsonValueKind.Null, "SinCosto"),
+            ("CasoEspecial", "", JsonValueKind.Null, "CasoEspecialNoFijado"),
+        }, precios);
+    }
+
+    [PostgreSqlFact]
+    public async Task Get_FichaInexistente_404()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        using var cliente = Cliente(fixture, "OPERADOR");
+        var id = await AltaAsync(cliente, new { nombre = "Existe" });
+
+        var respuesta = await cliente.GetAsync($"/api/articulos/{checked(id + 1)}");
+
+        Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
+        var cuerpo = await respuesta.Content.ReadAsStringAsync();
+        Assert.Contains("no existe", cuerpo);
+    }
+
+    [PostgreSqlFact]
+    public async Task Get_RolSinPermiso_403YSinToken_401()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        using var invitado = Cliente(fixture, "INVITADO");
+        using var anonimo = Cliente(fixture, "OPERADOR");
+        anonimo.DefaultRequestHeaders.Authorization = null;
+
+        foreach (var url in new[] { "/api/articulos?texto=filtro", "/api/articulos/1" })
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, (await invitado.GetAsync(url)).StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await anonimo.GetAsync(url)).StatusCode);
+        }
+    }
 }

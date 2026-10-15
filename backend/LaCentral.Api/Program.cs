@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using LaCentral.Api.Middleware;
 using LaCentral.Api.Seguridad;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +52,8 @@ builder.Services.AddScoped<ModificarClienteUseCase>();
 builder.Services.AddScoped<DarDeBajaClienteUseCase>();
 builder.Services.AddScoped<ReactivarClienteUseCase>();
 builder.Services.AddScoped<CrearArticuloUseCase>();
+builder.Services.AddScoped<ConsultarArticulosUseCase>();
+builder.Services.AddScoped<ObtenerArticuloDetalleUseCase>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -77,7 +80,10 @@ builder.Services.AddOpenApi(opciones =>
     // botón Authorize de Swagger para probar endpoints protegidos.
     opciones.AddDocumentTransformer<SeguridadOpenApi>();
 });
-builder.Services.AddControllers();
+// Los enums viajan por nombre (Modalidad, BasePrecio, RazonAusenciaPrecio): un número
+// no dice nada en el cliente y cambia si alguien reordena el enum.
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // ALTO 6: ninguna excepción sale con stack trace ni detalles internos.
 builder.Services.AddProblemDetails();

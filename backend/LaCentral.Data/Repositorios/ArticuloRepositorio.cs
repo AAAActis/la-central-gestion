@@ -58,7 +58,6 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
     // Query completo antes de paginar, expuesto a los tests de traducción SQL.
     internal IQueryable<CoincidenciaArticulo> CrearCoincidencias(ConsultaArticulos consulta)
     {
-        consulta.Validar();
         var articulos = _context.Articulo.AsNoTracking();
         if (!consulta.IncluirInactivos)
             articulos = articulos.Where(a => a.Activo);
@@ -112,7 +111,19 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
             if (exactos.Count > 1)
                 conflictos.Add(new(alternativa, exactos.Select(a => a.Id).ToArray()));
         }
-        return new(resultados, total, consulta.Pagina, consulta.TamanoPagina, conflictos);
+        // Los códigos de proveedor de la página, en una sola consulta aparte: la paginación
+        // se hace sobre artículos y no se multiplica por sus códigos.
+        var ids = resultados.Select(a => a.Id).ToArray();
+        var codigos = (await _context.ArticuloCodigoAlternativo.AsNoTracking()
+                .Where(c => ids.Contains(c.ArticuloId))
+                .OrderBy(c => c.ProveedorId).ThenBy(c => c.Id)
+                .Select(c => new { c.ArticuloId, Codigo = new CodigoProveedorResumenDto(c.ProveedorId, c.Proveedor.RazonSocial, c.Codigo) })
+                .ToListAsync(ct))
+            .ToLookup(c => c.ArticuloId, c => c.Codigo);
+        var articulos = resultados
+            .Select(a => new ArticuloResultadoBusquedaDto(a.Id, a.CodigoInterno, a.Nombre, a.Activo,
+                codigos[a.Id].ToArray())).ToArray();
+        return new(articulos, total, consulta.Pagina, consulta.TamanoPagina, conflictos);
     }
 
     public async Task<IReadOnlyList<ArticuloResumenConsultaDto>> ObtenerConflictosCodigoAsync(
@@ -145,9 +156,8 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
             articulo.Stock.OrderBy(s => s.SucursalId)
                 .Select(s => new StockSucursalConsultaDto(s.SucursalId, s.Sucursal.Nombre, s.Cantidad)).ToArray(),
             // D1: precios estampados en articulo_precio_modalidad, sin recalcular.
-            // Sin filas no se informa nada; la razón de cada ausencia es de HU-ART-02.
-            PreciosPorModalidad: articulo.ArticuloPrecioModalidad.Count == 0 ? null :
-                articulo.ArticuloPrecioModalidad
+            // Sin filas, lista vacía: la razón de cada ausencia la arma ObtenerArticuloDetalleUseCase.
+            PreciosPorModalidad: articulo.ArticuloPrecioModalidad
                     .Select(p => new PrecioModalidadConsultaDto(ModalidadPersistida.Leer(p.Modalidad),
                         ModalidadPersistida.LeerBase(p.Base), p.Porcentaje, p.Precio,
                         p.CalculoManual, p.FechaCalculo, p.UsuarioId))
