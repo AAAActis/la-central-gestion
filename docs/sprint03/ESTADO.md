@@ -548,6 +548,11 @@ prueba que la Fase 2 esté mal.
 - 2026-10-15 · **Ramas.** Las Fases 3 y 4 NO están en `develop` (`develop` = `f3c6705`). La Fase 5 sale del HEAD de `feature/HU-ART-02-consultar-articulos` (`a23bb26`), con esa rama como base provisoria del PR. Las Fases 6 y 7 se apilan sobre la anterior.
 - 2026-10-15 · **PRs con `gh`.** `gh` está instalado en `C:\Program Files\GitHub CLI\` (fuera del PATH de bash) y autenticado: desde la Fase 5, los PRs los abre el agente.
 - 2026-10-15 · **PR #117 (para el equipo):** el head es `feature/HU-ART-01-alta-articulo` (Fase 3), pero el título describe HU-ART-02 (Fase 4). La rama de la Fase 4 no tiene PR. No se tocó.
+- 2026-10-15 · **Decisiones del equipo (consigna de la sesión):**
+  - Se autoriza la 3ª ronda de la Fase 5. De acá en adelante, el límite de rondas es el de CLAUDE.md (3), no 2.
+  - **Costo de la línea confirmado:** precio unitario neto del descuento de la línea, SIN IVA, sin prorratear percepciones. Si el modelo guardara el precio de la línea con IVA incluido, se para y se informa.
+  - **Un artículo dado de baja no admite compras.** Confirmado.
+  - **NUL en un texto:** se resuelve en `ManejadorExcepcionesGlobal`, traduciendo el 22021 a 400 (un solo lugar para todos los endpoints). Primera unidad de la Fase 6, con TDD: primero el test HTTP en rojo (500), con al menos un segundo endpoint (artículos o clientes) para demostrar que es global.
 
 ## PASO 0 de la sesión de Fases 5-7 (2026-10-15)
 - `git worktree list`: solo el principal. `core.longpaths true`. El esquema `pr110_test_d4b8a811...` **ya no existe** (lo borró el equipo). Hay un esquema `staging` que no es de la suite: no se tocó.
@@ -591,8 +596,14 @@ Rama `feature/HU-FCO-01-factura-compra`, sale de `a23bb26` (HEAD de la Fase 4). 
 | ronda 2 (producción) | `0b7da32` estructura → `163b2cc` rojo → `b4fca2f` | — | upsert con `WHERE stock.cantidad + EXCLUDED.cantidad < 1e9`; 0 filas → Invalido, el caso de uso lo propaga, la UoW revierte. |
 | auditor | `f34bbc4..b4fca2f` | **APTO** | residuo cerrado contra el motor: borde exacto, stock negativo previo, sin fila previa y dos compras simultáneas (una 201, otra 400). 323/323. |
 | verificador | `10a0f0b..b4fca2f` | **NO APTO** | M11: `<` → `<=` en el WHERE del upsert sobrevive (65/65 en verde). El test de desborde usa una suma muy por encima del límite y no fija el borde. Las otras 10 mutaciones murieron. 323/323. |
+| ronda 3 (test, autorizada 2026-10-15) | `0190052` | — | `StockQueLlegaJustoAlLimiteDeSuColumna_InvalidoYNoQuedaNada`: stock previo 0,001 + 999.999.999,999 → Invalido, foto igual, sin excepción. Con `<=` (sin commitear) → rojo por 22003. |
+| verificador | `89e0202..0190052` | **NO APTO** | M11 cerrado (rojo por 22003 con `<=`; también mueren "sin `+ EXCLUDED.cantidad`" y `<` → `>`). **M12 sobrevive:** `LimiteStock = 1_000_000_000m` → `999_999_999.999m` (55/55 FacturaCompra + 8/8 API en verde). Ningún test fija el lado ACEPTADO del borde: una suma de exactamente 999.999.999,999 entra en NUMERIC(12,3) y la mutación la rechazaría. 324/324. |
 
-**Por qué se paró:** la consigna de la sesión dice "PARÁS si después de dos rondas de arreglos sigue habiendo un NO APTO". Las dos rondas ya se hicieron (ronda 1: B1/B2 + H1; ronda 2: el desborde de stock) y el verificador dio NO APTO sobre el código de la ronda 2. No se hizo push ni se abrió el PR.
+**Por qué se paró (2026-10-15, después de la ronda 3):** CLAUDE.md y la consigna: "NO APTO después de 3 rondas → PARÁS". Rondas: 1 (B1/B2 + H1), 2 (desborde de stock), 3 (borde M11). El verificador dio NO APTO sobre la ronda 3 por M12. No se hizo push ni se abrió el PR; `docs/sprint03/pr-fase5-hu-fco-01.md` queda escrito para cuando haya APTO. Las Fases 6 y 7 no se empezaron.
+
+**Lo que haría falta para APTO (solo un test, sin cambios de producción):** el espejo del test de la ronda 3. Un caso PG con stock previo 0,001 y una línea de 999.999.999,998 (suma 999.999.999,999), que espere éxito y relea la fila de stock con un contexto nuevo (= 999.999.999,999). Con la constante mutada daría Invalido → rojo. Requiere que el equipo autorice una 4ª ronda (excede el límite de CLAUDE.md).
+
+**Antecedente (pasada anterior):** la consigna de la sesión dice "PARÁS si después de dos rondas de arreglos sigue habiendo un NO APTO". Las dos rondas ya se hicieron (ronda 1: B1/B2 + H1; ronda 2: el desborde de stock) y el verificador dio NO APTO sobre el código de la ronda 2. No se hizo push ni se abrió el PR.
 
 **Lo que haría falta para APTO (solo un test, sin cambios de producción):** un caso PG en el borde, con stock previo 0,001 y una línea de 999.999.999,999 (suma exacta de 1e9) que espere Invalido, foto igual y ninguna excepción. Con `<=` la suma pasaría el WHERE y daría 22003, y el test quedaría en rojo. El auditor ya probó a mano que, con `<`, ese caso da 400 sin escritura (sonda S2b). Si el equipo autoriza una tercera ronda (CLAUDE.md admite hasta 3), es ese único commit de test, seguido de la verificación acotada del verificador.
 
@@ -609,26 +620,21 @@ Rama `feature/HU-FCO-01-factura-compra`, sale de `a23bb26` (HEAD de la Fase 4). 
 - Los subagentes y los hooks de graphify se copiaron a `backend/.claude/` (agents/ y settings.json). En la sesión de la Fase 1 NO cargaron, porque se leen al iniciar la sesión: `Agent type 'verificador-tdd' not found`. Se reinicia la sesión antes de la Fase 2. (Superado el 2026-10-14: la configuración vive en la raíz y carga.)
 
 ## PRÓXIMA SESIÓN — arrancar acá
-Arrancar en la **raíz del repo**. Estado al 2026-10-15: **Fase 5 PARADA en la compuerta** (ver "Compuerta de la Fase 5").
+Arrancar en la **raíz del repo**. Estado al 2026-10-15: **Fase 5 PARADA en la compuerta después de la 3ª ronda** (ver "Compuerta de la Fase 5").
 
-- Rama `feature/HU-FCO-01-factura-compra`, HEAD `b4fca2f` (más este commit de docs), **sin push**. Sale de `a23bb26` (Fase 4).
-- Suite: **323/323, 108 `[PostgreSqlFact]`**, con el rol `lacentral_tests`. Sin 53300, sin esquemas huérfanos.
-- Veredictos sobre el último código: **auditor-persistencia APTO** (`f34bbc4..b4fca2f`); **verificador-tdd NO APTO** (M11, borde del WHERE del upsert de stock).
+- Rama `feature/HU-FCO-01-factura-compra`, HEAD de código `0190052` (más este commit de docs), **sin push**. Sale de `a23bb26` (Fase 4).
+- Suite: **324/324, 109 `[PostgreSqlFact]`**, 0 warnings, con el rol `lacentral_tests`.
+- Veredictos sobre el último código: **auditor-persistencia APTO** (`f34bbc4..b4fca2f`; la ronda 3 es solo de test); **verificador-tdd NO APTO** (M12: la constante `LimiteStock` puede bajar una milésima sin que nada falle).
+- **Orden de merge: 3 (#117, ya en `develop`) → 4 (#118) → 5 (PR sin abrir).**
 
-0. **Decide el equipo:**
-   - ¿se autoriza una 3ª ronda para la Fase 5? Es UN test PG de borde (stock 0,001 + 999.999.999,999 → Invalido). CLAUDE.md permite 3 rondas; la consigna de la sesión cortaba en 2;
-   - ¿costo de la línea neto del descuento? (decisión técnica asentada en "Fase 5"; la alternativa es el precio bruto);
-   - ¿se rechaza la compra de un artículo dado de baja?;
-   - el NUL → 500 (deuda nueva).
-1. Si se autoriza la 3ª ronda: el test, el verificador acotado (de a uno, en su worktree), y con los dos en APTO:
-   - push;
-   - cuerpo del PR en `docs/sprint03/pr-fase5-hu-fco-01.md` (mismo formato que el de la Fase 4);
-   - `"/c/Program Files/GitHub CLI/gh.exe" pr create --base feature/HU-ART-02-consultar-articulos` (`gh` está autenticado, fuera del PATH de bash). **No cerrar #32**: CA5 es de la Fase 6.
-2. **PRs pendientes del equipo:** el #117 tiene head `feature/HU-ART-01-alta-articulo` (Fase 3), pero el título es de HU-ART-02 (Fase 4); la rama de la Fase 4 no tiene PR. Las Fases 3 y 4 no están en `develop`.
+0. **Decide el equipo:** ¿se autoriza una 4ª ronda para la Fase 5? Es UN test PG espejo del de la ronda 3: stock 0,001 + 999.999.999,998 → éxito, relectura = 999.999.999,999.
+1. Con APTO: push; `"/c/Program Files/GitHub CLI/gh.exe" pr create --base feature/HU-ART-02-consultar-articulos --body-file docs/sprint03/pr-fase5-hu-fco-01.md` (completar ahí la fila de la ronda y la cifra de la suite). **No cerrar #32.** Cuando entre #118, cambiar la base a `develop`.
+2. **PRs (hecho 2026-10-15):** el #117 ya estaba MERGEADO en `develop` (19:59, `c958901`); se le pusieron título y cuerpo de la Fase 3. La Fase 4 es el **#118**, abierto contra **`develop`** y no contra `feature/HU-ART-01-alta-articulo`: con la Fase 3 ya mergeada, `develop` y esa rama tienen el mismo árbol, y el propio cuerpo de la Fase 4 decía "cambiar la base a `develop` cuando entre la Fase 3".
 3. **Después, Fases 6 y 7** (`PLAN_SPRINT3.md`), apiladas sobre la 5. Notas ya relevadas para la Fase 6:
    - el comentario de `articulo_precio_modalidad` nombra `CalcularPreciosArticuloUseCase`. Plan: mover ahí la fórmula `ReglasPrecioModalidad.Calcular` (con los tests reapuntados) para que el nombre coincida;
    - `calculo_manual = true` no se pisa (el CHECK ya obliga a que porcentaje sea null en filas manuales);
    - el punto de integración está marcado en `RegistrarFacturaCompraUseCase`, dentro de la unidad de trabajo.
-   Para la Fase 7: `IContextoUsuario` **no expone el rol**.
+   - Fase 6 arranca con la unidad del NUL (decisión del equipo, en "Decisiones"). El precio amigo (CasoEspecial) nace con `calculo_manual = true`, así que la política "manual no se pisa" lo cubre.
+   Para la Fase 7: `IContextoUsuario` **no expone el rol**. **Contradicción a resolver:** el plan dice "el rol sale de IContextoUsuario" y la consigna del 2026-10-15 dice usar `[Authorize(Roles=...)]` "salvo que el plan diga otra cosa", y el plan dice otra cosa.
 4. **Cómo correr los tests:** la `LACENTRAL_TEST_PG` del proceso puede estar vieja (apuntaba a `lacentral`). Exportá la del ámbito User antes de `dotnet test`:
    `export LACENTRAL_TEST_PG="$(powershell.exe -NoProfile -Command "[Environment]::GetEnvironmentVariable('LACENTRAL_TEST_PG','User')" | tr -d '\r')"`
