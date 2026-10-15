@@ -91,10 +91,10 @@ public class CrearArticuloUseCase
             return Result.Success();
         }, ct);
 
-        if (!resultado.IsSuccess)
-            return Result<CrearArticuloResponse>.Failure(resultado.Tipo, resultado.Error);
-        return creado is null
-            ? Result<CrearArticuloResponse>.Failure(TipoError.Invalido, "El alta no se ejecutó.")
-            : Result<CrearArticuloResponse>.Success(creado);
+        // La unidad de trabajo devuelve el resultado de la operación: si dio éxito, la
+        // operación terminó y asignó `creado`.
+        return resultado.IsSuccess
+            ? Result<CrearArticuloResponse>.Success(creado!)
+            : Result<CrearArticuloResponse>.Failure(resultado.Tipo, resultado.Error);
     }
 }
