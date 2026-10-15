@@ -112,7 +112,10 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
             if (exactos.Count > 1)
                 conflictos.Add(new(alternativa, exactos.Select(a => a.Id).ToArray()));
         }
-        return new(resultados, total, consulta.Pagina, consulta.TamanoPagina, conflictos);
+        var articulos = resultados
+            .Select(a => new ArticuloResultadoBusquedaDto(a.Id, a.CodigoInterno, a.Nombre, a.Activo,
+                Array.Empty<CodigoProveedorResumenDto>())).ToArray();
+        return new(articulos, total, consulta.Pagina, consulta.TamanoPagina, conflictos);
     }
 
     public async Task<IReadOnlyList<ArticuloResumenConsultaDto>> ObtenerConflictosCodigoAsync(

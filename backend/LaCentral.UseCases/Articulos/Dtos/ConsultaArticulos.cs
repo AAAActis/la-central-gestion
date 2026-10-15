@@ -23,8 +23,16 @@ public sealed record ArticuloResumenConsultaDto(int Id, string CodigoInterno, st
 
 public sealed record ConflictoCodigoArticuloDto(string ClaveNormalizada, IReadOnlyList<int> ArticuloIds);
 
+/// <summary>Un código de proveedor tal como se cargó, para la lista de resultados.</summary>
+public sealed record CodigoProveedorResumenDto(int ProveedorId, string RazonSocial, string Codigo);
+
+/// <summary>HU-ART-02: cada resultado lleva su Id y sus códigos de proveedor.</summary>
+public sealed record ArticuloResultadoBusquedaDto(
+    int Id, string CodigoInterno, string Nombre, bool Activo,
+    IReadOnlyList<CodigoProveedorResumenDto> CodigosProveedor);
+
 public sealed record PaginaArticulosDto(
-    IReadOnlyList<ArticuloResumenConsultaDto> Articulos, int Total, int Pagina, int TamanoPagina,
+    IReadOnlyList<ArticuloResultadoBusquedaDto> Articulos, int Total, int Pagina, int TamanoPagina,
     IReadOnlyList<ConflictoCodigoArticuloDto> Conflictos);
 
 public sealed record CodigoProveedorConsultaDto(
@@ -42,3 +50,27 @@ public sealed record ArticuloDetalleConsultaDto(
     int? UltimoProveedorId, IReadOnlyList<CodigoProveedorConsultaDto> Codigos,
     IReadOnlyList<StockSucursalConsultaDto> Existencias,
     IReadOnlyList<PrecioModalidadConsultaDto>? PreciosPorModalidad);
+
+/// <summary>
+/// Por qué una modalidad no tiene precio. Viaja con el dato: un precio ausente sin razón
+/// se confunde con un cero, y un precio de tarjeta en cero nadie lo ve hasta que se vende.
+/// </summary>
+public enum RazonAusenciaPrecio
+{
+    SinConfiguracion,
+    SinCosto,
+    CasoEspecialNoFijado,
+    TasaSinDefinir
+}
+
+/// <summary>Una modalidad en la ficha. RazonAusencia es null si y solo si hay precio.</summary>
+public sealed record PrecioModalidadFichaDto(
+    Modalidad Modalidad, BasePrecio? Base, decimal? Porcentaje, decimal? Precio,
+    bool CalculoManual, DateTime? FechaCalculo, int? UsuarioId, RazonAusenciaPrecio? RazonAusencia);
+
+/// <summary>HU-ART-02: la ficha devuelve SIEMPRE las seis modalidades.</summary>
+public sealed record FichaArticuloDto(
+    int Id, string CodigoInterno, string Nombre, bool Activo, decimal? CostoVigente,
+    int? UltimoProveedorId, IReadOnlyList<CodigoProveedorConsultaDto> Codigos,
+    IReadOnlyList<StockSucursalConsultaDto> Existencias,
+    IReadOnlyList<PrecioModalidadFichaDto> Precios);
