@@ -267,6 +267,39 @@ public class RegistrarFacturaCompraPostgreSqlTests
         Assert.Equal(antes, await FotografiarAsync(fixture));
     }
 
+    /// <summary>
+    /// El borde exacto: 0,001 + 999.999.999,999 = 1.000.000.000, que ya no entra en
+    /// NUMERIC(12,3). Fija el límite del WHERE del upsert: con <c>&lt;=</c> la suma pasaría
+    /// y el motor daría 22003 en lugar de Invalido.
+    /// </summary>
+    [PostgreSqlFact]
+    public async Task StockQueLlegaJustoAlLimiteDeSuColumna_InvalidoYNoQuedaNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        await using (var contexto = fixture.CrearContexto())
+            await contexto.Stock.Where(s => s.ArticuloId == e.Comprado1 && s.SucursalId == e.Sucursal1)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Cantidad, 0.001m));
+        var antes = await FotografiarAsync(fixture);
+        var compra = Compra(e) with
+        {
+            Lineas = new[] { new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal1, 999_999_999.999m, 1m, 0m) }
+        };
+
+        Exception? error = null;
+        Result<RegistrarFacturaCompraResponse>? resultado = null;
+        await using (var contexto = fixture.CrearContexto())
+        {
+            try { resultado = await Caso(contexto, e).EjecutarAsync(compra); }
+            catch (Exception excepcion) { error = excepcion; }
+        }
+
+        Assert.Null(error);
+        Assert.Equal(TipoError.Invalido, resultado!.Tipo);
+        Assert.Contains($"{e.Comprado1}", resultado.Error);
+        Assert.Equal(antes, await FotografiarAsync(fixture));
+    }
+
     [PostgreSqlFact]
     public Task Atomicidad_FallaAlInsertarLaCabecera_NoQuedaNada() =>
         AfirmarQueNoQuedaNadaAsync("factura_compra", "INSERT", e => $"NEW.proveedor_id = {e.Proveedor}");
