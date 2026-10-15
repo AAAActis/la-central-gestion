@@ -37,6 +37,22 @@ public class ConsultarArticulosUseCaseTests
         _consulta.Verify(c => c.BuscarAsync(It.IsAny<ConsultaArticulos>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    // El límite de alternativas separadas por *: 10 se aceptan, 11 no.
+    [Fact]
+    public async Task Consulta_OnceAlternativas_InvalidoYDiezConsultanElRepositorio()
+    {
+        _consulta.Setup(c => c.BuscarAsync(It.IsAny<ConsultaArticulos>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Pagina());
+        var diez = string.Join('*', Enumerable.Range(1, 10).Select(i => $"alt{i}"));
+
+        var conDiez = await Caso().EjecutarAsync(new ConsultaArticulos(diez));
+        var conOnce = await Caso().EjecutarAsync(new ConsultaArticulos(diez + "*alt11"));
+
+        Assert.True(conDiez.IsSuccess);
+        Assert.Equal(TipoError.Invalido, conOnce.Tipo);
+        _consulta.Verify(c => c.BuscarAsync(It.IsAny<ConsultaArticulos>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     [Fact]
     public async Task Consulta_TextoDeMasDe500_Invalido()
     {
