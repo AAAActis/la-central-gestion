@@ -24,16 +24,12 @@ internal static class ModalidadPersistida
     public static BasePrecio? LeerBase(string? valor) =>
         valor is null ? null : Convertir(BasePorNombre, valor, "base");
 
-    public static string Escribir(Modalidad modalidad) => Nombre(modalidad);
+    // Los valores que se escriben salen de miembros del enum (ReglasPrecioModalidad.
+    // ConfiguracionInicial; ningún DTO HTTP recibe una modalidad ni una base). Un valor sin
+    // nombre daría "99", y lo rechazan los CHECK modalidad_valida y base_valida.
+    public static string Escribir(Modalidad modalidad) => modalidad.ToString();
 
-    public static string? EscribirBase(BasePrecio? basePrecio) =>
-        basePrecio is { } valor ? Nombre(valor) : null;
-
-    // (Modalidad)99 daría "99": el CHECK lo rechazaría, pero se corta antes, sin default.
-    private static string Nombre<T>(T valor) where T : struct, Enum =>
-        Enum.IsDefined(valor)
-            ? valor.ToString()
-            : throw new InvalidOperationException($"{typeof(T).Name} sin nombre: {valor}.");
+    public static string? EscribirBase(BasePrecio? basePrecio) => basePrecio?.ToString();
 
     private static Dictionary<string, T> PorNombre<T>() where T : struct, Enum =>
         Enum.GetValues<T>().ToDictionary(m => m.ToString(), StringComparer.Ordinal);
