@@ -118,10 +118,14 @@ public class RegistrarFacturaCompraUseCase
             return Result.Failure(TipoError.Invalido, $"El número de factura no puede superar los {LargoMaximoNumero} caracteres.");
         if (request.FechaVencimiento < request.FechaEmision)
             return Result.Failure(TipoError.Invalido, "El vencimiento no puede ser anterior a la emisión.");
-        // CA4/D8: las percepciones se guardan como datos; solo se exige que no sean negativas.
+        // CA4/D8: las percepciones se guardan como datos; solo se exige que no sean negativas
+        // y que entren en su columna.
         if (request.PercepcionIva < 0 || request.PercepcionIibb < 0 ||
             request.PercepcionMunicipal < 0 || request.PercepcionGanancias < 0)
             return Result.Failure(TipoError.Invalido, "Las percepciones no pueden ser negativas.");
+        if (!new[] { request.PercepcionIva, request.PercepcionIibb, request.PercepcionMunicipal, request.PercepcionGanancias }
+                .All(p => EntraEnColumna(p, Importe)))
+            return Result.Failure(TipoError.Invalido, "Las percepciones admiten hasta 2 decimales y 12 dígitos enteros.");
 
         // CA3: sin líneas no hay compra.
         if (request.Lineas is null || request.Lineas.Count == 0)
@@ -134,12 +138,32 @@ public class RegistrarFacturaCompraUseCase
                 return Result.Failure(TipoError.Invalido, $"El precio unitario del artículo {linea.ArticuloId} no puede ser negativo.");
             if (linea.DescuentoPorcentaje < 0 || linea.DescuentoPorcentaje > 100)
                 return Result.Failure(TipoError.Invalido, $"El descuento del artículo {linea.ArticuloId} tiene que estar entre 0 y 100.");
+            if (!EntraEnColumna(linea.Cantidad, Cantidad))
+                return Result.Failure(TipoError.Invalido, $"La cantidad del artículo {linea.ArticuloId} admite hasta 3 decimales y 9 dígitos enteros.");
+            if (!EntraEnColumna(linea.PrecioUnitario, Importe))
+                return Result.Failure(TipoError.Invalido, $"El precio unitario del artículo {linea.ArticuloId} admite hasta 2 decimales y 12 dígitos enteros.");
+            if (!EntraEnColumna(linea.DescuentoPorcentaje, Descuento))
+                return Result.Failure(TipoError.Invalido, $"El descuento del artículo {linea.ArticuloId} admite hasta 2 decimales.");
         }
         // Una línea por artículo: es la clave primaria del detalle.
         if (request.Lineas.GroupBy(l => l.ArticuloId).FirstOrDefault(g => g.Count() > 1) is { } repetido)
             return Result.Failure(TipoError.Invalido, $"El artículo {repetido.Key} aparece en más de una línea.");
 
         return Result.Success();
+    }
+
+    // NUMERIC(precisión, escala) de las columnas: lo que la base no puede guardar tal cual
+    // (la redondearía, la rechazaría por un CHECK o por desborde) se rechaza acá como
+    // Invalido, en lugar de terminar en un 500.
+    private static readonly (int Precision, int Escala) Cantidad = (12, 3);   // detalle y stock
+    private static readonly (int Precision, int Escala) Importe = (14, 2);    // precio, percepciones y costo
+    private static readonly (int Precision, int Escala) Descuento = (6, 2);
+
+    private static bool EntraEnColumna(decimal valor, (int Precision, int Escala) columna)
+    {
+        var limite = 1m;
+        for (var i = 0; i < columna.Precision - columna.Escala; i++) limite *= 10;
+        return valor == Math.Round(valor, columna.Escala) && Math.Abs(valor) < limite;
     }
 
     private static Result<RegistrarFacturaCompraResponse> Fallo(TipoError tipo, string error) =>
