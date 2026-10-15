@@ -52,7 +52,12 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
     public LaCentralDbContext CrearContexto() => new(new DbContextOptionsBuilder<LaCentralDbContext>()
         .UseNpgsql(_conexionAislada).EnableDetailedErrors().Options);
 
-    public static async Task<PostgreSqlPruebas> CrearAsync(ITestOutputHelper salida)
+    /// <param name="trasCrearEsquema">
+    /// Solo para probar la limpieza: corre sobre la conexión de administración apenas
+    /// creado el esquema, para forzar una falla real a mitad de la creación.
+    /// </param>
+    public static async Task<PostgreSqlPruebas> CrearAsync(ITestOutputHelper salida,
+        Func<NpgsqlConnection, string, Task>? trasCrearEsquema = null)
     {
         var conexion = ConexionRequerida;
         var alias = Environment.GetEnvironmentVariable("LACENTRAL_TEST_PG");
@@ -73,6 +78,8 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         config.CommandTimeout = 30;
         var admin = new NpgsqlConnection(config.ConnectionString);
         config.SearchPath = esquema;
+        // Identifica en pg_stat_activity las conexiones del pool de este esquema.
+        config.ApplicationName = esquema;
         var fixture = new PostgreSqlPruebas(admin, esquema, config.ConnectionString);
         try
         {
@@ -93,6 +100,7 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
 
             await fixture.EjecutarAsync($"CREATE SCHEMA {Q(esquema)}");
             fixture._creado = true;
+            if (trasCrearEsquema is not null) await trasCrearEsquema(admin, esquema);
             foreach (var tabla in tablas)
                 await fixture.EjecutarAsync($"CREATE TABLE {Q(esquema)}.{Q(tabla)} (LIKE {Q(origen)}.{Q(tabla)} INCLUDING ALL)");
             await fixture.RestaurarNombresDeIndicesAsync(origen, tablas);
@@ -201,6 +209,12 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         await contexto.SaveChangesAsync();
         return usuario.Id;
     }
+
+    /// <summary>
+    /// Registra algo que usa el esquema (una fábrica de WithWebHostBuilder, por ejemplo)
+    /// para liberarlo junto con él y no recién al final de la clase de tests.
+    /// </summary>
+    public T Liberar<T>(T recurso) where T : IAsyncDisposable => recurso;
 
     private async Task ValidarTablaAsync(string origen, IEntityType entidad)
     {

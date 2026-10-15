@@ -40,7 +40,7 @@ public class ArticulosApiPostgreSqlTests : IClassFixture<WebApplicationFactory<P
 
     private HttpClient Cliente(PostgreSqlPruebas fixture, string rol)
     {
-        var cliente = _factory.WithWebHostBuilder(builder =>
+        var cliente = fixture.Liberar(_factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(ConfiguracionJwt));
             builder.ConfigureTestServices(servicios =>
@@ -49,7 +49,7 @@ public class ArticulosApiPostgreSqlTests : IClassFixture<WebApplicationFactory<P
                 servicios.RemoveAll<IDbContextOptionsConfiguration<LaCentralDbContext>>();
                 servicios.AddDbContext<LaCentralDbContext>(o => o.UseNpgsql(fixture.ConexionAislada));
             });
-        }).CreateClient();
+        })).CreateClient();
 
         var token = new GeneradorToken(new ConfigurationBuilder().AddInMemoryCollection(ConfiguracionJwt).Build())
             .GenerarToken(1, "test.articulos", rol, 1);
