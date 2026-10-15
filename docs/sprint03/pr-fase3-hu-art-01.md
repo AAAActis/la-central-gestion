@@ -2,7 +2,7 @@
 
 **Rama:** `feature/HU-ART-01-alta-articulo` → **`develop`**
 **Título sugerido:** `feat: alta de articulo con precios por modalidad y base de calculo (HU-ART-01)`
-**Issue:** Refs #14 (ver "Qué NO hace": falta el entregable en frontend)
+**Issue:** Refs #14 (la pantalla de alta llega con la Fase 4)
 
 ## Qué hace
 
@@ -42,7 +42,7 @@
 - **H3:** el DTO de detalle expone base, porcentaje, `calculo_manual`, fecha y usuario. El test compara el DTO completo releído con un contexto nuevo (fecha con microsegundos, porcentaje -10).
 
 ## Qué NO hace
-- **No tiene entregable visible en `frontend/`.** La carpeta no existe en el repo. El requisito permanente ("toda fase que agregue endpoints cierra con un entregable en frontend/") se agregó al plan en esta sesión, al cerrar la fase. **Queda para que decida el equipo.**
+- **No tiene entregable visible en `frontend/`** en esta rama: la carpeta no existía. La pantalla de alta, junto con la de consulta, la trae la Fase 4.
 - No hay `GET /api/articulos/{id}`: es de la Fase 4. El `Location` ya apunta a esa ruta.
 - No hay forma de fijar el precio de CasoEspecial ni las tasas de Tarjeta3/6.
 - **"Sucursal habilitada":** la tabla `sucursal` no tiene esa marca, así que el stock cero va a todas las sucursales (hoy FR y SV).
@@ -85,24 +85,29 @@ Cada unidad tiene tres commits:
 
 La regla del plan dice "un test que pasa a la primera → parar". Para esta fase, el equipo la reemplazó por "declarar y verificar con mutación".
 
-## Cómo se verificó (2026-10-14, HEAD `c6dc60b`)
-- `dotnet build --no-incremental`: **0 advertencias, 0 errores**.
-- `dotnet test`: **227 total · 227 passed · 0 failed · 0 omitidos**. develop tenía 179, y al aplicar el 04 tenía 1 rojo por el CHECK `base_coherente`: la siembra de un test no lo cumplía, y se corrigió en `413308a`.
-- **Contra PostgreSQL real: 71** (antes 46). Son 70 con esquema aislado, confirmados en el StdOut del `.trx`, y 1 de catálogo. El test HTTP levanta la API con `WebApplicationFactory` y el `DbContext` en el esquema aislado, sin mocks.
-- `LaCentral.UseCases.csproj` sigue sin referencias. Ningún controlador importa `LaCentral.Data`.
-- Subagentes sobre `git diff f3c6705..c6dc60b`, corridos de a uno (detalle completo en `ESTADO.md`):
-  - **verificador-tdd: NO APTO.** Los rojos, el orden test → producción y las mutaciones declaradas se reproducen. Bloquean 4 mutaciones que sobreviven con la suite en verde:
-    - `ArticulosController` sin test de alta sin códigos;
-    - la rama `creado is null` de `CrearArticuloUseCase`;
-    - el guard `Enum.IsDefined` de `ModalidadPersistida`;
-    - las DataAnnotations del DTO HTTP sin test de 400.
-  - **auditor-persistencia: APTO.** H1, H2 y H3 están cerrados, ningún `TMP-` sobrevive y el alta es atómica en las cuatro tablas. Los hallazgos no bloquean.
+## Arreglos del NO APTO (ronda 1, `f05cee4`..`a9e7410`)
+| Commit | Qué |
+|---|---|
+| `f05cee4` | test: POST sin `codigosProveedor` → 201; 400 por las DataAnnotations del DTO HTTP. Caracterización: 6 mutaciones lo ponen en rojo |
+| `f480418` | test: `proveedorId` 0 o negativo → Invalido sin consultar proveedores. Caracterización |
+| `f581dac` | test: la unidad de trabajo real devuelve el resultado de la operación y la ejecuta una vez. Caracterización |
+| `7c7d5c4` → `e4f0f21` | test en rojo (`ArticuloPrecioModalidadPostgreSqlTests.cs:188`): una modalidad o base sin nombre la rechaza el CHECK del motor → se borra el guard `Enum.IsDefined`, inalcanzable |
+| `f581dac` → `a9e7410` | se borra la rama `creado is null` de `CrearArticuloUseCase`, inalcanzable: la unidad de trabajo devuelve el resultado de la operación |
 
-> ⚠️ **Este PR NO se puede abrir hasta que el verificador dé APTO.**
+Las dos guardas se borraron por la regla de `CLAUDE.md`: una guarda sin test que NO es alcanzable se borra, y queda el test que demuestra que el caso no puede ocurrir por otra vía.
+
+## Cómo se verificó (2026-10-14, HEAD de código `a9e7410`)
+- `dotnet build --no-incremental`: **0 advertencias, 0 errores**.
+- `dotnet test`: **234 total · 234 passed · 0 failed · 0 omitidos** (corrida del equipo: 234 correcto, 109 s; y la del verificador, en su worktree). develop tenía 179.
+- **Contra PostgreSQL real: 77 tests `[PostgreSqlFact]`** (develop: 46), todos ejecutados (0 omitidos). El test HTTP levanta la API con `WebApplicationFactory` y el `DbContext` en el esquema aislado, sin mocks.
+- `LaCentral.UseCases.csproj` sigue sin referencias. Ningún controlador importa `LaCentral.Data`.
+- Subagentes (detalle completo en `ESTADO.md`):
+  - Primera y segunda pasada sobre `f3c6705..c6dc60b`: **verificador NO APTO** por 4 mutaciones que sobrevivían (alta sin códigos en `ArticulosController`, rama `creado is null`, guard `Enum.IsDefined`, DataAnnotations sin test de 400); **auditor APTO**.
+  - **Ronda 1, verificación acotada a los commits posteriores a `903e0fd`: verificador-tdd APTO.** Las 4 mutaciones mueren (las dos guardas porque ya no existen y nada las necesitaba), el rojo de `7c7d5c4` se reproduce por aserción y el orden test → producción se respeta. Suite: 234/234, 0 omitidos, 0 warnings, 77 PG.
+  - El auditor no se re-corrió en la ronda 1: su APTO es el de `c6dc60b`. La ronda agrega tests PG y no toca repositorios.
 
 ## Pendiente (detalle en `ESTADO.md`)
-- El entregable en `frontend/`: lo decide el equipo.
-- La Fase 4 tiene que serializar `Modalidad` y `BasePrecio` por nombre en HTTP.
+- El entregable en `frontend/` (incluida la pantalla de alta de esta fase) lo trae la Fase 4, en `feature/HU-ART-02-consultar-articulos`.
 - La comparación del esquema test/producción depende del equipo: el agente no tiene acceso a `lacentral`.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)

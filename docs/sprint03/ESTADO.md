@@ -44,7 +44,7 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 | 2 · D10 en la aplicación | hecha (2026-10-14). Hallazgos 1, 2 y 3 del auditor arreglados. **Auditor APTO, verificador APTO (segunda pasada)** | `feature/d10-historial-baja` (pusheada; código hasta `d378c0f`, sale de `108ac1d`) | sin abrir: no hay `gh`, se abre a mano desde el link de compare. Cuerpo en `docs/sprint03/pr-fase2-d10-historial-baja.md`, reescrito el 2026-10-14. Base provisoria `fix/deuda-bloqueante-sprint3` | **2026-10-14, en `d378c0f`: 176 total · 176 passed · 0 failed · 0 skipped · 0 warnings (43 PG real)** | abrir el PR a mano; deuda abajo |
 | D1 · compuerta de esquema en la aplicación | hecha (2026-10-14): re-scaffold, conversión de `Modalidad`, suite en verde. **Auditor APTO, verificador APTO** | `feature/d1-precios-modalidad` (sale de `feature/d10-historial-baja`) | sin abrir. Cuerpo en `docs/sprint03/pr-d1-precios-modalidad.md`. Base provisoria `feature/d10-historial-baja` | **179 total · 179 passed · 0 failed · 0 skipped · 0 warnings (46 PG real)** | abrir el PR a mano |
 | — · Merge | **Fases 1, 2 y D1 mergeadas en develop** (2026-10-14): `a276272` (#113), `b0819a9` (#114), `f3c6705` (#115). Ramas borradas, locales y remotas | | | | |
-| 3 · HU-ART-01 | hecha (2026-10-14), con el script 04, las decisiones A-D y H1/H3. Subagentes: ver "Fase 3" | `feature/HU-ART-01-alta-articulo` (sale de develop `f3c6705`) | sin abrir. Cuerpo en `docs/sprint03/pr-fase3-hu-art-01.md`. Base `develop` | **227 total · 227 passed · 0 failed · 0 skipped · 0 warnings (71 PG real), en `c6dc60b`. Verificador NO APTO, auditor APTO: PR bloqueado** | sin entregable en `frontend/` (no existe); ver "Fase 3" |
+| 3 · HU-ART-01 | **cerrada (2026-10-14)**, con el script 04, las decisiones A-D y H1/H3. Ronda 1 de arreglos: **verificador APTO**, auditor APTO (pasada anterior). Ver "Fase 3" | `feature/HU-ART-01-alta-articulo` (sale de develop `f3c6705`, pusheada; código hasta `a9e7410`) | sin abrir: no hay `gh`, se abre a mano desde el link de compare. Cuerpo en `docs/sprint03/pr-fase3-hu-art-01.md`. Base `develop` | **234 total · 234 passed · 0 failed · 0 skipped · 0 warnings (77 `[PostgreSqlFact]`), en `a9e7410`** | el entregable en `frontend/` lo cubre la Fase 4 (pantalla de alta incluida) |
 | 4 · HU-ART-02 | pendiente | | | | |
 | 5 · HU-FCO-01 | pendiente | | | | |
 | 6 · HU-ART-05 + CA5 | pendiente (misma compuerta D1) | | | | |
@@ -162,6 +162,37 @@ Corrieron uno después del otro, sin otra suite en paralelo, para no repetir el 
 **Estado:** se PARÓ en el punto 2 de la instrucción. NO se tocaron los puntos 3 (cambios al plan), 4 (borrar las 17 ramas viejas) y 5 (push). Arreglar las 4 mutaciones lo decide el equipo.
 
 **Sin entregable en `frontend/`:** la carpeta no existe. El requisito permanente se agregó al plan en esta sesión, después de cerrar la fase. Lo decide el equipo.
+
+### Ronda 1 de arreglos (2026-10-14, `f05cee4`..`a9e7410`) y verificación acotada · **verificador APTO** → Fase 3 CERRADA
+Arreglos, según la regla de CLAUDE.md "NO APTO de un subagente":
+
+| Commit | Qué |
+|---|---|
+| `f05cee4` | test: POST sin códigos → 201, y 400 por las DataAnnotations del DTO HTTP (caracterización, verificada con 6 mutaciones) |
+| `f480418` | test: `proveedorId` 0 o negativo → Invalido sin consultar proveedores (caracterización) |
+| `f581dac` | test: la unidad de trabajo real devuelve el resultado de la operación y la ejecuta una vez (caracterización) |
+| `7c7d5c4` → `e4f0f21` | test en rojo: una modalidad o base sin nombre la rechaza el CHECK del motor → se borra el guard `Enum.IsDefined` de `ModalidadPersistida` (inalcanzable: lo cubre el motor) |
+| `f581dac` → `a9e7410` | se borra la rama `creado is null` de `CrearArticuloUseCase` (inalcanzable: la unidad de trabajo devuelve el resultado de la operación) |
+| `ace11ee` | definiciones de subagentes: el verificador nuevo (lo escribió el equipo) y R1-R5 + PRESUPUESTO copiados al auditor. Sin código |
+
+**Corrida del equipo sobre `a9e7410`:** 234 total · 234 correcto · 0 con errores · 0 omitido · 109 s.
+
+**verificador-tdd · APTO.** Un solo agente, en worktree propio, con el alcance acotado a los commits posteriores a `903e0fd`. Usó 13 corridas filtradas y 1 suite.
+- Orden: `7c7d5c4` (solo test) → `e4f0f21` (solo producción); `f581dac` (solo test) → `a9e7410` (solo producción). `f05cee4`, `f480418` y `f581dac` son de caracterización, declarados así en el commit.
+- Reprodujo el rojo de `7c7d5c4` por aserción, en `ArticuloPrecioModalidadPostgreSqlTests.cs:188`: esperaba `DbUpdateException` y llegó `InvalidOperationException "Modalidad sin nombre: 99."`.
+- Las 4 mutaciones que sobrevivían ahora mueren:
+  - `CodigosProveedor!` → 500 en `Post_SinCodigosProveedor_201YSeGuardaSinCodigos`;
+  - quitar cualquiera de los 5 atributos del DTO → rojo en los tests de 400;
+  - las ramas `creado is null` e `Enum.IsDefined` ya no existen, y nada las necesitaba.
+  - También mueren la mutación de `ProveedorId <= 0` y dos de la unidad de trabajo (M8 y M9).
+- Suite sobre HEAD: build `--no-incremental` con 0 warnings; **234 · 234 passed · 0 failed · 0 skipped**; **77 `[PostgreSqlFact]`** contra PostgreSQL real.
+- No bloqueantes:
+  - `Post_NombreDeMasDe200` mata la mutación con un `KeyNotFoundException`, no con una aserción (`ArticulosApiPostgreSqlTests.cs:156`);
+  - en `ProveedorNoIndicado_...` solo discrimina el `Verify(Times.Never)` (`CrearArticuloUseCaseTests.cs:168`);
+  - `creado!` depende del contrato de la unidad de trabajo;
+  - hubo una falla pasajera en `PostgreSqlPruebas.CrearAsync` (L79): se repitió y se descartó.
+- Borró su worktree (con `rm -rf`, por "Filename too long") y corrió `git worktree prune`: solo queda el principal.
+- **El auditor no se volvió a correr en esta ronda**, porque el equipo no lo pidió: su APTO es el de `c6dc60b`. Esta ronda agrega tests PG (`7c7d5c4` y `f581dac`) y no toca repositorios.
 
 ## Compuerta de esquema D1 · CERRADA (2026-10-14)
 
