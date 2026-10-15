@@ -154,6 +154,21 @@ public class CrearArticuloUseCaseTests
         NoSeEscribioNada();
     }
 
+    // Un proveedorId 0 o negativo llega desde HTTP (es un int sin [Range]): se rechaza
+    // como forma, sin ir a buscar un proveedor que no puede existir.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public async Task ProveedorNoIndicado_InvalidoSinConsultarProveedores(int proveedorId)
+    {
+        var resultado = await Caso().EjecutarAsync(Request((proveedorId, "GN-01")));
+
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+        Assert.Contains("proveedor", resultado.Error);
+        _proveedores.Verify(p => p.ObtenerDetallePorIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        NoSeEscribioNada();
+    }
+
     [Fact]
     public async Task ProveedorInactivo_Invalido()
     {
