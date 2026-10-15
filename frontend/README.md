@@ -1,0 +1,39 @@
+# La Central · frontend
+
+Pantalla de artículos (HU-ART-01 alta, HU-ART-02 búsqueda y ficha). Angular 20, sin
+librería de estado ni framework de UI.
+
+## Cómo levantarla
+
+Hacen falta dos terminales: la API y el frontend.
+
+```bash
+# 1 · la API, en el puerto 5181 (perfil http). Necesita la conexión y la clave JWT:
+#     ConnectionStrings__Postgres y Jwt__Key en el entorno (ver docs/entorno-local.md).
+cd backend
+dotnet run --project LaCentral.Api --launch-profile http
+
+# 2 · el frontend, en el puerto 4200 (la primera vez, antes: npm install)
+cd frontend
+npm start
+```
+
+Abrí **http://localhost:4200** y entrá con un usuario de la base (rol ADMINISTRADOR u
+OPERADOR).
+
+- `npm start` corre `ng serve` con `proxy.conf.json`: todo `/api` va a
+  `http://localhost:5181`. Por eso no hace falta CORS en la API.
+- El token vive **solo en memoria**. Si recargás la página, tenés que volver a entrar.
+
+## Qué hay
+
+| Archivo | Qué hace |
+|---|---|
+| `src/app/sesion.ts` | sesión en memoria y el interceptor que agrega el `Bearer` |
+| `src/app/api.ts` | las llamadas a `/api/acceso/login` y `/api/articulos` |
+| `src/app/login.ts` | el login |
+| `src/app/articulos.ts` | buscador, lista paginada, ficha con las seis modalidades y su razón, y alta |
+
+La ficha muestra **siempre** las seis modalidades. Si una no tiene precio, muestra la
+razón que manda la API (`sin configuración`, `sin costo`, `caso especial no fijado`,
+`tasa sin definir`), nunca un cero.
