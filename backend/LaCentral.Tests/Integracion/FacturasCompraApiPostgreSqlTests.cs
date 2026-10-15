@@ -133,6 +133,22 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
     }
 
     [PostgreSqlFact]
+    public async Task Post_SinFechaDeEmision_400YNoEscribe()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        var cuerpo = JsonSerializer.SerializeToNode(Cuerpo(s))!.AsObject();
+        cuerpo.Remove("fechaEmision");
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra", cuerpo);
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        await using var relectura = fixture.CrearContexto();
+        Assert.False(await relectura.FacturaCompra.AnyAsync());
+    }
+
+    [PostgreSqlFact]
     public async Task Post_NumeroActivoRepetido_409QueInformaLaFacturaEnConflicto()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
