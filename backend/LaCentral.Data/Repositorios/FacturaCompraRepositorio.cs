@@ -11,6 +11,8 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
     // Valores de los CHECK fc_estado_valido y fc_origen_valido.
     private const string EstadoActiva = "ACTIVA";
     private const string OrigenManual = "MANUAL";
+    // stock.cantidad es NUMERIC(12,3): la parte entera tiene a lo sumo 9 dígitos.
+    private const decimal LimiteStock = 1_000_000_000m;
 
     private readonly LaCentralDbContext _context;
 
@@ -64,12 +66,18 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
         {
             // D9: suma en el destino de la línea. El incremento lo hace el motor, así dos
             // compras simultáneas del mismo artículo no se pisan; si no había fila, se crea.
-            await _context.Database.ExecuteSqlInterpolatedAsync($"""
+            // Si la suma no entra en stock.cantidad, el WHERE no actualiza (0 filas) en lugar
+            // de desbordar (22003): es Invalido y la unidad de trabajo descarta todo.
+            var filas = await _context.Database.ExecuteSqlInterpolatedAsync($"""
                 INSERT INTO stock (articulo_id, sucursal_id, cantidad)
                 VALUES ({linea.ArticuloId}, {linea.SucursalId}, {linea.Cantidad})
                 ON CONFLICT (articulo_id, sucursal_id)
                 DO UPDATE SET cantidad = stock.cantidad + EXCLUDED.cantidad
+                WHERE stock.cantidad + EXCLUDED.cantidad < {LimiteStock}
                 """, ct);
+            if (filas == 0)
+                return Result<int>.Failure(TipoError.Invalido,
+                    $"El stock del artículo {linea.ArticuloId} en la sucursal {linea.SucursalId} superaría el máximo que se puede registrar.");
 
             // Por Id, nunca por código (Crítico 3).
             await _context.Articulo.Where(a => a.Id == linea.ArticuloId)

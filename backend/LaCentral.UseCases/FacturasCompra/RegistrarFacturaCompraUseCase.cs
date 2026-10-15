@@ -98,7 +98,10 @@ public class RegistrarFacturaCompraUseCase
         RegistrarFacturaCompraResponse? registrada = null;
         var resultado = await _unidadDeTrabajo.EjecutarAsync(async token =>
         {
-            registrada = new RegistrarFacturaCompraResponse((await _facturas.RegistrarConEfectosAsync(factura, token)).Value);
+            var escrita = await _facturas.RegistrarConEfectosAsync(factura, token);
+            if (!escrita.IsSuccess)
+                return escrita;
+            registrada = new RegistrarFacturaCompraResponse(escrita.Value);
             // CA5 (Fase 6, HU-ART-05): acá, en la MISMA unidad de trabajo, se recalculan los
             // precios por modalidad de los artículos comprados. #32 no se cierra sin eso.
             return Result.Success();
