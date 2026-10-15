@@ -58,6 +58,34 @@ export interface AltaArticulo {
   codigosProveedor: { proveedorId: number; codigo: string }[];
 }
 
+export interface ProveedorResumen {
+  id: number;
+  codigo: string;
+  razonSocial: string;
+  cuit: string | null;
+  activo: boolean;
+}
+
+export interface LineaFacturaCompra {
+  articuloId: number;
+  sucursalId: number;
+  cantidad: number;
+  precioUnitario: number;
+  descuentoPorcentaje: number;
+}
+
+export interface FacturaCompraNueva {
+  proveedorId: number;
+  numero: string;
+  fechaEmision: string;
+  fechaVencimiento: string | null;
+  percepcionIva: number;
+  percepcionIibb: number;
+  percepcionMunicipal: number;
+  percepcionGanancias: number;
+  lineas: LineaFacturaCompra[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiLaCentral {
   private readonly http = inject(HttpClient);
@@ -81,6 +109,16 @@ export class ApiLaCentral {
 
   crear(alta: AltaArticulo): Observable<{ id: number; codigoInterno: string }> {
     return this.http.post<{ id: number; codigoInterno: string }>('/api/articulos', alta);
+  }
+
+  /** Solo activos: a un proveedor inactivo no se le registran compras. 404 si no hay ninguno. */
+  proveedores(texto: string): Observable<ProveedorResumen[]> {
+    const params = new HttpParams().set('texto', texto).set('incluirInactivos', false);
+    return this.http.get<ProveedorResumen[]>('/api/proveedores', { params });
+  }
+
+  registrarFacturaCompra(factura: FacturaCompraNueva): Observable<{ id: number }> {
+    return this.http.post<{ id: number }>('/api/facturas-compra', factura);
   }
 }
 

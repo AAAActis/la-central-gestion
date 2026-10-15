@@ -1,6 +1,6 @@
 # La Central · frontend
 
-Pantalla de artículos (HU-ART-01 alta, HU-ART-02 búsqueda y ficha). Angular 20, sin
+Pantallas de artículos (HU-ART-01 alta, HU-ART-02 búsqueda y ficha) y de factura de compra (HU-FCO-01). Angular 20, sin
 librería de estado ni framework de UI.
 
 ## Cómo levantarla
@@ -30,9 +30,10 @@ OPERADOR).
 | Archivo | Qué hace |
 |---|---|
 | `src/app/sesion.ts` | sesión en memoria y el interceptor que agrega el `Bearer` |
-| `src/app/api.ts` | las llamadas a `/api/acceso/login` y `/api/articulos` |
+| `src/app/api.ts` | las llamadas a `/api/acceso/login`, `/api/articulos`, `/api/proveedores` y `/api/facturas-compra` |
 | `src/app/login.ts` | el login |
 | `src/app/articulos.ts` | buscador, lista paginada, ficha con las seis modalidades y su razón, y alta |
+| `src/app/factura-compra.ts` | carga manual de la factura de compra: proveedor activo, número, fechas, percepciones y líneas con destino; al registrar muestra el costo y el stock que quedaron, releídos de la ficha |
 
 La ficha muestra **siempre** las seis modalidades. Si una no tiene precio, muestra la
 razón que manda la API (`sin configuración`, `sin costo`, `caso especial no fijado`,
