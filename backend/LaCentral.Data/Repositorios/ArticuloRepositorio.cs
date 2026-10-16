@@ -34,7 +34,9 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
 
     /// <summary>
     /// Por artículo y modalidad (la clave primaria). Solo precio y fecha: la configuración
-    /// (base, porcentaje, calculo_manual) y el usuario no los cambia un recálculo.
+    /// (base, porcentaje, calculo_manual) y el usuario no los cambia un recálculo. Nunca
+    /// escribe una fila manual: el filtro va en el UPDATE, así que vale lo que la fila es al
+    /// escribir, no lo que era al leer (otra sesión pudo fijarla entre medio).
     /// </summary>
     public async Task ActualizarPreciosAsync(int articuloId, IReadOnlyList<LaCentral.UseCases.Entidades.PrecioModalidad> precios, CancellationToken ct = default)
     {
@@ -42,7 +44,7 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
         {
             var modalidad = ModalidadPersistida.Escribir(precio.Modalidad);
             await _context.ArticuloPrecioModalidad
-                .Where(p => p.ArticuloId == articuloId && p.Modalidad == modalidad)
+                .Where(p => p.ArticuloId == articuloId && p.Modalidad == modalidad && !p.CalculoManual)
                 .ExecuteUpdateAsync(s => s
                     .SetProperty(p => p.Precio, precio.Precio)
                     .SetProperty(p => p.FechaCalculo, precio.FechaCalculo), ct);

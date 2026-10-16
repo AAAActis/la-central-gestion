@@ -17,7 +17,8 @@ public interface IPreciosArticuloRepositorio
 
     /// <summary>
     /// Escribe precio y fecha de cálculo de cada fila, por artículo y modalidad. No toca
-    /// base, porcentaje, calculo_manual ni usuario.
+    /// base, porcentaje, calculo_manual ni usuario, y no escribe las filas que en la base
+    /// son manuales al momento de escribir: un precio fijado por una persona no se pisa.
     /// </summary>
     Task ActualizarPreciosAsync(int articuloId, IReadOnlyList<PrecioModalidad> precios, CancellationToken ct = default);
 }
