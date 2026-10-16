@@ -176,6 +176,25 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
         Assert.Equal(1m, await relectura.Stock.Where(x => x.ArticuloId == s.ArticuloId).SumAsync(x => x.Cantidad));
     }
 
+    // PostgreSQL no guarda el carácter NUL en un texto (22021): es un dato inválido, no un error del servidor.
+    [PostgreSqlFact]
+    public async Task Post_NumeroConCaracterNul_400YNoEscribe()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra", Cuerpo(s, numero: "A\u0000B"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        var problema = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains("caracteres no válidos", problema.GetProperty("detail").GetString());
+        Assert.False(problema.TryGetProperty("errors", out _));
+        await using var relectura = fixture.CrearContexto();
+        Assert.False(await relectura.FacturaCompra.AnyAsync());
+        Assert.Equal(1m, await relectura.Stock.Where(x => x.ArticuloId == s.ArticuloId).SumAsync(x => x.Cantidad));
+    }
+
     [PostgreSqlFact]
     public async Task Post_NumeroActivoRepetido_409QueInformaLaFacturaEnConflicto()
     {

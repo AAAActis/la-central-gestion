@@ -157,6 +157,23 @@ public class ArticulosApiPostgreSqlTests : IClassFixture<WebApplicationFactory<P
         Assert.Contains("Nombre", errores.EnumerateObject().Select(e => e.Name), StringComparer.OrdinalIgnoreCase);
     }
 
+    // El 22021 (NUL en un texto) se traduce en el manejador global, no por endpoint.
+    [PostgreSqlFact]
+    public async Task Post_NombreConCaracterNul_400YNoSeEscribe()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        using var cliente = Cliente(fixture, "OPERADOR");
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/articulos", new { nombre = "Filtro\u0000de aceite" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        var problema = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains("caracteres no válidos", problema.GetProperty("detail").GetString());
+        Assert.False(problema.TryGetProperty("errors", out _));
+        await using var relectura = fixture.CrearContexto();
+        Assert.False(await relectura.Articulo.AnyAsync());
+    }
+
     [PostgreSqlFact]
     public async Task Post_CodigoDeOtroArticulo_409InformandoCual()
     {
