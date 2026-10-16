@@ -326,6 +326,64 @@ public class RegistrarFacturaCompraUseCaseTests
         Assert.Equal("El stock no entra.", resultado.Error);
     }
 
+    // ---- CA5 (HU-ART-05 CA-001): recálculo de precios de los comprados ----
+
+    private void PreciosExistentes(params (int Id, decimal? Costo)[] articulos) =>
+        _precios.Setup(p => p.ObtenerAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(articulos.ToDictionary(a => a.Id,
+                a => new PreciosDeArticulo(a.Costo, ReglasPrecioModalidad.ConfiguracionInicial())));
+
+    [Fact]
+    public async Task Valida_RecalculaLosPreciosDeLosComprados_ConLaFechaDelRegistro()
+    {
+        PreciosExistentes((100, 180m), (200, 80m));
+        var escritos = new Dictionary<int, IReadOnlyList<PrecioModalidad>>();
+        _precios.Setup(p => p.ActualizarPreciosAsync(It.IsAny<int>(), It.IsAny<IReadOnlyList<PrecioModalidad>>(), It.IsAny<CancellationToken>()))
+            .Callback((int id, IReadOnlyList<PrecioModalidad> filas, CancellationToken _) => escritos[id] = filas)
+            .Returns(Task.CompletedTask);
+
+        var resultado = await Caso().EjecutarAsync(Request(new[] { Linea(100), Linea(200, sucursalId: 2) }));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        _precios.Verify(p => p.ObtenerAsync(
+            It.Is<IReadOnlyCollection<int>>(ids => ids.OrderBy(i => i).SequenceEqual(new[] { 100, 200 })),
+            It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal(new[] { 100, 200 }, escritos.Keys.Order());
+        Assert.Equal(270m, escritos[100].Single(p => p.Modalidad == Modalidad.Lista).Precio);
+        Assert.All(escritos.Values.SelectMany(f => f).Where(p => p.Precio is not null),
+            p => Assert.Equal(_registrada!.FechaRegistro, p.FechaCalculo));
+    }
+
+    [Fact]
+    public async Task Valida_ElRecalculoOcurreDentroDeLaUnidadDeTrabajo()
+    {
+        _unidad = DoblesBaja.UnidadQueNoEjecuta();
+        PreciosExistentes((100, 180m));
+
+        await Caso().EjecutarAsync(Request());
+
+        _precios.Verify(p => p.ObtenerAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _precios.Verify(p => p.ActualizarPreciosAsync(It.IsAny<int>(), It.IsAny<IReadOnlyList<PrecioModalidad>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // El recálculo corre después de escribir la compra: si rechaza, la unidad de trabajo
+    // recibe el fallo y descarta también la factura, el stock y el costo.
+    [Fact]
+    public async Task RecalculoRechazado_DevuelveSuFalloALaUnidadParaQueSeDescarteTodo()
+    {
+        PreciosExistentes((100, 6_666_666_666.67m));
+        Result? devueltoALaUnidad = null;
+        _unidad.Setup(u => u.EjecutarAsync(It.IsAny<Func<CancellationToken, Task<Result>>>(), It.IsAny<CancellationToken>()))
+            .Returns(async (Func<CancellationToken, Task<Result>> operacion, CancellationToken ct) => devueltoALaUnidad = await operacion(ct));
+
+        var resultado = await Caso().EjecutarAsync(Request());
+
+        Assert.NotNull(devueltoALaUnidad);
+        Assert.False(devueltoALaUnidad.IsSuccess);
+        AssertFallo(resultado, TipoError.Invalido);
+        Assert.Contains("artículo 100", resultado.Error);
+    }
+
     [Fact]
     public async Task Valida_ElRegistroOcurreDentroDeLaUnidadDeTrabajo()
     {
