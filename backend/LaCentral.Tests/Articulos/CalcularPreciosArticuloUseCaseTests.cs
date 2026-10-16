@@ -102,6 +102,31 @@ public class CalcularPreciosArticuloUseCaseTests
         Assert.Empty(_escritos);
     }
 
+    // El borde exacto: 10.000.000.000,00 ya no entra en NUMERIC(12,2). Con la configuración
+    // del alta no se alcanza (la Lista salta de ,99 a ,01), pero las filas se configuran: una
+    // tasa de Tarjeta sobre PrecioLista puede caer justo ahí. Lista 8.000.000.000,00 × 1,25.
+    // La tasa es SOLO DE PRUEBA: las de Tarjeta3/6 siguen sin definir (D1).
+    private const decimal TasaTarjeta3DePruebaQueLlegaAlLimite = 25m;
+
+    [Fact]
+    public async Task PrecioJustoEnElLimiteDeSuColumna_InvalidoYNoEscribe()
+    {
+        var configuracion = ReglasPrecioModalidad.ConfiguracionInicial()
+            .Select(p => p.Modalidad == Modalidad.Tarjeta3
+                ? p with { Base = BasePrecio.PrecioLista, Porcentaje = TasaTarjeta3DePruebaQueLlegaAlLimite }
+                : p)
+            .ToList();
+        // 5.333.333.333,33 × 1,50 = 7.999.999.999,995 → 8.000.000.000,00
+        Existentes((1, 5_333_333_333.33m, configuracion));
+
+        var resultado = await Caso().EjecutarAsync(new[] { 1 }, Ahora);
+
+        Assert.False(resultado.IsSuccess);
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+        Assert.Contains("Tarjeta3", resultado.Error);
+        Assert.Empty(_escritos);
+    }
+
     [Fact]
     public async Task PrecioEnElMaximoDeSuColumna_SeEscribe()
     {
