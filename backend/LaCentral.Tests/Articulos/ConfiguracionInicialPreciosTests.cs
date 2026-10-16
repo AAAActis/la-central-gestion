@@ -45,9 +45,9 @@ public class ConfiguracionInicialPreciosTests
     {
         var configuracion = ReglasPrecioModalidad.ConfiguracionInicial();
         Assert.Equal(6, configuracion.Count);
-        var lista = ReglasPrecioModalidad.Calcular(configuracion.Single(p => p.Modalidad == Modalidad.Lista), 100m, null);
+        var lista = CalcularPreciosArticuloUseCase.Calcular(configuracion.Single(p => p.Modalidad == Modalidad.Lista), 100m, null);
 
-        var precios = configuracion.ToDictionary(p => p.Modalidad, p => ReglasPrecioModalidad.Calcular(p, 100m, lista));
+        var precios = configuracion.ToDictionary(p => p.Modalidad, p => CalcularPreciosArticuloUseCase.Calcular(p, 100m, lista));
 
         Assert.Equal(150m, precios[Modalidad.Lista]);
         Assert.Equal(135m, precios[Modalidad.EfectivoTransferencia]);
