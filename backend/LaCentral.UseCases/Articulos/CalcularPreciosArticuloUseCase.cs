@@ -32,8 +32,24 @@ public class CalcularPreciosArticuloUseCase
 
     /// <summary>
     /// Las filas de un artículo con el precio de cada modalidad automática recalculado a
-    /// partir del costo. Las filas manuales salen intactas.
+    /// partir del costo, como filas nuevas. Las filas manuales salen intactas (la política
+    /// vigente: el recálculo no pisa un precio fijado por una persona). Lista va primero
+    /// porque es la base de Efectivo; si Lista es manual, la base es su precio (D11).
     /// </summary>
     public static IReadOnlyList<PrecioModalidad> Recalcular(
-        IReadOnlyList<PrecioModalidad> configuracion, decimal? costoArticulo, DateTime ahora) => configuracion;
+        IReadOnlyList<PrecioModalidad> configuracion, decimal? costoArticulo, DateTime ahora)
+    {
+        var lista = configuracion.SingleOrDefault(p => p.Modalidad == Modalidad.Lista);
+        var precioLista = lista is null ? null
+            : lista.CalculoManual ? lista.Precio
+            : Calcular(lista, costoArticulo, precioLista: null);
+
+        return configuracion.Select(fila =>
+        {
+            if (fila.CalculoManual)
+                return fila;
+            var precio = Calcular(fila, costoArticulo, precioLista);
+            return fila with { Precio = precio, FechaCalculo = precio is null ? null : ahora };
+        }).ToList();
+    }
 }
