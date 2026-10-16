@@ -82,6 +82,15 @@ public class ArticuloPrecioEstimadoTests
         Assert.Equal(11.28m, CalcularPreciosArticuloUseCase.Calcular(Lista(10m), costoArticulo: 10.25m, precioLista: null));
     }
 
+    // Con 11,275 el redondeo bancario también da 11,28; con 11,165 da 11,16. Este caso
+    // fija la mitad lejos del cero, el criterio de PostgreSQL para NUMERIC.
+    [Fact]
+    public void Calcular_MitadDeCentavoConDigitoPar_RedondeaLejosDelCero()
+    {
+        // 10,15 × 1,10 = 11,165 → 11,17 (ToEven daría 11,16)
+        Assert.Equal(11.17m, CalcularPreciosArticuloUseCase.Calcular(Lista(10m), costoArticulo: 10.15m, precioLista: null));
+    }
+
     // ---- Base de cálculo (script 04) ----
 
     // CostoArticulo es el costo del artículo: el precio de Lista que se pase no interviene.
