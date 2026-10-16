@@ -10,12 +10,14 @@ namespace LaCentral.UseCases.Articulos;
 public class CalcularPreciosArticuloUseCase
 {
     /// <summary>
-    /// Null cuando no hay fórmula (manual, o tasa sin definir) o cuando falta el valor de
-    /// la base. Nunca cero por defecto, y nunca se sustituye una base por otra.
+    /// Null cuando no hay fórmula (sin porcentaje: manual o tasa sin definir) o cuando falta
+    /// el valor de la base. Nunca cero por defecto, y nunca se sustituye una base por otra.
+    /// Una fila manual nunca tiene porcentaje (CHECK manual_sin_porcentaje), y Recalcular
+    /// no le pide precio a las manuales.
     /// </summary>
     public static decimal? Calcular(PrecioModalidad configuracion, decimal? costoArticulo, decimal? precioLista)
     {
-        if (configuracion.CalculoManual || configuracion.Porcentaje is not { } porcentaje)
+        if (configuracion.Porcentaje is not { } porcentaje)
             return null;
 
         var valorBase = configuracion.Base switch
