@@ -38,10 +38,27 @@ public class RegistrarFacturaCompraPostgreSqlTests
         PostgreSqlPruebas Fixture, int UsuarioId, int Proveedor, int ProveedorAnterior,
         int Comprado1, int Comprado2, int NoComprado, short Sucursal1, short Sucursal2);
 
+    private static readonly DateTime CalculoAnterior = new(2026, 9, 1, 8, 0, 0, DateTimeKind.Utc);
+
+    /// <summary>Las seis filas del alta, calculadas el 1/9 con ese costo. Con usuario, CasoEspecial queda fijado a mano en 80.</summary>
+    private static List<ArticuloPrecioModalidad> Precios(decimal? costo, int? usuarioCasoEspecial = null) =>
+        CalcularPreciosArticuloUseCase.Recalcular(ReglasPrecioModalidad.ConfiguracionInicial(), costo, CalculoAnterior)
+            .Select(p => new ArticuloPrecioModalidad
+            {
+                Modalidad = p.Modalidad.ToString(), Base = p.Base?.ToString(), Porcentaje = p.Porcentaje,
+                Precio = p.Modalidad == LaCentral.UseCases.Entidades.Modalidad.CasoEspecial && usuarioCasoEspecial is not null ? 80m : p.Precio,
+                CalculoManual = p.CalculoManual,
+                FechaCalculo = p.Modalidad == LaCentral.UseCases.Entidades.Modalidad.CasoEspecial && usuarioCasoEspecial is not null ? CalculoAnterior : p.FechaCalculo,
+                UsuarioId = p.Modalidad == LaCentral.UseCases.Entidades.Modalidad.CasoEspecial ? usuarioCasoEspecial : null
+            }).ToList();
+
     /// <summary>
     /// Comprado1 tiene costo y último proveedor previos y stock en las dos sucursales.
     /// Comprado2 no tiene costo y solo tiene fila de stock en la sucursal 1: la compra
     /// lo manda a la 2. NoComprado no aparece en la factura y no puede cambiar.
+    /// Los tres tienen las seis filas de precio del alta. Comprado1 tiene además su
+    /// CasoEspecial fijado a mano (80, por el usuario); NoComprado tiene los precios de su
+    /// costo 70 calculados el 1/9.
     /// </summary>
     private static async Task<Escenario> SembrarAsync(PostgreSqlPruebas fixture)
     {
@@ -60,8 +77,11 @@ public class RegistrarFacturaCompraPostgreSqlTests
             Stock = stock.Select(s => new Stock { SucursalId = s.Sucursal, Cantidad = s.Cantidad }).ToList()
         };
         var comprado1 = Articulo("FCO-1", 50m, anterior.Id, (sucursales[0], 3m), (sucursales[1], 0m));
+        comprado1.ArticuloPrecioModalidad = Precios(50m, usuarioCasoEspecial: usuarioId);
         var comprado2 = Articulo("FCO-2", null, null, (sucursales[0], 0m));
+        comprado2.ArticuloPrecioModalidad = Precios(null);
         var noComprado = Articulo("FCO-3", 70m, anterior.Id, (sucursales[0], 4m), (sucursales[1], 4m));
+        noComprado.ArticuloPrecioModalidad = Precios(70m);
         contexto.Articulo.AddRange(comprado1, comprado2, noComprado);
         await contexto.SaveChangesAsync();
 
@@ -142,6 +162,117 @@ public class RegistrarFacturaCompraPostgreSqlTests
                 (h.ArticuloId, h.ProveedorId, h.FacturaCompraId, h.PrecioCosto, h.Anulado, h.Fecha)),
             h => Assert.Equal((e.Comprado2, e.Proveedor, factura.Id, 80m, false, factura.FechaRegistro),
                 (h.ArticuloId, h.ProveedorId, h.FacturaCompraId, h.PrecioCosto, h.Anulado, h.Fecha)));
+    }
+
+    // ---- CA5 (HU-ART-05 CA-001 y CA-002): recálculo de los comprados, y solo de ellos ----
+
+    [PostgreSqlFact]
+    public async Task Registrar_RecalculaLosPreciosDeLosComprados_YNoLosDelResto()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        Dictionary<(int Articulo, string Modalidad), (string? Base, decimal? Porcentaje, decimal? Precio, bool Manual, DateTime? Fecha, int? Usuario)> antes;
+        await using (var lectura = fixture.CrearContexto())
+            antes = await PreciosAsync(lectura);
+
+        Result<RegistrarFacturaCompraResponse> resultado;
+        await using (var contexto = fixture.CrearContexto())
+            resultado = await Caso(contexto, e).EjecutarAsync(Compra(e));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        await using var relectura = fixture.CrearContexto();
+        var registro = (await relectura.FacturaCompra.AsNoTracking().SingleAsync()).FechaRegistro;
+        var precios = await PreciosAsync(relectura);
+
+        // Comprado1: costo 180 → Lista 270, Costo 180, Efectivo 243, con la fecha del registro.
+        Assert.Equal(("CostoArticulo", (decimal?)50m, (decimal?)270m, false, (DateTime?)registro, (int?)null), precios[(e.Comprado1, "Lista")]);
+        Assert.Equal(("CostoArticulo", (decimal?)0m, (decimal?)180m, false, (DateTime?)registro, (int?)null), precios[(e.Comprado1, "Costo")]);
+        Assert.Equal(("PrecioLista", (decimal?)-10m, (decimal?)243m, false, (DateTime?)registro, (int?)null), precios[(e.Comprado1, "EfectivoTransferencia")]);
+        Assert.Equal(((string?)null, (decimal?)null, (decimal?)null, false, (DateTime?)null, (int?)null), precios[(e.Comprado1, "Tarjeta3")]);
+        Assert.Equal(((string?)null, (decimal?)null, (decimal?)null, false, (DateTime?)null, (int?)null), precios[(e.Comprado1, "Tarjeta6")]);
+        // El CasoEspecial fijado a mano no se pisa.
+        Assert.Equal(antes[(e.Comprado1, "CasoEspecial")], precios[(e.Comprado1, "CasoEspecial")]);
+        Assert.Equal((decimal?)80m, precios[(e.Comprado1, "CasoEspecial")].Precio);
+
+        // Comprado2 no tenía costo: ahora 80 → Lista 120, Costo 80, Efectivo 108.
+        Assert.Equal(((decimal?)120m, (decimal?)80m, (decimal?)108m),
+            (precios[(e.Comprado2, "Lista")].Precio, precios[(e.Comprado2, "Costo")].Precio, precios[(e.Comprado2, "EfectivoTransferencia")].Precio));
+        Assert.Equal((DateTime?)registro, precios[(e.Comprado2, "Lista")].Fecha);
+
+        // El no comprado conserva sus seis filas tal cual (CA-002 de HU-ART-05).
+        Assert.All(antes.Where(p => p.Key.Articulo == e.NoComprado), p => Assert.Equal(p.Value, precios[p.Key]));
+        Assert.Equal((decimal?)105m, precios[(e.NoComprado, "Lista")].Precio);
+    }
+
+    // Invariante de SinCosto (Fase 4): después de una compra, ningún comprado queda con una
+    // modalidad con base y sin precio.
+    [PostgreSqlFact]
+    public async Task Registrar_NingunCompradoQuedaConBaseYSinPrecio()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+
+        await using (var contexto = fixture.CrearContexto())
+            Assert.True((await Caso(contexto, e).EjecutarAsync(Compra(e))).IsSuccess);
+
+        await using var relectura = fixture.CrearContexto();
+        var conBaseSinPrecio = await relectura.ArticuloPrecioModalidad.AsNoTracking()
+            .Where(p => (p.ArticuloId == e.Comprado1 || p.ArticuloId == e.Comprado2) && p.Base != null && p.Precio == null)
+            .Select(p => new { p.ArticuloId, p.Modalidad }).ToListAsync();
+        Assert.Empty(conBaseSinPrecio);
+    }
+
+    // Un costo que entra en su columna pero da una Lista que no entra en NUMERIC(12,2):
+    // Invalido, sin excepción, y no queda nada de la compra.
+    [PostgreSqlFact]
+    public async Task PrecioRecalculadoQueNoEntraEnSuColumna_InvalidoYNoQuedaNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        var antes = await FotografiarAsync(fixture);
+        var compra = Compra(e) with
+        {
+            Lineas = new[]
+            {
+                new LineaFacturaCompraRequest(e.Comprado2, e.Sucursal2, 1m, 80m, 0m),
+                new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal1, 1m, 6_666_666_666.67m, 0m)
+            }
+        };
+
+        Exception? error = null;
+        Result<RegistrarFacturaCompraResponse>? resultado = null;
+        await using (var contexto = fixture.CrearContexto())
+        {
+            try { resultado = await Caso(contexto, e).EjecutarAsync(compra); }
+            catch (Exception excepcion) { error = excepcion; }
+        }
+
+        Assert.Null(error);
+        Assert.Equal(TipoError.Invalido, resultado!.Tipo);
+        Assert.Contains($"artículo {e.Comprado1}", resultado.Error);
+        Assert.Equal(antes, await FotografiarAsync(fixture));
+    }
+
+    [PostgreSqlFact]
+    public async Task PreciosRepositorio_ObtenerDevuelveCostoYFilasDeLosPedidos()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        await using (var sinFilas = fixture.CrearContexto())
+            await sinFilas.ArticuloPrecioModalidad.Where(p => p.ArticuloId == e.Comprado2).ExecuteDeleteAsync();
+
+        await using var contexto = fixture.CrearContexto();
+        var leidos = await new ArticuloRepositorio(contexto).ObtenerAsync(new[] { e.Comprado1, e.Comprado2, int.MaxValue });
+
+        Assert.Equal(new[] { e.Comprado1, e.Comprado2 }, leidos.Keys.Order());
+        Assert.Equal(50m, leidos[e.Comprado1].CostoVigente);
+        Assert.Empty(leidos[e.Comprado2].Precios);
+        var esperadas = CalcularPreciosArticuloUseCase.Recalcular(ReglasPrecioModalidad.ConfiguracionInicial(), 50m, CalculoAnterior)
+            .Select(p => p.Modalidad == LaCentral.UseCases.Entidades.Modalidad.CasoEspecial
+                ? p with { Precio = 80m, FechaCalculo = CalculoAnterior, UsuarioId = e.UsuarioId }
+                : p)
+            .OrderBy(p => p.Modalidad);
+        Assert.Equal(esperadas, leidos[e.Comprado1].Precios.OrderBy(p => p.Modalidad));
     }
 
     // ---- CA2 ----
@@ -350,6 +481,12 @@ public class RegistrarFacturaCompraPostgreSqlTests
     public Task Atomicidad_FallaAlAgregarElHistorialDeLaSegundaLinea_NoQuedaNada() =>
         AfirmarQueNoQuedaNadaAsync("articulo_historial_compra", "INSERT", e => $"NEW.articulo_id = {e.Comprado2}");
 
+    // CA5: el recálculo es el último paso. Falla en el precio del segundo comprado, cuando
+    // los del primero ya se escribieron.
+    [PostgreSqlFact]
+    public Task Atomicidad_FallaAlRecalcularLosPreciosDelSegundoComprado_NoQuedaNada() =>
+        AfirmarQueNoQuedaNadaAsync("articulo_precio_modalidad", "UPDATE", e => $"NEW.articulo_id = {e.Comprado2}");
+
     private async Task AfirmarQueNoQuedaNadaAsync(string tabla, string eventos, Func<Escenario, string> condicion)
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
@@ -402,20 +539,28 @@ public class RegistrarFacturaCompraPostgreSqlTests
     }
 
     /// <summary>Todo lo que una compra puede tocar, releído con un contexto nuevo.</summary>
-    private sealed record Foto(int Facturas, int Lineas, int Historial, string Stock, string Articulos);
+    private sealed record Foto(int Facturas, int Lineas, int Historial, string Stock, string Articulos, string Precios);
 
     private static async Task<Foto> FotografiarAsync(PostgreSqlPruebas fixture)
     {
         await using var contexto = fixture.CrearContexto();
         var stock = await StockAsync(contexto);
         var articulos = await ArticulosAsync(contexto);
+        var precios = await PreciosAsync(contexto);
         return new(
             await contexto.FacturaCompra.CountAsync(),
             await contexto.FacturaCompraDetalle.CountAsync(),
             await contexto.ArticuloHistorialCompra.CountAsync(),
             string.Join("; ", stock.OrderBy(s => s.Key).Select(s => $"{s.Key}={s.Value}")),
-            string.Join("; ", articulos.OrderBy(a => a.Key).Select(a => $"{a.Key}={a.Value}")));
+            string.Join("; ", articulos.OrderBy(a => a.Key).Select(a => $"{a.Key}={a.Value}")),
+            string.Join("; ", precios.OrderBy(p => p.Key).Select(p => $"{p.Key}={p.Value}")));
     }
+
+    /// <summary>Cada fila de precio, completa: lo que el recálculo escribe y lo que no debe tocar.</summary>
+    private static async Task<Dictionary<(int Articulo, string Modalidad), (string? Base, decimal? Porcentaje, decimal? Precio, bool Manual, DateTime? Fecha, int? Usuario)>> PreciosAsync(LaCentralDbContext contexto) =>
+        (await contexto.ArticuloPrecioModalidad.AsNoTracking().ToListAsync()).ToDictionary(
+            p => (p.ArticuloId, p.Modalidad),
+            p => (p.Base, p.Porcentaje, p.Precio, p.CalculoManual, p.FechaCalculo, p.UsuarioId));
 
     private static async Task<Dictionary<(int Articulo, short Sucursal), decimal>> StockAsync(LaCentralDbContext contexto) =>
         (await contexto.Stock.AsNoTracking().ToListAsync()).ToDictionary(s => (s.ArticuloId, s.SucursalId), s => s.Cantidad);
