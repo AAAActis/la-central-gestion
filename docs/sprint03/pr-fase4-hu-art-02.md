@@ -1,10 +1,10 @@
 # PR · Fase 4 Sprint 3 — HU-ART-02 · Consulta de artículos
 
-**Rama:** `feature/HU-ART-02-consultar-articulos` → base provisoria **`feature/HU-ART-01-alta-articulo`**
+**Rama:** `feature/HU-ART-02-consultar-articulos` → **`develop`**
 **Título sugerido:** `feat: busqueda y ficha de articulo con razon de ausencia de precio, y pantalla en Angular (HU-ART-02)`
 **Issue:** Closes #15
 
-> ⚠️ **Cambiar la base a `develop` cuando entre el PR de la Fase 3** (`feature/HU-ART-01-alta-articulo`). Esta rama sale de ella porque necesita el alta, `PrecioModalidad` y las seis filas de precio. Mientras la Fase 3 no esté en develop, el diff contra develop mezcla las dos fases.
+> La Fase 3 (`feature/HU-ART-01-alta-articulo`) ya está en `develop` (#117), así que el diff contra `develop` es solo de la Fase 4.
 
 ## Qué hace
 

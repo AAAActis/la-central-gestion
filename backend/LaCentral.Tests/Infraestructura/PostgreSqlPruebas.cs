@@ -41,6 +41,7 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
     private readonly NpgsqlConnection _administracion;
     private readonly string _esquema;
     private readonly string _conexionAislada;
+    private readonly List<IAsyncDisposable> _aLiberar = new();
     private bool _creado;
 
     private PostgreSqlPruebas(NpgsqlConnection administracion, string esquema, string conexionAislada)
@@ -52,7 +53,12 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
     public LaCentralDbContext CrearContexto() => new(new DbContextOptionsBuilder<LaCentralDbContext>()
         .UseNpgsql(_conexionAislada).EnableDetailedErrors().Options);
 
-    public static async Task<PostgreSqlPruebas> CrearAsync(ITestOutputHelper salida)
+    /// <param name="trasCrearEsquema">
+    /// Solo para probar la limpieza: corre sobre la conexión de administración apenas
+    /// creado el esquema, para forzar una falla real a mitad de la creación.
+    /// </param>
+    public static async Task<PostgreSqlPruebas> CrearAsync(ITestOutputHelper salida,
+        Func<NpgsqlConnection, string, Task>? trasCrearEsquema = null)
     {
         var conexion = ConexionRequerida;
         var alias = Environment.GetEnvironmentVariable("LACENTRAL_TEST_PG");
@@ -73,6 +79,8 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         config.CommandTimeout = 30;
         var admin = new NpgsqlConnection(config.ConnectionString);
         config.SearchPath = esquema;
+        // Identifica en pg_stat_activity las conexiones del pool de este esquema.
+        config.ApplicationName = esquema;
         var fixture = new PostgreSqlPruebas(admin, esquema, config.ConnectionString);
         try
         {
@@ -91,8 +99,11 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
             foreach (var entidad in entidades)
                 await fixture.ValidarTablaAsync(origen, entidad);
 
+            // El DDL de PostgreSQL es transaccional: si algo falla antes del COMMIT,
+            // incluso si se corta la conexión, el esquema no llega a existir.
+            await using var transaccion = await admin.BeginTransactionAsync();
             await fixture.EjecutarAsync($"CREATE SCHEMA {Q(esquema)}");
-            fixture._creado = true;
+            if (trasCrearEsquema is not null) await trasCrearEsquema(admin, esquema);
             foreach (var tabla in tablas)
                 await fixture.EjecutarAsync($"CREATE TABLE {Q(esquema)}.{Q(tabla)} (LIKE {Q(origen)}.{Q(tabla)} INCLUDING ALL)");
             await fixture.RestaurarNombresDeIndicesAsync(origen, tablas);
@@ -133,6 +144,8 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
             // ValueGeneratedNever. Copiar sus valores reales evita inventar IDs.
             foreach (var tabla in new[] { "rol", "sucursal" })
                 await fixture.EjecutarAsync($"INSERT INTO {Q(esquema)}.{Q(tabla)} SELECT * FROM {Q(origen)}.{Q(tabla)}");
+            await transaccion.CommitAsync();
+            fixture._creado = true;
 
             salida.WriteLine($"Proveedor real: Npgsql; base exclusiva: {config.Database}; plantilla: {origen}; esquema aislado: {esquema}.");
             salida.WriteLine("Tablas verificadas y clonadas: " + string.Join(", ", tablas));
@@ -200,6 +213,16 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         contexto.Usuario.Add(usuario);
         await contexto.SaveChangesAsync();
         return usuario.Id;
+    }
+
+    /// <summary>
+    /// Registra algo que usa el esquema (una fábrica de WithWebHostBuilder, por ejemplo)
+    /// para liberarlo junto con él y no recién al final de la clase de tests.
+    /// </summary>
+    public T Liberar<T>(T recurso) where T : IAsyncDisposable
+    {
+        _aLiberar.Add(recurso);
+        return recurso;
     }
 
     private async Task ValidarTablaAsync(string origen, IEntityType entidad)
@@ -323,9 +346,19 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
     {
         try
         {
-            if (_creado && Regex.IsMatch(_esquema, "^pr110_test_[0-9a-f]{32}$") &&
-                _administracion.State == System.Data.ConnectionState.Open)
+            for (var i = _aLiberar.Count - 1; i >= 0; i--) await _aLiberar[i].DisposeAsync();
+            _aLiberar.Clear();
+            // Cada esquema tiene su cadena y por eso su propio pool, que nadie más
+            // reutiliza: si no se vacía, sus conexiones idle agotan las ranuras (53300).
+            await using (var pool = new NpgsqlConnection(_conexionAislada)) NpgsqlConnection.ClearPool(pool);
+
+            if (_creado && Regex.IsMatch(_esquema, "^pr110_test_[0-9a-f]{32}$"))
             {
+                if (_administracion.State != System.Data.ConnectionState.Open)
+                {
+                    await _administracion.CloseAsync();
+                    await _administracion.OpenAsync();
+                }
                 await EjecutarAsync($"DROP SCHEMA {Q(_esquema)} CASCADE");
                 _creado = false;
             }

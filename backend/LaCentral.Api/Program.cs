@@ -5,6 +5,7 @@ using LaCentral.Data.Repositorios;
 using LaCentral.UseCases;
 using LaCentral.UseCases.Articulos;
 using LaCentral.UseCases.Clientes;
+using LaCentral.UseCases.FacturasCompra;
 using LaCentral.UseCases.Proveedores;
 using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -26,6 +27,7 @@ builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 builder.Services.AddScoped<IConsultaArticulosRepositorio, ArticuloRepositorio>();
 builder.Services.AddScoped<IArticuloRepositorio, ArticuloRepositorio>();
 builder.Services.AddScoped<IHistorialBajaRepositorio, HistorialBajaRepositorio>();
+builder.Services.AddScoped<IFacturaCompraRepositorio, FacturaCompraRepositorio>();
 builder.Services.AddScoped<IUnidadDeTrabajo, UnidadDeTrabajo>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
 
@@ -54,6 +56,7 @@ builder.Services.AddScoped<ReactivarClienteUseCase>();
 builder.Services.AddScoped<CrearArticuloUseCase>();
 builder.Services.AddScoped<ConsultarArticulosUseCase>();
 builder.Services.AddScoped<ObtenerArticuloDetalleUseCase>();
+builder.Services.AddScoped<RegistrarFacturaCompraUseCase>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

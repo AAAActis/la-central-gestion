@@ -1,18 +1,25 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Articulos } from './articulos';
+import { FacturaCompra } from './factura-compra';
 import { Login } from './login';
 import { SesionActual } from './sesion';
 
 @Component({
   selector: 'app-root',
-  imports: [Login, Articulos],
+  imports: [Login, Articulos, FacturaCompra],
   template: `
     @if (sesion.sesion(); as s) {
       <header>
-        <strong>La Central · Artículos</strong>
+        <nav>
+          <strong>La Central</strong>
+          <button class="pestana" [class.activa]="vista() === 'articulos'" (click)="vista.set('articulos')">Artículos</button>
+          <button class="pestana" [class.activa]="vista() === 'compra'" (click)="vista.set('compra')">Factura de compra</button>
+        </nav>
         <span>{{ s.nombreUsuario }} ({{ s.rol }}) <button class="secundario" (click)="sesion.cerrar()">Salir</button></span>
       </header>
-      <main><app-articulos /></main>
+      <main>
+        @if (vista() === 'compra') { <app-factura-compra /> } @else { <app-articulos /> }
+      </main>
     } @else {
       <main><app-login /></main>
     }
@@ -20,4 +27,5 @@ import { SesionActual } from './sesion';
 })
 export class App {
   protected readonly sesion = inject(SesionActual);
+  protected readonly vista = signal<'articulos' | 'compra'>('articulos');
 }

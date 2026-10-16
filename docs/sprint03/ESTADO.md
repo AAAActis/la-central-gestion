@@ -44,10 +44,11 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 | 2 · D10 en la aplicación | hecha (2026-10-14). Hallazgos 1, 2 y 3 del auditor arreglados. **Auditor APTO, verificador APTO (segunda pasada)** | `feature/d10-historial-baja` (pusheada; código hasta `d378c0f`, sale de `108ac1d`) | sin abrir: no hay `gh`, se abre a mano desde el link de compare. Cuerpo en `docs/sprint03/pr-fase2-d10-historial-baja.md`, reescrito el 2026-10-14. Base provisoria `fix/deuda-bloqueante-sprint3` | **2026-10-14, en `d378c0f`: 176 total · 176 passed · 0 failed · 0 skipped · 0 warnings (43 PG real)** | abrir el PR a mano; deuda abajo |
 | D1 · compuerta de esquema en la aplicación | hecha (2026-10-14): re-scaffold, conversión de `Modalidad`, suite en verde. **Auditor APTO, verificador APTO** | `feature/d1-precios-modalidad` (sale de `feature/d10-historial-baja`) | sin abrir. Cuerpo en `docs/sprint03/pr-d1-precios-modalidad.md`. Base provisoria `feature/d10-historial-baja` | **179 total · 179 passed · 0 failed · 0 skipped · 0 warnings (46 PG real)** | abrir el PR a mano |
 | — · Merge | **Fases 1, 2 y D1 mergeadas en develop** (2026-10-14): `a276272` (#113), `b0819a9` (#114), `f3c6705` (#115). Ramas borradas, locales y remotas | | | | |
-| 3 · HU-ART-01 | **cerrada (2026-10-14)**, con el script 04, las decisiones A-D y H1/H3. Ronda 1 de arreglos: **verificador APTO**, auditor APTO (pasada anterior). Ver "Fase 3" | `feature/HU-ART-01-alta-articulo` (sale de develop `f3c6705`, pusheada; código hasta `a9e7410`) | sin abrir: no hay `gh`, se abre a mano desde el link de compare. Cuerpo en `docs/sprint03/pr-fase3-hu-art-01.md`. Base `develop` | **234 total · 234 passed · 0 failed · 0 skipped · 0 warnings (77 `[PostgreSqlFact]`), en `a9e7410`** | el entregable en `frontend/` lo cubre la Fase 4 (pantalla de alta incluida) |
-| 4 · HU-ART-02 | **hecha (2026-10-15)**: búsqueda, ficha con las seis modalidades y su razón, GET por HTTP, enums por nombre y `frontend/` en Angular. **Verificador APTO, auditor APTO (ronda 1)**. Ver "Fase 4" | `feature/HU-ART-02-consultar-articulos` (sale de `feature/HU-ART-01-alta-articulo` `ca84eae`, pusheada; HEAD de código `d44bab7`) | sin abrir: no hay `gh`. Cuerpo en `docs/sprint03/pr-fase4-hu-art-02.md`. Base provisoria `feature/HU-ART-01-alta-articulo`: **cambiar a `develop` cuando entre la Fase 3** | **258 total · 258 passed · 0 failed · 0 skipped · 0 warnings (86 `[PostgreSqlFact]`), en `d44bab7`** | abrir los PR de las Fases 3 y 4 a mano; deuda abajo |
-| 5 · HU-FCO-01 | pendiente | | | | |
-| 6 · HU-ART-05 + CA5 | pendiente (misma compuerta D1) | | | | |
+| 3 · HU-ART-01 | **cerrada (2026-10-14)**, con el script 04, las decisiones A-D y H1/H3. Ronda 1 de arreglos: **verificador APTO**, auditor APTO (pasada anterior). Ver "Fase 3" | `feature/HU-ART-01-alta-articulo` (sale de develop `f3c6705`, pusheada; código hasta `a9e7410`) | **#117, MERGEADO en develop (`c958901`)**. Cuerpo en `docs/sprint03/pr-fase3-hu-art-01.md` | **234 total · 234 passed · 0 failed · 0 skipped · 0 warnings (77 `[PostgreSqlFact]`), en `a9e7410`** | el entregable en `frontend/` lo cubre la Fase 4 (pantalla de alta incluida) |
+| 4 · HU-ART-02 | **hecha (2026-10-15)**: búsqueda, ficha con las seis modalidades y su razón, GET por HTTP, enums por nombre y `frontend/` en Angular. **Verificador APTO, auditor APTO (ronda 1)**. Ver "Fase 4" | `feature/HU-ART-02-consultar-articulos` (sale de `feature/HU-ART-01-alta-articulo` `ca84eae`, pusheada; HEAD de código `d44bab7`) | **#118, MERGEADO en develop (`56c1e3e`, 2026-10-15 22:27)**. Cuerpo en `docs/sprint03/pr-fase4-hu-art-02.md` | **258 total · 258 passed · 0 failed · 0 skipped · 0 warnings (86 `[PostgreSqlFact]`), en `d44bab7`** | deuda abajo |
+| — · Merge | **Fases 3 y 4 mergeadas en develop** (2026-10-15): `c958901` (#117, Fase 3) y `56c1e3e` (#118, Fase 4, 22:27). `develop` = `56c1e3e` | | | | |
+| 5 · HU-FCO-01 | **cerrada (2026-10-15)** tras la ronda 4 (autorizada por el equipo, solo M12): **verificador APTO** (`26c02fc..f424771`), **auditor APTO** (`f34bbc4..b4fca2f`; las rondas 3 y 4 son solo de test). Ver "Compuerta de la Fase 5" | `feature/HU-FCO-01-factura-compra` (sale de `a23bb26`, que ya está en develop; pusheada, HEAD de código `f424771`) | **#119** contra **`develop`**, `Refs #32` (no lo cierra). Cuerpo en `docs/sprint03/pr-fase5-hu-fco-01.md` | **325 total · 325 passed · 0 failed · 0 skipped · 0 warnings (109 `[PostgreSqlFact]`), en `f424771`**. En `0190052`: 324 con **108** PG (el "109" que figuraba contaba una mención en un comentario) | merge del equipo |
+| 6 · HU-ART-05 + FCO-01 CA5 | **siguiente** (issue #22; cierra #22 y #32 juntos). Ver "PRÓXIMA SESIÓN" | | | | tasas de Tarjeta3/6 y política de CasoEspecial: las define el equipo |
 | 7 · HU-ART-03 | pendiente | | | | |
 
 ## Corrección 2026-10-14 · el 28P01 era una credencial, no código
@@ -483,7 +484,15 @@ prueba que la Fase 2 esté mal.
 - 2026-10-14 · `CLAUDE.md`: rutas corregidas para que sean relativas a la raíz (`backend/LaCentral.Data/Models/`, `backend/LaCentral.Data/LaCentralDbContext.Personalizaciones.cs`, `backend/LaCentral.Tests/Infraestructura/PostgreSqlPruebas.cs`, `backend/LaCentral.Api/Program.cs`, `backend/LaCentral.UseCases/LaCentral.UseCases.csproj`, `graphify-out/GRAPH_REPORT.md`). Además se aclara dónde está la solución y dónde corre dotnet.
 - 2026-10-14 · `.gitignore`: `settings.json` ya estaba versionado (`d348ae4`), pero la regla `.claude/settings.json` lo seguía marcando como ignorado. Se reemplaza por `.claude/settings.local.json`, para los ajustes de cada máquina. Ojo: `settings.json` tiene la ruta absoluta de `graphify.exe` de una sola máquina.
 - 2026-10-14 · **D1, conversión texto ↔ `Modalidad`:** va en el mapeo del repositorio (`ModalidadPersistida`), no como value converter. El modelo scaffoldeado declara `string Modalidad`, y un value converter necesita que la propiedad CLR sea el enum: para eso habría que editar `Models/` o ignorar la propiedad generada y agregar otra a mano. Justificación completa en `docs/sprint03/pr-d1-precios-modalidad.md`.
-- 2026-10-14 · **D1:** `ObtenerDetallePorIdAsync` sin filas en `articulo_precio_modalidad` sigue devolviendo `PreciosPorModalidad = null`. Qué mostrar cuando falta una modalidad, y la razón de la ausencia, lo define HU-ART-02 (Fase 4).
+- 2026-10-14 · **D1:** `ObtenerDetallePorIdAsync` sin filas en `articulo_precio_modalidad` sigue devolviendo `PreciosPorModalidad = null`. Qué mostrar cuando falta una modalidad, y la razón de la ausencia, lo define HU-ART-02 (Fase 4). **Superado en la Fase 4 (abajo).**
+- 2026-10-15 · **Fase 4 · validación de la búsqueda en el caso de uso:** `ConsultaArticulos.Validar()` devuelve `Result` y la llama `ConsultarArticulosUseCase`. El repositorio ya no valida ni lanza `ArgumentException`.
+- 2026-10-15 · **Fase 4 · la ficha devuelve SIEMPRE las seis modalidades**, con `RazonAusenciaPrecio` cuando falta el precio (`SinConfiguracion`, `CasoEspecialNoFijado`, `TasaSinDefinir`, `SinCosto`, en ese orden). `PreciosPorModalidad` deja de ser anulable.
+- 2026-10-15 · **Fase 4 · enums por nombre en HTTP:** `JsonStringEnumConverter` global (`Modalidad`, `BasePrecio`, `RazonAusenciaPrecio`).
+- 2026-10-15 · **Fase 5 · `CostoUnitario` = precio unitario neto del descuento de la línea, SIN IVA y SIN prorratear percepciones.** Redondeado a centavos, el medio centavo lejos del cero. Las percepciones son de la cabecera (D8: datos sin lógica financiera). Vive en un solo lugar: `FacturaCompraDetalle.CostoUnitario`. **Confirmado por el equipo.**
+- 2026-10-15 · **Fase 5 · un artículo dado de baja no admite compras** (`Invalido`, "reactivalo antes"), igual que el proveedor inactivo (CA1). **Confirmado por el equipo.**
+- 2026-10-15 · **Fase 5 · `ObtenerNumeroActivoAsync` reemplaza a `ExisteNumeroActivoAsync`** (el nombre del plan), porque CA2 pide informar CON QUÉ factura choca. Devuelve `FacturaCompraExistente(Id, Numero, FechaEmision)` o null. Mismo criterio que 1.3 (`ObtenerPorCodigoAsync`).
+- 2026-10-15 · **Fase 5 · stock con el incremento en el motor:** `INSERT ... ON CONFLICT DO UPDATE ... WHERE stock.cantidad + EXCLUDED.cantidad < 1e9`. 0 filas → `Invalido` y la unidad de trabajo revierte. El borde está fijado por los dos lados (`0190052` rechazo, `f424771` aceptado).
+- 2026-10-15 · **Ramas (corrige la entrada de "Decisiones" de abajo):** las Fases 3 y 4 YA están en develop (#117 y #118). La Fase 5 abre su PR contra `develop`.
 
 ## Deuda nueva detectada
 (el agente la asienta acá, con archivo y línea)
@@ -536,11 +545,87 @@ prueba que la Fase 2 esté mal.
 - 2026-10-15 · **Auditor · seguridad de datos:** `lacentral_test.public` tiene 124 proveedores y 2108 clientes, los mismos conteos que `CLAUDE.md` da para los datos reales. Parece una copia de datos reales, en el mismo servidor y con el mismo rol `lacentral` (SUPERUSER) que la base principal. `ValidarBase` solo mira el nombre de la base. La suite no modifica `public`. Lo decide el equipo.
 - 2026-10-15 · Los subagentes no pueden borrar su worktree con `git worktree remove` en Windows ("Filename too long", por la ruta larga del scratchpad): lo borran a mano y corren `prune`. Habría que usar una ruta más corta o activar `core.longpaths`.
 - 2026-10-15 · `.claude/agents/verificador-tdd.md`, encabezado de PRESUPUESTO: dice "la suite es caraCorrer", le falta un salto de línea. No se tocó porque la definición es del equipo.
+- 2026-10-15 · **NUL en un texto → 500 en TODO el proyecto (22021).** POST `/api/facturas-compra` con `numero = "A\u0000B"` da `invalid byte sequence for encoding "UTF8": 0x00` y termina en 500 (sin escribir nada). Ni los casos de uso ni `ManejadorExcepcionesGlobal` tratan el 22021, así que pasa en cualquier endpoint que guarde texto. **Decisión del equipo:** se traduce el 22021 a 400 en el manejador global. Es la primera unidad de la Fase 6: test HTTP en rojo (500) en facturas de compra y en al menos un segundo endpoint (artículos o clientes), para demostrar que es global.
+- 2026-10-15 · **Invariante de `SinCosto` que la Fase 6 tiene que mantener.** La ficha informa `SinCosto` para toda modalidad "con base y sin precio" (Fase 4). Es correcto solo mientras un artículo con costo tenga sus precios calculados. Desde la Fase 5 la compra escribe el costo, y todavía NO recalcula: hoy una compra deja artículos con costo y precio null, que la ficha mostraría como `SinCosto`, lo cual es falso. **La Fase 6 tiene que recalcular en la MISMA unidad de trabajo de `RegistrarFacturaCompraUseCase`** (el punto de integración está marcado ahí), con un test PG que relea, con un contexto nuevo, costo y precios de cada comprado. En `lacentral_test` hay 0 casos (ninguna compra registrada en `public`).
 
 ## Premisas del plan que no coinciden con el código (revisar antes de la fase)
 - 2026-10-13 · **Fase 2:** el plan dice "NINGÚN repositorio escribe en [las tablas de historial]". Falso para cliente y proveedor: `LaCentral.Data/Repositorios/ClienteRepositorio.cs:176-191` y `ProveedorRepositorio.cs:154-169` ya abren y cierran la baja en `*_historial_baja` dentro del repositorio, sin puerto. Lo cubren los tests PG `DosCiclos..._ConservanEstadoEHistorial...`. Artículo y usuario no escriben historial. La Fase 2 pasa a ser extraer un puerto `IHistorialBajaRepositorio` y mover esa lógica, más los usuarios de baja/reactivación desde IContextoUsuario, no construirla desde cero. (Aplicada en la Fase 2.)
 - 2026-10-13 · **Fase 4:** el plan dice que el test del comodín ("100%_original") corre sobre InMemory. Hoy `ArticuloRepositorioTests.Busqueda_PermiteInactivosYNoInterpretaComodinesSQL` es `[PostgreSqlFact]` y corrió contra PostgreSQL real. Verificar si cubre ese caso exacto antes de duplicarlo. **Resuelto en la Fase 4 (2026-10-15):** usaba el texto exacto pero no discriminaba. Se agregó `Busqueda_100PorcientoGuionBajoOriginal_TraeSoloElLiteral`.
 - 2026-10-14 · **Fases 3, 4 y 6 (D1):** ~~el comentario de `articulo_margen` todavía dice "0,01 % = precio igual al costo", mientras que D1 dice Costo = × 1,00~~ (la tabla ya no existe, 2026-10-14). **Resuelto en la Fase 3 (2026-10-14):** `MargenModalidad` y `CalcularPrecioEstimado` ya no existen. Ahora están `PrecioModalidad`, `BasePrecio` y `ReglasPrecioModalidad`, con Efectivo sobre PrecioLista y CasoEspecial manual. `CalcularPreciosArticuloUseCase` sigue sin existir: es de la Fase 6. Lo que sigue es el texto original. **Seguía en pie:** la tabla nueva tiene dónde guardar `precio` y `calculo_manual`, pero el dominio no se alineó todavía: eso es de la Fase 3. Además, el comentario de la tabla nombra un `CalcularPreciosArticuloUseCase` que todavía no existe. El modelo "porcentaje sobre costo" de `MargenModalidad`/`CalcularPrecioEstimado` no expresa Efectivo (sobre Lista), CasoEspecial (precio fijo) ni la razón de la ausencia. Detalle en `informe-compuerta-d1.md`.
+
+## Decisiones
+- 2026-10-15 · **Rol de test `lacentral_tests`.** La suite corre con un rol sin superusuario: CONNECT + CREATE sobre `lacentral_test`, solo SELECT en `public`, sin acceso a `lacentral`. Lo aplicó el equipo y quedó versionado en `backend/db/rescaffold/05_rol_tests.sql` (sin contraseña), reconstruido leyendo el catálogo. Con este rol: 261/261, ningún 42501.
+- 2026-10-15 · **`LACENTRAL_TEST_PG` del proceso estaba vieja.** El valor del ámbito User apunta a `lacentral_tests`, pero el proceso de la sesión heredaba uno anterior con `lacentral`. Las corridas toman el valor del ámbito User y abortan si no es `lacentral_tests`.
+- 2026-10-15 · **Ramas.** Las Fases 3 y 4 NO están en `develop` (`develop` = `f3c6705`). La Fase 5 sale del HEAD de `feature/HU-ART-02-consultar-articulos` (`a23bb26`), con esa rama como base provisoria del PR. Las Fases 6 y 7 se apilan sobre la anterior.
+- 2026-10-15 · **PRs con `gh`.** `gh` está instalado en `C:\Program Files\GitHub CLI\` (fuera del PATH de bash) y autenticado: desde la Fase 5, los PRs los abre el agente.
+- 2026-10-15 · **PR #117 (para el equipo):** el head es `feature/HU-ART-01-alta-articulo` (Fase 3), pero el título describe HU-ART-02 (Fase 4). La rama de la Fase 4 no tiene PR. No se tocó.
+- 2026-10-15 · **Decisiones del equipo (consigna de la sesión):**
+  - Se autoriza la 3ª ronda de la Fase 5. De acá en adelante, el límite de rondas es el de CLAUDE.md (3), no 2.
+  - **Costo de la línea confirmado:** precio unitario neto del descuento de la línea, SIN IVA, sin prorratear percepciones. Si el modelo guardara el precio de la línea con IVA incluido, se para y se informa.
+  - **Un artículo dado de baja no admite compras.** Confirmado.
+  - **NUL en un texto:** se resuelve en `ManejadorExcepcionesGlobal`, traduciendo el 22021 a 400 (un solo lugar para todos los endpoints). Primera unidad de la Fase 6, con TDD: primero el test HTTP en rojo (500), con al menos un segundo endpoint (artículos o clientes) para demostrar que es global.
+
+## PASO 0 de la sesión de Fases 5-7 (2026-10-15)
+- `git worktree list`: solo el principal. `core.longpaths true`. El esquema `pr110_test_d4b8a811...` **ya no existe** (lo borró el equipo). Hay un esquema `staging` que no es de la suite: no se tocó.
+- Línea base con `lacentral_tests`: 253/258. Los 5 que fallaron eran 53300; ninguno 42501.
+- **Causa del 53300 (TDD, `1473f77` estructura → `3037344` rojo → `fix` siguiente):** (a) si la conexión de administración se cortaba a mitad de la creación, el esquema quedaba huérfano (`DisposeAsync` solo borraba con la conexión abierta); (b) cada esquema tiene su propia cadena y, por lo tanto, su propio pool, que nunca se vaciaba; (c) las fábricas de `WithWebHostBuilder` vivían hasta el final de la clase. Arreglo: creación en UNA transacción (el DDL de PostgreSQL es transaccional), `ClearPool` y `Liberar()` en `DisposeAsync`, y reapertura de la conexión de administración antes del DROP. Tests: `PostgreSqlPruebasLimpiezaTests` (3 PG, rojo por aserción).
+- **Compuerta:** dos corridas completas seguidas, **261/261 (89 PG)**, sin 53300. Al terminar: 0 conexiones idle de `lacentral_tests` y 0 esquemas `pr110_test_*`.
+- Hook de graphify: `graphify` por PATH, verificado (se dispara). El grafo se actualiza solo con el hook post-commit.
+
+## Fase 5 · HU-FCO-01 · Factura de compra (2026-10-15)
+Rama `feature/HU-FCO-01-factura-compra`, sale de `a23bb26` (HEAD de la Fase 4). Suite al cerrar la unidad HTTP + frontend: **309/309, 105 `[PostgreSqlFact]`**, 0 warnings.
+
+**Premisas contrastadas con el código:**
+- El plan nombra `ExisteNumeroActivoAsync`. CA2 pide informar CON QUÉ factura choca, así que el puerto es `ObtenerNumeroActivoAsync` y devuelve `FacturaCompraExistente(Id, Numero, FechaEmision)`, o null.
+- `ux_factura_compra_numero_activa` ya existe y el manejador global ya lo reconocía (409).
+- `IContextoUsuario` NO expone el rol (solo `UsuarioId`, `NombreUsuario`, `SucursalId`). Eso importa para la Fase 7.
+- `factura_compra.percepcion_*` tienen DEFAULT 0. Las cuatro van siempre, con 0 si no se informan.
+
+**Decisiones técnicas (2026-10-15):**
+- **Costo de la línea = precio unitario neto del descuento de la línea**, redondeado a centavos con el medio centavo lejos del cero (el criterio de PostgreSQL para NUMERIC). Las percepciones son de la cabecera y no se prorratean al costo (D8: datos sin lógica financiera). Vive en un solo lugar: `FacturaCompraDetalle.CostoUnitario`. **Para que lo confirme el equipo:** si el costo tuviera que ser el precio bruto, se cambia esa propiedad y sus 6 casos de test.
+- Un artículo **dado de baja** no admite compras (`Invalido`, "reactivalo antes"), igual que el proveedor inactivo (CA1). Confirmar con el equipo.
+- Validaciones del núcleo: número 1-30 caracteres, vencimiento ≥ emisión, percepciones ≥ 0, y por línea cantidad > 0, precio ≥ 0, descuento 0-100, un artículo por línea (es la PK del detalle) y sucursal real (D9).
+- Stock: `INSERT ... ON CONFLICT DO UPDATE SET cantidad = stock.cantidad + EXCLUDED.cantidad`. El motor hace el incremento (dos compras simultáneas no se pisan) y crea la fila si no existía.
+- 201 con `Location: /api/facturas-compra/{id}`, sin GET (la consulta de facturas es otra HU), con el mismo precedente que la Fase 3.
+- CA5: el punto de integración quedó marcado dentro de la unidad de trabajo de `RegistrarFacturaCompraUseCase`. **#32 NO se cierra hasta la Fase 6.**
+
+**Atomicidad (el test más importante del sprint).** En `RegistrarFacturaCompraPostgreSqlTests` hay un test PG por punto de falla. Cada uno fuerza al MOTOR a fallar con un trigger en el esquema aislado, en la segunda línea, cuando la primera ya escribió. Puntos: índice de número activo (carrera real), cabecera, detalle, stock, artículo (costo y último proveedor) e historial. Todos afirman con un contexto nuevo que no quedó cabecera, detalle, stock, costo, último proveedor ni historial. Mutaciones sin commitear: `UnidadDeTrabajo` sin transacción → 3 de 6 en rojo (los otros 3 caen dentro del primer SaveChanges, que ya es atómico); si además se escribe el stock antes que la cabecera → 6 de 6 en rojo.
+
+**Commits (TDD por unidad):** `2dda597` estructura → `05241ab` rojo Moq (31 rojos; `CostoUnitario(100,100)` pasa a la primera, se verificó con mutación) → `42cad4a` caso de uso → `ba4044c` rojo PG (10) → `97cdbea` repositorio → `f760405` rojo HTTP (5) → `c69ca86` controlador → `f7f8b27` 400 sin emisión (pasa a la primera; sin `[Required]` da 500) → `cdee847` frontend.
+
+**Frontend:** `frontend/src/app/factura-compra.ts`, una pestaña nueva en el header. No calcula costos: al registrar, relee la ficha de cada artículo comprado. Prueba de humo por el proxy, API con el rol `lacentral_tests` (solo SELECT en public), **solo lecturas**: proveedores sin token → 401; proveedores "a" → 200 con 4; ficha → 6 modalidades y 2 sucursales; POST sin token → 401; POST sin líneas → 400 (valida antes de escribir). `public.factura_compra` sigue con 0 filas.
+
+### Compuerta de la Fase 5 (2026-10-15), subagentes de a uno, cada uno en su worktree · **SE PARÓ**
+| Pasada | Alcance | Veredicto | Qué |
+|---|---|---|---|
+| verificador | `a23bb26..505301c` | NO APTO | B1: sin la guarda "no existe", el test solo miraba "999". B2: `<` → `<=` en el vencimiento no lo detectaba nada. 20 mutaciones más murieron. |
+| ronda 1 (tests) | `12480a2` (+ `10a0f0b` no bloqueante) | — | mensaje exacto de "no existe"; vencimiento el mismo día de la emisión; el proveedor inexistente afirma su mensaje. |
+| verificador | `505301c..12480a2` | **APTO** | B1/B2 y 8 mutaciones extra en rojo. 310/310. |
+| auditor | `a23bb26..10a0f0b` | NO APTO | H1: el núcleo aceptaba valores que NUMERIC no guarda (cantidad 0,0004 → 23514; 1e10 → 22003) → 500. |
+| ronda 1 (producción) | `3e110cb` rojo → `f34bbc4` | — | `EntraEnColumna`: (12,3) cantidad, (14,2) precio y percepciones, (6,2) descuento. |
+| auditor | `10a0f0b..f34bbc4` | NO APTO | H1 cerrado. Residuo: la suma al stock existente puede desbordar `stock.cantidad` (22003 → 500). |
+| ronda 2 (producción) | `0b7da32` estructura → `163b2cc` rojo → `b4fca2f` | — | upsert con `WHERE stock.cantidad + EXCLUDED.cantidad < 1e9`; 0 filas → Invalido, el caso de uso lo propaga, la UoW revierte. |
+| auditor | `f34bbc4..b4fca2f` | **APTO** | residuo cerrado contra el motor: borde exacto, stock negativo previo, sin fila previa y dos compras simultáneas (una 201, otra 400). 323/323. |
+| verificador | `10a0f0b..b4fca2f` | **NO APTO** | M11: `<` → `<=` en el WHERE del upsert sobrevive (65/65 en verde). El test de desborde usa una suma muy por encima del límite y no fija el borde. Las otras 10 mutaciones murieron. 323/323. |
+| ronda 3 (test, autorizada 2026-10-15) | `0190052` | — | `StockQueLlegaJustoAlLimiteDeSuColumna_InvalidoYNoQuedaNada`: stock previo 0,001 + 999.999.999,999 → Invalido, foto igual, sin excepción. Con `<=` (sin commitear) → rojo por 22003. |
+| verificador | `89e0202..0190052` | **NO APTO** | M11 cerrado (rojo por 22003 con `<=`; también mueren "sin `+ EXCLUDED.cantidad`" y `<` → `>`). **M12 sobrevive:** `LimiteStock = 1_000_000_000m` → `999_999_999.999m` (55/55 FacturaCompra + 8/8 API en verde). Ningún test fija el lado ACEPTADO del borde: una suma de exactamente 999.999.999,999 entra en NUMERIC(12,3) y la mutación la rechazaría. 324/324. |
+| ronda 4 (test, autorizada por el equipo 2026-10-15, solo M12) | `f424771` | — | `StockQueQuedaEnElMaximoDeSuColumna_SeRegistraYSeGuarda`: stock previo 0,001 + 999.999.999,998 → éxito, relectura con contexto nuevo = 999.999.999,999. Pasa contra producción (la constante es correcta); el rojo es contra M12. |
+| verificador | `26c02fc..f424771` | **APTO** | `f424771` toca solo `Tests/`. **M12 muere** por aserción (`RegistrarFacturaCompraPostgreSqlTests.cs:325`, `IsSuccess` falso con el Invalido de producción "superaría el máximo"). **M11 sigue muriendo** (22003 capturado en L297/300). Build `--no-incremental` 0 warnings; **325/325**, 109 `[PostgreSqlFact]`. Worktree borrado. |
+
+**Fase 5 CERRADA (2026-10-15, ronda 4):** los dos subagentes dan APTO. Lo que sigue (por qué se paró después de las rondas 2 y 3) queda como registro.
+
+**Por qué se paró (2026-10-15, después de la ronda 3):** CLAUDE.md y la consigna: "NO APTO después de 3 rondas → PARÁS". Rondas: 1 (B1/B2 + H1), 2 (desborde de stock), 3 (borde M11). El verificador dio NO APTO sobre la ronda 3 por M12. No se hizo push ni se abrió el PR; `docs/sprint03/pr-fase5-hu-fco-01.md` queda escrito para cuando haya APTO. Las Fases 6 y 7 no se empezaron.
+
+**Lo que haría falta para APTO (solo un test, sin cambios de producción):** el espejo del test de la ronda 3. Un caso PG con stock previo 0,001 y una línea de 999.999.999,998 (suma 999.999.999,999), que espere éxito y relea la fila de stock con un contexto nuevo (= 999.999.999,999). Con la constante mutada daría Invalido → rojo. Requiere que el equipo autorice una 4ª ronda (excede el límite de CLAUDE.md).
+
+**Antecedente (pasada anterior):** la consigna de la sesión dice "PARÁS si después de dos rondas de arreglos sigue habiendo un NO APTO". Las dos rondas ya se hicieron (ronda 1: B1/B2 + H1; ronda 2: el desborde de stock) y el verificador dio NO APTO sobre el código de la ronda 2. No se hizo push ni se abrió el PR.
+
+**Lo que haría falta para APTO (solo un test, sin cambios de producción):** un caso PG en el borde, con stock previo 0,001 y una línea de 999.999.999,999 (suma exacta de 1e9) que espere Invalido, foto igual y ninguna excepción. Con `<=` la suma pasaría el WHERE y daría 22003, y el test quedaría en rojo. El auditor ya probó a mano que, con `<`, ese caso da 400 sin escritura (sonda S2b). Si el equipo autoriza una tercera ronda (CLAUDE.md admite hasta 3), es ese único commit de test, seguido de la verificación acotada del verificador.
+
+**Deuda nueva (la decide el equipo):**
+- **NUL en un texto → 500 (todo el proyecto).** El auditor lo encontró: POST `/api/facturas-compra` con `numero = "A\u0000B"` da 22021 (`invalid byte sequence for encoding "UTF8": 0x00`) y termina en 500, sin escribir nada. Ningún caso de uso ni el manejador global trata el 22021, así que muy probablemente pase en todo endpoint con texto (solo se probó en facturas de compra). La decisión es si se traduce el 22021 a 400 de forma global, o si se rechazan los caracteres de control al recibir el JSON.
+- Después de un fallo de `RegistrarConEfectosAsync`, el DbContext conserva entidades rastreadas. Hoy no tiene efecto, porque el contexto vive lo que dura la petición; habría que limpiarlo si algún día se reutiliza.
+- El rango de `EntraEnColumna` para el descuento (|x| < 10.000) es inalcanzable: antes corre la guarda 0-100. No es una guarda propia: es la función compartida.
 
 ## Revisión de la Fase 1 por el equipo (2026-10-13)
 - Fase 1 verificada contra el grafo (`bf845dbc`): los nueve ítems están. El PR todavía no se abrió (no hay `gh`): abrirlo a mano desde la rama `fix/deuda-bloqueante-sprint3` con el cuerpo de `pr-fase1-deuda-bloqueante.md`.
@@ -550,17 +635,35 @@ prueba que la Fase 2 esté mal.
 - Los subagentes y los hooks de graphify se copiaron a `backend/.claude/` (agents/ y settings.json). En la sesión de la Fase 1 NO cargaron, porque se leen al iniciar la sesión: `Agent type 'verificador-tdd' not found`. Se reinicia la sesión antes de la Fase 2. (Superado el 2026-10-14: la configuración vive en la raíz y carga.)
 
 ## PRÓXIMA SESIÓN — arrancar acá
-Arrancar en la **raíz del repo**. Objetivo: **Fase 5 · HU-FCO-01 · Factura de compra (Issue #32)**, rama `feature/HU-FCO-01-factura-compra`.
+Arrancar en la **raíz del repo**. Estado al 2026-10-15:
 
-0. **Al empezar:**
-   - confirmar que `git worktree list` muestra solo el principal;
-   - confirmar que `dotnet test` da 258/258 con 86 PG;
-   - ¿el equipo borró el esquema huérfano `pr110_test_d4b8a811...`? (ver "Deuda").
-1. **PRs abiertos a mano, sin `gh`:**
-   - Fase 3, `feature/HU-ART-01-alta-articulo` → `develop`. Cuerpo en `pr-fase3-hu-art-01.md`.
-   - Fase 4, `feature/HU-ART-02-consultar-articulos` → base provisoria Fase 3. Cuerpo en `pr-fase4-hu-art-02.md`. **Cambiar la base a `develop` cuando entre la Fase 3.**
-2. **Antes de la rama:** ¿las Fases 3 y 4 ya están en develop? Si no, PREGUNTAR de qué rama sale la Fase 5. Necesita al menos el alta de artículo de la Fase 3.
-3. **Fase 5** (detalle en `PLAN_SPRINT3.md`, FASE 5):
-   - es la fase con el test de atomicidad más importante del sprint;
-   - entregable visible en `frontend/` (ya existe: Angular, ver `frontend/README.md`).
-   - Al cerrar: los dos subagentes (APTO los dos), el PR, este archivo, y PARAR.
+- **`develop` = `56c1e3e`**: Fases 1, 2, D1, 3 (#117) y 4 (#118) mergeadas.
+- **Fase 5 (HU-FCO-01, #32): CERRADA (2026-10-15)**, verificador APTO (ronda 4) y auditor APTO. Rama `feature/HU-FCO-01-factura-compra` pusheada, **PR #119** contra `develop`. Suite en `f424771`: **325/325, 109 `[PostgreSqlFact]`**, 0 warnings. Falta que el equipo lo mergee.
+- **#32 sigue ABIERTO a propósito:** su CA5 (recalcular precios al comprar) es de la Fase 6.
+
+### FASE 6 · HU-ART-05 + FCO-01 CA5 · issue #22
+Rama `feature/HU-ART-05-precios-modalidad`. Sale del HEAD de la Fase 5 si su PR todavía no entró; si ya entró, de `develop`. Plan: `docs/sprint03/PLAN_SPRINT3.md`, sección "FASE 6".
+
+**Bloqueos reales (los decide el equipo, NO el agente):**
+1. **Tasas de Tarjeta3 y Tarjeta6: SIN DEFINIR (D1).** No se inventa un número. En producción esas modalidades siguen sin base ni porcentaje y la ficha informa `TasaSinDefinir`. Los tests pueden usar tasas **claramente nombradas como de prueba** (plan, Fase 6), nunca presentadas como comerciales. Cuando el equipo dé las tasas, entran como configuración, no en el código.
+2. **CasoEspecial: el recálculo NO pisa su precio.** Política vigente: CasoEspecial nace con `calculo_manual = true` y toda fila manual queda intacta (el CHECK ya obliga a porcentaje null en filas manuales). Fijar o cambiar el precio de CasoEspecial no tiene endpoint ni HU: si la Fase 6 lo necesita, se PARA y se pregunta.
+
+**Orden de trabajo:**
+1. **Unidad del NUL (primera, decisión del equipo):** el 22021 → 400 en `ManejadorExcepcionesGlobal`. Test HTTP en rojo (500) en facturas de compra y en un segundo endpoint (artículos o clientes), commit aparte, después el fix. Ver "Deuda nueva detectada".
+2. **`CalcularPreciosArticuloUseCase`, ÚNICA regla de cálculo:** mover ahí `ReglasPrecioModalidad.Calcular`, con sus tests reapuntados (ninguno se borra). Es el nombre que ya cita el comentario de `articulo_precio_modalidad`. La API y el frontend no duplican fórmulas.
+   - Ejemplos obligatorios en los tests, con costo 100: Lista → 150 · Costo → 100 · EfectivoTransferencia → 135.
+   - Sin costo o sin configuración → null con su razón, nunca cero.
+3. **Integración (CA5):** recalcular y persistir las modalidades automáticas de los artículos comprados **dentro de la misma unidad de trabajo** de `RegistrarFacturaCompraUseCase` (el punto está marcado ahí).
+   - Mantiene el **invariante de `SinCosto`** (ver "Deuda nueva detectada"): ningún artículo con costo puede quedar con una modalidad con base y precio null.
+   - Una compra cambia SOLO los precios de los comprados, no los del resto del catálogo: test PG que relea con un contexto nuevo los comprados y un no comprado.
+   - Atomicidad: si falla el recálculo, no queda nada de la compra (sumar el punto de falla a los de `RegistrarFacturaCompraPostgreSqlTests`).
+4. **Cierre:** recién acá se cierran **#32 y #22 juntos**, verificando CA5 y CA1 en el mismo recorrido. Auditor y verificador de a uno, cada uno en su worktree. **ESTADO.md se actualiza ANTES del push** (regla de `CLAUDE.md`).
+
+### Después: Fase 7 · HU-ART-03 (#17)
+- `IContextoUsuario` **no expone el rol**. **Contradicción a resolver con el equipo antes de empezar:** el plan dice "el rol sale de IContextoUsuario" y la consigna del 2026-10-15 dice usar `[Authorize(Roles=...)]` "salvo que el plan diga otra cosa", y el plan dice otra cosa.
+
+### Cómo correr los tests
+La `LACENTRAL_TEST_PG` del proceso puede estar vieja (apuntaba a `lacentral`). Exportá la del ámbito User antes de `dotnet test` (desde `backend/`) y abortá si el usuario no es `lacentral_tests`:
+`export LACENTRAL_TEST_PG="$(powershell.exe -NoProfile -Command "[Environment]::GetEnvironmentVariable('LACENTRAL_TEST_PG','User')" | tr -d '\r')"`
+
+`gh` está en `"/c/Program Files/GitHub CLI/gh.exe"` (fuera del PATH de bash), autenticado.
