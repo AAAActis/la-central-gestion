@@ -47,8 +47,8 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 | 3 · HU-ART-01 | **cerrada (2026-10-14)**, con el script 04, las decisiones A-D y H1/H3. Ronda 1 de arreglos: **verificador APTO**, auditor APTO (pasada anterior). Ver "Fase 3" | `feature/HU-ART-01-alta-articulo` (sale de develop `f3c6705`, pusheada; código hasta `a9e7410`) | **#117, MERGEADO en develop (`c958901`)**. Cuerpo en `docs/sprint03/pr-fase3-hu-art-01.md` | **234 total · 234 passed · 0 failed · 0 skipped · 0 warnings (77 `[PostgreSqlFact]`), en `a9e7410`** | el entregable en `frontend/` lo cubre la Fase 4 (pantalla de alta incluida) |
 | 4 · HU-ART-02 | **hecha (2026-10-15)**: búsqueda, ficha con las seis modalidades y su razón, GET por HTTP, enums por nombre y `frontend/` en Angular. **Verificador APTO, auditor APTO (ronda 1)**. Ver "Fase 4" | `feature/HU-ART-02-consultar-articulos` (sale de `feature/HU-ART-01-alta-articulo` `ca84eae`, pusheada; HEAD de código `d44bab7`) | **#118, MERGEADO en develop (`56c1e3e`, 2026-10-15 22:27)**. Cuerpo en `docs/sprint03/pr-fase4-hu-art-02.md` | **258 total · 258 passed · 0 failed · 0 skipped · 0 warnings (86 `[PostgreSqlFact]`), en `d44bab7`** | deuda abajo |
 | — · Merge | **Fases 3 y 4 mergeadas en develop** (2026-10-15): `c958901` (#117, Fase 3) y `56c1e3e` (#118, Fase 4, 22:27). `develop` = `56c1e3e` | | | | |
-| 5 · HU-FCO-01 | **cerrada (2026-10-15)** tras la ronda 4 (autorizada por el equipo, solo M12): **verificador APTO** (`26c02fc..f424771`), **auditor APTO** (`f34bbc4..b4fca2f`; las rondas 3 y 4 son solo de test). Ver "Compuerta de la Fase 5" | `feature/HU-FCO-01-factura-compra` (sale de `a23bb26`, que ya está en develop; pusheada, HEAD de código `f424771`) | **#119** contra **`develop`**, `Refs #32` (no lo cierra). Cuerpo en `docs/sprint03/pr-fase5-hu-fco-01.md` | **325 total · 325 passed · 0 failed · 0 skipped · 0 warnings (109 `[PostgreSqlFact]`), en `f424771`**. En `0190052`: 324 con **108** PG (el "109" que figuraba contaba una mención en un comentario) | merge del equipo |
-| 6 · HU-ART-05 + FCO-01 CA5 | **siguiente** (issue #22; cierra #22 y #32 juntos). Ver "PRÓXIMA SESIÓN" | | | | tasas de Tarjeta3/6 y política de CasoEspecial: las define el equipo |
+| 5 · HU-FCO-01 | **cerrada (2026-10-15)** tras la ronda 4 (autorizada por el equipo, solo M12): **verificador APTO** (`26c02fc..f424771`), **auditor APTO** (`f34bbc4..b4fca2f`; las rondas 3 y 4 son solo de test). Ver "Compuerta de la Fase 5" | `feature/HU-FCO-01-factura-compra` (sale de `a23bb26`, que ya está en develop; pusheada, HEAD de código `f424771`) | **#119, MERGEADO en develop** (`d9ab678`; develop = `a47a866` con #120). `Refs #32` (no lo cierra). Cuerpo en `docs/sprint03/pr-fase5-hu-fco-01.md` | **325 total · 325 passed · 0 failed · 0 skipped · 0 warnings (109 `[PostgreSqlFact]`), en `f424771`**. En `0190052`: 324 con **108** PG (el "109" que figuraba contaba una mención en un comentario) | — |
+| 6 · HU-ART-05 + FCO-01 CA5 | **cerrada (2026-10-16)**: NUL → 400, `CalcularPreciosArticuloUseCase` única regla, D11, recálculo al comprar en la misma unidad de trabajo. **Verificador APTO (ronda 1), auditor APTO**. Ver "Fase 6" | `feature/HU-ART-05-precios-modalidad` (sale de develop `a47a866`; **sin push**, HEAD `638afe4` + este ESTADO) | sin abrir. Cuerpo en `docs/sprint03/pr-fase6-hu-art-05.md` (Closes #22, Closes #32) | **351 total · 351 passed · 0 failed · 0 skipped · 0 warnings (117 `[PostgreSqlFact]`), en `638afe4`** | push y PR con OK de Javi; deuda abajo |
 | 7 · HU-ART-03 | pendiente | | | | |
 
 ## Corrección 2026-10-14 · el 28P01 era una credencial, no código
@@ -545,8 +545,14 @@ prueba que la Fase 2 esté mal.
 - 2026-10-15 · **Auditor · seguridad de datos:** `lacentral_test.public` tiene 124 proveedores y 2108 clientes, los mismos conteos que `CLAUDE.md` da para los datos reales. Parece una copia de datos reales, en el mismo servidor y con el mismo rol `lacentral` (SUPERUSER) que la base principal. `ValidarBase` solo mira el nombre de la base. La suite no modifica `public`. Lo decide el equipo.
 - 2026-10-15 · Los subagentes no pueden borrar su worktree con `git worktree remove` en Windows ("Filename too long", por la ruta larga del scratchpad): lo borran a mano y corren `prune`. Habría que usar una ruta más corta o activar `core.longpaths`.
 - 2026-10-15 · `.claude/agents/verificador-tdd.md`, encabezado de PRESUPUESTO: dice "la suite es caraCorrer", le falta un salto de línea. No se tocó porque la definición es del equipo.
+- ~~2026-10-15 · NUL en un texto → 500~~ y ~~el invariante de `SinCosto`~~: **resueltos en la Fase 6** (`e2118f6`; `d1b21b7` + `fbd4358`, con `Registrar_NingunCompradoQuedaConBaseYSinPrecio`). Lo que sigue es el texto original.
 - 2026-10-15 · **NUL en un texto → 500 en TODO el proyecto (22021).** POST `/api/facturas-compra` con `numero = "A\u0000B"` da `invalid byte sequence for encoding "UTF8": 0x00` y termina en 500 (sin escribir nada). Ni los casos de uso ni `ManejadorExcepcionesGlobal` tratan el 22021, así que pasa en cualquier endpoint que guarde texto. **Decisión del equipo:** se traduce el 22021 a 400 en el manejador global. Es la primera unidad de la Fase 6: test HTTP en rojo (500) en facturas de compra y en al menos un segundo endpoint (artículos o clientes), para demostrar que es global.
 - 2026-10-15 · **Invariante de `SinCosto` que la Fase 6 tiene que mantener.** La ficha informa `SinCosto` para toda modalidad "con base y sin precio" (Fase 4). Es correcto solo mientras un artículo con costo tenga sus precios calculados. Desde la Fase 5 la compra escribe el costo, y todavía NO recalcula: hoy una compra deja artículos con costo y precio null, que la ficha mostraría como `SinCosto`, lo cual es falso. **La Fase 6 tiene que recalcular en la MISMA unidad de trabajo de `RegistrarFacturaCompraUseCase`** (el punto de integración está marcado ahí), con un test PG que relea, con un contexto nuevo, costo y precios de cada comprado. En `lacentral_test` hay 0 casos (ninguna compra registrada en `public`).
+- 2026-10-16 · **Fase 6, auditor O1 · filas manuales reescritas con lo leído:** `backend/LaCentral.Data/Repositorios/ArticuloRepositorio.cs`, `ActualizarPreciosAsync`, escribe precio y fecha de TODAS las filas que recibe, incluidas las manuales (vuelven de `Recalcular` sin cambios). Hoy no tiene efecto: ningún endpoint fija precios manuales. Cuando exista el de precio amigo, una compra concurrente podría volver a poner el valor viejo sin error. Arreglo sugerido: `WHERE NOT calculo_manual` o no mandar las manuales, con un test que lo discrimine (hoy esa mutación sería equivalente).
+- 2026-10-16 · **Fase 6, auditor O2:** el comentario de `Atomicidad_FallaAlRecalcularLosPreciosDelSegundoComprado_NoQuedaNada` dice que falla "cuando los del primero ya se escribieron"; ningún assert lo comprueba (depende del orden del diccionario de `ObtenerAsync`). La atomicidad igual queda probada: cuando falla el recálculo, la compra, el stock y el costo ya están escritos.
+- 2026-10-16 · **Fase 6, auditor O3:** ningún test fuerza una falla del recálculo por HTTP (`WebApplicationFactory`). Con el DI real, la atomicidad descansa en que `AddDbContext` es scoped y los tres repositorios y la unidad de trabajo comparten el contexto (`Program.cs`).
+- 2026-10-16 · **Fase 6 · Lista manual sin precio fijado:** con D11, Efectivo quedaría con base y sin precio, y la ficha lo mostraría como `SinCosto` (falso). Hoy no se alcanza: ninguna operación vuelve manual a Lista. Lo resuelve la HU que agregue precios manuales.
+- 2026-10-16 · **Auditor · esquema huérfano en `lacentral_test`:** `pr110_test_5bef5661630743e4b6d09c409f11fafa`, dueño `lacentral_tests`, ya existía antes de la auditoría (las corridas de la Fase 6 usaron `lacentral_javi` y no dejaron esquemas). Al final había 6 conexiones abiertas a `lacentral_test` de origen desconocido. No se tocó (R3): lo borra el equipo.
 
 ## Premisas del plan que no coinciden con el código (revisar antes de la fase)
 - 2026-10-13 · **Fase 2:** el plan dice "NINGÚN repositorio escribe en [las tablas de historial]". Falso para cliente y proveedor: `LaCentral.Data/Repositorios/ClienteRepositorio.cs:176-191` y `ProveedorRepositorio.cs:154-169` ya abren y cierran la baja en `*_historial_baja` dentro del repositorio, sin puerto. Lo cubren los tests PG `DosCiclos..._ConservanEstadoEHistorial...`. Artículo y usuario no escriben historial. La Fase 2 pasa a ser extraer un puerto `IHistorialBajaRepositorio` y mover esa lógica, más los usuarios de baja/reactivación desde IContextoUsuario, no construirla desde cero. (Aplicada en la Fase 2.)
@@ -554,6 +560,11 @@ prueba que la Fase 2 esté mal.
 - 2026-10-14 · **Fases 3, 4 y 6 (D1):** ~~el comentario de `articulo_margen` todavía dice "0,01 % = precio igual al costo", mientras que D1 dice Costo = × 1,00~~ (la tabla ya no existe, 2026-10-14). **Resuelto en la Fase 3 (2026-10-14):** `MargenModalidad` y `CalcularPrecioEstimado` ya no existen. Ahora están `PrecioModalidad`, `BasePrecio` y `ReglasPrecioModalidad`, con Efectivo sobre PrecioLista y CasoEspecial manual. `CalcularPreciosArticuloUseCase` sigue sin existir: es de la Fase 6. Lo que sigue es el texto original. **Seguía en pie:** la tabla nueva tiene dónde guardar `precio` y `calculo_manual`, pero el dominio no se alineó todavía: eso es de la Fase 3. Además, el comentario de la tabla nombra un `CalcularPreciosArticuloUseCase` que todavía no existe. El modelo "porcentaje sobre costo" de `MargenModalidad`/`CalcularPrecioEstimado` no expresa Efectivo (sobre Lista), CasoEspecial (precio fijo) ni la razón de la ausencia. Detalle en `informe-compuerta-d1.md`.
 
 ## Decisiones
+- 2026-10-16 · **D11 · Lista manual → Efectivo sobre ella.** Si la fila de Lista es manual, Efectivo = Lista manual × 0,90 (la base `PrecioLista` es el precio de lista vigente, manual o calculado). Decidido por Javi; test `RecalcularPreciosTests.ListaManual_EfectivoSobreLaListaManual_YLaListaNoSeToca` (`71d6cf1` rojo → `80d62fd`).
+- 2026-10-16 · **Rol de test `lacentral_javi` aceptado.** Javi verificó en el catálogo que tiene los mismos permisos que `lacentral_tests` (no superusuario, sin CONNECT a `lacentral`, CREATE en `lacentral_test`). Las corridas abortan si el usuario de `LACENTRAL_TEST_PG` (ámbito User) no es `lacentral_tests` ni `lacentral_javi`. Corrige la regla del 2026-10-15 de abajo.
+- 2026-10-16 · **Fase 6 · forma del recálculo (Javi):** dos unidades. Unidad 2, el núcleo puro (`Calcular` + `Recalcular`); unidad 3, `EjecutarAsync` con puerto e integración. El puerto (`IPreciosArticuloRepositorio`) usa el MISMO DbContext scoped que `RegistrarFacturaCompraUseCase`; la atomicidad la prueba el test PG.
+- 2026-10-16 · **Fase 6 · precio que no entra en `articulo_precio_modalidad.precio` NUMERIC(12,2) → Invalido**, sin escribir ninguno, mismo criterio que H1 y el desborde de stock de la Fase 5 (antes, 22003 → 500). Borde fijado por los dos lados (9.999.999.999,99 se escribe; 10.000.000.000,00 no).
+- 2026-10-16 · **Fase 6 · la guarda `CalculoManual` de `Calcular` se borró** por inalcanzable (CHECK `manual_sin_porcentaje`, probado contra el motor), regla de CLAUDE.md.
 - 2026-10-15 · **Rol de test `lacentral_tests`.** La suite corre con un rol sin superusuario: CONNECT + CREATE sobre `lacentral_test`, solo SELECT en `public`, sin acceso a `lacentral`. Lo aplicó el equipo y quedó versionado en `backend/db/rescaffold/05_rol_tests.sql` (sin contraseña), reconstruido leyendo el catálogo. Con este rol: 261/261, ningún 42501.
 - 2026-10-15 · **`LACENTRAL_TEST_PG` del proceso estaba vieja.** El valor del ámbito User apunta a `lacentral_tests`, pero el proceso de la sesión heredaba uno anterior con `lacentral`. Las corridas toman el valor del ámbito User y abortan si no es `lacentral_tests`.
 - 2026-10-15 · **Ramas.** Las Fases 3 y 4 NO están en `develop` (`develop` = `f3c6705`). La Fase 5 sale del HEAD de `feature/HU-ART-02-consultar-articulos` (`a23bb26`), con esa rama como base provisoria del PR. Las Fases 6 y 7 se apilan sobre la anterior.
@@ -571,6 +582,27 @@ prueba que la Fase 2 esté mal.
 - **Causa del 53300 (TDD, `1473f77` estructura → `3037344` rojo → `fix` siguiente):** (a) si la conexión de administración se cortaba a mitad de la creación, el esquema quedaba huérfano (`DisposeAsync` solo borraba con la conexión abierta); (b) cada esquema tiene su propia cadena y, por lo tanto, su propio pool, que nunca se vaciaba; (c) las fábricas de `WithWebHostBuilder` vivían hasta el final de la clase. Arreglo: creación en UNA transacción (el DDL de PostgreSQL es transaccional), `ClearPool` y `Liberar()` en `DisposeAsync`, y reapertura de la conexión de administración antes del DROP. Tests: `PostgreSqlPruebasLimpiezaTests` (3 PG, rojo por aserción).
 - **Compuerta:** dos corridas completas seguidas, **261/261 (89 PG)**, sin 53300. Al terminar: 0 conexiones idle de `lacentral_tests` y 0 esquemas `pr110_test_*`.
 - Hook de graphify: `graphify` por PATH, verificado (se dispara). El grafo se actualiza solo con el hook post-commit.
+
+## Fase 6 · HU-ART-05 + FCO-01 CA5 (2026-10-16)
+Rama `feature/HU-ART-05-precios-modalidad`, sale de develop `a47a866` (Fase 5 ya mergeada, #119). La hizo Javi con el agente; Santi retoma la semana siguiente. **Sin push** (lo autoriza Javi). Cuerpo del PR: `docs/sprint03/pr-fase6-hu-art-05.md`.
+
+**Commits (TDD por unidad):**
+- Unidad 1 · NUL → 400: `95571c7` rojo HTTP (2: artículos y facturas, Expected BadRequest / Actual InternalServerError) → `e2118f6` fix en `ManejadorExcepcionesGlobal` (22021 directo o en `DbUpdateException`). Cada rama la cubre un test distinto (artículos: `DbUpdateException`; facturas: directa), verificado con mutación.
+- Unidad 2 · única regla: `6f2e337` refactor (`Calcular` → `CalcularPreciosArticuloUseCase`, 12 métodos reapuntados, 327 = 327) → `698cec7` test de redondeo (declarado; mata ToEven) → `71d6cf1` rojo `Recalcular` (6 de 8) → `80d62fd` → `bc5e98f` (guarda inalcanzable borrada).
+- Unidad 3 · integración: `bf568db` estructura (puerto `IPreciosArticuloRepositorio`, DI) → `a5102ba` rojo Moq (6 de 8) → `d1b21b7` → `fe029b2` rojo PG/HTTP (6) → `fbd4358` repositorio.
+- Cierre: `264879f` PR · `84967d8` ronda 1 (test, M6) · `638afe4` PR · este ESTADO.
+
+**Compuerta (subagentes de a uno, cada uno en su worktree):**
+| Pasada | Alcance | Veredicto | Qué |
+|---|---|---|---|
+| verificador | `a47a866..264879f` | NO APTO | M6: `>=` → `>` en `LimitePrecio` sobrevivía (ningún test en 10.000.000.000,00 exacto). 4 rojos reproducidos por aserción, 15 mutaciones muertas, 350/350. No bloqueante: `d1b21b7` también tocaba un test (el doble por defecto), no declarado en el PR → declarado en `638afe4`. |
+| ronda 1 (test) | `84967d8` | — | `PrecioJustoEnElLimiteDeSuColumna_InvalidoYNoEscribe`: Tarjeta3 con tasa SOLO DE PRUEBA 25 % sobre Lista 8.000.000.000,00 → 1e10 → Invalido. |
+| verificador | `264879f..638afe4` | **APTO** | M6 muere (`:124`), límite una centésima menos muere (`:137`). 351/351, 117 PG. |
+| auditor | `a47a866..638afe4` | **APTO** | Atomicidad con mutación (recálculo fuera de la unidad → 2 PG en rojo), CHECK cumplidos, relectura con contexto nuevo. Observaciones O1-O3 en "Deuda nueva detectada". Suite no repetida (usa la del verificador). |
+
+**Suite:** 351 total · 351 passed · 0 failed · 0 skipped · 0 warnings, **117 `[PostgreSqlFact]`**, en `638afe4`, rol `lacentral_javi`.
+
+**Issues:** el PR cierra **#22 y #32** (CA5 de FCO-01 y CA-001 de ART-05 verificados en el mismo recorrido HTTP: alta, compra a 100, ficha Lista 150 · Costo 100 · Efectivo 135).
 
 ## Fase 5 · HU-FCO-01 · Factura de compra (2026-10-15)
 Rama `feature/HU-FCO-01-factura-compra`, sale de `a23bb26` (HEAD de la Fase 4). Suite al cerrar la unidad HTTP + frontend: **309/309, 105 `[PostgreSqlFact]`**, 0 warnings.
@@ -635,35 +667,18 @@ Rama `feature/HU-FCO-01-factura-compra`, sale de `a23bb26` (HEAD de la Fase 4). 
 - Los subagentes y los hooks de graphify se copiaron a `backend/.claude/` (agents/ y settings.json). En la sesión de la Fase 1 NO cargaron, porque se leen al iniciar la sesión: `Agent type 'verificador-tdd' not found`. Se reinicia la sesión antes de la Fase 2. (Superado el 2026-10-14: la configuración vive en la raíz y carga.)
 
 ## PRÓXIMA SESIÓN — arrancar acá
-Arrancar en la **raíz del repo**. Estado al 2026-10-15:
+Arrancar en la **raíz del repo**. Estado al 2026-10-16:
 
-- **`develop` = `56c1e3e`**: Fases 1, 2, D1, 3 (#117) y 4 (#118) mergeadas.
-- **Fase 5 (HU-FCO-01, #32): CERRADA (2026-10-15)**, verificador APTO (ronda 4) y auditor APTO. Rama `feature/HU-FCO-01-factura-compra` pusheada, **PR #119** contra `develop`. Suite en `f424771`: **325/325, 109 `[PostgreSqlFact]`**, 0 warnings. Falta que el equipo lo mergee.
-- **#32 sigue ABIERTO a propósito:** su CA5 (recalcular precios al comprar) es de la Fase 6.
+- **`develop` = `a47a866`**: Fases 1 a 5 mergeadas (#113, #114, #115, #117, #118, #119) y #120 (onboarding).
+- **Fase 6 (HU-ART-05 + FCO-01 CA5): CERRADA (2026-10-16)**, verificador APTO (ronda 1) y auditor APTO. Rama `feature/HU-ART-05-precios-modalidad`, **sin push**: el push y el PR los autoriza Javi. Cuerpo en `docs/sprint03/pr-fase6-hu-art-05.md` (Closes #22, Closes #32). Suite: **351/351, 117 `[PostgreSqlFact]`**, 0 warnings.
+- **Pendientes del equipo:** tasas de Tarjeta3/6 (siguen sin definir; entran como configuración, no en el código); endpoint/HU de precio manual (CasoEspecial y, con D11, una Lista manual); borrar el esquema huérfano `pr110_test_5bef5661...`; deuda O1-O3 de la Fase 6.
 
-### FASE 6 · HU-ART-05 + FCO-01 CA5 · issue #22
-Rama `feature/HU-ART-05-precios-modalidad`. Sale del HEAD de la Fase 5 si su PR todavía no entró; si ya entró, de `develop`. Plan: `docs/sprint03/PLAN_SPRINT3.md`, sección "FASE 6".
-
-**Bloqueos reales (los decide el equipo, NO el agente):**
-1. **Tasas de Tarjeta3 y Tarjeta6: SIN DEFINIR (D1).** No se inventa un número. En producción esas modalidades siguen sin base ni porcentaje y la ficha informa `TasaSinDefinir`. Los tests pueden usar tasas **claramente nombradas como de prueba** (plan, Fase 6), nunca presentadas como comerciales. Cuando el equipo dé las tasas, entran como configuración, no en el código.
-2. **CasoEspecial: el recálculo NO pisa su precio.** Política vigente: CasoEspecial nace con `calculo_manual = true` y toda fila manual queda intacta (el CHECK ya obliga a porcentaje null en filas manuales). Fijar o cambiar el precio de CasoEspecial no tiene endpoint ni HU: si la Fase 6 lo necesita, se PARA y se pregunta.
-
-**Orden de trabajo:**
-1. **Unidad del NUL (primera, decisión del equipo):** el 22021 → 400 en `ManejadorExcepcionesGlobal`. Test HTTP en rojo (500) en facturas de compra y en un segundo endpoint (artículos o clientes), commit aparte, después el fix. Ver "Deuda nueva detectada".
-2. **`CalcularPreciosArticuloUseCase`, ÚNICA regla de cálculo:** mover ahí `ReglasPrecioModalidad.Calcular`, con sus tests reapuntados (ninguno se borra). Es el nombre que ya cita el comentario de `articulo_precio_modalidad`. La API y el frontend no duplican fórmulas.
-   - Ejemplos obligatorios en los tests, con costo 100: Lista → 150 · Costo → 100 · EfectivoTransferencia → 135.
-   - Sin costo o sin configuración → null con su razón, nunca cero.
-3. **Integración (CA5):** recalcular y persistir las modalidades automáticas de los artículos comprados **dentro de la misma unidad de trabajo** de `RegistrarFacturaCompraUseCase` (el punto está marcado ahí).
-   - Mantiene el **invariante de `SinCosto`** (ver "Deuda nueva detectada"): ningún artículo con costo puede quedar con una modalidad con base y precio null.
-   - Una compra cambia SOLO los precios de los comprados, no los del resto del catálogo: test PG que relea con un contexto nuevo los comprados y un no comprado.
-   - Atomicidad: si falla el recálculo, no queda nada de la compra (sumar el punto de falla a los de `RegistrarFacturaCompraPostgreSqlTests`).
-4. **Cierre:** recién acá se cierran **#32 y #22 juntos**, verificando CA5 y CA1 en el mismo recorrido. Auditor y verificador de a uno, cada uno en su worktree. **ESTADO.md se actualiza ANTES del push** (regla de `CLAUDE.md`).
-
-### Después: Fase 7 · HU-ART-03 (#17)
+### Fase 7 · HU-ART-03 (#17)
 - `IContextoUsuario` **no expone el rol**. **Contradicción a resolver con el equipo antes de empezar:** el plan dice "el rol sale de IContextoUsuario" y la consigna del 2026-10-15 dice usar `[Authorize(Roles=...)]` "salvo que el plan diga otra cosa", y el plan dice otra cosa.
+- Rama `feature/HU-ART-03-modificar-articulo`, solo con OK de Javi, con `git checkout -b`.
 
 ### Cómo correr los tests
-La `LACENTRAL_TEST_PG` del proceso puede estar vieja (apuntaba a `lacentral`). Exportá la del ámbito User antes de `dotnet test` (desde `backend/`) y abortá si el usuario no es `lacentral_tests`:
+La `LACENTRAL_TEST_PG` del proceso puede estar vieja. Exportá la del ámbito User antes de `dotnet test` (desde `backend/`) y abortá si el usuario no es `lacentral_tests` ni `lacentral_javi` (decisión del 2026-10-16):
 `export LACENTRAL_TEST_PG="$(powershell.exe -NoProfile -Command "[Environment]::GetEnvironmentVariable('LACENTRAL_TEST_PG','User')" | tr -d '\r')"`
 
-`gh` está en `"/c/Program Files/GitHub CLI/gh.exe"` (fuera del PATH de bash), autenticado.
+En la máquina de Javi `gh` no está instalado: el PR se abre a mano. En PowerShell 5.1, los mensajes de commit con comillas dobles se rompen: usar `git commit -F <archivo>`.

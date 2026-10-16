@@ -49,7 +49,12 @@
 |---|---|---|
 | verificador sobre `a47a866..264879f` · **NO APTO** | M6: `p.Precio >= LimitePrecio` → `>` sobrevivía (ningún test usaba exactamente 10.000.000.000,00). 4 rojos reproducidos por aserción, 15 mutaciones más murieron, 350/350 | `84967d8` (test): `PrecioJustoEnElLimiteDeSuColumna_InvalidoYNoEscribe`, Tarjeta3 con tasa SOLO DE PRUEBA 25 % sobre una Lista de 8.000.000.000,00. Pasa contra producción (declarado); con M6, Expected False / Actual True |
 
+| verificador sobre `264879f..638afe4` | M6 muere por aserción (`:124`); límite una centésima menos muere (`:137`). 351/351, 117 PG | **APTO** |
+| auditor sobre `a47a866..638afe4` | Sin bloqueantes. Atomicidad verificada con mutación (recálculo fuera de la unidad de trabajo → 2 tests PG en rojo); CHECK de `articulo_precio_modalidad` cumplidos; relectura con contexto nuevo; sin Ids sembrados ni InMemory nuevos | **APTO** |
+
 El borde de `LimitePrecio` queda fijado por los dos lados: 9.999.999.999,99 se escribe y 10.000.000.000,00 es Invalido.
+
+Observaciones no bloqueantes del auditor (quedan como deuda en `ESTADO.md`): O1, `ActualizarPreciosAsync` también reescribe las filas manuales con lo que leyó (sin efecto hoy; con un endpoint de precio amigo, una compra concurrente podría volver a poner el valor viejo); O2, el orden "el primero ya escribió" del test de atomicidad del recálculo no se afirma; O3, ningún test fuerza una falla del recálculo por HTTP.
 
 ## Tasas de Tarjeta3/6
 Siguen **sin definir** (D1). En producción esas filas no tienen base ni porcentaje y la ficha informa `TasaSinDefinir`. `RecalcularPreciosTests` usa `TasaTarjeta3DePrueba = 7` y `TasaTarjeta6DePrueba = 13`, nombradas y comentadas como **solo de prueba**: no son tasas comerciales. Cuando el equipo las defina, entran como configuración (base y porcentaje de la fila), no en el código.
@@ -58,9 +63,9 @@ Siguen **sin definir** (D1). En producción esas filas no tienen base ni porcent
 El recálculo **no pisa** una fila manual (política vigente). Fijar el precio de CasoEspecial no tiene endpoint ni HU: esta fase no lo toca.
 
 ## Cómo se verificó
-2026-10-16, HEAD de código `fbd4358`, rol de test `lacentral_javi` (mismos permisos que `lacentral_tests`, aceptado por el equipo).
+2026-10-16, HEAD `638afe4` (corrida del verificador en su worktree), rol de test `lacentral_javi` (mismos permisos que `lacentral_tests`, aceptado por el equipo).
 - `dotnet build --no-incremental`: 0 advertencias, 0 errores.
-- `dotnet test`: **350 total · 350 passed · 0 failed · 0 omitidos**, **117 `[PostgreSqlFact]`** contra PostgreSQL real. La Fase 5 cerró con 325 y 109.
+- `dotnet test`: **351 total · 351 passed · 0 failed · 0 omitidos**, **117 `[PostgreSqlFact]`** contra PostgreSQL real. La Fase 5 cerró con 325 y 109.
 - `LaCentral.UseCases.csproj` sigue sin referencias. Ningún controlador importa `LaCentral.Data`; el acoplamiento nuevo está solo en `Program.cs`.
 - Recorrido HTTP (`FacturasCompraApiPostgreSqlTests.Post_Compra_LaFichaDelArticuloMuestraLosPreciosRecalculados`): alta por la API, compra a 100, la ficha da **Lista 150 · Costo 100 · EfectivoTransferencia 135**, Tarjeta3/6 `TasaSinDefinir`, CasoEspecial `CasoEspecialNoFijado`.
 
