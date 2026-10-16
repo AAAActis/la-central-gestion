@@ -90,14 +90,15 @@ public class RegistrarFacturaCompraPostgreSqlTests
     }
 
     /// <summary>La sesión está en la sucursal 1: el stock va al destino de cada línea (D9), no a la sesión.</summary>
-    private static RegistrarFacturaCompraUseCase Caso(LaCentralDbContext contexto, Escenario e)
+    private static RegistrarFacturaCompraUseCase Caso(LaCentralDbContext contexto, Escenario e,
+        CalcularPreciosArticuloUseCase? recalculo = null)
     {
         var sesion = new Mock<IContextoUsuario>();
         sesion.SetupGet(s => s.UsuarioId).Returns(e.UsuarioId);
         sesion.SetupGet(s => s.SucursalId).Returns(e.Sucursal1);
         return new(new FacturaCompraRepositorio(contexto), new ProveedorRepositorio(contexto),
             new ArticuloRepositorio(contexto), new UnidadDeTrabajo(contexto), sesion.Object,
-            new CalcularPreciosArticuloUseCase(new ArticuloRepositorio(contexto)));
+            recalculo ?? new CalcularPreciosArticuloUseCase(new ArticuloRepositorio(contexto)));
     }
 
     private static RegistrarFacturaCompraRequest Compra(Escenario e, string numero = "A-0001-00000001") => new(
@@ -202,6 +203,56 @@ public class RegistrarFacturaCompraPostgreSqlTests
         // El no comprado conserva sus seis filas tal cual (CA-002 de HU-ART-05).
         Assert.All(antes.Where(p => p.Key.Articulo == e.NoComprado), p => Assert.Equal(p.Value, precios[p.Key]));
         Assert.Equal((decimal?)105m, precios[(e.NoComprado, "Lista")].Precio);
+    }
+
+    // O1 de la Fase 6: el recálculo lee las filas, otra persona fija a mano el CasoEspecial
+    // del mismo artículo y confirma, y recién después el recálculo escribe. La fila manual
+    // tiene que quedar con lo que fijó esa persona, no con lo que el recálculo leyó antes.
+    [PostgreSqlFact]
+    public async Task Registrar_PrecioManualFijadoMientrasSeRecalcula_SobreviveALaCompra()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        var fijado = new DateTime(2026, 10, 2, 9, 30, 0, DateTimeKind.Utc);
+
+        Result<RegistrarFacturaCompraResponse> resultado;
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var precios = new PreciosConFijacionConcurrente(new ArticuloRepositorio(contexto), async () =>
+            {
+                await using var otraSesion = fixture.CrearContexto();
+                await otraSesion.ArticuloPrecioModalidad
+                    .Where(p => p.ArticuloId == e.Comprado1 && p.Modalidad == "CasoEspecial")
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(p => p.Precio, 95m)
+                        .SetProperty(p => p.FechaCalculo, fijado));
+            });
+            resultado = await Caso(contexto, e, new CalcularPreciosArticuloUseCase(precios)).EjecutarAsync(Compra(e));
+        }
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        await using var relectura = fixture.CrearContexto();
+        var casoEspecial = (await PreciosAsync(relectura))[(e.Comprado1, "CasoEspecial")];
+        Assert.Equal(((string?)null, (decimal?)null, (decimal?)95m, true, (DateTime?)fijado, (int?)e.UsuarioId), casoEspecial);
+    }
+
+    /// <summary>El repositorio de producción, con la fijación de otra sesión entre la lectura y la escritura.</summary>
+    private sealed class PreciosConFijacionConcurrente : IPreciosArticuloRepositorio
+    {
+        private readonly IPreciosArticuloRepositorio _real;
+        private readonly Func<Task> _fijar;
+
+        public PreciosConFijacionConcurrente(IPreciosArticuloRepositorio real, Func<Task> fijar) => (_real, _fijar) = (real, fijar);
+
+        public async Task<IReadOnlyDictionary<int, PreciosDeArticulo>> ObtenerAsync(IReadOnlyCollection<int> articuloIds, CancellationToken ct = default)
+        {
+            var leidos = await _real.ObtenerAsync(articuloIds, ct);
+            await _fijar();
+            return leidos;
+        }
+
+        public Task ActualizarPreciosAsync(int articuloId, IReadOnlyList<LaCentral.UseCases.Entidades.PrecioModalidad> precios, CancellationToken ct = default) =>
+            _real.ActualizarPreciosAsync(articuloId, precios, ct);
     }
 
     // Invariante de SinCosto (Fase 4): después de una compra, ningún comprado queda con una
