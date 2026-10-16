@@ -106,9 +106,11 @@ public class RegistrarFacturaCompraUseCase
             if (!escrita.IsSuccess)
                 return escrita;
             registrada = new RegistrarFacturaCompraResponse(escrita.Value);
-            // CA5 (Fase 6, HU-ART-05): acá, en la MISMA unidad de trabajo, se recalculan los
-            // precios por modalidad de los artículos comprados. #32 no se cierra sin eso.
-            return Result.Success();
+            // CA5 (HU-ART-05 CA-001): en la MISMA unidad de trabajo, los precios por modalidad
+            // de los comprados se recalculan con el costo que se acaba de escribir. Si el
+            // recálculo rechaza, la unidad de trabajo descarta también la compra.
+            return await _calcularPrecios.EjecutarAsync(
+                factura.Lineas.Select(l => l.ArticuloId).ToArray(), factura.FechaRegistro, token);
         }, ct);
 
         // Si la unidad de trabajo dio éxito, la operación terminó y asignó `registrada`.

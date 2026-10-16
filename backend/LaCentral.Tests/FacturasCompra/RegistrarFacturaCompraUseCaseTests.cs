@@ -46,6 +46,9 @@ public class RegistrarFacturaCompraUseCaseTests
         _facturas.Setup(f => f.RegistrarConEfectosAsync(It.IsAny<FacturaCompra>(), It.IsAny<CancellationToken>()))
             .Callback((FacturaCompra f, CancellationToken _) => _registrada = f)
             .ReturnsAsync(Result<int>.Success(IdGenerado));
+        // Por defecto los comprados no tienen filas de precio: no hay nada que recalcular.
+        _precios.Setup(p => p.ObtenerAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<int, PreciosDeArticulo>());
     }
 
     private RegistrarFacturaCompraUseCase Caso() =>

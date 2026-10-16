@@ -11,6 +11,10 @@ namespace LaCentral.UseCases.Articulos;
 /// </summary>
 public class CalcularPreciosArticuloUseCase
 {
+    // articulo_precio_modalidad.precio es NUMERIC(12,2): la parte entera tiene a lo sumo
+    // 10 dígitos. Ya viene redondeado a centavos.
+    private const decimal LimitePrecio = 10_000_000_000m;
+
     private readonly IPreciosArticuloRepositorio _precios;
 
     public CalcularPreciosArticuloUseCase(IPreciosArticuloRepositorio precios) => _precios = precios;
@@ -18,10 +22,26 @@ public class CalcularPreciosArticuloUseCase
     /// <summary>
     /// Recalcula y persiste los precios de los artículos pedidos. NO abre una unidad de
     /// trabajo: corre dentro de la de quien lo llama (la compra), así que si algo falla
-    /// después, el recálculo se descarta con todo lo demás.
+    /// después, el recálculo se descarta con todo lo demás. Un precio que la columna no
+    /// guarda es Invalido y no se escribe nada: primero se calcula todo, después se escribe.
     /// </summary>
-    public Task<Result> EjecutarAsync(IReadOnlyCollection<int> articuloIds, DateTime ahora, CancellationToken ct = default) =>
-        Task.FromResult(Result.Success());
+    public async Task<Result> EjecutarAsync(IReadOnlyCollection<int> articuloIds, DateTime ahora, CancellationToken ct = default)
+    {
+        var actuales = await _precios.ObtenerAsync(articuloIds, ct);
+        var recalculados = actuales
+            .Where(a => a.Value.Precios.Count > 0)
+            .Select(a => (Id: a.Key, Precios: Recalcular(a.Value.Precios, a.Value.CostoVigente, ahora)))
+            .ToList();
+
+        foreach (var (id, precios) in recalculados)
+            if (precios.FirstOrDefault(p => p.Precio >= LimitePrecio) is { } excedido)
+                return Result.Failure(TipoError.Invalido,
+                    $"El precio {excedido.Modalidad} del artículo {id} ({excedido.Precio:N2}) superaría el máximo que se puede registrar.");
+
+        foreach (var (id, precios) in recalculados)
+            await _precios.ActualizarPreciosAsync(id, precios, ct);
+        return Result.Success();
+    }
 
     /// <summary>
     /// Null cuando no hay fórmula (sin porcentaje: manual o tasa sin definir) o cuando falta
