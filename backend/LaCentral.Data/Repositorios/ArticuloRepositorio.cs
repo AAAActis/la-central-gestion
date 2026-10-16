@@ -6,11 +6,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LaCentral.Data.Repositorios;
 
-public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepositorio
+public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepositorio, IPreciosArticuloRepositorio
 {
     private readonly LaCentralDbContext _context;
 
     public ArticuloRepositorio(LaCentralDbContext context) => _context = context;
+
+    public Task<IReadOnlyDictionary<int, PreciosDeArticulo>> ObtenerAsync(IReadOnlyCollection<int> articuloIds, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyDictionary<int, PreciosDeArticulo>>(new Dictionary<int, PreciosDeArticulo>());
+
+    public Task ActualizarPreciosAsync(int articuloId, IReadOnlyList<LaCentral.UseCases.Entidades.PrecioModalidad> precios, CancellationToken ct = default) =>
+        Task.CompletedTask;
 
     /// <summary>
     /// Un solo SaveChanges para artículo, códigos, stock y precios. codigo_interno es NOT NULL

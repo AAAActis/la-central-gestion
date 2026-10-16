@@ -1,4 +1,5 @@
 using LaCentral.Tests.Infraestructura;
+using LaCentral.UseCases.Articulos;
 using LaCentral.UseCases.Comun;
 using LaCentral.UseCases.Entidades;
 using LaCentral.UseCases.FacturasCompra;
@@ -21,6 +22,7 @@ public class RegistrarFacturaCompraUseCaseTests
     private readonly Mock<IFacturaCompraRepositorio> _facturas = new();
     private readonly Mock<IProveedorRepositorio> _proveedores = new();
     private readonly Mock<IArticuloRepositorio> _articulos = new();
+    private readonly Mock<IPreciosArticuloRepositorio> _precios = new();
     private Mock<IUnidadDeTrabajo> _unidad = DoblesBaja.UnidadQueEjecuta();
     private Mock<IContextoUsuario> _contexto = DoblesBaja.Contexto();
     private FacturaCompra? _registrada;
@@ -47,7 +49,8 @@ public class RegistrarFacturaCompraUseCaseTests
     }
 
     private RegistrarFacturaCompraUseCase Caso() =>
-        new(_facturas.Object, _proveedores.Object, _articulos.Object, _unidad.Object, _contexto.Object);
+        new(_facturas.Object, _proveedores.Object, _articulos.Object, _unidad.Object, _contexto.Object,
+            new CalcularPreciosArticuloUseCase(_precios.Object));
 
     private static LineaFacturaCompraRequest Linea(int articuloId = 100, short sucursalId = 1,
         decimal cantidad = 5m, decimal precio = 200m, decimal descuento = 10m) =>

@@ -3,6 +3,7 @@ using LaCentral.Data;
 using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using LaCentral.Tests.Infraestructura;
+using LaCentral.UseCases.Articulos;
 using LaCentral.UseCases.Comun;
 using LaCentral.UseCases.FacturasCompra;
 using LaCentral.UseCases.FacturasCompra.Dtos;
@@ -75,7 +76,8 @@ public class RegistrarFacturaCompraPostgreSqlTests
         sesion.SetupGet(s => s.UsuarioId).Returns(e.UsuarioId);
         sesion.SetupGet(s => s.SucursalId).Returns(e.Sucursal1);
         return new(new FacturaCompraRepositorio(contexto), new ProveedorRepositorio(contexto),
-            new ArticuloRepositorio(contexto), new UnidadDeTrabajo(contexto), sesion.Object);
+            new ArticuloRepositorio(contexto), new UnidadDeTrabajo(contexto), sesion.Object,
+            new CalcularPreciosArticuloUseCase(new ArticuloRepositorio(contexto)));
     }
 
     private static RegistrarFacturaCompraRequest Compra(Escenario e, string numero = "A-0001-00000001") => new(

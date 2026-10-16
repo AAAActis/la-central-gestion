@@ -1,3 +1,4 @@
+using LaCentral.UseCases.Articulos;
 using LaCentral.UseCases.Comun;
 using LaCentral.UseCases.Entidades;
 using LaCentral.UseCases.FacturasCompra.Dtos;
@@ -16,19 +17,22 @@ public class RegistrarFacturaCompraUseCase
     private readonly IArticuloRepositorio _articulos;
     private readonly IUnidadDeTrabajo _unidadDeTrabajo;
     private readonly IContextoUsuario _contexto;
+    private readonly CalcularPreciosArticuloUseCase _calcularPrecios;
 
     public RegistrarFacturaCompraUseCase(
         IFacturaCompraRepositorio facturas,
         IProveedorRepositorio proveedores,
         IArticuloRepositorio articulos,
         IUnidadDeTrabajo unidadDeTrabajo,
-        IContextoUsuario contexto)
+        IContextoUsuario contexto,
+        CalcularPreciosArticuloUseCase calcularPrecios)
     {
         _facturas = facturas;
         _proveedores = proveedores;
         _articulos = articulos;
         _unidadDeTrabajo = unidadDeTrabajo;
         _contexto = contexto;
+        _calcularPrecios = calcularPrecios;
     }
 
     public async Task<Result<RegistrarFacturaCompraResponse>> EjecutarAsync(

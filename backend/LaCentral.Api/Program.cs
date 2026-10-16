@@ -26,6 +26,7 @@ builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 builder.Services.AddScoped<IConsultaArticulosRepositorio, ArticuloRepositorio>();
 builder.Services.AddScoped<IArticuloRepositorio, ArticuloRepositorio>();
+builder.Services.AddScoped<IPreciosArticuloRepositorio, ArticuloRepositorio>();
 builder.Services.AddScoped<IHistorialBajaRepositorio, HistorialBajaRepositorio>();
 builder.Services.AddScoped<IFacturaCompraRepositorio, FacturaCompraRepositorio>();
 builder.Services.AddScoped<IUnidadDeTrabajo, UnidadDeTrabajo>();
@@ -56,6 +57,7 @@ builder.Services.AddScoped<ReactivarClienteUseCase>();
 builder.Services.AddScoped<CrearArticuloUseCase>();
 builder.Services.AddScoped<ConsultarArticulosUseCase>();
 builder.Services.AddScoped<ObtenerArticuloDetalleUseCase>();
+builder.Services.AddScoped<CalcularPreciosArticuloUseCase>();
 builder.Services.AddScoped<RegistrarFacturaCompraUseCase>();
 
 

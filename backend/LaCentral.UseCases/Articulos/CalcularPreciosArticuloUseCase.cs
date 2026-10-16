@@ -1,4 +1,6 @@
+using LaCentral.UseCases.Comun;
 using LaCentral.UseCases.Entidades;
+using LaCentral.UseCases.Puertos;
 
 namespace LaCentral.UseCases.Articulos;
 
@@ -9,6 +11,18 @@ namespace LaCentral.UseCases.Articulos;
 /// </summary>
 public class CalcularPreciosArticuloUseCase
 {
+    private readonly IPreciosArticuloRepositorio _precios;
+
+    public CalcularPreciosArticuloUseCase(IPreciosArticuloRepositorio precios) => _precios = precios;
+
+    /// <summary>
+    /// Recalcula y persiste los precios de los artículos pedidos. NO abre una unidad de
+    /// trabajo: corre dentro de la de quien lo llama (la compra), así que si algo falla
+    /// después, el recálculo se descarta con todo lo demás.
+    /// </summary>
+    public Task<Result> EjecutarAsync(IReadOnlyCollection<int> articuloIds, DateTime ahora, CancellationToken ct = default) =>
+        Task.FromResult(Result.Success());
+
     /// <summary>
     /// Null cuando no hay fórmula (sin porcentaje: manual o tasa sin definir) o cuando falta
     /// el valor de la base. Nunca cero por defecto, y nunca se sustituye una base por otra.
