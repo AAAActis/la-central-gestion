@@ -236,6 +236,43 @@ public class RegistrarFacturaCompraPostgreSqlTests
         Assert.Equal(((string?)null, (decimal?)null, (decimal?)95m, true, (DateTime?)fijado, (int?)e.UsuarioId), casoEspecial);
     }
 
+    // O1, el filtro va en la base: la fila Costo era automática cuando el recálculo la leyó,
+    // y otra sesión la pasa a manual (sin base ni porcentaje, con usuario) antes de que
+    // escriba. Decide lo que la fila es al escribir: un filtro sobre lo leído la pisaría.
+    [PostgreSqlFact]
+    public async Task Registrar_FilaQuePasaAManualMientrasSeRecalcula_SobreviveALaCompra()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        var fijado = new DateTime(2026, 10, 2, 9, 30, 0, DateTimeKind.Utc);
+
+        Result<RegistrarFacturaCompraResponse> resultado;
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var precios = new PreciosConFijacionConcurrente(new ArticuloRepositorio(contexto), async () =>
+            {
+                await using var otraSesion = fixture.CrearContexto();
+                await otraSesion.ArticuloPrecioModalidad
+                    .Where(p => p.ArticuloId == e.Comprado1 && p.Modalidad == "Costo")
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(p => p.CalculoManual, true)
+                        .SetProperty(p => p.Base, (string?)null)
+                        .SetProperty(p => p.Porcentaje, (decimal?)null)
+                        .SetProperty(p => p.Precio, 170m)
+                        .SetProperty(p => p.FechaCalculo, fijado)
+                        .SetProperty(p => p.UsuarioId, e.UsuarioId));
+            });
+            resultado = await Caso(contexto, e, new CalcularPreciosArticuloUseCase(precios)).EjecutarAsync(Compra(e));
+        }
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        await using var relectura = fixture.CrearContexto();
+        var releidos = await PreciosAsync(relectura);
+        Assert.Equal(((string?)null, (decimal?)null, (decimal?)170m, true, (DateTime?)fijado, (int?)e.UsuarioId), releidos[(e.Comprado1, "Costo")]);
+        // Las automáticas del mismo artículo sí se recalculan con el costo nuevo (180).
+        Assert.Equal((decimal?)270m, releidos[(e.Comprado1, "Lista")].Precio);
+    }
+
     /// <summary>El repositorio de producción, con la fijación de otra sesión entre la lectura y la escritura.</summary>
     private sealed class PreciosConFijacionConcurrente : IPreciosArticuloRepositorio
     {
