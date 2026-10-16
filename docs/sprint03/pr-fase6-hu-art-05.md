@@ -34,7 +34,7 @@
 | Redondeo | `698cec7` (test, pasa a la primera: **declarado**) |
 | `Recalcular` | `6f2e337` (stub que devuelve la entrada) → `71d6cf1` (8 tests, 6 rojos por aserción) → `80d62fd` |
 | Guarda inalcanzable | `bc5e98f` (refactor de producción) |
-| Recálculo al comprar (Moq) | `bf568db` (estructura) → `a5102ba` (8 tests, 6 rojos por aserción o `Verify`) → `d1b21b7` |
+| Recálculo al comprar (Moq) | `bf568db` (estructura) → `a5102ba` (8 tests, 6 rojos por aserción o `Verify`) → `d1b21b7` (producción; además, en `RegistrarFacturaCompraUseCaseTests`, el doble de `IPreciosArticuloRepositorio` devuelve por defecto un diccionario vacío: sin ese setup Moq devolvía null y 3 tests existentes daban `ArgumentNullException`) |
 | Repositorio, atomicidad y HTTP (PG) | `fe029b2` (6 rojos por aserción: 5 PG + 1 HTTP) → `fbd4358` |
 
 **Excepciones declaradas** (pasaron a la primera, cada una verificada con una mutación sin commitear que la pone en rojo):
@@ -43,6 +43,13 @@
 - `CalcularPreciosArticuloUseCaseTests.ArticuloSinFilasDePrecio_NoSeEscribe` y `RegistrarFacturaCompraUseCaseTests.Valida_ElRecalculoOcurreDentroDeLaUnidadDeTrabajo` (`a5102ba`): escribir artículos sin filas → rojo; recalcular también fuera de la unidad → rojo.
 
 **Otras mutaciones verificadas** (todas en rojo): base intercambiada en `Calcular`; Lista manual recalculada (D11, Expected 180 / Actual null); fecha siempre; `LimitePrecio` una centésima menos; escribir antes de validar todos; la compra ignora el rechazo del recálculo; solo el primer comprado; otra fecha; el repositorio sin filtrar por modalidad o por artículo, o sin escribir la fecha (el motor lo rechaza con 23514); la base leída como null.
+
+## Compuerta (subagentes de a uno, cada uno en su worktree; detalle en `ESTADO.md`)
+| Ronda | Hallazgo | Arreglo |
+|---|---|---|
+| verificador sobre `a47a866..264879f` · **NO APTO** | M6: `p.Precio >= LimitePrecio` → `>` sobrevivía (ningún test usaba exactamente 10.000.000.000,00). 4 rojos reproducidos por aserción, 15 mutaciones más murieron, 350/350 | `84967d8` (test): `PrecioJustoEnElLimiteDeSuColumna_InvalidoYNoEscribe`, Tarjeta3 con tasa SOLO DE PRUEBA 25 % sobre una Lista de 8.000.000.000,00. Pasa contra producción (declarado); con M6, Expected False / Actual True |
+
+El borde de `LimitePrecio` queda fijado por los dos lados: 9.999.999.999,99 se escribe y 10.000.000.000,00 es Invalido.
 
 ## Tasas de Tarjeta3/6
 Siguen **sin definir** (D1). En producción esas filas no tienen base ni porcentaje y la ficha informa `TasaSinDefinir`. `RecalcularPreciosTests` usa `TasaTarjeta3DePrueba = 7` y `TasaTarjeta6DePrueba = 13`, nombradas y comentadas como **solo de prueba**: no son tasas comerciales. Cuando el equipo las defina, entran como configuración (base y porcentaje de la fila), no en el código.
