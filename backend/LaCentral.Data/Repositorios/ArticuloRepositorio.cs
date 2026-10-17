@@ -6,11 +6,50 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LaCentral.Data.Repositorios;
 
-public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepositorio
+public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepositorio, IPreciosArticuloRepositorio
 {
     private readonly LaCentralDbContext _context;
 
     public ArticuloRepositorio(LaCentralDbContext context) => _context = context;
+
+    public async Task<IReadOnlyDictionary<int, PreciosDeArticulo>> ObtenerAsync(IReadOnlyCollection<int> articuloIds, CancellationToken ct = default)
+    {
+        var articulos = await _context.Articulo.AsNoTracking()
+            .Where(a => articuloIds.Contains(a.Id))
+            .Select(a => new { a.Id, a.PrecioCosto, Filas = a.ArticuloPrecioModalidad.ToList() })
+            .ToListAsync(ct);
+
+        return articulos.ToDictionary(a => a.Id, a => new PreciosDeArticulo(a.PrecioCosto, a.Filas
+            .Select(p => new LaCentral.UseCases.Entidades.PrecioModalidad
+            {
+                Modalidad = ModalidadPersistida.Leer(p.Modalidad),
+                Base = ModalidadPersistida.LeerBase(p.Base),
+                Porcentaje = p.Porcentaje,
+                Precio = p.Precio,
+                CalculoManual = p.CalculoManual,
+                FechaCalculo = p.FechaCalculo,
+                UsuarioId = p.UsuarioId
+            }).ToList()));
+    }
+
+    /// <summary>
+    /// Por artículo y modalidad (la clave primaria). Solo precio y fecha: la configuración
+    /// (base, porcentaje, calculo_manual) y el usuario no los cambia un recálculo. Nunca
+    /// escribe una fila manual: el filtro va en el UPDATE, así que vale lo que la fila es al
+    /// escribir, no lo que era al leer (otra sesión pudo fijarla entre medio).
+    /// </summary>
+    public async Task ActualizarPreciosAsync(int articuloId, IReadOnlyList<LaCentral.UseCases.Entidades.PrecioModalidad> precios, CancellationToken ct = default)
+    {
+        foreach (var precio in precios)
+        {
+            var modalidad = ModalidadPersistida.Escribir(precio.Modalidad);
+            await _context.ArticuloPrecioModalidad
+                .Where(p => p.ArticuloId == articuloId && p.Modalidad == modalidad && !p.CalculoManual)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(p => p.Precio, precio.Precio)
+                    .SetProperty(p => p.FechaCalculo, precio.FechaCalculo), ct);
+        }
+    }
 
     /// <summary>
     /// Un solo SaveChanges para artículo, códigos, stock y precios. codigo_interno es NOT NULL

@@ -9,12 +9,14 @@ namespace LaCentral.Api.Middleware;
 /// Última red para lo que ningún caso de uso tradujo a Result. Las reglas de
 /// negocio NO pasan por acá: viajan como Result y las traduce MapeoResultado.
 ///
-/// Solo dos salidas posibles:
+/// Salidas posibles:
 ///   · violación de unicidad de una restricción reconocida → 409. Es la carrera
 ///     que el núcleo no puede evitar (dos altas simultáneas pasan la validación
 ///     previa y el índice rechaza la segunda).
 ///   · violación de un CHECK reconocido → 409. Es un dato existente que choca con
 ///     la operación (una baja con fecha futura que no admite la reactivación).
+///   · texto que PostgreSQL no puede guardar (22021, p. ej. el carácter NUL) → 400,
+///     en cualquier endpoint.
 ///   · cualquier otra cosa → 500 genérico.
 /// Ninguna respuesta lleva el mensaje, el tipo ni el stack de la excepción.
 /// </summary>
@@ -62,6 +64,9 @@ public sealed class ManejadorExcepcionesGlobal : IExceptionHandler
     private const string MensajeReactivacionAnterior =
         "La fecha de reactivación no puede ser anterior a la fecha de la baja.";
 
+    public const string MensajeCaracteresNoValidos =
+        "Un texto enviado tiene caracteres no válidos (por ejemplo, el carácter nulo).";
+
     private readonly IProblemDetailsService _problemDetails;
     private readonly ILogger<ManejadorExcepcionesGlobal> _logger;
 
@@ -82,6 +87,16 @@ public sealed class ManejadorExcepcionesGlobal : IExceptionHandler
                 Status = StatusCodes.Status409Conflict,
                 Title = "Conflicto con los datos existentes.",
                 Detail = mensaje
+            };
+        }
+        else if (EsTextoConCaracteresNoValidos(excepcion))
+        {
+            _logger.LogWarning(excepcion, "Texto con caracteres no válidos traducido a 400.");
+            problema = new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Datos inválidos.",
+                Detail = MensajeCaracteresNoValidos
             };
         }
         else
@@ -107,13 +122,7 @@ public sealed class ManejadorExcepcionesGlobal : IExceptionHandler
     /// <summary>El mensaje para el usuario si es una violación reconocida (unicidad o CHECK); si no, null.</summary>
     public static string? MensajeDeConflicto(Exception excepcion)
     {
-        // SaveChanges envuelve la PostgresException en DbUpdateException; ExecuteUpdate no.
-        var pg = excepcion switch
-        {
-            DbUpdateException { InnerException: PostgresException interna } => interna,
-            PostgresException directa => directa,
-            _ => null
-        };
+        var pg = ExcepcionDePostgres(excepcion);
         if (pg?.ConstraintName is null)
             return null;
 
@@ -125,4 +134,16 @@ public sealed class ManejadorExcepcionesGlobal : IExceptionHandler
         };
         return reconocidas is not null && reconocidas.TryGetValue(pg.ConstraintName, out var mensaje) ? mensaje : null;
     }
+
+    /// <summary>True si PostgreSQL rechazó un texto por su codificación (22021).</summary>
+    public static bool EsTextoConCaracteresNoValidos(Exception excepcion) =>
+        ExcepcionDePostgres(excepcion)?.SqlState == PostgresErrorCodes.CharacterNotInRepertoire;
+
+    // SaveChanges envuelve la PostgresException en DbUpdateException; ExecuteUpdate no.
+    private static PostgresException? ExcepcionDePostgres(Exception excepcion) => excepcion switch
+    {
+        DbUpdateException { InnerException: PostgresException interna } => interna,
+        PostgresException directa => directa,
+        _ => null
+    };
 }

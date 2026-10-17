@@ -176,6 +176,62 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
         Assert.Equal(1m, await relectura.Stock.Where(x => x.ArticuloId == s.ArticuloId).SumAsync(x => x.Cantidad));
     }
 
+    // HU-FCO-01 CA5 y HU-ART-05 CA-001 en el mismo recorrido: un artículo dado de alta por
+    // la API (nace con las seis filas, sin costo) se compra a 100 y la ficha muestra los
+    // precios recalculados. Los ejemplos del plan, de punta a punta.
+    [PostgreSqlFact]
+    public async Task Post_Compra_LaFichaDelArticuloMuestraLosPreciosRecalculados()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        var alta = await cliente.PostAsJsonAsync("/api/articulos", new { nombre = "Correa de distribución" });
+        Assert.Equal(HttpStatusCode.Created, alta.StatusCode);
+        var articuloId = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        var cuerpo = JsonSerializer.SerializeToNode(Cuerpo(s))!.AsObject();
+        cuerpo["lineas"] = JsonSerializer.SerializeToNode(new[]
+        {
+            new { articuloId, sucursalId = s.SucursalId, cantidad = 1m, precioUnitario = 100m, descuentoPorcentaje = 0m }
+        });
+
+        var compra = await cliente.PostAsJsonAsync("/api/facturas-compra", cuerpo);
+        var ficha = await cliente.GetAsync($"/api/articulos/{articuloId}");
+
+        Assert.Equal(HttpStatusCode.Created, compra.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, ficha.StatusCode);
+        var detalle = await ficha.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(100m, detalle.GetProperty("costoVigente").GetDecimal());
+        var precios = detalle.GetProperty("precios").EnumerateArray().ToDictionary(
+            p => p.GetProperty("modalidad").GetString()!,
+            p => (Precio: p.GetProperty("precio").ValueKind == JsonValueKind.Null ? (decimal?)null : p.GetProperty("precio").GetDecimal(),
+                  Razon: p.GetProperty("razonAusencia").ToString()));
+        Assert.Equal(((decimal?)150m, ""), precios["Lista"]);
+        Assert.Equal(((decimal?)100m, ""), precios["Costo"]);
+        Assert.Equal(((decimal?)135m, ""), precios["EfectivoTransferencia"]);
+        Assert.Equal(((decimal?)null, "TasaSinDefinir"), precios["Tarjeta3"]);
+        Assert.Equal(((decimal?)null, "TasaSinDefinir"), precios["Tarjeta6"]);
+        Assert.Equal(((decimal?)null, "CasoEspecialNoFijado"), precios["CasoEspecial"]);
+    }
+
+    // PostgreSQL no guarda el carácter NUL en un texto (22021): es un dato inválido, no un error del servidor.
+    [PostgreSqlFact]
+    public async Task Post_NumeroConCaracterNul_400YNoEscribe()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra", Cuerpo(s, numero: "A\u0000B"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        var problema = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains("caracteres no válidos", problema.GetProperty("detail").GetString());
+        Assert.False(problema.TryGetProperty("errors", out _));
+        await using var relectura = fixture.CrearContexto();
+        Assert.False(await relectura.FacturaCompra.AnyAsync());
+        Assert.Equal(1m, await relectura.Stock.Where(x => x.ArticuloId == s.ArticuloId).SumAsync(x => x.Cantidad));
+    }
+
     [PostgreSqlFact]
     public async Task Post_NumeroActivoRepetido_409QueInformaLaFacturaEnConflicto()
     {

@@ -3,33 +3,11 @@ using LaCentral.UseCases.Entidades;
 namespace LaCentral.UseCases.Articulos;
 
 /// <summary>
-/// D1: la única regla de cálculo de precios del sistema. La usan el alta de artículo
-/// (HU-ART-01) y el recálculo al confirmar una factura de compra (Fase 6).
-/// precio = valor_de_la_base × (1 + porcentaje / 100)
+/// D1: la configuración con que nace un artículo (HU-ART-01). La regla de cálculo vive
+/// en CalcularPreciosArticuloUseCase.
 /// </summary>
 public static class ReglasPrecioModalidad
 {
-    /// <summary>
-    /// Null cuando no hay fórmula (manual, o tasa sin definir) o cuando falta el valor de
-    /// la base. Nunca cero por defecto, y nunca se sustituye una base por otra.
-    /// </summary>
-    public static decimal? Calcular(PrecioModalidad configuracion, decimal? costoArticulo, decimal? precioLista)
-    {
-        if (configuracion.CalculoManual || configuracion.Porcentaje is not { } porcentaje)
-            return null;
-
-        var valorBase = configuracion.Base switch
-        {
-            BasePrecio.CostoArticulo => costoArticulo,
-            BasePrecio.PrecioLista => precioLista,
-            _ => null
-        };
-        if (valorBase is null)
-            return null;
-
-        return Math.Round(valorBase.Value * (1m + porcentaje / 100m), 2, MidpointRounding.AwayFromZero);
-    }
-
     /// <summary>
     /// Decisión C: las seis filas con que nace un artículo, con precio null. Tarjeta3/6 sin
     /// base ni porcentaje hasta que existan las tasas: D1 prohíbe inventar un número.
