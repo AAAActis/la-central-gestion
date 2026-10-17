@@ -117,15 +117,15 @@ decisión confirmada, ver la sección 3).
 
 | Issue | HU | Estado | Motivo |
 |---|---|---|---|
-| #14 | ART-01 | **Cerrado** | CA1, CA3, CA4 y CA5 verificados. CA2 y CA6 no aplican como están escritos: el código interno lo genera el sistema y los márgenes son globales (sección 3, c). Conviene corregir el texto del Issue para que no quede un CA sin tilde |
-| #15 | ART-02 | **Cerrado** | Búsqueda, ficha y pantalla entregadas (#118). Quedan como deuda de tests, sin cambio de código: CA2 (un test de búsqueda por código interno solo), CA5 (último proveedor releído de la base) y el mensaje de CA4 en la pantalla |
+| #14 | ART-01 | **Cerrado**, con comentario | CA1, CA3, CA4 y CA5 verificados. El comentario deja constancia de que el texto de CA2 y CA6 quedó desactualizado por decisiones del sprint: el código interno lo genera el sistema (`LC-{id}`) y los márgenes son globales (sección 3, c). **Hay que actualizar el texto de esos CA** |
+| #15 | ART-02 | **REABIERTO**, con comentario | Búsqueda, ficha y pantalla entregadas (#118), pero **CA2, CA4 y CA5 no tienen test que los verifique**: CA2 (búsqueda por código interno solo), CA4 (mensaje «sin resultados» en la pantalla) y CA5 (último proveedor releído de la base). Los tests entran al Sprint 4 |
 | #32 | FCO-01 | **Cerrado** | Los cinco CA verificados. CA5 se cerró con la Fase 6 (#121, `Closes #32`) |
-| #22 | ART-05 | **ABIERTO** | Falta el precio de CasoEspecial (no hay endpoint ni HU), agregar la modalidad L2 y quitar Tarjeta3/Tarjeta6. Es Sprint 4, y L2 y Tarjeta son cambio de esquema (compuerta). CA4 depende de las ventas |
-| #17 | ART-03 | **ABIERTO** | CA4 hay que reescribirlo: los márgenes son globales, no por artículo (sección 3, c) |
+| #22 | ART-05 | **REABIERTO**, con comentario | Falta el precio de CasoEspecial (no hay endpoint ni HU), agregar la modalidad L2 y quitar Tarjeta3/Tarjeta6. Es Sprint 4, y L2 y Tarjeta son cambio de esquema (compuerta). CA4 depende de las ventas |
+| #17 | ART-03 | **REABIERTO**, con comentario | CA4 hay que reescribirlo: los márgenes son globales, no por artículo (sección 3, c) |
 
-> **Ojo, discrepancia con GitHub (consultado el 2026-10-17):** los cinco Issues figuran **cerrados**,
-> todos el 2026-10-17 a las 18:14 UTC por `AAAActis`, como "completed". **#17 y #22 hay que
-> reabrirlos.** El agente no tiene `gh` y no los toca: lo hace el equipo.
+> Estado en GitHub al 2026-10-17: los cinco Issues se habían cerrado a las 18:14 UTC (`AAAActis`).
+> Ese mismo día Javi, a mano, **reabrió #15, #17 y #22** y dejó **#14** cerrado; cada uno lleva un
+> comentario con el motivo. **#32** sigue cerrado.
 
 ---
 
