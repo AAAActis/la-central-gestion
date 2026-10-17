@@ -782,6 +782,7 @@ Arrancar en la **raíz del repo**. Estado al 2026-10-17:
 2. **N4 · carrera código interno / código de proveedor:** esquema (trigger o tabla única de códigos) o un lock. Ver "Deuda nueva detectada".
 3. **Precio manual (CasoEspecial):** HU nueva, con OB1 (lectura desfasada), OB2 (orden de bloqueos), OB3 y "Lista manual sin precio fijado → `SinCosto`". La escriben Javi y Alfredo.
 4. **Reescritura de CA4 de #17** (y de CA6 de #14): los márgenes son globales, no por artículo. Decidir qué queda del CA.
+5. **Cómo se verifica CA4 de #15** (mensaje «sin resultados» en la pantalla; hoy el frontend no tiene tests). Decisión pendiente del equipo (2026-10-17). **Recomendada:** test de componente con las herramientas de test que trae Angular (`ng test`), sin librerías nuevas. **Alternativa:** verificación manual con evidencia.
 
 ### Sprint 4 · sin compuerta (agente, TDD)
 - **"Regla: toda escritura verifica que escribió"**, apariciones 4-6 abiertas (`CerrarAsync` en Reactivar artículo, cliente, proveedor y usuario; `ActualizarAsync` en `RestablecerContrasenaUseCase`). Antes, el equipo decide qué responde una reactivación sin baja abierta.
