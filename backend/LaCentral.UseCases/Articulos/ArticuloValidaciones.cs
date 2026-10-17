@@ -10,6 +10,24 @@ public static class ArticuloValidaciones
     public const int LargoNombre = 200;
     public const int LargoUbicacion = 60;
     public const int LargoCodigo = 60;
+    // articulo.codigo_interno.
+    public const int LargoCodigoInterno = 40;
+
+    // El prefijo de los códigos internos que genera el alta desde la identidad (LC-{id:D6}).
+    public const string PrefijoCodigoGenerado = "LC-";
+
+    /// <summary>
+    /// Un código interno puesto a mano. No puede usar el prefijo del sistema: chocaría con el
+    /// que el alta le asigna a un artículo futuro.
+    /// </summary>
+    public static Result ValidarCodigoInterno(string clave)
+    {
+        if (clave.Length == 0 || clave.Length > LargoCodigoInterno)
+            return Result.Failure(TipoError.Invalido, $"El código interno es obligatorio y no puede superar los {LargoCodigoInterno} caracteres.");
+        if (clave.StartsWith(PrefijoCodigoGenerado, StringComparison.Ordinal))
+            return Result.Failure(TipoError.Invalido, $"Los códigos que empiezan con {PrefijoCodigoGenerado} los genera el sistema.");
+        return Result.Success();
+    }
 
     public static Result ValidarDatos(string nombre, string? ubicacionDeposito)
     {
