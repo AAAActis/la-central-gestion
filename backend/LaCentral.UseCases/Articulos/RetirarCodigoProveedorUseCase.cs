@@ -25,7 +25,7 @@ public class RetirarCodigoProveedorUseCase
     public async Task<Result> EjecutarAsync(int id, int proveedorId, CancellationToken ct = default)
     {
         if (!_contexto.EsAdministrador)
-            return Result.Failure(TipoError.NoAutorizado, "Solo un administrador puede retirar un código de proveedor.");
+            return Result.Failure(TipoError.Prohibido, "Solo un administrador puede retirar un código de proveedor.");
 
         var articulo = await _consulta.ObtenerDetallePorIdAsync(id, ct);
         if (articulo is null)

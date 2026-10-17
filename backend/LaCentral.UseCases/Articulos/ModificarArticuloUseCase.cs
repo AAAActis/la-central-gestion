@@ -59,7 +59,7 @@ public class ModificarArticuloUseCase
             if (clave != NormalizacionArticulo.Codigo(articulo.CodigoInterno))
             {
                 if (!_contexto.EsAdministrador)
-                    return Result.Failure(TipoError.NoAutorizado, "Solo un administrador puede cambiar el código interno.");
+                    return Result.Failure(TipoError.Prohibido, "Solo un administrador puede cambiar el código interno.");
                 validacion = ArticuloValidaciones.ValidarCodigoInterno(clave);
                 if (!validacion.IsSuccess)
                     return validacion;
