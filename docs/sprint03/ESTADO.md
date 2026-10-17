@@ -50,7 +50,7 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 | 5 · HU-FCO-01 | **cerrada (2026-10-15)** tras la ronda 4 (autorizada por el equipo, solo M12): **verificador APTO** (`26c02fc..f424771`), **auditor APTO** (`f34bbc4..b4fca2f`; las rondas 3 y 4 son solo de test). Ver "Compuerta de la Fase 5" | `feature/HU-FCO-01-factura-compra` (sale de `a23bb26`, que ya está en develop; pusheada, HEAD de código `f424771`) | **#119, MERGEADO en develop** (`d9ab678`; develop = `a47a866` con #120). `Refs #32` (no lo cierra). Cuerpo en `docs/sprint03/pr-fase5-hu-fco-01.md` | **325 total · 325 passed · 0 failed · 0 skipped · 0 warnings (109 `[PostgreSqlFact]`), en `f424771`**. En `0190052`: 324 con **108** PG (el "109" que figuraba contaba una mención en un comentario) | — |
 | 6 · HU-ART-05 + FCO-01 CA5 | **cerrada (2026-10-16)** y **cambios pedidos por Santi en el PR #121 aplicados (2026-10-16)**: NUL → 400, `CalcularPreciosArticuloUseCase` única regla, Interpretación pendiente · Lista manual → Efectivo (sin confirmar), recálculo al comprar en la misma unidad de trabajo, O1 resuelta. Ver "Fase 6" | `feature/HU-ART-05-precios-modalidad` (sale de develop `a47a866`; pusheada) | **#121, MERGEADO en develop (`0580a16`)**. Refs #22 · Closes #32 | **353 total · 353 passed · 0 failed · 0 skipped · 0 warnings (119 `[PostgreSqlFact]`), en `c575e4e`** | revisión de Santi; confirmar con Alfredo la Interpretación pendiente · Lista manual → Efectivo |
 | — · Merge | **Fase 6 mergeada en develop** (#121). `develop` = `0580a16`, suite esperada 353/353, 119 `[PostgreSqlFact]` (re-corrida el 2026-10-16 al empezar la Fase 7: 353/353, 0 omitidos, 0 warnings) | | | | |
-| 7 · HU-ART-03 | **cerrada (2026-10-17)**: modificación, códigos, retiro (solo admin), baja y reactivación, rol de la sesión y `frontend/`. Ronda 1 (B1, B2 del auditor). **Verificador APTO, auditor APTO.** CA4 sin implementar (falta regla). Ver "Fase 7" | `feature/HU-ART-03-modificar-articulo` (sale de develop `0580a16`, pusheada) | **sin abrir** (a mano, sin `gh`). `Refs #17`. Cuerpo en `docs/sprint03/pr-fase7-hu-art-03.md` | **430 total · 430 passed · 0 failed · 0 skipped · 0 warnings (145 `[PostgreSqlFact]`), en `acc8f9d`** | CA4; decisiones a confirmar; deuda N2-N5 |
+| 7 · HU-ART-03 | **cerrada (2026-10-17)**: modificación, códigos, retiro (solo admin), baja y reactivación, rol de la sesión y `frontend/`. Ronda 1 (B1, B2 del auditor). Rol sin permiso → 403 (Javi). **Verificador APTO, auditor APTO.** CA4 sin implementar (falta regla). Ver "Fase 7" | `feature/HU-ART-03-modificar-articulo` (sale de develop `0580a16`, pusheada) | **sin abrir** (a mano, sin `gh`). `Refs #17`. Cuerpo en `docs/sprint03/pr-fase7-hu-art-03.md` | **431 total · 431 passed · 0 failed · 0 skipped · 0 warnings (145 `[PostgreSqlFact]`), en `aa2e795`** | CA4; deuda N2-N5 |
 
 ## Corrección 2026-10-14 · el 28P01 era una credencial, no código
 
@@ -559,7 +559,7 @@ prueba que la Fase 2 esté mal.
 - 2026-10-16 · **Auditor · esquema huérfano en `lacentral_test`:** `pr110_test_5bef5661630743e4b6d09c409f11fafa`, dueño `lacentral_tests`, ya existía antes de la auditoría (las corridas de la Fase 6 usaron `lacentral_javi` y no dejaron esquemas). Al final había 6 conexiones abiertas a `lacentral_test` de origen desconocido. No se tocó (R3): lo borra el equipo.
 
 - 2026-10-17 · **Fase 7 · CA4 de #17 sin implementar** (modificar los márgenes de venta de un artículo). Falta la regla: qué márgenes se editan por artículo, si eso contradice D1 o D1 es solo el valor inicial, si las tasas de tarjeta son por artículo o globales, y quién las edita. El recálculo de un artículo ya existe (`CalcularPreciosArticuloUseCase`).
-- 2026-10-17 · **Fase 7 · `NoAutorizado` → 401** para un usuario autenticado sin permiso (`backend/LaCentral.Api/Middleware/MapeoResultado.cs`). El controlador declara 403. El frontend muestra el `detail`; un cliente que trate todo 401 como "volver a entrar" se equivocaría. Cambiarlo es global: lo decide el equipo.
+- 2026-10-17 · ~~**Fase 7 · `NoAutorizado` → 401** para un usuario autenticado sin permiso.~~ **Resuelto el mismo día** (decisión de Javi): `TipoError.Prohibido` → 403, ver "Decisiones".
 - 2026-10-17 · **Fase 7, auditor N2:** `backend/LaCentral.UseCases/Articulos/ReactivarArticuloUseCase.cs` ignora el `bool` de `CerrarAsync`. Un inactivo sin baja abierta (importado) se reactiva sin rastro. Mismo patrón que cliente y proveedor.
 - 2026-10-17 · **Fase 7, auditor N3:** los códigos de proveedor pueden empezar con `LC-` (`ArticuloValidaciones.ValidarCodigos`), aunque el código interno manual no. Viene del alta.
 - 2026-10-17 · **Fase 7, auditor N4:** la unicidad entre `articulo.codigo_interno` y `articulo_codigo_alternativo.codigo` la controla solo la aplicación. Con el código interno editable a mano, una carrera entre dos sesiones puede dejar la misma clave en los dos lados. Cerrarla pide esquema (trigger o tabla única de códigos) o un lock. Lo decide el equipo.
@@ -576,8 +576,10 @@ prueba que la Fase 2 esté mal.
 - 2026-10-14 · **Fases 3, 4 y 6 (D1):** ~~el comentario de `articulo_margen` todavía dice "0,01 % = precio igual al costo", mientras que D1 dice Costo = × 1,00~~ (la tabla ya no existe, 2026-10-14). **Resuelto en la Fase 3 (2026-10-14):** `MargenModalidad` y `CalcularPrecioEstimado` ya no existen. Ahora están `PrecioModalidad`, `BasePrecio` y `ReglasPrecioModalidad`, con Efectivo sobre PrecioLista y CasoEspecial manual. `CalcularPreciosArticuloUseCase` sigue sin existir: es de la Fase 6. Lo que sigue es el texto original. **Seguía en pie:** la tabla nueva tiene dónde guardar `precio` y `calculo_manual`, pero el dominio no se alineó todavía: eso es de la Fase 3. Además, el comentario de la tabla nombra un `CalcularPreciosArticuloUseCase` que todavía no existe. El modelo "porcentaje sobre costo" de `MargenModalidad`/`CalcularPrecioEstimado` no expresa Efectivo (sobre Lista), CasoEspecial (precio fijo) ni la razón de la ausencia. Detalle en `informe-compuerta-d1.md`.
 
 ## Decisiones
-- 2026-10-17 · **Fase 7 · rol de la sesión (Javi):** `IContextoUsuario.EsAdministrador` sale del claim de rol en `ContextoUsuario`. El caso de uso da `NoAutorizado` si un OPERADOR cambia el código interno o retira un código. El `[Authorize(Roles="ADMINISTRADOR,OPERADOR")]` se mantiene. Cierra la contradicción de la PRÓXIMA SESIÓN anterior.
-- 2026-10-17 · **Fase 7 · para confirmar con el equipo:** el código interno manual sin el prefijo `LC-` y sin coincidir con ningún código (tampoco con los nuevos de la misma petición); retirar un código de un artículo dado de baja → 400; baja y reactivación para los dos roles; la ficha suma `ubicacionDeposito` y `motivoBaja`. Detalle en "Fase 7".
+- 2026-10-17 · **Fase 7 · rol sin permiso → 403 (Javi).** `TipoError.Prohibido` → 403 en `MapeoResultado`, usado SOLO en los dos chequeos de rol: cambiar el código interno (`ModificarArticuloUseCase`) y retirar un código (`RetirarCodigoProveedorUseCase`). Los demás `NoAutorizado` (login inválido, sesión sin usuario) siguen en 401. Ver "Fase 7 · 403".
+- 2026-10-17 · **Fase 7 · confirmadas por Javi:** el código interno manual no puede empezar con `LC-`; retirar un código de un artículo dado de baja → 400; baja y reactivación para ADMINISTRADOR y OPERADOR.
+- 2026-10-17 · **Fase 7 · rol de la sesión (Javi):** `IContextoUsuario.EsAdministrador` sale del claim de rol en `ContextoUsuario`. El caso de uso da `Prohibido` (403; hasta `aa2e795`, `NoAutorizado`) si un OPERADOR cambia el código interno o retira un código. El `[Authorize(Roles="ADMINISTRADOR,OPERADOR")]` se mantiene. Cierra la contradicción de la PRÓXIMA SESIÓN anterior.
+- 2026-10-17 · **Fase 7 · para confirmar con el equipo:** la ficha suma `ubicacionDeposito` y `motivoBaja`. Detalle en "Fase 7".
 - 2026-10-16 · **Interpretación pendiente · Lista manual → Efectivo.** Pendiente de confirmación del equipo (Alfredo): no es una decisión ni lleva número. Lo que hace el código: si la fila de Lista es manual, Efectivo = Lista manual × 0,90 (la base `PrecioLista` es el precio de lista vigente, manual o calculado). **Pregunta para Alfredo:** si alguien fija a mano el precio de lista, ¿el de efectivo lo sigue solo al −10 % o son dos decisiones separadas? Hoy no se alcanza (ninguna operación vuelve manual a Lista). Reclasificada el 2026-10-16 por el pedido de cambios del PR #121 (Santi); el código no cambia. Test `RecalcularPreciosTests.ListaManual_EfectivoSobreLaListaManual_YLaListaNoSeToca` (`71d6cf1` rojo → `80d62fd`).
 - 2026-10-16 · **Rol de test `lacentral_javi` aceptado.** Javi verificó en el catálogo que tiene los mismos permisos que `lacentral_tests` (no superusuario, sin CONNECT a `lacentral`, CREATE en `lacentral_test`). Las corridas abortan si el usuario de `LACENTRAL_TEST_PG` (ámbito User) no es `lacentral_tests` ni `lacentral_javi`. Corrige la regla del 2026-10-15 de abajo.
 - 2026-10-16 · **Fase 6 · forma del recálculo (Javi):** dos unidades. Unidad 2, el núcleo puro (`Calcular` + `Recalcular`); unidad 3, `EjecutarAsync` con puerto e integración. El puerto (`IPreciosArticuloRepositorio`) usa el MISMO DbContext scoped que `RegistrarFacturaCompraUseCase`; la atomicidad la prueba el test PG.
@@ -619,7 +621,7 @@ Rama `feature/HU-ART-03-modificar-articulo`, sale de develop `0580a16`. Línea b
 **Pasaron a la primera, declarados y verificados con mutación sin commitear** (todas en rojo): M1 sin `Activo` en el UPDATE → la carrera de baja; M2 `ObtenerConflictosCodigoAsync` sin códigos de proveedor → CA3 y código interno = código de proveedor; M3 UPDATE sin Id → otro artículo modificado; M4 retiro sin artículo → borra el del otro artículo; M5 reactivar borra motivo y fecha; H1 `EsAdministrador => true` → los dos 401; H2 el PUT ignora los códigos → 204 sin el código; H3 sin el chequeo de conflicto del caso de uso → el 409 sale del índice sin decir cuál artículo; H4 inexistente → Invalido.
 
 **Decisiones (2026-10-17):**
-- **Rol (decisión de Javi, consigna de la sesión):** `IContextoUsuario.EsAdministrador`, leído del claim de rol en `ContextoUsuario` (`IsInRole("ADMINISTRADOR")`, el mismo claim que firma `GeneradorToken`). El caso de uso devuelve `NoAutorizado` si un OPERADOR cambia el código interno o retira un código. El `[Authorize(Roles="ADMINISTRADOR,OPERADOR")]` del controlador se mantiene. Cierra la contradicción que estaba en "PRÓXIMA SESIÓN".
+- **Rol (decisión de Javi, consigna de la sesión):** `IContextoUsuario.EsAdministrador`, leído del claim de rol en `ContextoUsuario` (`IsInRole("ADMINISTRADOR")`, el mismo claim que firma `GeneradorToken`). El caso de uso devuelve `Prohibido` (403, desde `1a93f7e`; antes `NoAutorizado`, 401) si un OPERADOR cambia el código interno o retira un código. El `[Authorize(Roles="ADMINISTRADOR,OPERADOR")]` del controlador se mantiene. Cierra la contradicción que estaba en "PRÓXIMA SESIÓN".
 - Endpoints: `PUT /api/articulos/{id}` (204), `DELETE /api/articulos/{id}/codigos/{proveedorId}` (el proveedor identifica el código, D2), `POST /{id}/baja` (motivo, `DarDeBajaRequest`) y `POST /{id}/reactivacion`.
 - `CodigosProveedor` del PUT son los que se asocian: un código que el artículo ya tiene (mismo proveedor y misma clave normalizada) no es conflicto ni se revalida su proveedor; uno omitido NO se retira. Cambiar el código de un proveedor = retirar (admin) + agregar.
 - **Código interno manual (para que lo confirme el equipo):** 1-40 caracteres, normalizado como los códigos (trim + mayúsculas), **sin el prefijo `LC-`** (lo genera el alta desde la identidad: uno puesto a mano chocaría con un alta futura) y sin coincidir con ningún código interno ni de proveedor, incluidos los del propio artículo.
@@ -646,6 +648,19 @@ Rama `feature/HU-ART-03-modificar-articulo`, sale de develop `0580a16`. Línea b
 | auditor | `a1f4143..acc8f9d` | **APTO** | B1 y B2 cerrados contra el motor, con sus mutaciones en rojo. SQL capturado: la rama null no lleva `codigo_interno` y `activo` sigue en los dos WHERE. **430/430, 145 PG** |
 
 **Suite final (corrida del auditor, en `acc8f9d`):** 430 total · 430 passed · 0 failed · 0 skipped, 0 warnings, **145 `[PostgreSqlFact]`** (antes 353 y 119: +77 tests, 26 PG), rol `lacentral_javi`.
+
+**Fase 7 · 403 para un rol sin permiso (2026-10-17, decisión de Javi):**
+| Paso | Commit | Qué |
+|---|---|---|
+| Estructura | `0abcd8c` | `TipoError.Prohibido`, sin mapear |
+| Rojo | `70af035` | 2 Moq (Expected Prohibido / Actual NoAutorizado) y 2 HTTP+PG (Expected Forbidden / Actual Unauthorized) |
+| Producción | `1a93f7e` | `Prohibido` → 403 en `MapeoResultado` y en los dos chequeos de rol |
+| Caracterización | `aa2e795` | `Login_ContrasenaIncorrecta_DevuelveStatus401`: pasa a la primera, declarado; con `NoAutorizado` → 403 en el mapeo da rojo |
+
+| Pasada | Alcance | Veredicto | Qué |
+|---|---|---|---|
+| verificador | `b4a1ff0..aa2e795` | **APTO** | 4 rojos reproducidos por aserción. 6 mutaciones muertas: cada caso de uso vuelto a `NoAutorizado`, `Prohibido` → 401, la línea del mapeo borrada (→ 400), `NoAutorizado` → 403, y un `NoAutorizado` de sesión vuelto `Prohibido`. Los 11 `NoAutorizado` restantes son de login o de sesión |
+| auditor | `b4a1ff0..aa2e795` | **APTO** | Los dos 403 releen con un contexto nuevo y no hay escritura; el chequeo de rol va antes de escribir y fuera de la unidad de trabajo (mutaciones "escribir antes del chequeo" → rojo en los dos). **431/431, 0 omitidos, 145 PG** |
 
 **Issue:** `Refs #17` (CA4 sin implementar). CA1, CA2, CA3 y CA5 verificados: el mapa de tests está en el cuerpo del PR. Cuerpo: `docs/sprint03/pr-fase7-hu-art-03.md`.
 
@@ -742,17 +757,17 @@ Rama `feature/HU-FCO-01-factura-compra`, sale de `a23bb26` (HEAD de la Fase 4). 
 Arrancar en la **raíz del repo**. Estado al 2026-10-17:
 
 - **`develop` = `0580a16`**: Fases 1 a 6 mergeadas (#113, #114, #115, #117, #118, #119, #121) y #120 (onboarding).
-- **Fase 7 (HU-ART-03, #17): CERRADA (2026-10-17)**, **PR SIN ABRIR**: lo abre Javi a mano desde el link de compare (no hay `gh`), con el cuerpo de `docs/sprint03/pr-fase7-hu-art-03.md`. Rama `feature/HU-ART-03-modificar-articulo`, pusheada. **`Refs #17`, no Closes: CA4 no está implementado.** Verificador APTO y auditor APTO (después de la ronda 1, B1 y B2). Suite: **430/430, 145 `[PostgreSqlFact]`**, 0 omitidos, 0 warnings, en `acc8f9d`. No se mergea sin el equipo.
+- **Fase 7 (HU-ART-03, #17): CERRADA (2026-10-17)**, **PR SIN ABRIR**: lo abre Javi a mano desde el link de compare (no hay `gh`), con el cuerpo de `docs/sprint03/pr-fase7-hu-art-03.md`. Rama `feature/HU-ART-03-modificar-articulo`, pusheada. **`Refs #17`, no Closes: CA4 no está implementado.** Verificador APTO y auditor APTO (después de la ronda 1, B1 y B2, y otra vez sobre el cambio a 403). Suite: **431/431, 145 `[PostgreSqlFact]`**, 0 omitidos, 0 warnings, en `aa2e795`. No se mergea sin el equipo.
+- **Ya decidido por Javi (2026-10-17):** `LC-` prohibido en el código interno manual; retirar en un artículo dado de baja → 400; baja y reactivación para los dos roles; rol sin permiso → **403** (`TipoError.Prohibido`, hecho en `0abcd8c..aa2e795`).
 - **Decisiones que tiene que tomar el equipo antes de cerrar #17:**
   - **CA4 · márgenes por artículo:** qué márgenes se editan (¿el +50 % de Lista de UN artículo contradice D1 o D1 es solo el valor inicial?), si las tasas de tarjeta son por artículo o globales, y quién los edita. Hasta entonces no se implementa.
-  - Confirmar: el código interno manual sin el prefijo `LC-`; retirar un código de un artículo dado de baja → 400; baja y reactivación para ADMINISTRADOR y OPERADOR; `NoAutorizado` → 401 (¿403?).
   - Deuda N2-N5 del auditor (ver "Deuda nueva detectada").
 - **Pendientes de antes:** tasas de Tarjeta3/6; HU de precio manual (CasoEspecial y OB1/OB2); confirmar con Alfredo la Interpretación pendiente · Lista manual → Efectivo; borrar el esquema huérfano `pr110_test_5bef5661...` (sigue ahí al 2026-10-17); deuda O2-O3 de la Fase 6.
 
 ### Fase 8 · Cierre del sprint (plan, sección "FASE 8")
 - **Sin rama nueva.** Es un reporte, no código. Arrancar cuando el PR de la Fase 7 esté abierto (y, si el equipo quiere, mergeado).
 - Contenido:
-  - tests antes y después: línea base 108 (8 PG) → 430 (145 PG), con el desglose PG / dobles y 0 omitidos;
+  - tests antes y después: línea base 108 (8 PG) → 431 (145 PG), con el desglose PG / dobles y 0 omitidos;
   - CA por HU: ART-01 (#14), ART-02 (#15), FCO-01 (#32, cerrado por #121), ART-05 (#22, Refs: Tarjeta3/6 y CasoEspecial sin definir), ART-03 (#17, Refs: CA4);
   - la deuda de este archivo, con un responsable sugerido;
   - qué Issues se cierran y cuáles siguen abiertos, con el motivo.
@@ -762,6 +777,6 @@ Arrancar en la **raíz del repo**. Estado al 2026-10-17:
 La `LACENTRAL_TEST_PG` del proceso puede estar vieja. Exportá la del ámbito User antes de `dotnet test` (desde `backend/`) y abortá si el usuario no es `lacentral_tests` ni `lacentral_javi` (decisión del 2026-10-16):
 `export LACENTRAL_TEST_PG="$(powershell.exe -NoProfile -Command "[Environment]::GetEnvironmentVariable('LACENTRAL_TEST_PG','User')" | tr -d '\r')"`
 
-La suite completa tarda ~5 min 15 s (430 tests); un test PG filtrado, ~15-20 s.
+La suite completa tarda ~5 min 15 s (431 tests); un test PG filtrado, ~15-20 s.
 
 En la máquina de Javi `gh` no está instalado: el PR se abre a mano. En PowerShell 5.1, los mensajes de commit con comillas dobles se rompen: usar `git commit -F <archivo>`.

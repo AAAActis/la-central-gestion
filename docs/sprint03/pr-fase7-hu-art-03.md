@@ -8,7 +8,7 @@
 
 ### Permisos desde la sesión
 - `IContextoUsuario.EsAdministrador`, leído del claim de rol en `ContextoUsuario` (`IsInRole("ADMINISTRADOR")`, el mismo claim que firma `GeneradorToken` y que lee `[Authorize(Roles)]`). Decisión de Javi.
-- El caso de uso devuelve `NoAutorizado` si un OPERADOR cambia el código interno o retira un código. El rol nunca sale del cuerpo: un `"rol": "ADMINISTRADOR"` en el JSON no cambia nada (test HTTP).
+- El caso de uso devuelve `TipoError.Prohibido` si un OPERADOR cambia el código interno o retira un código, y `MapeoResultado` lo traduce a **403**. Decisión de Javi. Los demás `NoAutorizado` (login inválido, sesión sin usuario) siguen en 401. El rol nunca sale del cuerpo: un `"rol": "ADMINISTRADOR"` en el JSON no cambia nada (test HTTP).
 - El `[Authorize(Roles = "ADMINISTRADOR,OPERADOR")]` del controlador se mantiene.
 
 ### `PUT /api/articulos/{id}` · `ModificarArticuloUseCase` (204)
@@ -52,17 +52,19 @@
 - No guarda historial de códigos retirados: se borra la fila. Nada referencia `articulo_codigo_alternativo`.
 - No cambia el esquema ni `Data/Models/`.
 
-## Decisiones para que confirme el equipo
+## Decisiones (confirmadas por Javi, 2026-10-17)
 1. Un código interno puesto a mano no puede empezar con `LC-`. Sin esto, uno como `LC-000999` haría fallar con 409 el alta del artículo de Id 999.
 2. Retirar un código de un artículo dado de baja → 400, por la misma regla que CA5.
 3. Baja y reactivación de artículo: ADMINISTRADOR y OPERADOR.
-4. `NoAutorizado` sale como **401** por `MapeoResultado`, también para un OPERADOR autenticado. Semánticamente sería 403. No se tocó el mapeo global: ver la deuda.
+4. Un rol sin permiso recibe **403**: `TipoError.Prohibido`, solo en los dos chequeos de rol. Login inválido y sesión sin usuario siguen en 401 (`NoAutorizado`).
+
+Queda para el equipo: la ficha suma `ubicacionDeposito` y `motivoBaja` (aditivo).
 
 ## Cómo se verificó
-- **Suite (en `acc8f9d`, corrida del auditor; la del verificador en `7858c26` dio 428/428):**
-  - **430 total · 430 passed · 0 failed · 0 skipped**, 0 warnings con `--no-incremental`;
+- **Suite (en `aa2e795`, corrida del auditor):**
+  - **431 total · 431 passed · 0 failed · 0 skipped**, 0 warnings con `--no-incremental`;
   - **145 `[PostgreSqlFact]`** contra PostgreSQL real, con el rol `lacentral_javi`;
-  - antes: 353 y 119. Tests nuevos: **77**, 26 de ellos contra PostgreSQL.
+  - antes: 353 y 119. Tests nuevos: **78**, 26 de ellos contra PostgreSQL.
 - **Persistencia:**
   - todo con casos de uso, repositorios y unidad de trabajo reales sobre el mismo contexto, y relectura con un contexto nuevo. Solo la sesión es un doble;
   - sin Ids sembrados.
@@ -85,7 +87,7 @@
 | CA3 | verificado | `Modificar_CodigoDeOtroArticulo_ConflictoInformandoCualYNoEscribeNada`, `Put_CodigoDeOtroArticulo_409InformandoCual` |
 | CA4 | **NO implementado** | — (falta la regla de negocio) |
 | CA5 | verificado | `Modificar_DadoDeBaja_InvalidoYNoEscribeNada`, `Modificar_OtraSesionLoDaDeBajaEntreLecturaYEscritura_...`, `Baja_Modificar_Reactivar_Modificar` (HTTP) |
-| Permisos | verificado | `Put_OperadorCambiaElCodigoInterno_401YNoEscribe`, `Put_AdministradorCambiaElCodigoInterno_204YSeGuarda`, `Delete_Operador..._401`, `Delete_Administrador..._204` |
+| Permisos | verificado | `Put_OperadorCambiaElCodigoInterno_403YNoEscribe`, `Put_AdministradorCambiaElCodigoInterno_204YSeGuarda`, `Delete_OperadorRetiraUnCodigo_403YElCodigoQueda`, `Delete_Administrador..._204`, `Login_ContrasenaIncorrecta_DevuelveStatus401` |
 
 ## TDD
 | Unidad | estructura → test (rojo) → producción |
@@ -99,6 +101,8 @@
 | Borde del código interno (no bloqueante del verificador) | `a1f4143`: 40 caracteres se guardan. Pasa a la primera, declarado; con `>` → `>=` da rojo |
 | Ronda 1 del auditor (B1, B2, N1) | `e060dbe`: 7 rojos (4 Verify, 2 Expected Conflicto / Actual Ninguno, 1 Expected "ADM-9" / Actual "LC-000001") → `7858c26` |
 | Guarda de B1 por los dos lados (no bloqueante del verificador) | `acc8f9d`: caracterización; `Any` → `All` y `==` → `!=` dan rojo |
+| Rol sin permiso → 403 (decisión de Javi) | `0abcd8c` (`TipoError.Prohibido`, sin mapear) → `70af035`: 4 rojos (2 Moq Expected Prohibido / Actual NoAutorizado, 2 HTTP Expected Forbidden / Actual Unauthorized) → `1a93f7e` |
+| Login inválido sigue en 401 | `aa2e795`: caracterización, pasa a la primera; con `NoAutorizado` → 403 en el mapeo da rojo |
 
 **Excepciones declaradas.** Estos tests pasaron a la primera. Cada uno se verificó con una mutación sin commitear, y todas dieron rojo:
 - **PG.** Pasan a la primera porque los resuelve el caso de uso, o porque el stub no escribe.
@@ -106,7 +110,7 @@
   - `Modificar_OtraSesionLoDaDeBaja...`: con M1, el UPDATE sin `activo`.
 - **HTTP.** Pasan a la primera porque los cubren los casos de uso ya hechos.
   - `Put_OperadorModifica...`: con H2, el controlador ignora los códigos.
-  - `Put_OperadorCambia..._401` y `Delete_Operador..._401`: con H1, `EsAdministrador => true`.
+  - `Put_OperadorCambia...` y `Delete_Operador...` (hoy `_403`, entonces `_401`): con H1, `EsAdministrador => true`.
   - `Put_CodigoDeOtroArticulo_409...`: con H3, sin el chequeo del caso de uso. El 409 sale del índice y no dice cuál artículo.
   - `Put_Inexistente_404`: con H4, inexistente → Invalido.
 - **Otras mutaciones, todas en rojo:**
@@ -122,12 +126,10 @@
 | ronda 1 | `e060dbe` → `7858c26` | — | B1: Conflicto. B2: el código interno es `string?` en el puerto, y con null la columna queda fuera del SET. N1: el test de reactivación afirma su restricción |
 | verificador | `a1f4143..7858c26` | **APTO** | 7 rojos reproducidos. 11 mutaciones muertas, entre ellas la de B2 y las dos ramas del repositorio. Suite 428/428, 145 PG. No bloqueantes N-a/N-b (la guarda B1 por un solo lado) → `acc8f9d` |
 | auditor | `a1f4143..acc8f9d` | **APTO** | B1 y B2 cerrados contra el motor, con sus mutaciones en rojo. El SQL de la rama null no lleva `codigo_interno`, y `activo` sigue en los dos WHERE. Suite 430/430, 145 PG |
+| verificador | `b4a1ff0..aa2e795` (403) | **APTO** | 4 rojos reproducidos por aserción. 6 mutaciones muertas: cada caso de uso de vuelta a `NoAutorizado`, `Prohibido` → 401, la línea del mapeo borrada (→ 400), `NoAutorizado` → 403, y un `NoAutorizado` de sesión vuelto `Prohibido`. Los 11 `NoAutorizado` restantes son de login o de sesión |
+| auditor | `b4a1ff0..aa2e795` (403) | **APTO** | Los dos 403 releen con un contexto nuevo y no escriben. El chequeo de rol va antes de escribir y fuera de la unidad de trabajo: con la escritura antes del chequeo, los dos tests dan rojo. **Suite 431/431, 0 omitidos, 145 PG** |
 
 ## Deuda nueva
-- `NoAutorizado` → 401 para un usuario autenticado sin permiso (`backend/LaCentral.Api/Middleware/MapeoResultado.cs`).
-  - El frontend muestra el `detail`, así que no se confunde con una sesión vencida.
-  - Un cliente que trate todo 401 como "volver a entrar" lo haría mal.
-  - Cambiarlo a 403 es global: lo decide el equipo.
 - La unicidad entre `codigo_interno` y los códigos de proveedor la sigue controlando solo la aplicación, ahora también en la modificación. Una carrera entre dos sesiones no la cierra el motor.
 - Retirar un código borra la fila: no queda rastro de qué código tuvo el artículo.
 - **Auditor N2:** `ReactivarArticuloUseCase` ignora el `bool` de `CerrarAsync`. Un inactivo sin una baja abierta en el historial, como un dato importado, se reactiva sin dejar rastro. Es el mismo patrón que cliente y proveedor.
