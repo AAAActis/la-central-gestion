@@ -48,8 +48,9 @@ Resultado: todo en verde, skipped = 0. Compuerta de Fase 0 superada.
 | 4 · HU-ART-02 | **hecha (2026-10-15)**: búsqueda, ficha con las seis modalidades y su razón, GET por HTTP, enums por nombre y `frontend/` en Angular. **Verificador APTO, auditor APTO (ronda 1)**. Ver "Fase 4" | `feature/HU-ART-02-consultar-articulos` (sale de `feature/HU-ART-01-alta-articulo` `ca84eae`, pusheada; HEAD de código `d44bab7`) | **#118, MERGEADO en develop (`56c1e3e`, 2026-10-15 22:27)**. Cuerpo en `docs/sprint03/pr-fase4-hu-art-02.md` | **258 total · 258 passed · 0 failed · 0 skipped · 0 warnings (86 `[PostgreSqlFact]`), en `d44bab7`** | deuda abajo |
 | — · Merge | **Fases 3 y 4 mergeadas en develop** (2026-10-15): `c958901` (#117, Fase 3) y `56c1e3e` (#118, Fase 4, 22:27). `develop` = `56c1e3e` | | | | |
 | 5 · HU-FCO-01 | **cerrada (2026-10-15)** tras la ronda 4 (autorizada por el equipo, solo M12): **verificador APTO** (`26c02fc..f424771`), **auditor APTO** (`f34bbc4..b4fca2f`; las rondas 3 y 4 son solo de test). Ver "Compuerta de la Fase 5" | `feature/HU-FCO-01-factura-compra` (sale de `a23bb26`, que ya está en develop; pusheada, HEAD de código `f424771`) | **#119, MERGEADO en develop** (`d9ab678`; develop = `a47a866` con #120). `Refs #32` (no lo cierra). Cuerpo en `docs/sprint03/pr-fase5-hu-fco-01.md` | **325 total · 325 passed · 0 failed · 0 skipped · 0 warnings (109 `[PostgreSqlFact]`), en `f424771`**. En `0190052`: 324 con **108** PG (el "109" que figuraba contaba una mención en un comentario) | — |
-| 6 · HU-ART-05 + FCO-01 CA5 | **cerrada (2026-10-16)** y **cambios pedidos por Santi en el PR #121 aplicados (2026-10-16)**: NUL → 400, `CalcularPreciosArticuloUseCase` única regla, Interpretación pendiente · Lista manual → Efectivo (sin confirmar), recálculo al comprar en la misma unidad de trabajo, O1 resuelta. Ver "Fase 6" | `feature/HU-ART-05-precios-modalidad` (sale de develop `a47a866`; pusheada) | **#121** abierto, sin mergear. Refs #22 · Closes #32 | **353 total · 353 passed · 0 failed · 0 skipped · 0 warnings (119 `[PostgreSqlFact]`), en `c575e4e`** | revisión de Santi; confirmar con Alfredo la Interpretación pendiente · Lista manual → Efectivo |
-| 7 · HU-ART-03 | pendiente | | | | |
+| 6 · HU-ART-05 + FCO-01 CA5 | **cerrada (2026-10-16)** y **cambios pedidos por Santi en el PR #121 aplicados (2026-10-16)**: NUL → 400, `CalcularPreciosArticuloUseCase` única regla, Interpretación pendiente · Lista manual → Efectivo (sin confirmar), recálculo al comprar en la misma unidad de trabajo, O1 resuelta. Ver "Fase 6" | `feature/HU-ART-05-precios-modalidad` (sale de develop `a47a866`; pusheada) | **#121, MERGEADO en develop (`0580a16`)**. Refs #22 · Closes #32 | **353 total · 353 passed · 0 failed · 0 skipped · 0 warnings (119 `[PostgreSqlFact]`), en `c575e4e`** | revisión de Santi; confirmar con Alfredo la Interpretación pendiente · Lista manual → Efectivo |
+| — · Merge | **Fase 6 mergeada en develop** (#121). `develop` = `0580a16`, suite esperada 353/353, 119 `[PostgreSqlFact]` (re-corrida el 2026-10-16 al empezar la Fase 7: 353/353, 0 omitidos, 0 warnings) | | | | |
+| 7 · HU-ART-03 | **en curso (2026-10-16)**. Ver "Fase 7" | `feature/HU-ART-03-modificar-articulo` (sale de develop `0580a16`) | sin abrir | | |
 
 ## Corrección 2026-10-14 · el 28P01 era una credencial, no código
 
@@ -586,6 +587,41 @@ prueba que la Fase 2 esté mal.
 - **Compuerta:** dos corridas completas seguidas, **261/261 (89 PG)**, sin 53300. Al terminar: 0 conexiones idle de `lacentral_tests` y 0 esquemas `pr110_test_*`.
 - Hook de graphify: `graphify` por PATH, verificado (se dispara). El grafo se actualiza solo con el hook post-commit.
 
+## Fase 7 · HU-ART-03 · Modificación y códigos (2026-10-17)
+Rama `feature/HU-ART-03-modificar-articulo`, sale de develop `0580a16`. Línea base re-corrida al empezar: 353/353, 0 omitidos, 0 warnings, rol `lacentral_javi`.
+
+**Criterios de #17** (leídos del Issue): CA1 actualiza el registro · CA2 agrega un código con su proveedor sin alterar los existentes · CA3 código de otro artículo → rechazo informando el conflicto · **CA4 modificar los márgenes de venta → recalcula el precio solo de ese artículo** · CA5 dado de baja → se deniega e indica que debe reactivarse.
+
+**Commits (TDD por unidad):**
+| Unidad | estructura → test (rojo) → producción |
+|---|---|
+| Estructura | `901d55f` (puerto `EsAdministrador`, firmas del repositorio, esqueletos que devuelven Success, endpoints sin DataAnnotations) |
+| Modificación (Moq) | `02c2d53` (27 rojos: 21 Assert, 6 Verify) → `a9dbd7f` |
+| Retiro, baja y reactivación (Moq) | `2c16031` (20 rojos: 16 Assert, 4 Verify) → `2983318` |
+| Repositorio (PG) | `9ff4ac2` (14 tests, 11 rojos por aserción, 3 declarados) → `e72d569` |
+| HTTP (WebApplicationFactory + PG) | `b9e42b1` (10 tests, 5 rojos por aserción, 5 declarados) → `4f9a5f5` |
+| Frontend | `7bc47c4` |
+
+**Pasaron a la primera, declarados y verificados con mutación sin commitear** (todas en rojo): M1 sin `Activo` en el UPDATE → la carrera de baja; M2 `ObtenerConflictosCodigoAsync` sin códigos de proveedor → CA3 y código interno = código de proveedor; M3 UPDATE sin Id → otro artículo modificado; M4 retiro sin artículo → borra el del otro artículo; M5 reactivar borra motivo y fecha; H1 `EsAdministrador => true` → los dos 401; H2 el PUT ignora los códigos → 204 sin el código; H3 sin el chequeo de conflicto del caso de uso → el 409 sale del índice sin decir cuál artículo; H4 inexistente → Invalido.
+
+**Decisiones (2026-10-17):**
+- **Rol (decisión de Javi, consigna de la sesión):** `IContextoUsuario.EsAdministrador`, leído del claim de rol en `ContextoUsuario` (`IsInRole("ADMINISTRADOR")`, el mismo claim que firma `GeneradorToken`). El caso de uso devuelve `NoAutorizado` si un OPERADOR cambia el código interno o retira un código. El `[Authorize(Roles="ADMINISTRADOR,OPERADOR")]` del controlador se mantiene. Cierra la contradicción que estaba en "PRÓXIMA SESIÓN".
+- Endpoints: `PUT /api/articulos/{id}` (204), `DELETE /api/articulos/{id}/codigos/{proveedorId}` (el proveedor identifica el código, D2), `POST /{id}/baja` (motivo, `DarDeBajaRequest`) y `POST /{id}/reactivacion`.
+- `CodigosProveedor` del PUT son los que se asocian: un código que el artículo ya tiene (mismo proveedor y misma clave normalizada) no es conflicto ni se revalida su proveedor; uno omitido NO se retira. Cambiar el código de un proveedor = retirar (admin) + agregar.
+- **Código interno manual (para que lo confirme el equipo):** 1-40 caracteres, normalizado como los códigos (trim + mayúsculas), **sin el prefijo `LC-`** (lo genera el alta desde la identidad: uno puesto a mano chocaría con un alta futura) y sin coincidir con ningún código interno ni de proveedor, incluidos los del propio artículo.
+- Retirar un código de un artículo dado de baja → Invalido (retirar también es modificar, CA5).
+- Baja y reactivación: ADMINISTRADOR y OPERADOR (las reglas de permisos solo restringen el código interno y el retiro). `articulo` no tiene `usuario_baja_id`: el usuario queda solo en `articulo_historial_baja` (como proveedor). La reactivación conserva motivo y fecha en la fila (D10).
+- La condición de estado va en el WHERE del UPDATE (`activo`): si otra sesión da de baja entre la lectura y la escritura, la modificación da 400 y no escribe nada (test PG).
+- La ficha suma `ubicacionDeposito` y `motivoBaja` (parámetros opcionales al final de los DTOs; aditivo).
+
+**CA4 · NO implementado (compuerta: falta una regla de negocio / choca con D1).** D1 fija las bases y porcentajes (Lista +50 % sobre costo, Costo 0 %, Efectivo −10 % sobre Lista), Tarjeta3/6 tienen tasas "configurables, sin definir" y CasoEspecial es precio manual, cuyo endpoint es otra HU (con OB1/OB2 pendientes). Para "modificar los márgenes de un artículo" hace falta decidir: qué márgenes se pueden editar por artículo; si cambiar el +50 % de Lista de UN artículo contradice D1 o D1 es solo el valor inicial; si las tasas de tarjeta son por artículo o globales; y quién puede editarlos. No se inventó ninguna. El recálculo "solo de ese artículo" ya existe (`CalcularPreciosArticuloUseCase`, Fase 6), así que cuando haya regla el trabajo es chico. **Por esto el PR va con `Refs #17`, no `Closes`.**
+
+**Suite (2026-10-17, en `7bc47c4`):** 424 total · 424 passed · 0 failed · 0 skipped · 0 warnings (`--no-incremental`), **143 `[PostgreSqlFact]`** (antes 353 y 119), rol `lacentral_javi`, 5 min 18 s.
+
+**Frontend:** en la ficha de `frontend/src/app/articulos.ts`: modificar nombre, ubicación y código interno (habilitado solo para ADMINISTRADOR, visual: decide la API), agregar códigos, "Retirar" (solo admin), baja con motivo y reactivación. `ng build` OK. Prueba de humo por el proxy contra `lacentral_test`, **sin escrituras** (el rol de test solo tiene SELECT en `public`, que es la copia de datos reales): PUT, DELETE de código, baja y reactivación sin token → 401 (las rutas existen: una inexistente da 404); login malo → 401; pantalla → 200. **Las escrituras por la pantalla no se probaron en el navegador**; las cubren los tests HTTP contra PostgreSQL.
+
+**Compuerta (subagentes):** pendiente.
+
 ## Fase 6 · HU-ART-05 + FCO-01 CA5 (2026-10-16)
 Rama `feature/HU-ART-05-precios-modalidad`, sale de develop `a47a866` (Fase 5 ya mergeada, #119). La hizo Javi con el agente; Santi retoma la semana siguiente. Pusheada con OK de Javi; **PR #121** (abierto a mano, sin `gh`). Santi pidió cambios (B1-B3) el 2026-10-16: aplicados abajo. Cuerpo del PR: `docs/sprint03/pr-fase6-hu-art-05.md`.
 
@@ -677,8 +713,10 @@ Rama `feature/HU-FCO-01-factura-compra`, sale de `a23bb26` (HEAD de la Fase 4). 
 ## PRÓXIMA SESIÓN — arrancar acá
 Arrancar en la **raíz del repo**. Estado al 2026-10-16:
 
-- **`develop` = `a47a866`**: Fases 1 a 5 mergeadas (#113, #114, #115, #117, #118, #119) y #120 (onboarding).
-- **Fase 6 (HU-ART-05 + FCO-01 CA5): CERRADA (2026-10-16)**, **PR #121 abierto, sin mergear** (no se mergea sin el equipo). Santi pidió cambios B1-B3 el 2026-10-16: aplicados y pusheados (Refs #22 · Closes #32; Interpretación pendiente · Lista manual → Efectivo; O1 resuelta en `e37c4ab` → `e92707c` → `c575e4e`). Verificador APTO (ronda 1 de B3), auditor APTO (OB1-OB3 latentes, en la deuda). Cuerpo en `docs/sprint03/pr-fase6-hu-art-05.md`. Suite: **353/353, 119 `[PostgreSqlFact]`**, 0 warnings. Siguiente: que Santi re-revise y que Alfredo confirme la Interpretación pendiente · Lista manual → Efectivo.
+> **Corrección 2026-10-16 (sesión de la Fase 7):** lo que sigue estaba desactualizado. El PR #121 YA ESTÁ MERGEADO: `develop` = `0580a16`, suite 353/353, 119 `[PostgreSqlFact]`. La Fase 7 está en curso en `feature/HU-ART-03-modificar-articulo` (ver "Fase 7"). Esta sección se reescribe entera al cerrar la Fase 7.
+
+- **`develop` = `0580a16`**: Fases 1 a 6 mergeadas (#113, #114, #115, #117, #118, #119, #121) y #120 (onboarding).
+- **Fase 6 (HU-ART-05 + FCO-01 CA5): CERRADA (2026-10-16)**, **PR #121 MERGEADO**. Santi pidió cambios B1-B3 el 2026-10-16: aplicados y pusheados (Refs #22 · Closes #32; Interpretación pendiente · Lista manual → Efectivo; O1 resuelta en `e37c4ab` → `e92707c` → `c575e4e`). Verificador APTO (ronda 1 de B3), auditor APTO (OB1-OB3 latentes, en la deuda). Cuerpo en `docs/sprint03/pr-fase6-hu-art-05.md`. Suite: **353/353, 119 `[PostgreSqlFact]`**, 0 warnings. Siguiente: que Santi re-revise y que Alfredo confirme la Interpretación pendiente · Lista manual → Efectivo.
 - **Pendientes del equipo:** tasas de Tarjeta3/6 (siguen sin definir; entran como configuración, no en el código); endpoint/HU de precio manual (CasoEspecial y, si Alfredo confirma la Interpretación pendiente · Lista manual → Efectivo, una Lista manual); **confirmar con Alfredo la Interpretación pendiente · Lista manual → Efectivo** (¿Efectivo sigue a una Lista fijada a mano al −10 % o son dos decisiones separadas?); borrar el esquema huérfano `pr110_test_5bef5661...`; deuda O2-O3 de la Fase 6 (O1 resuelta).
 
 ### Fase 7 · HU-ART-03 (#17)
