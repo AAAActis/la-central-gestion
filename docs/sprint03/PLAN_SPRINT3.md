@@ -27,7 +27,9 @@ CONVENCIONES QUE NO SE NEGOCIAN:
   · PROHIBIDO editar archivos de LaCentral.Data/Models/: son generados.
     El código manual va en LaCentralDbContext.Personalizaciones.cs (partial).
   · Flujo de negocio con Result<T> y TipoError { Ninguno, NoEncontrado, Conflicto,
-    Invalido, NoAutorizado }. NO excepciones para reglas de negocio.
+    Invalido, NoAutorizado, Prohibido }. NO excepciones para reglas de negocio.
+    NoAutorizado (401): sin credenciales válidas o sin usuario en la sesión.
+    Prohibido (403): la sesión es válida, pero su rol no permite la operación.
   · La API nunca devuelve una entidad de dominio ni un modelo de persistencia.
     Solo DTOs. MapeoResultado.AResultadoHttp() traduce Result a HTTP; usalo siempre.
   · Sin MediatR. Sin interfaces para casos de uso: solo para puertos de infraestructura.
