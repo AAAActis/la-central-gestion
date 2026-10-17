@@ -35,5 +35,6 @@ public class ContextoUsuario : IContextoUsuario
         }
     }
 
-    public bool EsAdministrador => false;
+    // El claim de rol que firma GeneradorToken: el mismo que lee [Authorize(Roles = ...)].
+    public bool EsAdministrador => UsuarioActual.IsInRole("ADMINISTRADOR");
 }
