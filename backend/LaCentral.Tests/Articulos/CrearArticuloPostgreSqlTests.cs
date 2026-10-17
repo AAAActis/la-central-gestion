@@ -142,6 +142,17 @@ public class CrearArticuloPostgreSqlTests
 
         public Task<IReadOnlyList<short>> ObtenerSucursalesAsync(CancellationToken ct = default)
             => _real.ObtenerSucursalesAsync(ct);
+
+        // HU-ART-03: el alta no las usa; delegan en el real.
+        public Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string codigoInterno,
+            CancellationToken ct = default) => _real.ActualizarDatosAsync(id, nombre, ubicacionDeposito, codigoInterno, ct);
+        public Task AgregarCodigosAsync(int id, IReadOnlyList<LaCentral.UseCases.Entidades.CodigoAlternativo> codigos,
+            CancellationToken ct = default) => _real.AgregarCodigosAsync(id, codigos, ct);
+        public Task<bool> RetirarCodigoAsync(int id, int proveedorId, CancellationToken ct = default)
+            => _real.RetirarCodigoAsync(id, proveedorId, ct);
+        public Task<bool> DarDeBajaAsync(int id, string motivo, DateTime fechaBaja, CancellationToken ct = default)
+            => _real.DarDeBajaAsync(id, motivo, fechaBaja, ct);
+        public Task<bool> ReactivarAsync(int id, CancellationToken ct = default) => _real.ReactivarAsync(id, ct);
     }
 
     [PostgreSqlFact]

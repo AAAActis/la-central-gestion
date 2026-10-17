@@ -57,6 +57,10 @@ builder.Services.AddScoped<ReactivarClienteUseCase>();
 builder.Services.AddScoped<CrearArticuloUseCase>();
 builder.Services.AddScoped<ConsultarArticulosUseCase>();
 builder.Services.AddScoped<ObtenerArticuloDetalleUseCase>();
+builder.Services.AddScoped<ModificarArticuloUseCase>();
+builder.Services.AddScoped<RetirarCodigoProveedorUseCase>();
+builder.Services.AddScoped<DarDeBajaArticuloUseCase>();
+builder.Services.AddScoped<ReactivarArticuloUseCase>();
 builder.Services.AddScoped<CalcularPreciosArticuloUseCase>();
 builder.Services.AddScoped<RegistrarFacturaCompraUseCase>();
 

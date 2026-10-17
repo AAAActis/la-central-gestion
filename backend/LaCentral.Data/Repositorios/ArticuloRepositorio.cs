@@ -94,6 +94,20 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
     public async Task<IReadOnlyList<short>> ObtenerSucursalesAsync(CancellationToken ct = default)
         => await _context.Sucursal.AsNoTracking().OrderBy(s => s.Id).Select(s => s.Id).ToListAsync(ct);
 
+    public Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string codigoInterno,
+        CancellationToken ct = default) => Task.FromResult(false);
+
+    public Task AgregarCodigosAsync(int id, IReadOnlyList<LaCentral.UseCases.Entidades.CodigoAlternativo> codigos,
+        CancellationToken ct = default) => Task.CompletedTask;
+
+    public Task<bool> RetirarCodigoAsync(int id, int proveedorId, CancellationToken ct = default)
+        => Task.FromResult(false);
+
+    public Task<bool> DarDeBajaAsync(int id, string motivo, DateTime fechaBaja, CancellationToken ct = default)
+        => Task.FromResult(false);
+
+    public Task<bool> ReactivarAsync(int id, CancellationToken ct = default) => Task.FromResult(false);
+
     // Query completo antes de paginar, expuesto a los tests de traducción SQL.
     internal IQueryable<CoincidenciaArticulo> CrearCoincidencias(ConsultaArticulos consulta)
     {

@@ -34,4 +34,6 @@ public class ContextoUsuario : IContextoUsuario
             return short.TryParse(claim, out var sucursalId) ? sucursalId : (short)0;
         }
     }
+
+    public bool EsAdministrador => false;
 }

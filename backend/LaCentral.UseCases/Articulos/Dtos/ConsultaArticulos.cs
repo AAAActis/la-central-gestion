@@ -52,7 +52,8 @@ public sealed record ArticuloDetalleConsultaDto(
     int Id, string CodigoInterno, string Nombre, bool Activo, decimal? CostoVigente,
     int? UltimoProveedorId, IReadOnlyList<CodigoProveedorConsultaDto> Codigos,
     IReadOnlyList<StockSucursalConsultaDto> Existencias,
-    IReadOnlyList<PrecioModalidadConsultaDto> PreciosPorModalidad);
+    IReadOnlyList<PrecioModalidadConsultaDto> PreciosPorModalidad,
+    string? UbicacionDeposito = null, string? MotivoBaja = null);
 
 /// <summary>
 /// Por qué una modalidad no tiene precio. Viaja con el dato: un precio ausente sin razón
@@ -76,4 +77,5 @@ public sealed record FichaArticuloDto(
     int Id, string CodigoInterno, string Nombre, bool Activo, decimal? CostoVigente,
     int? UltimoProveedorId, IReadOnlyList<CodigoProveedorConsultaDto> Codigos,
     IReadOnlyList<StockSucursalConsultaDto> Existencias,
-    IReadOnlyList<PrecioModalidadFichaDto> Precios);
+    IReadOnlyList<PrecioModalidadFichaDto> Precios,
+    string? UbicacionDeposito = null, string? MotivoBaja = null);
