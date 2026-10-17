@@ -298,11 +298,11 @@ public class ModificarArticuloUseCaseTests
     // ---- Código interno: solo ADMINISTRADOR ----
 
     [Fact]
-    public async Task OperadorCambiaElCodigoInterno_NoAutorizadoYNoEscribe()
+    public async Task OperadorCambiaElCodigoInterno_ProhibidoYNoEscribe()
     {
         var resultado = await Caso().EjecutarAsync(Id, Request("LC-ESPECIAL"));
 
-        Assert.Equal(TipoError.NoAutorizado, resultado.Tipo);
+        Assert.Equal(TipoError.Prohibido, resultado.Tipo);
         NoSeEscribioNada();
     }
 

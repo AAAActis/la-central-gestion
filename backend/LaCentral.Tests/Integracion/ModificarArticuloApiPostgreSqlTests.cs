@@ -115,7 +115,7 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
 
     // El rol sale del token, no del cuerpo.
     [PostgreSqlFact]
-    public async Task Put_OperadorCambiaElCodigoInterno_401YNoEscribe()
+    public async Task Put_OperadorCambiaElCodigoInterno_403YNoEscribe()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
         var usuario = await fixture.CrearUsuarioAsync();
@@ -125,7 +125,7 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
         var respuesta = await cliente.PutAsJsonAsync($"/api/articulos/{id}",
             new { nombre = "Bujía NGK", codigoInterno = "BUJIA-01", rol = "ADMINISTRADOR" });
 
-        Assert.Equal(HttpStatusCode.Unauthorized, respuesta.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, respuesta.StatusCode);
         Assert.Contains("administrador", await DetalleAsync(respuesta));
         var articulo = await LeerAsync(fixture, id);
         Assert.Equal(("Bujía", $"LC-{id:D6}"), (articulo.Nombre, articulo.CodigoInterno));
@@ -146,7 +146,7 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
     }
 
     [PostgreSqlFact]
-    public async Task Delete_OperadorRetiraUnCodigo_401YElCodigoQueda()
+    public async Task Delete_OperadorRetiraUnCodigo_403YElCodigoQueda()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
         var usuario = await fixture.CrearUsuarioAsync();
@@ -156,7 +156,7 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
 
         var respuesta = await cliente.DeleteAsync($"/api/articulos/{id}/codigos/{norte}");
 
-        Assert.Equal(HttpStatusCode.Unauthorized, respuesta.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, respuesta.StatusCode);
         Assert.Single((await LeerAsync(fixture, id)).ArticuloCodigoAlternativo);
     }
 

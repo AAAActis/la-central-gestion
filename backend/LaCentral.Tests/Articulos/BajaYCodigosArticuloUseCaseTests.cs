@@ -70,13 +70,13 @@ public class BajaYCodigosArticuloUseCaseTests
     // ---- Retiro de un código: solo ADMINISTRADOR, operación explícita ----
 
     [Fact]
-    public async Task Retirar_Operador_NoAutorizadoYNoRetira()
+    public async Task Retirar_Operador_ProhibidoYNoRetira()
     {
         Rol(administrador: false);
 
         var resultado = await Retirar().EjecutarAsync(Id, ProveedorNorte);
 
-        Assert.Equal(TipoError.NoAutorizado, resultado.Tipo);
+        Assert.Equal(TipoError.Prohibido, resultado.Tipo);
         NoSeRetiro();
     }
 
