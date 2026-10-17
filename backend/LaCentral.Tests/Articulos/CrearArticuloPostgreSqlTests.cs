@@ -144,7 +144,7 @@ public class CrearArticuloPostgreSqlTests
             => _real.ObtenerSucursalesAsync(ct);
 
         // HU-ART-03: el alta no las usa; delegan en el real.
-        public Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string codigoInterno,
+        public Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string? codigoInterno,
             CancellationToken ct = default) => _real.ActualizarDatosAsync(id, nombre, ubicacionDeposito, codigoInterno, ct);
         public Task AgregarCodigosAsync(int id, IReadOnlyList<LaCentral.UseCases.Entidades.CodigoAlternativo> codigos,
             CancellationToken ct = default) => _real.AgregarCodigosAsync(id, codigos, ct);

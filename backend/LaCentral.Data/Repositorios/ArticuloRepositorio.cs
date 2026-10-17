@@ -96,13 +96,22 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
 
     // HU-ART-03. Todo por Id, y la condición de estado en el WHERE: vale lo que la fila es al
     // escribir, no lo que era al leer (otra sesión pudo darla de baja entre medio).
-    public async Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string codigoInterno,
+    // Sin código interno nuevo, la columna no entra en el SET: escribir el valor leído pisaría
+    // el que otra sesión pudo cambiar entre la lectura y la escritura.
+    public async Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string? codigoInterno,
         CancellationToken ct = default)
-        => await _context.Articulo.Where(a => a.Id == id && a.Activo)
-            .ExecuteUpdateAsync(s => s
+    {
+        var articulo = _context.Articulo.Where(a => a.Id == id && a.Activo);
+        var filas = codigoInterno is null
+            ? await articulo.ExecuteUpdateAsync(s => s
+                .SetProperty(a => a.Nombre, nombre)
+                .SetProperty(a => a.UbicacionDeposito, ubicacionDeposito), ct)
+            : await articulo.ExecuteUpdateAsync(s => s
                 .SetProperty(a => a.Nombre, nombre)
                 .SetProperty(a => a.UbicacionDeposito, ubicacionDeposito)
-                .SetProperty(a => a.CodigoInterno, codigoInterno), ct) == 1;
+                .SetProperty(a => a.CodigoInterno, codigoInterno), ct);
+        return filas == 1;
+    }
 
     // Solo inserta: los códigos que el artículo ya tiene no se tocan. Una carrera con otro
     // artículo la cierran codigo_unico_global y un_codigo_por_proveedor (23505 → 409).

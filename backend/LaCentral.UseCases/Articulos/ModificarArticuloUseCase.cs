@@ -51,7 +51,8 @@ public class ModificarArticuloUseCase
         if (!validacion.IsSuccess)
             return validacion;
 
-        var codigoInterno = articulo.CodigoInterno;
+        // null = no cambia: el UPDATE no toca la columna.
+        string? codigoInterno = null;
         if (request.CodigoInterno is not null)
         {
             var clave = NormalizacionArticulo.Codigo(request.CodigoInterno);
@@ -78,6 +79,12 @@ public class ModificarArticuloUseCase
             .Select(c => new CodigoAlternativo(NormalizacionArticulo.Codigo(c.Codigo), c.ProveedorId))
             .Where(c => !articulo.Codigos.Any(e => e.ProveedorId == c.ProveedorId && e.ClaveNormalizada == c.Codigo))
             .ToList();
+
+        // El motor no relaciona codigo_interno con los códigos de proveedor: en la misma petición
+        // tampoco pueden ser la misma clave.
+        if (codigoInterno is not null && nuevos.Any(c => c.Codigo == codigoInterno))
+            return Result.Failure(TipoError.Conflicto,
+                $"El código {codigoInterno} no puede ser a la vez el código interno y un código de proveedor.");
 
         foreach (var codigo in nuevos.DistinctBy(c => c.ProveedorId))
         {
