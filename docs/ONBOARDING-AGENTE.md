@@ -179,8 +179,10 @@ puerto.
 código manual va en `LaCentralDbContext.Personalizaciones.cs`.
 
 **Nada de excepciones para reglas de negocio.** Se usa `Result<T>` con
-`TipoError { Ninguno, NoEncontrado, Conflicto, Invalido, NoAutorizado }`.
-`MapeoResultado.AResultadoHttp()` traduce a HTTP.
+`TipoError { Ninguno, NoEncontrado, Conflicto, Invalido, NoAutorizado, Prohibido }`.
+`MapeoResultado.AResultadoHttp()` traduce a HTTP. `NoAutorizado` (401): sin credenciales
+válidas o sin usuario en la sesión. `Prohibido` (403): la sesión es válida, pero su rol no
+permite la operación.
 
 **La API nunca devuelve una entidad de dominio ni un modelo de persistencia.** Solo
 DTOs.

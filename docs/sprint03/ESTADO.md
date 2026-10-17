@@ -560,14 +560,21 @@ prueba que la Fase 2 esté mal.
 
 - 2026-10-17 · **Fase 7 · CA4 de #17 sin implementar** (modificar los márgenes de venta de un artículo). Falta la regla: qué márgenes se editan por artículo, si eso contradice D1 o D1 es solo el valor inicial, si las tasas de tarjeta son por artículo o globales, y quién las edita. El recálculo de un artículo ya existe (`CalcularPreciosArticuloUseCase`).
 - 2026-10-17 · ~~**Fase 7 · `NoAutorizado` → 401** para un usuario autenticado sin permiso.~~ **Resuelto el mismo día** (decisión de Javi): `TipoError.Prohibido` → 403, ver "Decisiones".
-- 2026-10-17 · **Fase 7, auditor N2:** `backend/LaCentral.UseCases/Articulos/ReactivarArticuloUseCase.cs` ignora el `bool` de `CerrarAsync`. Un inactivo sin baja abierta (importado) se reactiva sin rastro. Mismo patrón que cliente y proveedor.
-- 2026-10-17 · **Fase 7, auditor N3:** los códigos de proveedor pueden empezar con `LC-` (`ArticuloValidaciones.ValidarCodigos`), aunque el código interno manual no. Viene del alta.
-- 2026-10-17 · **Fase 7, auditor N4:** la unicidad entre `articulo.codigo_interno` y `articulo_codigo_alternativo.codigo` la controla solo la aplicación. Con el código interno editable a mano, una carrera entre dos sesiones puede dejar la misma clave en los dos lados. Cerrarla pide esquema (trigger o tabla única de códigos) o un lock. Lo decide el equipo.
-- 2026-10-17 · **Fase 7, auditor N5:** no hay test HTTP del 409 que sale de un 23505 en una carrera al modificar (`codigo_unico_global`, `articulo_codigo_interno_key`). El caso PG afirma `DbUpdateException`.
-- 2026-10-17 · **Fase 7, verificador:** el conflicto en carrera de `ArticuloRepositorio.AgregarCodigosAsync` llega al caso de uso como `DbUpdateException`, no como `Result`. Por HTTP sale 409 con el mensaje genérico del índice.
-- 2026-10-17 · **Fase 7:** retirar un código borra la fila. No queda historial de qué códigos tuvo un artículo.
+- 2026-10-17 · **SPRINT 4 · "Regla: toda escritura verifica que escribió"** (era el N2 del auditor de la Fase 7; lo subió Santi al aprobar el PR). Toda operación de escritura devuelve si tocó una fila, y el caso de uso lo consume: un `false` es un error, no un éxito silencioso. Las apariciones (las cuatro originales y dos sumadas por Javi):
+  1. **Crítico 3** (lección del plan, `docs/sprint03/PLAN_SPRINT3.md:376`): actualizar por Id, nunca por código.
+  2. **`ProveedorRepositorio.ActualizarAsync`:** devolvía `void` y salía en silencio si no encontraba la fila. Desde la Fase 2 (2.3) devuelve `bool`, y lo consumen `ModificarProveedorUseCase`, `DarDeBajaProveedorUseCase` y `ReactivarProveedorUseCase`.
+  3. **`ExecuteUpdate` del código interno** (`ArticuloRepositorio`): `AsignarCodigoInternoAsync` y `ActualizarDatosAsync` devuelven `filas == 1`, y lo consumen `CrearArticuloUseCase` y `ModificarArticuloUseCase` (B2 de la Fase 7).
+  4. **`CerrarAsync` ignorado en Reactivar:** `ReactivarArticuloUseCase`, `ReactivarClienteUseCase` y `ReactivarProveedorUseCase` no miran el `bool`. Un inactivo sin baja abierta en el historial (un dato importado) se reactiva sin rastro. **Sigue abierto.**
+  5. **`CerrarAsync` ignorado en `ReactivarUsuarioUseCase`** (`backend/LaCentral.UseCases/Acceso/ReactivarUsuarioUseCase.cs:58`): mismo caso que el punto 4, para usuarios. **Abierto.** Lo sumó Javi el 2026-10-17.
+  6. **`ActualizarAsync` ignorado en `RestablecerContrasenaUseCase`** (`backend/LaCentral.UseCases/Acceso/RestablecerContrasenaUseCase.cs:43`): no mira el `bool`, así que un restablecimiento que no tocó ninguna fila se informa como éxito. **Abierto.** Lo sumó Javi el 2026-10-17.
+- 2026-10-17 · **COMPUERTA DEL SPRINT 4 · auditor N4 de la Fase 7:** carrera entre el código interno y los códigos de proveedor. La unicidad entre `articulo.codigo_interno` y `articulo_codigo_alternativo.codigo` la controla solo la aplicación. Con el código interno editable a mano, dos sesiones en carrera pueden dejar la misma clave en los dos lados. Cerrarla pide esquema (trigger o tabla única de códigos) o un lock. **Lo decide el equipo antes de tocar código.**
+- **Deuda declarada de la Fase 7 (2026-10-17):**
+  - **N3 del auditor:** los códigos de proveedor pueden empezar con `LC-` (`ArticuloValidaciones.ValidarCodigos`), aunque el código interno manual no. Viene del alta.
+  - **N5 del auditor:** no hay test HTTP del 409 que sale de un 23505 en una carrera al modificar (`codigo_unico_global`, `articulo_codigo_interno_key`). El caso PG afirma `DbUpdateException`.
+  - **Historial de códigos retirados:** retirar un código borra la fila. No queda rastro de qué códigos tuvo un artículo.
+  - **409 genérico de la carrera** (verificador): el conflicto en carrera de `ArticuloRepositorio.AgregarCodigosAsync` llega al caso de uso como `DbUpdateException`, no como `Result`. Por HTTP sale 409, pero con el mensaje genérico del índice.
+  - **Esquema huérfano** `pr110_test_5bef5661630743e4b6d09c409f11fafa` en `lacentral_test`. Lo vio el auditor de la Fase 7 y lo borra el equipo.
 - 2026-10-17 · **Fase 7:** el frontend se compiló (`ng build`) y se probó por el proxy solo sin escrituras. Las escrituras por la pantalla no se probaron en el navegador, porque `public` de `lacentral_test` es la copia de datos reales y el rol de test solo tiene SELECT allí.
-- 2026-10-17 · El esquema huérfano `pr110_test_5bef5661630743e4b6d09c409f11fafa` sigue en `lacentral_test`: lo vio el auditor de la Fase 7. Lo borra el equipo.
 
 
 ## Premisas del plan que no coinciden con el código (revisar antes de la fase)
@@ -577,7 +584,8 @@ prueba que la Fase 2 esté mal.
 
 ## Decisiones
 - 2026-10-17 · **Fase 7 · rol sin permiso → 403 (Javi).** `TipoError.Prohibido` → 403 en `MapeoResultado`, usado SOLO en los dos chequeos de rol: cambiar el código interno (`ModificarArticuloUseCase`) y retirar un código (`RetirarCodigoProveedorUseCase`). Los demás `NoAutorizado` (login inválido, sesión sin usuario) siguen en 401. Ver "Fase 7 · 403".
-- 2026-10-17 · **Fase 7 · confirmadas por Javi:** el código interno manual no puede empezar con `LC-`; retirar un código de un artículo dado de baja → 400; baja y reactivación para ADMINISTRADOR y OPERADOR.
+- 2026-10-17 · **Fase 7 · confirmadas por Javi:** el código interno manual no puede empezar con `LC-`; retirar un código de un artículo dado de baja → 400.
+- 2026-10-17 · **Interpretación pendiente · baja y reactivación de artículo para ADMINISTRADOR y OPERADOR.** Pendiente de confirmación (Alfredo): no es una decisión ni lleva número. Lo reclasificó Santi al aprobar el PR de la Fase 7. **Incoherencia:** hoy un OPERADOR puede sacar un artículo del catálogo pero no puede cambiarle el código interno, y sacarlo del catálogo tiene más consecuencias. El código no cambia: `DarDeBajaArticuloUseCase` y `ReactivarArticuloUseCase` no miran el rol.
 - 2026-10-17 · **Fase 7 · rol de la sesión (Javi):** `IContextoUsuario.EsAdministrador` sale del claim de rol en `ContextoUsuario`. El caso de uso da `Prohibido` (403; hasta `aa2e795`, `NoAutorizado`) si un OPERADOR cambia el código interno o retira un código. El `[Authorize(Roles="ADMINISTRADOR,OPERADOR")]` se mantiene. Cierra la contradicción de la PRÓXIMA SESIÓN anterior.
 - 2026-10-17 · **Fase 7 · para confirmar con el equipo:** la ficha suma `ubicacionDeposito` y `motivoBaja`. Detalle en "Fase 7".
 - 2026-10-16 · **Interpretación pendiente · Lista manual → Efectivo.** Pendiente de confirmación del equipo (Alfredo): no es una decisión ni lleva número. Lo que hace el código: si la fila de Lista es manual, Efectivo = Lista manual × 0,90 (la base `PrecioLista` es el precio de lista vigente, manual o calculado). **Pregunta para Alfredo:** si alguien fija a mano el precio de lista, ¿el de efectivo lo sigue solo al −10 % o son dos decisiones separadas? Hoy no se alcanza (ninguna operación vuelve manual a Lista). Reclasificada el 2026-10-16 por el pedido de cambios del PR #121 (Santi); el código no cambia. Test `RecalcularPreciosTests.ListaManual_EfectivoSobreLaListaManual_YLaListaNoSeToca` (`71d6cf1` rojo → `80d62fd`).
@@ -626,7 +634,7 @@ Rama `feature/HU-ART-03-modificar-articulo`, sale de develop `0580a16`. Línea b
 - `CodigosProveedor` del PUT son los que se asocian: un código que el artículo ya tiene (mismo proveedor y misma clave normalizada) no es conflicto ni se revalida su proveedor; uno omitido NO se retira. Cambiar el código de un proveedor = retirar (admin) + agregar.
 - **Código interno manual (para que lo confirme el equipo):** 1-40 caracteres, normalizado como los códigos (trim + mayúsculas), **sin el prefijo `LC-`** (lo genera el alta desde la identidad: uno puesto a mano chocaría con un alta futura) y sin coincidir con ningún código interno ni de proveedor, incluidos los del propio artículo.
 - Retirar un código de un artículo dado de baja → Invalido (retirar también es modificar, CA5).
-- Baja y reactivación: ADMINISTRADOR y OPERADOR (las reglas de permisos solo restringen el código interno y el retiro). `articulo` no tiene `usuario_baja_id`: el usuario queda solo en `articulo_historial_baja` (como proveedor). La reactivación conserva motivo y fecha en la fila (D10).
+- Baja y reactivación: ADMINISTRADOR y OPERADOR (las reglas de permisos solo restringen el código interno y el retiro). **Interpretación pendiente de confirmación (Alfredo)**, no una decisión: ver "Decisiones". `articulo` no tiene `usuario_baja_id`: el usuario queda solo en `articulo_historial_baja` (como proveedor). La reactivación conserva motivo y fecha en la fila (D10).
 - La condición de estado va en el WHERE del UPDATE (`activo`): si otra sesión da de baja entre la lectura y la escritura, la modificación da 400 y no escribe nada (test PG).
 - La ficha suma `ubicacionDeposito` y `motivoBaja` (parámetros opcionales al final de los DTOs; aditivo).
 
@@ -758,10 +766,12 @@ Arrancar en la **raíz del repo**. Estado al 2026-10-17:
 
 - **`develop` = `0580a16`**: Fases 1 a 6 mergeadas (#113, #114, #115, #117, #118, #119, #121) y #120 (onboarding).
 - **Fase 7 (HU-ART-03, #17): CERRADA (2026-10-17)**, **PR SIN ABRIR**: lo abre Javi a mano desde el link de compare (no hay `gh`), con el cuerpo de `docs/sprint03/pr-fase7-hu-art-03.md`. Rama `feature/HU-ART-03-modificar-articulo`, pusheada. **`Refs #17`, no Closes: CA4 no está implementado.** Verificador APTO y auditor APTO (después de la ronda 1, B1 y B2, y otra vez sobre el cambio a 403). Suite: **431/431, 145 `[PostgreSqlFact]`**, 0 omitidos, 0 warnings, en `aa2e795`. No se mergea sin el equipo.
-- **Ya decidido por Javi (2026-10-17):** `LC-` prohibido en el código interno manual; retirar en un artículo dado de baja → 400; baja y reactivación para los dos roles; rol sin permiso → **403** (`TipoError.Prohibido`, hecho en `0abcd8c..aa2e795`).
+- **Ya decidido por Javi (2026-10-17):** `LC-` prohibido en el código interno manual; retirar en un artículo dado de baja → 400; rol sin permiso → **403** (`TipoError.Prohibido`, hecho en `0abcd8c..aa2e795`).
+- **Santi aprobó el PR de la Fase 7 (2026-10-17)** con dos correcciones de documentación, aplicadas: `TipoError` con seis valores en CLAUDE.md, el plan y el onboarding; y baja y reactivación para los dos roles pasan a interpretación pendiente (Alfredo).
 - **Decisiones que tiene que tomar el equipo antes de cerrar #17:**
   - **CA4 · márgenes por artículo:** qué márgenes se editan (¿el +50 % de Lista de UN artículo contradice D1 o D1 es solo el valor inicial?), si las tasas de tarjeta son por artículo o globales, y quién los edita. Hasta entonces no se implementa.
-  - Deuda N2-N5 del auditor (ver "Deuda nueva detectada").
+  - **Alfredo:** ¿baja y reactivación de artículo también para OPERADOR? (interpretación pendiente, ver "Decisiones").
+- **Sprint 4:** el ítem "Regla: toda escritura verifica que escribió" (ex N2) y la compuerta N4 (carrera código interno / código de proveedor), los dos en "Deuda nueva detectada". N3, N5, historial de códigos retirados, 409 genérico y el esquema huérfano quedan como deuda declarada.
 - **Pendientes de antes:** tasas de Tarjeta3/6; HU de precio manual (CasoEspecial y OB1/OB2); confirmar con Alfredo la Interpretación pendiente · Lista manual → Efectivo; borrar el esquema huérfano `pr110_test_5bef5661...` (sigue ahí al 2026-10-17); deuda O2-O3 de la Fase 6.
 
 ### Fase 8 · Cierre del sprint (plan, sección "FASE 8")
