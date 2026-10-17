@@ -30,7 +30,9 @@ controlador importa `LaCentral.Data`.
 - Editar archivos de `backend/LaCentral.Data/Models/` — son generados. El código manual
   va en `backend/LaCentral.Data/LaCentralDbContext.Personalizaciones.cs` (partial).
 - Excepciones para flujo de negocio. Se usa `Result<T>` con
-  `TipoError { Ninguno, NoEncontrado, Conflicto, Invalido, NoAutorizado }`.
+  `TipoError { Ninguno, NoEncontrado, Conflicto, Invalido, NoAutorizado, Prohibido }`.
+  `NoAutorizado` (401): sin credenciales válidas o sin usuario en la sesión. `Prohibido`
+  (403): la sesión es válida, pero su rol no permite la operación.
 - Devolver entidades o modelos de persistencia desde la API. Solo DTOs, vía
   `MapeoResultado.AResultadoHttp()`.
 - Sembrar Ids en los tests. Los genera la base: `GENERATED ALWAYS AS IDENTITY`.

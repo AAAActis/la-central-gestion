@@ -27,7 +27,7 @@
 ### `POST /{id}/baja` y `POST /{id}/reactivacion` · baja lógica con el historial de la Fase 2 (D10)
 - Baja: motivo obligatorio (con trim) y usuario de la sesión. La fila y `articulo_historial_baja` se escriben en la misma unidad de trabajo, con la misma fecha. `articulo` no tiene `usuario_baja_id`: el usuario queda solo en el historial, como en proveedor.
 - Reactivación: cierra la baja abierta con el usuario de la sesión. La fila conserva motivo y fecha de la última baja (D10).
-- Las dos son para ADMINISTRADOR y OPERADOR.
+- Hoy las dos están abiertas para ADMINISTRADOR y OPERADOR. Es una **interpretación pendiente de confirmación (Alfredo)**, no una decisión: ver "Decisiones".
 
 ### Ficha y frontend
 - `GET /api/articulos/{id}` suma `ubicacionDeposito` y `motivoBaja`. El cambio es aditivo.
@@ -55,8 +55,9 @@
 ## Decisiones (confirmadas por Javi, 2026-10-17)
 1. Un código interno puesto a mano no puede empezar con `LC-`. Sin esto, uno como `LC-000999` haría fallar con 409 el alta del artículo de Id 999.
 2. Retirar un código de un artículo dado de baja → 400, por la misma regla que CA5.
-3. Baja y reactivación de artículo: ADMINISTRADOR y OPERADOR.
-4. Un rol sin permiso recibe **403**: `TipoError.Prohibido`, solo en los dos chequeos de rol. Login inválido y sesión sin usuario siguen en 401 (`NoAutorizado`).
+3. Un rol sin permiso recibe **403**: `TipoError.Prohibido`, solo en los dos chequeos de rol. Login inválido y sesión sin usuario siguen en 401 (`NoAutorizado`).
+
+**Interpretación pendiente de confirmación (Alfredo) · baja y reactivación de artículo para ADMINISTRADOR y OPERADOR.** No es una decisión. Hay una incoherencia: hoy un OPERADOR puede sacar un artículo del catálogo, pero no puede cambiarle el código interno, y sacarlo del catálogo tiene más consecuencias. El código no cambia en este PR.
 
 Queda para el equipo: la ficha suma `ubicacionDeposito` y `motivoBaja` (aditivo).
 
