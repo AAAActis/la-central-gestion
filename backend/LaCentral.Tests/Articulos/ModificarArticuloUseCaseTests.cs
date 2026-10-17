@@ -339,6 +339,19 @@ public class ModificarArticuloUseCaseTests
         NoSeEscribioNada();
     }
 
+    // El borde aceptado: 40 caracteres entran en articulo.codigo_interno varchar(40).
+    [Fact]
+    public async Task CodigoInternoDeExactamente40_SeGuarda()
+    {
+        Administrador();
+        var cuarenta = new string('B', 40);
+
+        var resultado = await Caso().EjecutarAsync(Id, Request(cuarenta));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        SeActualizo("Bujía NGK", "Estante 5", cuarenta);
+    }
+
     // LC-nnnnnn lo genera el sistema desde la identidad: uno puesto a mano chocaría con el
     // de un alta futura.
     [Fact]
