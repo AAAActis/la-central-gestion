@@ -13,7 +13,7 @@
 
 ### Unidad 2 · `CalcularPreciosArticuloUseCase`, única regla de cálculo
 - `Calcular` se mueve sin cambios desde `ReglasPrecioModalidad`, que queda solo con la configuración inicial del alta. Ningún código de producción llamaba a `ReglasPrecioModalidad.Calcular`: solo tests, que se reapuntan (12 métodos, 14 casos; ninguno se borra).
-- **`Recalcular(configuracion, costo, ahora)`**: Lista primero (es la base de Efectivo); las filas manuales salen intactas; las automáticas, como filas nuevas, con `FechaCalculo = ahora` solo si hay precio. **D11 (interpretación pendiente de confirmación del equipo, Alfredo):** si Lista es manual, el código calcula Efectivo sobre ese precio de lista (× 0,90). Pregunta abierta: si alguien fija a mano el precio de lista, ¿el de efectivo lo sigue solo al −10 % o son dos decisiones separadas? Hoy no se alcanza (ninguna operación vuelve manual a Lista).
+- **`Recalcular(configuracion, costo, ahora)`**: Lista primero (es la base de Efectivo); las filas manuales salen intactas; las automáticas, como filas nuevas, con `FechaCalculo = ahora` solo si hay precio. **Interpretación pendiente · Lista manual → Efectivo** (pendiente de confirmación del equipo, Alfredo): si Lista es manual, el código calcula Efectivo sobre ese precio de lista (× 0,90). Pregunta abierta: si alguien fija a mano el precio de lista, ¿el de efectivo lo sigue solo al −10 % o son dos decisiones separadas? Hoy no se alcanza (ninguna operación vuelve manual a Lista).
 - `Calcular` pierde la guarda de `CalculoManual`: no se alcanza (una fila manual no tiene porcentaje por el CHECK `manual_sin_porcentaje`, probado contra el motor, y `Recalcular` no le pide precio a las manuales). Regla de CLAUDE.md para guardas no alcanzables.
 - API y frontend no calculan precios (grep sin fórmulas en Api, Data y `frontend/src`; `FacturaCompra.CostoUnitario` es el costo de la línea, otra regla).
 
@@ -44,7 +44,7 @@
 - `CalcularPreciosArticuloUseCaseTests.ArticuloSinFilasDePrecio_NoSeEscribe` y `RegistrarFacturaCompraUseCaseTests.Valida_ElRecalculoOcurreDentroDeLaUnidadDeTrabajo` (`a5102ba`): escribir artículos sin filas → rojo; recalcular también fuera de la unidad → rojo.
 - `RegistrarFacturaCompraPostgreSqlTests.Registrar_FilaQuePasaAManualMientrasSeRecalcula_SobreviveALaCompra` (`c575e4e`): filtrar las manuales sobre lo leído en vez de en el UPDATE (M3) da Expected 170 / 2026-10-02, Actual 180,00 / fecha del registro.
 
-**Otras mutaciones verificadas** (todas en rojo): base intercambiada en `Calcular`; Lista manual recalculada (D11, Expected 180 / Actual null); fecha siempre; `LimitePrecio` una centésima menos; escribir antes de validar todos; la compra ignora el rechazo del recálculo; solo el primer comprado; otra fecha; el repositorio sin filtrar por modalidad o por artículo, o sin escribir la fecha (el motor lo rechaza con 23514); la base leída como null.
+**Otras mutaciones verificadas** (todas en rojo): base intercambiada en `Calcular`; Lista manual recalculada (Interpretación pendiente · Lista manual → Efectivo, Expected 180 / Actual null); fecha siempre; `LimitePrecio` una centésima menos; escribir antes de validar todos; la compra ignora el rechazo del recálculo; solo el primer comprado; otra fecha; el repositorio sin filtrar por modalidad o por artículo, o sin escribir la fecha (el motor lo rechaza con 23514); la base leída como null.
 
 ## Compuerta (subagentes de a uno, cada uno en su worktree; detalle en `ESTADO.md`)
 | Ronda | Hallazgo | Arreglo |
