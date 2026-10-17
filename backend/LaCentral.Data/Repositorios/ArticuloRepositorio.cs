@@ -94,19 +94,41 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
     public async Task<IReadOnlyList<short>> ObtenerSucursalesAsync(CancellationToken ct = default)
         => await _context.Sucursal.AsNoTracking().OrderBy(s => s.Id).Select(s => s.Id).ToListAsync(ct);
 
-    public Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string codigoInterno,
-        CancellationToken ct = default) => Task.FromResult(false);
+    // HU-ART-03. Todo por Id, y la condición de estado en el WHERE: vale lo que la fila es al
+    // escribir, no lo que era al leer (otra sesión pudo darla de baja entre medio).
+    public async Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string codigoInterno,
+        CancellationToken ct = default)
+        => await _context.Articulo.Where(a => a.Id == id && a.Activo)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(a => a.Nombre, nombre)
+                .SetProperty(a => a.UbicacionDeposito, ubicacionDeposito)
+                .SetProperty(a => a.CodigoInterno, codigoInterno), ct) == 1;
 
-    public Task AgregarCodigosAsync(int id, IReadOnlyList<LaCentral.UseCases.Entidades.CodigoAlternativo> codigos,
-        CancellationToken ct = default) => Task.CompletedTask;
+    // Solo inserta: los códigos que el artículo ya tiene no se tocan. Una carrera con otro
+    // artículo la cierran codigo_unico_global y un_codigo_por_proveedor (23505 → 409).
+    public async Task AgregarCodigosAsync(int id, IReadOnlyList<LaCentral.UseCases.Entidades.CodigoAlternativo> codigos,
+        CancellationToken ct = default)
+    {
+        _context.ArticuloCodigoAlternativo.AddRange(codigos.Select(c =>
+            new ArticuloCodigoAlternativo { ArticuloId = id, ProveedorId = c.ProveedorId, Codigo = c.Codigo }));
+        await _context.SaveChangesAsync(ct);
+    }
 
-    public Task<bool> RetirarCodigoAsync(int id, int proveedorId, CancellationToken ct = default)
-        => Task.FromResult(false);
+    public async Task<bool> RetirarCodigoAsync(int id, int proveedorId, CancellationToken ct = default)
+        => await _context.ArticuloCodigoAlternativo.Where(c => c.ArticuloId == id && c.ProveedorId == proveedorId)
+            .ExecuteDeleteAsync(ct) > 0;
 
-    public Task<bool> DarDeBajaAsync(int id, string motivo, DateTime fechaBaja, CancellationToken ct = default)
-        => Task.FromResult(false);
+    public async Task<bool> DarDeBajaAsync(int id, string motivo, DateTime fechaBaja, CancellationToken ct = default)
+        => await _context.Articulo.Where(a => a.Id == id && a.Activo)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(a => a.Activo, false)
+                .SetProperty(a => a.MotivoBaja, motivo)
+                .SetProperty(a => a.FechaBaja, fechaBaja), ct) == 1;
 
-    public Task<bool> ReactivarAsync(int id, CancellationToken ct = default) => Task.FromResult(false);
+    // D10: motivo y fecha quedan en la fila como rastro de la última baja.
+    public async Task<bool> ReactivarAsync(int id, CancellationToken ct = default)
+        => await _context.Articulo.Where(a => a.Id == id && !a.Activo)
+            .ExecuteUpdateAsync(s => s.SetProperty(a => a.Activo, true), ct) == 1;
 
     // Query completo antes de paginar, expuesto a los tests de traducción SQL.
     internal IQueryable<CoincidenciaArticulo> CrearCoincidencias(ConsultaArticulos consulta)
@@ -214,7 +236,9 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
                     .Select(p => new PrecioModalidadConsultaDto(ModalidadPersistida.Leer(p.Modalidad),
                         ModalidadPersistida.LeerBase(p.Base), p.Porcentaje, p.Precio,
                         p.CalculoManual, p.FechaCalculo, p.UsuarioId))
-                    .OrderBy(p => p.Modalidad).ToArray());
+                    .OrderBy(p => p.Modalidad).ToArray(),
+            UbicacionDeposito: articulo.UbicacionDeposito,
+            MotivoBaja: articulo.MotivoBaja);
     }
 
     internal sealed class CoincidenciaArticulo
