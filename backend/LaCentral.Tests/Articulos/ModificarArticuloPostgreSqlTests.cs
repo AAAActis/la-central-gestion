@@ -186,6 +186,69 @@ public class ModificarArticuloPostgreSqlTests
         Assert.Equal($"LC-{id:D6}", (await LeerAsync(fixture, id)).CodigoInterno);
     }
 
+    // B1 del auditor: el motor no relaciona codigo_interno con los códigos de proveedor. En una
+    // sola petición, sin carrera, no puede quedar la misma clave en los dos lados.
+    [PostgreSqlFact]
+    public async Task Modificar_CodigoInternoIgualAUnCodigoNuevoDeLaMismaPeticion_ConflictoYNoEscribeNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var sur = await CrearProveedorAsync(fixture, "PRV-S");
+        var id = await CrearArticuloAsync(fixture, "Bujía");
+
+        Result resultado;
+        await using (var contexto = fixture.CrearContexto())
+            resultado = await Modificar(contexto, administrador: true).EjecutarAsync(id, Datos("Bujía", "X-77", (sur, " x-77 ")));
+
+        Assert.Equal(TipoError.Conflicto, resultado.Tipo);
+        var articulo = await LeerAsync(fixture, id);
+        Assert.Equal($"LC-{id:D6}", articulo.CodigoInterno);
+        Assert.Empty(articulo.ArticuloCodigoAlternativo);
+    }
+
+    /// <summary>Lee con el repositorio real y, recién después, otra sesión cambia el código interno.</summary>
+    private sealed class ConsultaQueCambiaElCodigoInternoDespuesDeLeer : IConsultaArticulosRepositorio
+    {
+        private readonly ArticuloRepositorio _real;
+        private readonly PostgreSqlPruebas _fixture;
+        private readonly string _codigoDeOtraSesion;
+
+        public ConsultaQueCambiaElCodigoInternoDespuesDeLeer(LaCentralDbContext contexto, PostgreSqlPruebas fixture, string codigo)
+            => (_real, _fixture, _codigoDeOtraSesion) = (new ArticuloRepositorio(contexto), fixture, codigo);
+
+        public async Task<ArticuloDetalleConsultaDto?> ObtenerDetallePorIdAsync(int id, CancellationToken ct = default)
+        {
+            var leido = await _real.ObtenerDetallePorIdAsync(id, ct);
+            await using var otraSesion = _fixture.CrearContexto();
+            await otraSesion.Articulo.Where(a => a.Id == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(a => a.CodigoInterno, _codigoDeOtraSesion), ct);
+            return leido;
+        }
+
+        public Task<PaginaArticulosDto> BuscarAsync(ConsultaArticulos consulta, CancellationToken ct = default)
+            => _real.BuscarAsync(consulta, ct);
+
+        public Task<IReadOnlyList<ArticuloResumenConsultaDto>> ObtenerConflictosCodigoAsync(string codigo, CancellationToken ct = default)
+            => _real.ObtenerConflictosCodigoAsync(codigo, ct);
+    }
+
+    // B2 del auditor: un administrador cambia el código interno entre la lectura y la escritura
+    // de una modificación de un operador que solo toca el nombre. El código del administrador queda.
+    [PostgreSqlFact]
+    public async Task Modificar_SinCambiarElCodigoInterno_NoPisaElQueOtraSesionCambioEntreMedio()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var id = await CrearArticuloAsync(fixture, "Bujía");
+
+        Result resultado;
+        await using (var contexto = fixture.CrearContexto())
+            resultado = await Modificar(contexto, consulta: new ConsultaQueCambiaElCodigoInternoDespuesDeLeer(contexto, fixture, "ADM-9"))
+                .EjecutarAsync(id, Datos("Bujía corregida"));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        var articulo = await LeerAsync(fixture, id);
+        Assert.Equal(("Bujía corregida", "ADM-9"), (articulo.Nombre, articulo.CodigoInterno));
+    }
+
     // ---- CA5 ----
 
     [PostgreSqlFact]
@@ -436,7 +499,11 @@ public class ModificarArticuloPostgreSqlTests
         }
 
         await using (var contexto = fixture.CrearContexto())
-            await Assert.ThrowsAnyAsync<Exception>(() => Reactivar(contexto, usuario).EjecutarAsync(id));
+        {
+            var excepcion = await Assert.ThrowsAnyAsync<Exception>(() => Reactivar(contexto, usuario).EjecutarAsync(id));
+            // La falla es la del motor, no otra cosa antes de llegar a él.
+            Assert.Contains("articulo_hist_fechas_coherentes", (excepcion.InnerException ?? excepcion).Message);
+        }
 
         Assert.False((await LeerAsync(fixture, id)).Activo);
         await using var relectura = fixture.CrearContexto();

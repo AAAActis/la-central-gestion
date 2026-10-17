@@ -75,8 +75,9 @@ public class ModificarArticuloUseCaseTests
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    private void SeActualizo(string nombre, string? ubicacion, string codigoInterno) =>
-        _articulos.Verify(r => r.ActualizarDatosAsync(Id, nombre, ubicacion, codigoInterno, It.IsAny<CancellationToken>()),
+    // codigoInterno null = el UPDATE no toca la columna (no se pisa un cambio de otra sesión).
+    private void SeActualizo(string nombre, string? ubicacion, string? codigoInterno) =>
+        _articulos.Verify(r => r.ActualizarDatosAsync(Id, nombre, ubicacion, It.Is<string>(c => c == codigoInterno), It.IsAny<CancellationToken>()),
             Times.Once);
 
     // ---- Existencia y CA5 ----
@@ -159,7 +160,7 @@ public class ModificarArticuloUseCaseTests
         var resultado = await Caso().EjecutarAsync(Id, Request());
 
         Assert.True(resultado.IsSuccess, resultado.Error);
-        SeActualizo("Bujía NGK", "Estante 5", CodigoActual);
+        SeActualizo("Bujía NGK", "Estante 5", null);
         _articulos.Verify(r => r.AgregarCodigosAsync(It.IsAny<int>(), It.IsAny<IReadOnlyList<CodigoAlternativo>>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -170,7 +171,7 @@ public class ModificarArticuloUseCaseTests
         var resultado = await Caso().EjecutarAsync(Id, Request() with { UbicacionDeposito = "   " });
 
         Assert.True(resultado.IsSuccess, resultado.Error);
-        SeActualizo("Bujía NGK", null, CodigoActual);
+        SeActualizo("Bujía NGK", null, null);
     }
 
     [Fact]
@@ -223,7 +224,7 @@ public class ModificarArticuloUseCaseTests
         var resultado = await Caso().EjecutarAsync(Id, Request(null, (10, "BPR-6ES")));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
-        SeActualizo("Bujía NGK", "Estante 5", CodigoActual);
+        SeActualizo("Bujía NGK", "Estante 5", null);
     }
 
     // CA3: el código ya pertenece a otro artículo → se rechaza informando cuál.
@@ -312,7 +313,7 @@ public class ModificarArticuloUseCaseTests
         var resultado = await Caso().EjecutarAsync(Id, Request(" lc-000042 "));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
-        SeActualizo("Bujía NGK", "Estante 5", CodigoActual);
+        SeActualizo("Bujía NGK", "Estante 5", null);
     }
 
     [Fact]
@@ -376,6 +377,19 @@ public class ModificarArticuloUseCaseTests
 
         Assert.Equal(TipoError.Conflicto, resultado.Tipo);
         Assert.Contains("Filtro de aire", resultado.Error);
+        NoSeEscribioNada();
+    }
+
+    // B1 del auditor: en la misma petición, el código interno nuevo y un código de proveedor
+    // nuevo no pueden ser la misma clave. Ninguno está en la base todavía.
+    [Fact]
+    public async Task CodigoInternoIgualAUnCodigoNuevoDeLaMismaPeticion_Conflicto()
+    {
+        Administrador();
+
+        var resultado = await Caso().EjecutarAsync(Id, Request("X-77", (20, " x-77 ")));
+
+        Assert.Equal(TipoError.Conflicto, resultado.Tipo);
         NoSeEscribioNada();
     }
 
