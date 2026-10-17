@@ -393,6 +393,33 @@ public class ModificarArticuloUseCaseTests
         NoSeEscribioNada();
     }
 
+    // La guarda de B1 no rechaza un código de proveedor distinto del interno nuevo.
+    [Fact]
+    public async Task CodigoInternoNuevoYUnCodigoDeProveedorDistinto_SeGuardanLosDos()
+    {
+        Administrador();
+
+        var resultado = await Caso().EjecutarAsync(Id, Request("X-77", (20, "NGK-1")));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        SeActualizo("Bujía NGK", "Estante 5", "X-77");
+        Assert.NotNull(_agregados);
+        Assert.Equal(new[] { ("NGK-1", 20) }, _agregados.Select(c => (c.Codigo, c.ProveedorId)));
+    }
+
+    // Basta con que UNO de los códigos nuevos coincida con el interno nuevo.
+    [Fact]
+    public async Task CodigoInternoIgualASoloUnoDeVariosCodigosNuevos_Conflicto()
+    {
+        Administrador();
+        Proveedor(30, activo: true, "Autopartes Oeste");
+
+        var resultado = await Caso().EjecutarAsync(Id, Request("X-77", (20, "NGK-1"), (30, "X-77")));
+
+        Assert.Equal(TipoError.Conflicto, resultado.Tipo);
+        NoSeEscribioNada();
+    }
+
     // Un código de proveedor del propio artículo tampoco puede pasar a ser su código interno.
     [Fact]
     public async Task CodigoInternoIgualAUnCodigoDeProveedorDelPropioArticulo_Conflicto()
