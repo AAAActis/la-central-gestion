@@ -64,4 +64,44 @@ public class LoginIntegracionTests : IClassFixture<WebApplicationFactory<Program
         var contenido = await respuesta.Content.ReadAsStringAsync();
         Assert.Contains("token", contenido.ToLower());
     }
+
+    // Credenciales inválidas siguen en 401: el 403 es solo para un rol sin permiso.
+    [Fact]
+    public async Task Login_ContrasenaIncorrecta_DevuelveStatus401()
+    {
+        var repoMock = new Mock<IUsuarioRepositorio>();
+        var hashMock = new Mock<IServicioHash>();
+
+        var usuarioMock = new Usuario { Id = 1, NombreUsuario = "admin", HashContrasena = "hash_real", RolId = 2, Activo = true };
+
+        repoMock.Setup(r => r.ObtenerPorNombreAsync("admin", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(usuarioMock);
+
+        hashMock.Setup(h => h.VerificarClave("clave_mala", "hash_real"))
+            .Returns(false);
+
+        var cliente = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureAppConfiguration((context, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Jwt:Secret"] = "ClaveSecretaDePruebaMuyLargaParaQueNoFalle123!",
+                    ["Jwt:Key"] = "ClaveSecretaDePruebaMuyLargaParaQueNoFalle123!"
+                });
+            });
+
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddScoped(_ => repoMock.Object);
+                services.AddScoped(_ => hashMock.Object);
+            });
+        }).CreateClient();
+
+        var request = new { NombreUsuario = "admin", Contrasena = "clave_mala" };
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/acceso/login", request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, respuesta.StatusCode);
+    }
 }

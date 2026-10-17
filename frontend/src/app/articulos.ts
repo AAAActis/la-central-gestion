@@ -1,10 +1,11 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-  AltaArticulo, ApiLaCentral, ArticuloResultado, FichaArticulo, Modalidad, PaginaArticulos,
+  AltaArticulo, ApiLaCentral, ArticuloResultado, FichaArticulo, Modalidad, ModificacionArticulo, PaginaArticulos,
   RazonAusencia, mensajeDeError,
 } from './api';
+import { SesionActual } from './sesion';
 
 const NOMBRE_MODALIDAD: Record<Modalidad, string> = {
   Lista: 'Lista',
@@ -120,13 +121,54 @@ const TEXTO_RAZON: Record<RazonAusencia, string> = {
 
         <h3>Códigos de proveedor</h3>
         @for (c of f.codigos; track c.proveedorId) {
-          <p><span class="codigo">{{ c.codigoOriginal }}</span> {{ c.razonSocial }}</p>
+          <p><span class="codigo">{{ c.codigoOriginal }}</span> {{ c.razonSocial }}
+            @if (esAdministrador() && f.activo) {
+              <button type="button" class="secundario" (click)="retirarCodigo(f, c.proveedorId)">Retirar</button>
+            }
+          </p>
         } @empty { <p class="tenue">Sin códigos de proveedor.</p> }
+        @if (errorCodigos()) { <p class="error">{{ errorCodigos() }}</p> }
 
         <h3>Stock</h3>
         @for (e of f.existencias; track e.sucursalId) {
           <p>{{ e.sucursal }}: {{ e.cantidad | number: '1.0-3' }}</p>
         } @empty { <p class="tenue">Sin stock registrado.</p> }
+
+        @if (f.activo) {
+          <h3>Modificar</h3>
+          <form (ngSubmit)="modificar(f)">
+            <label>Nombre <input name="mNombre" [(ngModel)]="edicion.nombre" maxlength="200" required /></label>
+            <label>Ubicación en depósito <input name="mUbicacion" [(ngModel)]="edicion.ubicacionDeposito" maxlength="60" /></label>
+            <label>Código interno
+              <input name="mCodigoInterno" [(ngModel)]="edicion.codigoInterno" maxlength="40" [disabled]="!esAdministrador()" />
+              @if (!esAdministrador()) { <span class="tenue">solo un administrador lo cambia</span> }
+            </label>
+            <fieldset>
+              <legend>Agregar códigos de proveedor (los existentes se conservan)</legend>
+              @for (c of edicion.codigosProveedor; track $index; let i = $index) {
+                <div class="fila">
+                  <input type="number" min="1" [name]="'mProv' + i" [(ngModel)]="c.proveedorId" placeholder="Id proveedor" class="corto" />
+                  <input [name]="'mCod' + i" [(ngModel)]="c.codigo" maxlength="60" placeholder="Código" />
+                  <button type="button" class="secundario" (click)="edicion.codigosProveedor.splice(i, 1)">Quitar</button>
+                </div>
+              }
+              <button type="button" class="secundario" (click)="edicion.codigosProveedor.push({ proveedorId: $any(null), codigo: '' })">+ Código</button>
+            </fieldset>
+            @if (errorModificacion()) { <p class="error">{{ errorModificacion() }}</p> }
+            <button type="submit">Guardar cambios</button>
+          </form>
+
+          <h3>Dar de baja</h3>
+          <form class="fila" (ngSubmit)="darDeBaja(f)">
+            <input name="motivo" [(ngModel)]="motivoBaja" maxlength="200" placeholder="Motivo de la baja" required />
+            <button type="submit" class="secundario">Dar de baja</button>
+          </form>
+        } @else {
+          <h3>Dado de baja</h3>
+          <p>Motivo: {{ f.motivoBaja ?? '—' }}. Para modificarlo, primero hay que reactivarlo.</p>
+          <button type="button" (click)="reactivar(f)">Reactivar</button>
+        }
+        @if (errorEstado()) { <p class="error">{{ errorEstado() }}</p> }
       </section>
     }
   `,
@@ -173,7 +215,14 @@ export class Articulos {
   private cargarFicha(id: number) {
     this.errorFicha.set(null);
     this.api.ficha(id).subscribe({
-      next: f => this.ficha.set(f),
+      next: f => {
+        this.ficha.set(f);
+        this.edicion = Articulos.edicionDe(f);
+        this.motivoBaja = '';
+        this.errorModificacion.set(null);
+        this.errorCodigos.set(null);
+        this.errorEstado.set(null);
+      },
       error: e => {
         this.ficha.set(null);
         this.errorFicha.set(mensajeDeError(e));
@@ -223,5 +272,62 @@ export class Articulos {
 
   private static altaVacia(): AltaArticulo {
     return { nombre: '', ubicacionDeposito: '', codigosProveedor: [] };
+  }
+
+  // ---- HU-ART-03 ----
+
+  private readonly sesion = inject(SesionActual);
+  /** Solo para mostrar u ocultar controles: los permisos los decide la API con la sesión. */
+  readonly esAdministrador = computed(() => this.sesion.sesion()?.rol === 'ADMINISTRADOR');
+
+  edicion: ModificacionArticulo = { nombre: '', ubicacionDeposito: null, codigoInterno: null, codigosProveedor: [] };
+  motivoBaja = '';
+  readonly errorModificacion = signal<string | null>(null);
+  readonly errorCodigos = signal<string | null>(null);
+  readonly errorEstado = signal<string | null>(null);
+
+  private static edicionDe(f: FichaArticulo): ModificacionArticulo {
+    return { nombre: f.nombre, ubicacionDeposito: f.ubicacionDeposito ?? '', codigoInterno: f.codigoInterno, codigosProveedor: [] };
+  }
+
+  modificar(f: FichaArticulo) {
+    this.errorModificacion.set(null);
+    const cambios: ModificacionArticulo = {
+      nombre: this.edicion.nombre,
+      ubicacionDeposito: this.edicion.ubicacionDeposito?.trim() || null,
+      // Un operador no lo puede cambiar: se manda null y la API conserva el actual.
+      codigoInterno: this.esAdministrador() ? this.edicion.codigoInterno : null,
+      codigosProveedor: this.edicion.codigosProveedor
+        .filter(c => c.codigo.trim() !== '')
+        .map(c => ({ proveedorId: Number(c.proveedorId), codigo: c.codigo })),
+    };
+    this.api.modificar(f.id, cambios).subscribe({
+      next: () => this.cargarFicha(f.id),
+      error: e => this.errorModificacion.set(mensajeDeError(e)),
+    });
+  }
+
+  retirarCodigo(f: FichaArticulo, proveedorId: number) {
+    this.errorCodigos.set(null);
+    this.api.retirarCodigo(f.id, proveedorId).subscribe({
+      next: () => this.cargarFicha(f.id),
+      error: e => this.errorCodigos.set(mensajeDeError(e)),
+    });
+  }
+
+  darDeBaja(f: FichaArticulo) {
+    this.errorEstado.set(null);
+    this.api.darDeBaja(f.id, this.motivoBaja).subscribe({
+      next: () => this.cargarFicha(f.id),
+      error: e => this.errorEstado.set(mensajeDeError(e)),
+    });
+  }
+
+  reactivar(f: FichaArticulo) {
+    this.errorEstado.set(null);
+    this.api.reactivar(f.id).subscribe({
+      next: () => this.cargarFicha(f.id),
+      error: e => this.errorEstado.set(mensajeDeError(e)),
+    });
   }
 }

@@ -50,11 +50,21 @@ export interface FichaArticulo {
   codigos: { proveedorId: number; razonSocial: string; codigoOriginal: string; claveNormalizada: string }[];
   existencias: { sucursalId: number; sucursal: string; cantidad: number }[];
   precios: PrecioFicha[];
+  ubicacionDeposito: string | null;
+  motivoBaja: string | null;
 }
 
 export interface AltaArticulo {
   nombre: string;
   ubicacionDeposito: string | null;
+  codigosProveedor: { proveedorId: number; codigo: string }[];
+}
+
+/** PUT /api/articulos/{id}. codigoInterno null = no se cambia; los códigos omitidos NO se retiran. */
+export interface ModificacionArticulo {
+  nombre: string;
+  ubicacionDeposito: string | null;
+  codigoInterno: string | null;
   codigosProveedor: { proveedorId: number; codigo: string }[];
 }
 
@@ -109,6 +119,23 @@ export class ApiLaCentral {
 
   crear(alta: AltaArticulo): Observable<{ id: number; codigoInterno: string }> {
     return this.http.post<{ id: number; codigoInterno: string }>('/api/articulos', alta);
+  }
+
+  modificar(id: number, cambios: ModificacionArticulo): Observable<void> {
+    return this.http.put<void>(`/api/articulos/${id}`, cambios);
+  }
+
+  /** Solo ADMINISTRADOR: lo decide la API con el rol de la sesión. */
+  retirarCodigo(id: number, proveedorId: number): Observable<void> {
+    return this.http.delete<void>(`/api/articulos/${id}/codigos/${proveedorId}`);
+  }
+
+  darDeBaja(id: number, motivo: string): Observable<void> {
+    return this.http.post<void>(`/api/articulos/${id}/baja`, { motivo });
+  }
+
+  reactivar(id: number): Observable<void> {
+    return this.http.post<void>(`/api/articulos/${id}/reactivacion`, null);
   }
 
   /** Solo activos: a un proveedor inactivo no se le registran compras. 404 si no hay ninguno. */

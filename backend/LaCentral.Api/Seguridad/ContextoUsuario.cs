@@ -34,4 +34,7 @@ public class ContextoUsuario : IContextoUsuario
             return short.TryParse(claim, out var sucursalId) ? sucursalId : (short)0;
         }
     }
+
+    // El claim de rol que firma GeneradorToken: el mismo que lee [Authorize(Roles = ...)].
+    public bool EsAdministrador => UsuarioActual.IsInRole("ADMINISTRADOR");
 }

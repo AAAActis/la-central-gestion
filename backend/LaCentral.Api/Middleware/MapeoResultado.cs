@@ -63,6 +63,7 @@ public static class MapeoResultado
             TipoError.NoEncontrado => StatusCodes.Status404NotFound,
             TipoError.Conflicto    => StatusCodes.Status409Conflict,
             TipoError.NoAutorizado => StatusCodes.Status401Unauthorized,
+            TipoError.Prohibido    => StatusCodes.Status403Forbidden,
             TipoError.Invalido     => StatusCodes.Status400BadRequest,
 
             // Sin este caso por defecto, un TipoError que alguien agregue mañana
