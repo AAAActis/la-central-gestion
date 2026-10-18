@@ -1,4 +1,5 @@
 using Moq;
+using LaCentral.Tests.Infraestructura;
 using Xunit;
 using LaCentral.UseCases;
 using LaCentral.UseCases.Comun;
@@ -15,7 +16,7 @@ public class DarDeBajaClienteUseCaseTests
     public DarDeBajaClienteUseCaseTests()
     {
         _repositorioMock = new Mock<IClienteRepositorio>();
-        _useCase = new DarDeBajaClienteUseCase(_repositorioMock.Object);
+        _useCase = new DarDeBajaClienteUseCase(_repositorioMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
     }
 
     [Fact]
@@ -88,6 +89,7 @@ public class DarDeBajaClienteUseCaseTests
         var cliente = new Cliente { UsuarioAltaId = 1, Activo = true, Cuit = "20123456789" };
         _repositorioMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
+        _repositorioMock.Setup(r => r.ActualizarAsync(cliente, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         // Act
         var resultado = await _useCase.EjecutarAsync(1, "20123456789", "Cierre de empresa");
@@ -100,5 +102,18 @@ public class DarDeBajaClienteUseCaseTests
         
         // Verifica que el repositorio se haya llamado una vez para guardar
         _repositorioMock.Verify(r => r.ActualizarAsync(cliente, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task EjecutarAsync_CuandoLaFilaDesaparecioAntesDeActualizar_RetornaNoEncontrado()
+    {
+        var cliente = new Cliente { UsuarioAltaId = 1, Activo = true, Cuit = "20123456789" };
+        _repositorioMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cliente);
+        _repositorioMock.Setup(r => r.ActualizarAsync(cliente, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        var resultado = await _useCase.EjecutarAsync(1, "20123456789", "Cierre de empresa");
+
+        Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
     }
 }

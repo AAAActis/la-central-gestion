@@ -16,8 +16,6 @@ public partial class Articulo
     /// </summary>
     public decimal? PrecioCosto { get; set; }
 
-    public decimal? PrecioVentaEstimado { get; set; }
-
     public int? UltimoProveedorId { get; set; }
 
     /// <summary>
@@ -39,7 +37,7 @@ public partial class Articulo
 
     public virtual ICollection<ArticuloHistorialCompra> ArticuloHistorialCompra { get; set; } = new List<ArticuloHistorialCompra>();
 
-    public virtual ICollection<ArticuloMargen> ArticuloMargen { get; set; } = new List<ArticuloMargen>();
+    public virtual ICollection<ArticuloPrecioModalidad> ArticuloPrecioModalidad { get; set; } = new List<ArticuloPrecioModalidad>();
 
     public virtual ICollection<FacturaCompraDetalle> FacturaCompraDetalle { get; set; } = new List<FacturaCompraDetalle>();
 

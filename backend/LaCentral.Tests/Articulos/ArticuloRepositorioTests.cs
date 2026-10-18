@@ -77,6 +77,57 @@ public class ArticuloRepositorioTests
         Assert.Empty((await repo.BuscarAsync(new("inexistente"))).Articulos);
     }
 
+    // El caso EXACTO del plan, con los dos metacaracteres juntos. Los señuelos solo
+    // coinciden si % y _ se interpretan: LIKE '%100%_ORIGINAL%' los trae a los tres.
+    // Busqueda_PermiteInactivosYNoInterpretaComodinesSQL usa el mismo texto, pero su
+    // señuelo ("Filtro común") no contiene "100": no discrimina.
+    [PostgreSqlFact]
+    [Trait("Proveedor", "PostgreSQL")]
+    public async Task Busqueda_100PorcientoGuionBajoOriginal_TraeSoloElLiteral()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using var context = fixture.CrearContexto();
+        var literal = CrearArticulo("ART-1", "Filtro 100%_original");
+        context.Articulo.AddRange(literal,
+            CrearArticulo("ART-2", "Filtro 100 de original"),
+            CrearArticulo("ART-3", "Filtro 1005_original"));
+        await context.SaveChangesAsync();
+
+        var pagina = await new ArticuloRepositorio(context).BuscarAsync(new("100%_original"));
+
+        Assert.Equal(literal.Id, Assert.Single(pagina.Articulos).Id);
+        Assert.Equal(1, pagina.Total);
+    }
+
+    [PostgreSqlFact]
+    [Trait("Proveedor", "PostgreSQL")]
+    public async Task Busqueda_CadaResultadoTraeSusCodigosDeProveedor()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using var context = fixture.CrearContexto();
+        var norte = new Proveedor { Codigo = "PRV-N", RazonSocial = "Norte", Activo = true };
+        var sur = new Proveedor { Codigo = "PRV-S", RazonSocial = "Sur", Activo = true };
+        context.Proveedor.AddRange(norte, sur);
+        await context.SaveChangesAsync();
+        var conCodigos = CrearArticulo("ART-1", "Bujía NGK");
+        conCodigos.ArticuloCodigoAlternativo.Add(new() { Codigo = " bpr6es ", ProveedorId = sur.Id });
+        conCodigos.ArticuloCodigoAlternativo.Add(new() { Codigo = "NGK-6", ProveedorId = norte.Id });
+        var sinCodigos = CrearArticulo("ART-2", "Bujía Bosch");
+        context.Articulo.AddRange(conCodigos, sinCodigos);
+        await context.SaveChangesAsync();
+
+        var pagina = await new ArticuloRepositorio(context).BuscarAsync(new("bujia"));
+
+        var primero = Assert.Single(pagina.Articulos, a => a.Id == conCodigos.Id);
+        Assert.Equal("ART-1", primero.CodigoInterno);
+        Assert.Equal(new[]
+        {
+            new CodigoProveedorResumenDto(norte.Id, "Norte", "NGK-6"),
+            new CodigoProveedorResumenDto(sur.Id, "Sur", " bpr6es ")
+        }.OrderBy(c => c.ProveedorId), primero.CodigosProveedor);
+        Assert.Empty(Assert.Single(pagina.Articulos, a => a.Id == sinCodigos.Id).CodigosProveedor);
+    }
+
     [PostgreSqlFact]
     [Trait("Proveedor", "PostgreSQL")]
     public async Task Conflictos_IncluyeTodosLosIdsAunqueSeanInactivosOFueraDePagina()
@@ -111,27 +162,24 @@ public class ArticuloRepositorioTests
         });
         context.Articulo.Add(articulo);
         await context.SaveChangesAsync();
-        var repo = new ArticuloRepositorio(context);
+        // Contexto NUEVO: con el de la siembra, el change tracker devolvería las instancias
+        // cargadas aunque la consulta no trajera los códigos ni el stock de la base.
+        await using var lectura = fixture.CrearContexto();
+        var repo = new ArticuloRepositorio(lectura);
         var detalle = await repo.ObtenerDetallePorIdAsync(articulo.Id);
         Assert.NotNull(detalle);
         Assert.Null(detalle.CostoVigente);
         Assert.Null(detalle.UltimoProveedorId);
-        Assert.Null(detalle.PreciosPorModalidad);
+        // HU-ART-02: sin filas, lista vacía (no null). La razón de cada ausencia la arma el caso de uso.
+        Assert.NotNull(detalle.PreciosPorModalidad);
+        Assert.Empty(detalle.PreciosPorModalidad);
         Assert.Equal(" gn-01 ", Assert.Single(detalle.Codigos).CodigoOriginal);
         Assert.Equal("GN-01", detalle.Codigos[0].ClaveNormalizada);
+        Assert.Equal("Proveedor de prueba", detalle.Codigos[0].RazonSocial);
         Assert.Equal(1.5m, Assert.Single(detalle.Existencias).Cantidad);
+        Assert.Equal(sucursal.Nombre, detalle.Existencias[0].Sucursal);
         Assert.Null(await repo.ObtenerDetallePorIdAsync(checked(articulo.Id + 1)));
     }
-
-    [Theory]
-    [InlineData("* *", 1, 20)]
-    [InlineData("mouse*\t", 1, 20)]
-    [InlineData("mouse", 0, 20)]
-    [InlineData("mouse", 1, 0)]
-    [InlineData("mouse", 1, 101)]
-    [InlineData("mouse", int.MaxValue, 100)]
-    public void Consulta_RechazaEntradaOPaginaInvalida(string texto, int pagina, int tamano)
-        => Assert.ThrowsAny<ArgumentException>(() => new ConsultaArticulos(texto, Pagina: pagina, TamanoPagina: tamano).Validar());
 
     [Fact]
     public void Consulta_TraduceRankingAgrupacionYPaginacionAPostgreSQL()

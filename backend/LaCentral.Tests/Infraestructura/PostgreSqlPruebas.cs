@@ -7,14 +7,13 @@ using Xunit.Abstractions;
 
 namespace LaCentral.Tests.Infraestructura;
 
+/// <summary>
+/// Marca un test que corre contra PostgreSQL real. NUNCA se omite: sin conexión
+/// configurada falla (ver PostgreSqlPruebas.ConexionRequerida). Una prueba no
+/// ejecutada no es una prueba aprobada.
+/// </summary>
 public sealed class PostgreSqlFactAttribute : FactAttribute
 {
-    public PostgreSqlFactAttribute()
-    {
-        if (PostgreSqlPruebas.ConexionConfigurada is null &&
-            Environment.GetEnvironmentVariable("LA_CENTRAL_REQUIRE_POSTGRES") != "1")
-            Skip = "PostgreSQL no ejecutado: falta LA_CENTRAL_TEST_POSTGRES (alias LACENTRAL_TEST_PG).";
-    }
 }
 
 /// <summary>
@@ -34,20 +33,34 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         }
     }
 
+    /// <summary>La conexión de test, o una falla que explica cómo configurarla.</summary>
+    public static string ConexionRequerida => ConexionConfigurada ?? throw new InvalidOperationException(
+        "Falta la conexión PostgreSQL de test: definí LACENTRAL_TEST_PG (o LA_CENTRAL_TEST_POSTGRES) " +
+        "apuntando a una base test_* o *_test. Ver LaCentral.Tests/README.md.");
+
     private readonly NpgsqlConnection _administracion;
     private readonly string _esquema;
     private readonly string _conexionAislada;
+    private readonly List<IAsyncDisposable> _aLiberar = new();
     private bool _creado;
 
     private PostgreSqlPruebas(NpgsqlConnection administracion, string esquema, string conexionAislada)
         => (_administracion, _esquema, _conexionAislada) = (administracion, esquema, conexionAislada);
 
+    /// <summary>Cadena con search_path al esquema aislado: para levantar la API contra él.</summary>
+    public string ConexionAislada => _conexionAislada;
+
     public LaCentralDbContext CrearContexto() => new(new DbContextOptionsBuilder<LaCentralDbContext>()
         .UseNpgsql(_conexionAislada).EnableDetailedErrors().Options);
 
-    public static async Task<PostgreSqlPruebas> CrearAsync(ITestOutputHelper salida)
+    /// <param name="trasCrearEsquema">
+    /// Solo para probar la limpieza: corre sobre la conexión de administración apenas
+    /// creado el esquema, para forzar una falla real a mitad de la creación.
+    /// </param>
+    public static async Task<PostgreSqlPruebas> CrearAsync(ITestOutputHelper salida,
+        Func<NpgsqlConnection, string, Task>? trasCrearEsquema = null)
     {
-        var conexion = ConexionConfigurada ?? throw new InvalidOperationException("Falta conexión PostgreSQL de test.");
+        var conexion = ConexionRequerida;
         var alias = Environment.GetEnvironmentVariable("LACENTRAL_TEST_PG");
         var principal = Environment.GetEnvironmentVariable("LA_CENTRAL_TEST_POSTGRES");
         if (!string.IsNullOrWhiteSpace(alias) && !string.IsNullOrWhiteSpace(principal) && alias != principal)
@@ -66,6 +79,8 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         config.CommandTimeout = 30;
         var admin = new NpgsqlConnection(config.ConnectionString);
         config.SearchPath = esquema;
+        // Identifica en pg_stat_activity las conexiones del pool de este esquema.
+        config.ApplicationName = esquema;
         var fixture = new PostgreSqlPruebas(admin, esquema, config.ConnectionString);
         try
         {
@@ -84,10 +99,14 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
             foreach (var entidad in entidades)
                 await fixture.ValidarTablaAsync(origen, entidad);
 
+            // El DDL de PostgreSQL es transaccional: si algo falla antes del COMMIT,
+            // incluso si se corta la conexión, el esquema no llega a existir.
+            await using var transaccion = await admin.BeginTransactionAsync();
             await fixture.EjecutarAsync($"CREATE SCHEMA {Q(esquema)}");
-            fixture._creado = true;
+            if (trasCrearEsquema is not null) await trasCrearEsquema(admin, esquema);
             foreach (var tabla in tablas)
                 await fixture.EjecutarAsync($"CREATE TABLE {Q(esquema)}.{Q(tabla)} (LIKE {Q(origen)}.{Q(tabla)} INCLUDING ALL)");
+            await fixture.RestaurarNombresDeIndicesAsync(origen, tablas);
 
             // LIKE conserva tipos, defaults, CHECK, índices e identity (con
             // secuencias nuevas), pero NO copia las FK: se agregan explícitamente.
@@ -125,6 +144,8 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
             // ValueGeneratedNever. Copiar sus valores reales evita inventar IDs.
             foreach (var tabla in new[] { "rol", "sucursal" })
                 await fixture.EjecutarAsync($"INSERT INTO {Q(esquema)}.{Q(tabla)} SELECT * FROM {Q(origen)}.{Q(tabla)}");
+            await transaccion.CommitAsync();
+            fixture._creado = true;
 
             salida.WriteLine($"Proveedor real: Npgsql; base exclusiva: {config.Database}; plantilla: {origen}; esquema aislado: {esquema}.");
             salida.WriteLine("Tablas verificadas y clonadas: " + string.Join(", ", tablas));
@@ -135,6 +156,73 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
             await fixture.DisposeAsync();
             throw;
         }
+    }
+
+    /// <summary>
+    /// LIKE ... INCLUDING ALL genera nombres nuevos para los índices (y las restricciones
+    /// UNIQUE que los respaldan). El manejador global reconoce las violaciones por nombre,
+    /// así que la copia tiene que llevar los del origen. Se aparean por tabla, unicidad y
+    /// definición; ALTER INDEX también renombra la restricción asociada.
+    /// </summary>
+    private async Task RestaurarNombresDeIndicesAsync(string origen, string[] tablas)
+    {
+        async Task<List<(string Tabla, string Nombre, string Firma)>> IndicesAsync(string esquema)
+        {
+            var indices = new List<(string, string, string)>();
+            await using var comando = new NpgsqlCommand("""
+                SELECT t.relname, ix.relname,
+                       i.indisunique::text || ' ' || regexp_replace(pg_get_indexdef(i.indexrelid), '^.* USING ', '')
+                FROM pg_index i JOIN pg_class ix ON ix.oid = i.indexrelid
+                JOIN pg_class t ON t.oid = i.indrelid JOIN pg_namespace n ON n.oid = t.relnamespace
+                WHERE n.nspname = @schema AND t.relname = ANY(@tablas)
+                """, _administracion);
+            comando.Parameters.AddWithValue("schema", esquema);
+            comando.Parameters.AddWithValue("tablas", tablas);
+            await using var reader = await comando.ExecuteReaderAsync();
+            while (await reader.ReadAsync()) indices.Add((reader.GetString(0), reader.GetString(1), reader.GetString(2)));
+            return indices;
+        }
+
+        var originales = await IndicesAsync(origen);
+        var copiados = await IndicesAsync(_esquema);
+        foreach (var original in originales)
+        {
+            var candidatos = copiados.Where(c => c.Tabla == original.Tabla && c.Firma == original.Firma).ToList();
+            if (candidatos.Count != 1 || originales.Count(o => o.Tabla == original.Tabla && o.Firma == original.Firma) != 1)
+                throw new InvalidOperationException($"No se pudo aparear sin ambigüedad el índice {original.Tabla}.{original.Nombre} en la copia.");
+            if (candidatos[0].Nombre != original.Nombre)
+                await EjecutarAsync($"ALTER INDEX {Q(_esquema)}.{Q(candidatos[0].Nombre)} RENAME TO {Q(original.Nombre)}");
+        }
+    }
+
+    /// <summary>
+    /// Siembra un usuario real en el esquema aislado (rol y sucursal copiados de los
+    /// catálogos) y devuelve el Id que generó la base. Lo exigen las FK de auditoría.
+    /// </summary>
+    public async Task<int> CrearUsuarioAsync(string nombreUsuario = "auditor")
+    {
+        await using var contexto = CrearContexto();
+        var usuario = new Usuario
+        {
+            NombreUsuario = nombreUsuario,
+            HashContrasena = "hash-de-prueba",
+            RolId = await contexto.Rol.OrderBy(r => r.Id).Select(r => r.Id).FirstAsync(),
+            SucursalId = await contexto.Sucursal.OrderBy(s => s.Id).Select(s => s.Id).FirstAsync(),
+            Activo = true
+        };
+        contexto.Usuario.Add(usuario);
+        await contexto.SaveChangesAsync();
+        return usuario.Id;
+    }
+
+    /// <summary>
+    /// Registra algo que usa el esquema (una fábrica de WithWebHostBuilder, por ejemplo)
+    /// para liberarlo junto con él y no recién al final de la clase de tests.
+    /// </summary>
+    public T Liberar<T>(T recurso) where T : IAsyncDisposable
+    {
+        _aLiberar.Add(recurso);
+        return recurso;
     }
 
     private async Task ValidarTablaAsync(string origen, IEntityType entidad)
@@ -258,9 +346,19 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
     {
         try
         {
-            if (_creado && Regex.IsMatch(_esquema, "^pr110_test_[0-9a-f]{32}$") &&
-                _administracion.State == System.Data.ConnectionState.Open)
+            for (var i = _aLiberar.Count - 1; i >= 0; i--) await _aLiberar[i].DisposeAsync();
+            _aLiberar.Clear();
+            // Cada esquema tiene su cadena y por eso su propio pool, que nadie más
+            // reutiliza: si no se vacía, sus conexiones idle agotan las ranuras (53300).
+            await using (var pool = new NpgsqlConnection(_conexionAislada)) NpgsqlConnection.ClearPool(pool);
+
+            if (_creado && Regex.IsMatch(_esquema, "^pr110_test_[0-9a-f]{32}$"))
             {
+                if (_administracion.State != System.Data.ConnectionState.Open)
+                {
+                    await _administracion.CloseAsync();
+                    await _administracion.OpenAsync();
+                }
                 await EjecutarAsync($"DROP SCHEMA {Q(_esquema)} CASCADE");
                 _creado = false;
             }

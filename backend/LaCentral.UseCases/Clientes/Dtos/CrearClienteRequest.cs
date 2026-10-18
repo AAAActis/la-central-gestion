@@ -6,6 +6,6 @@ public record CrearClienteRequest(
     string? Cuit, // Ahora es opcional por la regla de negocio nueva
     string CondicionFiscal,
     string CondicionPago,
-    List<string> Telefonos,   // Asumiendo que mandan strings simples por ahora
-    List<string> Direcciones 
+    List<string>? Telefonos,   // Asumiendo que mandan strings simples por ahora
+    List<string>? Direcciones // El caso de uso tolera null y lo trata como lista vacía
 );

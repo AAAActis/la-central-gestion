@@ -36,6 +36,18 @@ public static class MapeoResultado
         return Falla(controlador, resultado.Tipo, resultado.Error);
     }
 
+    /// <summary>Para altas que devuelven el recurso creado: 201 con Location.</summary>
+    public static IActionResult ACreadoHttp<T>(
+        this ControllerBase controlador, Result<T> resultado, Func<T, string> ubicacion)
+    {
+        if (resultado.IsSuccess)
+        {
+            return controlador.Created(ubicacion(resultado.Value), resultado.Value);
+        }
+
+        return Falla(controlador, resultado.Tipo, resultado.Error);
+    }
+
     /// <summary>
     /// Punto único donde se elige el código HTTP de un fallo. Ningún controlador
     /// decide esto: si mañana cambia la traducción, se cambia acá y nada más.
@@ -51,6 +63,7 @@ public static class MapeoResultado
             TipoError.NoEncontrado => StatusCodes.Status404NotFound,
             TipoError.Conflicto    => StatusCodes.Status409Conflict,
             TipoError.NoAutorizado => StatusCodes.Status401Unauthorized,
+            TipoError.Prohibido    => StatusCodes.Status403Forbidden,
             TipoError.Invalido     => StatusCodes.Status400BadRequest,
 
             // Sin este caso por defecto, un TipoError que alguien agregue mañana

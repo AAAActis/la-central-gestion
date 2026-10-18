@@ -104,6 +104,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
             UrlReferencia = bd.UrlReferencia,
             Activo = bd.Activo,
             MotivoBaja = bd.MotivoBaja, // <--- FALTABA ESTA LÍNEA
+            FechaBaja = bd.FechaBaja,
             Telefonos = bd.ProveedorTelefono.Select(t => t.Numero ?? string.Empty).ToList(),
             Direcciones = bd.ProveedorDireccion.Select(d => d.Calle ?? string.Empty).ToList()
         };
@@ -124,56 +125,41 @@ public class ProveedorRepositorio : IProveedorRepositorio
         };
     }
 
-    public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Proveedor proveedor, CancellationToken ct = default)
+    public async Task<LaCentral.UseCases.Entidades.Proveedor?> ObtenerPorCodigoAsync(string codigo, CancellationToken ct = default)
+    {
+        var bd = await _context.Proveedor.AsNoTracking().FirstOrDefaultAsync(p => p.Codigo == codigo, ct);
+        if (bd == null) return null;
+
+        return new LaCentral.UseCases.Entidades.Proveedor
+        {
+            Id = bd.Id,
+            Codigo = bd.Codigo,
+            RazonSocial = bd.RazonSocial,
+            Cuit = bd.Cuit,
+            Activo = bd.Activo
+        };
+    }
+
+    public async Task<bool> ActualizarAsync(LaCentral.UseCases.Entidades.Proveedor proveedor, CancellationToken ct = default)
 {
     var bd = await _context.Proveedor
         .Include(p => p.ProveedorTelefono)
         .Include(p => p.ProveedorDireccion)
         .SingleOrDefaultAsync(p => p.Id == proveedor.Id, ct);
 
-    if (bd == null) return;
+    if (bd == null) return false;
 
     bd.RazonSocial = proveedor.RazonSocial;
     bd.Cuit = proveedor.Cuit;
     bd.UrlReferencia = proveedor.UrlReferencia;
 
-    // FIX CRÍTICO 2: Mapeo de estado y motivo
-    bool estadoAnterior = bd.Activo;
+    // FIX CRÍTICO 2: Mapeo de estado y motivo. La fecha la fija el caso de uso:
+    // el repositorio ya no la estampa por su cuenta.
     bd.Activo = proveedor.Activo;
     bd.MotivoBaja = proveedor.MotivoBaja;
+    bd.FechaBaja = proveedor.FechaBaja;
 
-    // Si transiciona de Activo a Inactivo, estampa la fecha
-    if (estadoAnterior && !proveedor.Activo)
-    {
-        bd.FechaBaja = DateTime.UtcNow;
-    }
-
-    // LÓGICA D10: Gestión del Historial de Baja
-    if (!bd.Activo)
-    {
-        var bajaAbierta = await _context.ProveedorHistorialBaja
-            .FirstOrDefaultAsync(h => h.ProveedorId == bd.Id && h.FechaReactivacion == null, ct);
-        
-        if (bajaAbierta == null)
-        {
-            _context.ProveedorHistorialBaja.Add(new LaCentral.Data.Models.ProveedorHistorialBaja
-            {
-                ProveedorId = bd.Id,
-                Motivo = bd.MotivoBaja ?? "Baja lógica",
-                FechaBaja = bd.FechaBaja ?? DateTime.UtcNow
-            });
-        }
-    }
-    else
-    {
-        var bajaAbierta = await _context.ProveedorHistorialBaja
-            .FirstOrDefaultAsync(h => h.ProveedorId == bd.Id && h.FechaReactivacion == null, ct);
-        
-        if (bajaAbierta != null)
-        {
-            bajaAbierta.FechaReactivacion = DateTime.UtcNow;
-        }
-    }
+    // El historial D10 lo escribe IHistorialBajaRepositorio, desde el caso de uso.
 
     var telsABorrar = bd.ProveedorTelefono.Where(t => !proveedor.Telefonos.Contains(t.Numero ?? string.Empty)).ToList();
     foreach (var t in telsABorrar) _context.Remove(t);
@@ -184,9 +170,12 @@ public class ProveedorRepositorio : IProveedorRepositorio
     var dirsABorrar = bd.ProveedorDireccion.Where(d => !proveedor.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
     foreach (var d in dirsABorrar) _context.Remove(d);
 
-    var dirsNuevas = proveedor.Direcciones.Where(d => !bd.ProveedorDireccion.Any(b => b.Calle == d)).ToList();
+    // Misma convención que la lectura: sin calle en la base (NULL) es "" en el dominio.
+    // Una dirección sin calle ("") solo se conserva si ya existía: no se crea una fila vacía.
+    var dirsNuevas = proveedor.Direcciones.Where(d => d.Length > 0 && !bd.ProveedorDireccion.Any(b => (b.Calle ?? string.Empty) == d)).ToList();
     foreach (var d in dirsNuevas) bd.ProveedorDireccion.Add(new LaCentral.Data.Models.ProveedorDireccion { Calle = d });
 
     await _context.SaveChangesAsync(ct);
+    return true;
     }  
 }

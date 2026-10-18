@@ -21,6 +21,9 @@ public enum TipoError
     /// <summary>Los datos recibidos no cumplen una regla de negocio.</summary>
     Invalido,
 
-    /// <summary>Quien opera no tiene permiso, o las credenciales no son válidas.</summary>
-    NoAutorizado
+    /// <summary>Las credenciales no son válidas, o la sesión no identifica a un usuario.</summary>
+    NoAutorizado,
+
+    /// <summary>La sesión es válida, pero su rol no permite la operación.</summary>
+    Prohibido
 }

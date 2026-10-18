@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using Microsoft.AspNetCore.TestHost;
 using System.Net.Http.Json;
 using Moq;
+using LaCentral.Tests.Infraestructura;
 using LaCentral.Api.Seguridad;
 using LaCentral.UseCases.Puertos;
 using LaCentral.UseCases.Entidades;
@@ -102,8 +103,8 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
         contextoMock.SetupGet(c => c.NombreUsuario).Returns("test.integracion");
         contextoMock.SetupGet(c => c.SucursalId).Returns((short)1);
 
-        repoMock.Setup(r => r.ExisteCodigoAsync(codigoClientePrueba, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => clienteGuardado != null);
+        repoMock.Setup(r => r.ObtenerPorCodigoAsync(codigoClientePrueba, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => clienteGuardado);
         repoMock.Setup(r => r.ExisteCuitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         repoMock.Setup(r => r.ExisteRazonSocialAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -121,11 +122,13 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
                 : new List<Cliente> { clienteGuardado });
         repoMock.Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
             .Callback<Cliente, CancellationToken>((c, _) => clienteGuardado = c)
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
 
         var http = CrearClienteAutenticado(services =>
         {
             services.AddScoped(_ => repoMock.Object);
+            services.AddScoped(_ => new Mock<IHistorialBajaRepositorio>().Object);
+            services.AddScoped(_ => DoblesBaja.UnidadQueEjecuta().Object);
             services.AddScoped(_ => contextoMock.Object);
         });
 
@@ -242,11 +245,13 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
         repoMock.Setup(r => r.ObtenerPorCuitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Proveedor?)null);
         repoMock.Setup(r => r.ActualizarAsync(It.IsAny<Proveedor>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync((Proveedor p, CancellationToken _) => tabla.Any(x => x.Id == p.Id));
 
         var http = CrearClienteAutenticado(services =>
         {
             services.AddScoped(_ => repoMock.Object);
+            services.AddScoped(_ => new Mock<IHistorialBajaRepositorio>().Object);
+            services.AddScoped(_ => DoblesBaja.UnidadQueEjecuta().Object);
         });
 
         // 1. Alta — HU-PRO-01

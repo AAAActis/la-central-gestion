@@ -1,4 +1,5 @@
 using LaCentral.UseCases.Comun;
+using LaCentral.UseCases.Entidades;
 using LaCentral.UseCases.Puertos;
 
 namespace LaCentral.UseCases;
@@ -6,10 +7,17 @@ namespace LaCentral.UseCases;
 public class DarDeBajaClienteUseCase
 {
     private readonly IClienteRepositorio _repositorio;
+    private readonly IHistorialBajaRepositorio _historial;
+    private readonly IUnidadDeTrabajo _unidadDeTrabajo;
+    private readonly IContextoUsuario _contexto;
 
-    public DarDeBajaClienteUseCase(IClienteRepositorio repositorio)
+    public DarDeBajaClienteUseCase(IClienteRepositorio repositorio, IHistorialBajaRepositorio historial,
+        IUnidadDeTrabajo unidadDeTrabajo, IContextoUsuario contexto)
     {
         _repositorio = repositorio;
+        _historial = historial;
+        _unidadDeTrabajo = unidadDeTrabajo;
+        _contexto = contexto;
     }
 
     public async Task<Result> EjecutarAsync(int id, string confirmacion, string motivo, CancellationToken ct = default)
@@ -31,13 +39,26 @@ public class DarDeBajaClienteUseCase
         if (string.IsNullOrWhiteSpace(motivo))
             return Result.Failure(TipoError.Invalido, "El motivo de baja es obligatorio.");
 
+        // El usuario sale de la sesión (0 = sin identidad): queda en el historial D10.
+        var usuarioId = _contexto.UsuarioId;
+        if (usuarioId <= 0)
+            return Result.Failure(TipoError.NoAutorizado, "No se pudo determinar el usuario que ejecuta la operación.");
+
         // CA-001 y CA-004: aplicar baja lógica
         cliente.Activo = false;
         cliente.MotivoBaja = motivo;
         cliente.FechaBaja = DateTime.UtcNow;
+        cliente.UsuarioBajaId = usuarioId;
 
-        await _repositorio.ActualizarAsync(cliente, ct);
+        // D10: la fila y su historial, juntos o ninguno.
+        return await _unidadDeTrabajo.EjecutarAsync(async c =>
+        {
+            if (!await _repositorio.ActualizarAsync(cliente, c))
+                return Result.Failure(TipoError.NoEncontrado, "El cliente no existe.");
 
-        return Result.Success();
+            await _historial.AbrirAsync(EntidadConHistorialBaja.Cliente, cliente.Id, motivo,
+                cliente.FechaBaja.Value, usuarioId, c);
+            return Result.Success();
+        }, ct);
     }
 }

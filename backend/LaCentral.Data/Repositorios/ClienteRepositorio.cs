@@ -40,10 +40,19 @@ public class ClienteRepositorio : IClienteRepositorio
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<bool> ExisteCodigoAsync(string codigo, CancellationToken cancellationToken = default)
+    public async Task<LaCentral.UseCases.Entidades.Cliente?> ObtenerPorCodigoAsync(string codigo, CancellationToken ct = default)
     {
-        return await _context.Cliente
-            .AnyAsync(c => c.Codigo == codigo, cancellationToken);
+        var c = await _context.Cliente.AsNoTracking().FirstOrDefaultAsync(x => x.Codigo == codigo, ct);
+        if (c == null) return null;
+
+        return new LaCentral.UseCases.Entidades.Cliente
+        {
+            Id = c.Id,
+            Codigo = c.Codigo,
+            RazonSocial = c.RazonSocial,
+            Cuit = c.CuitCuil,
+            Activo = c.Activo
+        };
     }
 
     public Task<bool> ExisteCuitAsync(string cuit, CancellationToken ct = default)
@@ -97,6 +106,7 @@ public class ClienteRepositorio : IClienteRepositorio
         return clientesBd
             .Select(c => new LaCentral.UseCases.Entidades.Cliente
             {
+                Id = c.Id,
                 Codigo = c.Codigo,
                 RazonSocial = c.RazonSocial,
                 Cuit = c.CuitCuil,
@@ -119,7 +129,7 @@ public class ClienteRepositorio : IClienteRepositorio
 
         return new LaCentral.UseCases.Entidades.Cliente
         {
-            // Se elimina Id = clienteBd.Id porque el dominio exige usar Codigo
+            Id = clienteBd.Id,
             Codigo = clienteBd.Codigo,
             RazonSocial = clienteBd.RazonSocial,
             Cuit = clienteBd.CuitCuil,
@@ -128,10 +138,11 @@ public class ClienteRepositorio : IClienteRepositorio
             Activo = clienteBd.Activo,
             MotivoBaja = clienteBd.MotivoBaja,
             FechaBaja = clienteBd.FechaBaja,
+            UsuarioBajaId = clienteBd.UsuarioBajaId,
 
             // Mapeamos leyendo desde ClienteTelefonos y ClienteDireccions
             Telefonos = clienteBd.ClienteTelefono.Select(t => t.Numero).ToList(), 
-            Direcciones = clienteBd.ClienteDireccion.Select(d => d.Calle).ToList() 
+            Direcciones = clienteBd.ClienteDireccion.Select(d => d.Calle ?? string.Empty).ToList()
         };
     }
 
@@ -143,6 +154,7 @@ public class ClienteRepositorio : IClienteRepositorio
         // Mapeo mínimo para el mensaje de error del CA-003
         return new LaCentral.UseCases.Entidades.Cliente 
         { 
+            Id = c.Id,
             Codigo = c.Codigo, 
             RazonSocial = c.RazonSocial, 
             Cuit = c.CuitCuil,
@@ -150,15 +162,15 @@ public class ClienteRepositorio : IClienteRepositorio
         };
     }
 
-    public async Task ActualizarAsync(LaCentral.UseCases.Entidades.Cliente cliente, CancellationToken ct = default)
+    public async Task<bool> ActualizarAsync(LaCentral.UseCases.Entidades.Cliente cliente, CancellationToken ct = default)
 {
-    // Traemos la entidad completa con tracking
+    // Por Id: el código es mutable y puede ser justamente lo que se está cambiando (CRÍTICO 3).
     var clienteBd = await _context.Cliente
         .Include(c => c.ClienteTelefono)
         .Include(c => c.ClienteDireccion)
-        .SingleOrDefaultAsync(c => c.Codigo == cliente.Codigo, ct);
+        .SingleOrDefaultAsync(c => c.Id == cliente.Id, ct);
 
-    if (clienteBd == null) return;
+    if (clienteBd == null) return false;
 
     // Actualización de primitivos
     clienteBd.RazonSocial = cliente.RazonSocial;
@@ -169,33 +181,9 @@ public class ClienteRepositorio : IClienteRepositorio
     clienteBd.Activo = cliente.Activo;
     clienteBd.MotivoBaja = cliente.MotivoBaja;
     clienteBd.FechaBaja = cliente.FechaBaja;
+    clienteBd.UsuarioBajaId = cliente.UsuarioBajaId;
 
-    // LÓGICA D10: Gestión del Historial de Baja
-    if (!clienteBd.Activo)
-    {
-        var bajaAbierta = await _context.ClienteHistorialBaja
-            .FirstOrDefaultAsync(h => h.ClienteId == clienteBd.Id && h.FechaReactivacion == null, ct);
-        
-        if (bajaAbierta == null)
-        {
-            _context.ClienteHistorialBaja.Add(new LaCentral.Data.Models.ClienteHistorialBaja
-            {
-                ClienteId = clienteBd.Id,
-                Motivo = clienteBd.MotivoBaja ?? "Baja lógica",
-                FechaBaja = clienteBd.FechaBaja ?? DateTime.UtcNow
-            });
-        }
-    }
-    else
-    {
-        var bajaAbierta = await _context.ClienteHistorialBaja
-            .FirstOrDefaultAsync(h => h.ClienteId == clienteBd.Id && h.FechaReactivacion == null, ct);
-        
-        if (bajaAbierta != null)
-        {
-            bajaAbierta.FechaReactivacion = DateTime.UtcNow;
-        }
-    }
+    // El historial D10 lo escribe IHistorialBajaRepositorio, desde el caso de uso.
 
     // Sincronización inteligente de Teléfonos
     var telsABorrar = clienteBd.ClienteTelefono.Where(t => !cliente.Telefonos.Contains(t.Numero)).ToList();
@@ -208,10 +196,12 @@ public class ClienteRepositorio : IClienteRepositorio
     var dirsABorrar = clienteBd.ClienteDireccion.Where(d => !cliente.Direcciones.Contains(d.Calle ?? string.Empty)).ToList();
     foreach (var d in dirsABorrar) _context.Remove(d);
 
-    var dirsNuevas = cliente.Direcciones.Where(d => !clienteBd.ClienteDireccion.Any(bd => bd.Calle == d)).ToList();
+    // Una dirección sin calle ("") solo se conserva si ya existía: no se crea una fila vacía.
+    var dirsNuevas = cliente.Direcciones.Where(d => d.Length > 0 && !clienteBd.ClienteDireccion.Any(bd => (bd.Calle ?? string.Empty) == d)).ToList();
     foreach (var d in dirsNuevas) clienteBd.ClienteDireccion.Add(new LaCentral.Data.Models.ClienteDireccion { Calle = d });
 
     await _context.SaveChangesAsync(ct);
+    return true;
     }
 
     // El dominio representa "sin dato" como cadena vacía; la base, como NULL.

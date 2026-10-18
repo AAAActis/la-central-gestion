@@ -6,16 +6,142 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LaCentral.Data.Repositorios;
 
-public class ArticuloRepositorio : IConsultaArticulosRepositorio
+public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepositorio, IPreciosArticuloRepositorio
 {
     private readonly LaCentralDbContext _context;
 
     public ArticuloRepositorio(LaCentralDbContext context) => _context = context;
 
+    public async Task<IReadOnlyDictionary<int, PreciosDeArticulo>> ObtenerAsync(IReadOnlyCollection<int> articuloIds, CancellationToken ct = default)
+    {
+        var articulos = await _context.Articulo.AsNoTracking()
+            .Where(a => articuloIds.Contains(a.Id))
+            .Select(a => new { a.Id, a.PrecioCosto, Filas = a.ArticuloPrecioModalidad.ToList() })
+            .ToListAsync(ct);
+
+        return articulos.ToDictionary(a => a.Id, a => new PreciosDeArticulo(a.PrecioCosto, a.Filas
+            .Select(p => new LaCentral.UseCases.Entidades.PrecioModalidad
+            {
+                Modalidad = ModalidadPersistida.Leer(p.Modalidad),
+                Base = ModalidadPersistida.LeerBase(p.Base),
+                Porcentaje = p.Porcentaje,
+                Precio = p.Precio,
+                CalculoManual = p.CalculoManual,
+                FechaCalculo = p.FechaCalculo,
+                UsuarioId = p.UsuarioId
+            }).ToList()));
+    }
+
+    /// <summary>
+    /// Por artículo y modalidad (la clave primaria). Solo precio y fecha: la configuración
+    /// (base, porcentaje, calculo_manual) y el usuario no los cambia un recálculo. Nunca
+    /// escribe una fila manual: el filtro va en el UPDATE, así que vale lo que la fila es al
+    /// escribir, no lo que era al leer (otra sesión pudo fijarla entre medio).
+    /// </summary>
+    public async Task ActualizarPreciosAsync(int articuloId, IReadOnlyList<LaCentral.UseCases.Entidades.PrecioModalidad> precios, CancellationToken ct = default)
+    {
+        foreach (var precio in precios)
+        {
+            var modalidad = ModalidadPersistida.Escribir(precio.Modalidad);
+            await _context.ArticuloPrecioModalidad
+                .Where(p => p.ArticuloId == articuloId && p.Modalidad == modalidad && !p.CalculoManual)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(p => p.Precio, precio.Precio)
+                    .SetProperty(p => p.FechaCalculo, precio.FechaCalculo), ct);
+        }
+    }
+
+    /// <summary>
+    /// Un solo SaveChanges para artículo, códigos, stock y precios. codigo_interno es NOT NULL
+    /// y único: entra un provisional irrepetible hasta que el caso de uso asigna el definitivo,
+    /// derivado del Id, en la misma transacción.
+    /// </summary>
+    public async Task<int> AgregarAsync(LaCentral.UseCases.Entidades.Articulo articulo, CancellationToken ct = default)
+    {
+        var fila = new Articulo
+        {
+            CodigoInterno = "TMP-" + Guid.NewGuid().ToString("N"),
+            Nombre = articulo.Nombre,
+            UbicacionDeposito = articulo.UbicacionDeposito,
+            PrecioCosto = articulo.CostoVigente,
+            Activo = articulo.Activo,
+            MotivoBaja = articulo.MotivoBaja,
+            FechaBaja = articulo.FechaBaja,
+            ArticuloCodigoAlternativo = articulo.CodigosAlternativos
+                .Select(c => new ArticuloCodigoAlternativo { Codigo = c.Codigo, ProveedorId = c.ProveedorId }).ToList(),
+            Stock = articulo.Existencias
+                .Select(e => new Stock { SucursalId = checked((short)e.SucursalId), Cantidad = e.Cantidad }).ToList(),
+            ArticuloPrecioModalidad = articulo.Precios.Select(p => new ArticuloPrecioModalidad
+            {
+                Modalidad = ModalidadPersistida.Escribir(p.Modalidad),
+                Base = ModalidadPersistida.EscribirBase(p.Base),
+                Porcentaje = p.Porcentaje,
+                Precio = p.Precio,
+                CalculoManual = p.CalculoManual,
+                FechaCalculo = p.FechaCalculo,
+                UsuarioId = p.UsuarioId
+            }).ToList()
+        };
+        _context.Articulo.Add(fila);
+        await _context.SaveChangesAsync(ct);
+        return fila.Id;
+    }
+
+    public async Task<bool> AsignarCodigoInternoAsync(int id, string codigoInterno, CancellationToken ct = default)
+        => await _context.Articulo.Where(a => a.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(a => a.CodigoInterno, codigoInterno), ct) == 1;
+
+    public async Task<IReadOnlyList<short>> ObtenerSucursalesAsync(CancellationToken ct = default)
+        => await _context.Sucursal.AsNoTracking().OrderBy(s => s.Id).Select(s => s.Id).ToListAsync(ct);
+
+    // HU-ART-03. Todo por Id, y la condición de estado en el WHERE: vale lo que la fila es al
+    // escribir, no lo que era al leer (otra sesión pudo darla de baja entre medio).
+    // Sin código interno nuevo, la columna no entra en el SET: escribir el valor leído pisaría
+    // el que otra sesión pudo cambiar entre la lectura y la escritura.
+    public async Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string? codigoInterno,
+        CancellationToken ct = default)
+    {
+        var articulo = _context.Articulo.Where(a => a.Id == id && a.Activo);
+        var filas = codigoInterno is null
+            ? await articulo.ExecuteUpdateAsync(s => s
+                .SetProperty(a => a.Nombre, nombre)
+                .SetProperty(a => a.UbicacionDeposito, ubicacionDeposito), ct)
+            : await articulo.ExecuteUpdateAsync(s => s
+                .SetProperty(a => a.Nombre, nombre)
+                .SetProperty(a => a.UbicacionDeposito, ubicacionDeposito)
+                .SetProperty(a => a.CodigoInterno, codigoInterno), ct);
+        return filas == 1;
+    }
+
+    // Solo inserta: los códigos que el artículo ya tiene no se tocan. Una carrera con otro
+    // artículo la cierran codigo_unico_global y un_codigo_por_proveedor (23505 → 409).
+    public async Task AgregarCodigosAsync(int id, IReadOnlyList<LaCentral.UseCases.Entidades.CodigoAlternativo> codigos,
+        CancellationToken ct = default)
+    {
+        _context.ArticuloCodigoAlternativo.AddRange(codigos.Select(c =>
+            new ArticuloCodigoAlternativo { ArticuloId = id, ProveedorId = c.ProveedorId, Codigo = c.Codigo }));
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task<bool> RetirarCodigoAsync(int id, int proveedorId, CancellationToken ct = default)
+        => await _context.ArticuloCodigoAlternativo.Where(c => c.ArticuloId == id && c.ProveedorId == proveedorId)
+            .ExecuteDeleteAsync(ct) > 0;
+
+    public async Task<bool> DarDeBajaAsync(int id, string motivo, DateTime fechaBaja, CancellationToken ct = default)
+        => await _context.Articulo.Where(a => a.Id == id && a.Activo)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(a => a.Activo, false)
+                .SetProperty(a => a.MotivoBaja, motivo)
+                .SetProperty(a => a.FechaBaja, fechaBaja), ct) == 1;
+
+    // D10: motivo y fecha quedan en la fila como rastro de la última baja.
+    public async Task<bool> ReactivarAsync(int id, CancellationToken ct = default)
+        => await _context.Articulo.Where(a => a.Id == id && !a.Activo)
+            .ExecuteUpdateAsync(s => s.SetProperty(a => a.Activo, true), ct) == 1;
+
     // Query completo antes de paginar, expuesto a los tests de traducción SQL.
     internal IQueryable<CoincidenciaArticulo> CrearCoincidencias(ConsultaArticulos consulta)
     {
-        consulta.Validar();
         var articulos = _context.Articulo.AsNoTracking();
         if (!consulta.IncluirInactivos)
             articulos = articulos.Where(a => a.Activo);
@@ -69,7 +195,19 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
             if (exactos.Count > 1)
                 conflictos.Add(new(alternativa, exactos.Select(a => a.Id).ToArray()));
         }
-        return new(resultados, total, consulta.Pagina, consulta.TamanoPagina, conflictos);
+        // Los códigos de proveedor de la página, en una sola consulta aparte: la paginación
+        // se hace sobre artículos y no se multiplica por sus códigos.
+        var ids = resultados.Select(a => a.Id).ToArray();
+        var codigos = (await _context.ArticuloCodigoAlternativo.AsNoTracking()
+                .Where(c => ids.Contains(c.ArticuloId))
+                .OrderBy(c => c.ProveedorId).ThenBy(c => c.Id)
+                .Select(c => new { c.ArticuloId, Codigo = new CodigoProveedorResumenDto(c.ProveedorId, c.Proveedor.RazonSocial, c.Codigo) })
+                .ToListAsync(ct))
+            .ToLookup(c => c.ArticuloId, c => c.Codigo);
+        var articulos = resultados
+            .Select(a => new ArticuloResultadoBusquedaDto(a.Id, a.CodigoInterno, a.Nombre, a.Activo,
+                codigos[a.Id].ToArray())).ToArray();
+        return new(articulos, total, consulta.Pagina, consulta.TamanoPagina, conflictos);
     }
 
     public async Task<IReadOnlyList<ArticuloResumenConsultaDto>> ObtenerConflictosCodigoAsync(
@@ -90,6 +228,7 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
         var articulo = await _context.Articulo.AsNoTracking()
             .Include(a => a.ArticuloCodigoAlternativo).ThenInclude(c => c.Proveedor)
             .Include(a => a.Stock).ThenInclude(s => s.Sucursal)
+            .Include(a => a.ArticuloPrecioModalidad)
             .SingleOrDefaultAsync(a => a.Id == id, ct);
         if (articulo is null) return null;
 
@@ -100,9 +239,15 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio
                     c.Codigo, NormalizacionArticulo.Codigo(c.Codigo))).ToArray(),
             articulo.Stock.OrderBy(s => s.SucursalId)
                 .Select(s => new StockSucursalConsultaDto(s.SucursalId, s.Sucursal.Nombre, s.Cantidad)).ToArray(),
-            // D1: el esquema vigente no identifica modalidades. No interpretar
-            // márgenes legados ni calcular una fórmula que el equipo retiró.
-            PreciosPorModalidad: null);
+            // D1: precios estampados en articulo_precio_modalidad, sin recalcular.
+            // Sin filas, lista vacía: la razón de cada ausencia la arma ObtenerArticuloDetalleUseCase.
+            PreciosPorModalidad: articulo.ArticuloPrecioModalidad
+                    .Select(p => new PrecioModalidadConsultaDto(ModalidadPersistida.Leer(p.Modalidad),
+                        ModalidadPersistida.LeerBase(p.Base), p.Porcentaje, p.Precio,
+                        p.CalculoManual, p.FechaCalculo, p.UsuarioId))
+                    .OrderBy(p => p.Modalidad).ToArray(),
+            UbicacionDeposito: articulo.UbicacionDeposito,
+            MotivoBaja: articulo.MotivoBaja);
     }
 
     internal sealed class CoincidenciaArticulo

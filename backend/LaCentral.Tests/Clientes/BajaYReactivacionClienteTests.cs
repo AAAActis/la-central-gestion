@@ -1,4 +1,5 @@
 using Moq;
+using LaCentral.Tests.Infraestructura;
 using Xunit;
 using LaCentral.UseCases;
 using LaCentral.UseCases.Puertos;
@@ -28,7 +29,7 @@ public class BajaYReactivacionClienteTests
     {
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(999, It.IsAny<CancellationToken>()))
                  .ReturnsAsync((Cliente?)null);
-        var casoUso = new DarDeBajaClienteUseCase(_repoMock.Object);
+        var casoUso = new DarDeBajaClienteUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
 
         var resultado = await casoUso.EjecutarAsync(999, "30-12345678-9", "Cierre empresa");
 
@@ -42,7 +43,7 @@ public class BajaYReactivacionClienteTests
     {
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(999, It.IsAny<CancellationToken>()))
                  .ReturnsAsync((Cliente?)null);
-        var casoUso = new ReactivarClienteUseCase(_repoMock.Object);
+        var casoUso = new ReactivarClienteUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
 
         var resultado = await casoUso.EjecutarAsync(999);
 
@@ -58,7 +59,8 @@ public class BajaYReactivacionClienteTests
     {
         var cliente = CrearClienteBase(activo: true);
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
-        var casoUso = new DarDeBajaClienteUseCase(_repoMock.Object);
+        _repoMock.Setup(r => r.ActualizarAsync(cliente, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        var casoUso = new DarDeBajaClienteUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
 
         var resultado = await casoUso.EjecutarAsync(1, "30-12345678-9", "Cese de actividades");
 
@@ -73,7 +75,7 @@ public class BajaYReactivacionClienteTests
     {
         var cliente = CrearClienteBase(activo: true);
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
-        var casoUso = new DarDeBajaClienteUseCase(_repoMock.Object);
+        var casoUso = new DarDeBajaClienteUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
 
         var resultado = await casoUso.EjecutarAsync(1, "11-11111111-1", "Motivo X");
 
@@ -87,7 +89,7 @@ public class BajaYReactivacionClienteTests
     {
         var cliente = CrearClienteBase(activo: true);
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
-        var casoUso = new DarDeBajaClienteUseCase(_repoMock.Object);
+        var casoUso = new DarDeBajaClienteUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
 
         var resultado = await casoUso.EjecutarAsync(1, "30-12345678-9", "");
 
@@ -101,7 +103,7 @@ public class BajaYReactivacionClienteTests
     {
         var cliente = CrearClienteBase(activo: false);
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
-        var casoUso = new DarDeBajaClienteUseCase(_repoMock.Object);
+        var casoUso = new DarDeBajaClienteUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
 
         var resultado = await casoUso.EjecutarAsync(1, "30-12345678-9", "Otro motivo");
 
@@ -117,7 +119,8 @@ public class BajaYReactivacionClienteTests
     {
         var cliente = CrearClienteBase(activo: false);
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
-        var casoUso = new ReactivarClienteUseCase(_repoMock.Object);
+        _repoMock.Setup(r => r.ActualizarAsync(cliente, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        var casoUso = new ReactivarClienteUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
 
         var resultado = await casoUso.EjecutarAsync(1);
 
@@ -132,7 +135,7 @@ public class BajaYReactivacionClienteTests
     {
         var cliente = CrearClienteBase(activo: true);
         _repoMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
-        var casoUso = new ReactivarClienteUseCase(_repoMock.Object);
+        var casoUso = new ReactivarClienteUseCase(_repoMock.Object, new Mock<IHistorialBajaRepositorio>().Object, DoblesBaja.UnidadQueEjecuta().Object, DoblesBaja.Contexto().Object);
 
         var resultado = await casoUso.EjecutarAsync(1);
 

@@ -29,55 +29,28 @@ public class Existencia
     }
 }
 
-// 2. D1: Márgenes persistidos por modalidad
-public class MargenModalidad
-{
-    public int ModalidadId { get; set; }
-    public decimal Porcentaje { get; set; }
-
-    public MargenModalidad(int modalidadId, decimal porcentaje)
-    {
-        ModalidadId = modalidadId;
-        Porcentaje = porcentaje;
-    }
-}
-
 public class Articulo
 {
     public int Id { get; set; }
     public string CodigoInterno { get; set; } = string.Empty;
     public string Nombre { get; set; } = string.Empty;
     public bool Activo { get; set; }
+
+    // El CHECK articulo_baja_coherente exige motivo Y fecha cuando activo = false;
+    // una fila activa puede conservarlos como rastro de su última baja (D10).
+    public string? MotivoBaja { get; set; }
+    public DateTime? FechaBaja { get; set; }
     
+    // Texto libre e informativo: el sistema no gestiona el depósito.
+    public string? UbicacionDeposito { get; set; }
+
     public decimal? CostoVigente { get; set; }
 
     public List<CodigoAlternativo> CodigosAlternativos { get; set; } = new();
     
     public List<Existencia> Existencias { get; set; } = new();
     
-    public List<MargenModalidad> Margenes { get; set; } = new();
-
-    public decimal? CalcularPrecioEstimado(int modalidadId)
-    {
-        // TODO 1: Sin precio de costo -> null
-        if (CostoVigente is null)
-        {
-            return null;
-        }
-
-        var margen = Margenes.FirstOrDefault(m => m.ModalidadId == modalidadId);
-        
-        // TODO 2: Sin márgenes cargados para la modalidad -> null
-        if (margen is null)
-        {
-            return null;
-        }
-
-        // TODO 3: Fórmula según D1
-        decimal factor = 1m + (margen.Porcentaje / 100m);
-        decimal precioCalculado = CostoVigente.Value * factor;
-
-        // TODO 4: Redondeo explícito a 2 decimales, forzando la mitad hacia arriba
-        return Math.Round(precioCalculado, 2, MidpointRounding.AwayFromZero);
-    }
+    // D1: las seis filas de articulo_precio_modalidad. La fórmula vive en
+    // ReglasPrecioModalidad, no en la entidad.
+    public List<PrecioModalidad> Precios { get; set; } = new();
 }

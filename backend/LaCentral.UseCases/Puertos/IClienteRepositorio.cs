@@ -4,7 +4,6 @@ namespace LaCentral.UseCases.Puertos;
 
 public interface IClienteRepositorio
 {
-    Task<bool> ExisteCodigoAsync(string codigo, CancellationToken ct = default);
     Task<bool> ExisteCuitAsync(string cuit, CancellationToken ct = default);
     Task<bool> ExisteRazonSocialAsync(string razonSocial, CancellationToken ct = default);
     Task AgregarAsync(Cliente cliente, CancellationToken ct = default);
@@ -23,5 +22,8 @@ public interface IClienteRepositorio
     Task<Cliente?> ObtenerDetallePorIdAsync(int id, CancellationToken ct = default);
 
     Task<Cliente?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default);
-    Task ActualizarAsync(Cliente cliente, CancellationToken ct = default);
+
+    /// <summary>El código es la clave de negocio; devuelve el dueño para informar el conflicto.</summary>
+    Task<Cliente?> ObtenerPorCodigoAsync(string codigo, CancellationToken ct = default);
+    Task<bool> ActualizarAsync(Cliente cliente, CancellationToken ct = default);
 }
