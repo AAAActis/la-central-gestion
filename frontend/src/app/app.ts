@@ -1,31 +1,30 @@
-import { Component, inject, signal } from '@angular/core';
-import { Articulos } from './pantallas/articulos/articulos';
-import { FacturaCompra } from './pantallas/factura-compra/factura-compra';
-import { Login } from './pantallas/login/login';
+import { Component, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Router, RouterOutlet } from '@angular/router';
+import { skip } from 'rxjs';
+import { Menu } from './diseno/menu';
 import { SesionActual } from './nucleo/sesion';
 
 @Component({
   selector: 'app-root',
-  imports: [Login, Articulos, FacturaCompra],
+  imports: [RouterOutlet, Menu],
   template: `
     @if (sesion.sesion(); as s) {
       <header>
-        <nav>
-          <strong>La Central</strong>
-          <button class="pestana" [class.activa]="vista() === 'articulos'" (click)="vista.set('articulos')">Artículos</button>
-          <button class="pestana" [class.activa]="vista() === 'compra'" (click)="vista.set('compra')">Factura de compra</button>
-        </nav>
-        <span>{{ s.nombreUsuario }} ({{ s.rol }}) <button class="secundario" (click)="sesion.cerrar()">Salir</button></span>
+        <app-menu />
+        <span class="usuario">{{ s.nombreUsuario }} ({{ s.rol }}) <button class="secundario" (click)="sesion.cerrar()">Salir</button></span>
       </header>
-      <main>
-        @if (vista() === 'compra') { <app-factura-compra /> } @else { <app-articulos /> }
-      </main>
-    } @else {
-      <main><app-login /></main>
     }
+    <main><router-outlet /></main>
   `,
 })
 export class App {
   protected readonly sesion = inject(SesionActual);
-  protected readonly vista = signal<'articulos' | 'compra'>('articulos');
+  private readonly router = inject(Router);
+
+  constructor() {
+    // Entrar o salir cambia qué rutas existen: se vuelve a resolver la URL actual, sin recargar.
+    toObservable(this.sesion.sesion).pipe(skip(1)).subscribe(() =>
+      this.router.navigateByUrl(this.router.url, { onSameUrlNavigation: 'reload' }));
+  }
 }

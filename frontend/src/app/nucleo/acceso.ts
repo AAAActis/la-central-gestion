@@ -32,4 +32,4 @@ export function habilitadoPara(roles: readonly string[]): CanMatchFn {
 }
 
 /** Deja entrar solo con sesión. */
-export const conSesion: CanMatchFn = () => false;
+export const conSesion: CanMatchFn = () => rolActual() !== '';
