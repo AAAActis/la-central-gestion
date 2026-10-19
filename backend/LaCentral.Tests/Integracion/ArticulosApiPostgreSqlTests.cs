@@ -338,6 +338,40 @@ public class ArticulosApiPostgreSqlTests : IClassFixture<WebApplicationFactory<P
         }, precios);
     }
 
+    // HU-STK-01 de punta a punta: CA-002 recién dado de alta (sin movimientos), CA-001 y CA-003
+    // con una sucursal en negativo. Cada sucursal por separado y el total, como número.
+    [PostgreSqlFact]
+    public async Task Get_Ficha_ExistenciasPorSucursalYTotal()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        using var cliente = Cliente(fixture, "OPERADOR");
+        var id = await AltaAsync(cliente, new { nombre = "Pastilla de freno" });
+
+        static async Task<(decimal[] Cantidades, decimal Total)> ExistenciasAsync(HttpClient cliente, int id)
+        {
+            var ficha = await cliente.GetFromJsonAsync<JsonElement>($"/api/articulos/{id}");
+            return (ficha.GetProperty("existencias").EnumerateArray()
+                    .Select(e => e.GetProperty("cantidad").GetDecimal()).ToArray(),
+                ficha.GetProperty("totalExistencias").GetDecimal());
+        }
+
+        var sinMovimientos = await ExistenciasAsync(cliente, id);
+        Assert.Equal(new[] { 0m, 0m }, sinMovimientos.Cantidades);
+        Assert.Equal(0m, sinMovimientos.Total);
+
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var filas = await contexto.Stock.Where(s => s.ArticuloId == id).OrderBy(s => s.SucursalId).ToListAsync();
+            filas[0].Cantidad = 7m;
+            filas[1].Cantidad = -3m;
+            await contexto.SaveChangesAsync();
+        }
+
+        var conNegativo = await ExistenciasAsync(cliente, id);
+        Assert.Equal(new[] { 7m, -3m }, conNegativo.Cantidades);
+        Assert.Equal(4m, conNegativo.Total);
+    }
+
     [PostgreSqlFact]
     public async Task Get_FichaInexistente_404()
     {
