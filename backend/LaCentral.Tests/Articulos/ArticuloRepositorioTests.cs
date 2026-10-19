@@ -176,7 +176,7 @@ public class ArticuloRepositorioTests
         Assert.Equal(" gn-01 ", Assert.Single(detalle.Codigos).CodigoOriginal);
         Assert.Equal("GN-01", detalle.Codigos[0].ClaveNormalizada);
         Assert.Equal("Proveedor de prueba", detalle.Codigos[0].RazonSocial);
-        Assert.Equal(1.5m, Assert.Single(detalle.Existencias).Cantidad);
+        Assert.Equal(1.5m, detalle.Existencias[0].Cantidad);
         Assert.Equal(sucursal.Nombre, detalle.Existencias[0].Sucursal);
         Assert.Null(await repo.ObtenerDetallePorIdAsync(checked(articulo.Id + 1)));
     }

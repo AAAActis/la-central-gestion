@@ -227,18 +227,20 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
     {
         var articulo = await _context.Articulo.AsNoTracking()
             .Include(a => a.ArticuloCodigoAlternativo).ThenInclude(c => c.Proveedor)
-            .Include(a => a.Stock).ThenInclude(s => s.Sucursal)
+            .Include(a => a.Stock)
             .Include(a => a.ArticuloPrecioModalidad)
             .SingleOrDefaultAsync(a => a.Id == id, ct);
         if (articulo is null) return null;
+        var sucursales = await _context.Sucursal.AsNoTracking().OrderBy(s => s.Id).ToListAsync(ct);
 
         return new(articulo.Id, articulo.CodigoInterno, articulo.Nombre, articulo.Activo,
             articulo.PrecioCosto, articulo.UltimoProveedorId,
             articulo.ArticuloCodigoAlternativo.OrderBy(c => c.ProveedorId).ThenBy(c => c.Id)
                 .Select(c => new CodigoProveedorConsultaDto(c.ProveedorId, c.Proveedor.RazonSocial,
                     c.Codigo, NormalizacionArticulo.Codigo(c.Codigo))).ToArray(),
-            articulo.Stock.OrderBy(s => s.SucursalId)
-                .Select(s => new StockSucursalConsultaDto(s.SucursalId, s.Sucursal.Nombre, s.Cantidad)).ToArray(),
+            // HU-STK-01 CA-002: toda sucursal aparece; sin fila en stock (sin movimientos) es cero, no vacío.
+            sucursales.Select(s => new StockSucursalConsultaDto(s.Id, s.Nombre,
+                articulo.Stock.SingleOrDefault(e => e.SucursalId == s.Id)?.Cantidad ?? 0m)).ToArray(),
             // D1: precios estampados en articulo_precio_modalidad, sin recalcular.
             // Sin filas, lista vacía: la razón de cada ausencia la arma ObtenerArticuloDetalleUseCase.
             PreciosPorModalidad: articulo.ArticuloPrecioModalidad
