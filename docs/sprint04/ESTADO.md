@@ -38,9 +38,42 @@ muestra una lista vacía. Diseño completo en `docs/sprint04/METODO-VINCULACION.
 | C1 | Script 05 · agregar modalidad **L2 (+40 %)** y retirar **Tarjeta3 / Tarjeta6**. Cambio de esquema: el CHECK `articulo_precio_modalidad_valida` lista los seis nombres actuales y el alta inserta seis filas por artículo. Script del equipo, aplicado a mano en `lacentral_test` y `lacentral`, re-scaffold después, comparando antes la huella md5 del esquema `public` de las dos bases. Arrastra: borrar o reapuntar `RecalcularPreciosTests.TarjetasConTasasDePrueba_AplicanLaFormula` y `CalcularPreciosArticuloUseCaseTests.PrecioJustoEnElLimiteDeSuColumna_InvalidoYNoEscribe`. | Santi | **Pendiente** |
 | C2 | Script 06 · tabla **`proveedor_articulo`** con clave única `(proveedor_id, codigo_proveedor)`, columna `nombre_normalizado` indexada y `articulo_id` NULLABLE. Más la tabla de vinculaciones aprendidas. | Santi | **Pendiente** |
 | C3 | Base **`lacentral_demo`** con datos sembrados inventados: 5 proveedores, unos 30 artículos con varios códigos por artículo y compras a distinto precio. Bloqueante para que Sergio pruebe algo. Hoy `lacentral_test.public` tiene 124 proveedores y 2108 clientes que parecen copia de datos reales, y `ValidarBase` solo mira el nombre. | Santi | **Pendiente** |
-| C4 | **Decisión de negocio · el código interno.** En la Fase 3 se decidió que lo genera el sistema (`LC-{id:D6}`), y por eso el CA2 de HU-ART-01 quedó NO verificado. Pero la convención del backlog dice que el código interno es la clave única de artículos, y el objetivo 4 del mandato unifica los códigos de proveedor **bajo esa clave**. Pregunta a Sergio: *"cuando cargan un repuesto nuevo, ¿le ponen un código propio de ustedes o les sirve que el sistema le asigne uno?"* Define si el alta lleva campo, si la pantalla de artículos lo lleva, y si N4 se cierra solo. | Santi → Sergio | **Pendiente** |
+| C4 | **Decisión de negocio · el código interno.** En la Fase 3 se decidió que lo genera el sistema (`LC-{id:D6}`), y por eso el CA2 de HU-ART-01 quedó NO verificado. Pero la convención del backlog dice que el código interno es la clave única de artículos, y el objetivo 4 del mandato unifica los códigos de proveedor **bajo esa clave**. Pregunta a Sergio: *"cuando cargan un repuesto nuevo, ¿le ponen un código propio de ustedes o les sirve que el sistema le asigne uno?"* Define si el alta lleva campo, si la pantalla de artículos lo lleva, y si N4 se cierra solo. | Santi → Sergio | **Respondida por Sergio (19/10/2026), pendiente de decisión del equipo.** Ver «Respuestas de Sergio · 19/10/2026». |
 | C5 | **Escribir HU-CMP-06 y HU-CMP-07** (IDs 053 y 054) en el formato de la proforma, y revisarlas antes de implementar. Son reglas de negocio, no tecnicismos. | Santi | **Pendiente** |
 | C6 | **Medición previa, 1 hora.** Tomar 50 artículos reales con sus códigos en dos o tres proveedores, normalizarlos y contar cuántos coinciden exacto. Define si hace falta el nivel 3 de coincidencia o alcanza con los dos primeros. | Santi | **Pendiente** |
+
+---
+
+## Respuestas de Sergio · 19/10/2026 (vía Javi)
+
+Registradas textuales. **No son decisiones**: las toma el equipo. No se numeran como D-nn.
+
+**a. Código del artículo (responde la compuerta C4).** Todos los artículos tienen CÓDIGO
+ORIGINAL (del fabricante) + código del proveedor. El original es la clave normalizada; los de
+proveedor son alternativos. Si dos marcas venden el mismo código original, son DOS artículos: se
+distinguen por marca. El código original se puede corregir después de cargado, y lo puede
+corregir CUALQUIER empleado.
+
+Datos existentes: el `codigo_interno` importado de Multisoft mezcla códigos de proveedor y
+originales; no se puede migrar automáticamente, hay que cargar los originales.
+
+Consecuencias (compuerta del equipo, **NO se implementan en la pista B**):
+- contradice la Fase 3 (`LC-{id}` generado) y la regla de la Fase 7 (cambiar el código solo
+  ADMINISTRADOR);
+- cambio de esquema: marca + código original, columna que no puede nacer NOT NULL por los datos
+  existentes (obligatoria en la aplicación para altas y modificaciones), índice único parcial
+  (código original normalizado + marca), listado de artículos sin código original;
+- cierra N4 en el motor para los que lo tengan;
+- hace falta una HU de carga de códigos originales (y marca) de los existentes;
+- reescribir CA2 de HU-ART-01 con este modelo.
+
+Preguntas abiertas: cuántos artículos hay que completar y de dónde sale la marca de los
+existentes.
+
+**b. Listas de precios.** No hay Excel/CSV; los proveedores publican precios actualizados en su
+web, salvo cuando no hay stock. HU-CMP-08 (055, pista C) no se resuelve con archivo como está
+planteada: **avisar a Lauti y Santi**. Para B3: distinguir precio vigente, precio vencido
+(RNF-014) y "sin precio: el proveedor no tiene stock".
 
 ---
 
