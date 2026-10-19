@@ -4,6 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { App } from './app';
+import { appConfig } from './app.config';
 import { rutasDe } from './app.routes';
 import { MODULOS_DEL_SISTEMA } from './modulos';
 import { MODULOS, Modulo } from './nucleo/acceso';
@@ -66,7 +67,7 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       await ir(fixture, '/factura-compra');
       expect(pantalla(fixture, 'app-login')).not.toBeNull();
       expect(pantalla(fixture, 'app-factura-compra')).toBeNull();
-      expect(enlacesDelMenu(fixture).length).toBe(0);
+      expect((fixture.nativeElement as HTMLElement).querySelector('header')).toBeNull();
     });
 
     it('al iniciar sesión abre el primer módulo habilitado', async () => {
@@ -90,6 +91,14 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       await ir(fixture, '/factura-compra');
       const activos = enlacesDelMenu(fixture).filter(a => a.getAttribute('aria-current') === 'page');
       expect(activos.map(a => a.textContent?.trim())).toEqual(['Factura de compra']);
+    });
+
+    it('CA1 · la marca se ve: solo el módulo activo lleva la raya de color debajo', async () => {
+      entrarComo('OPERADOR');
+      await ir(fixture, '/factura-compra');
+      const raya = (titulo: string) => getComputedStyle(enlace(fixture, titulo)!).borderBottomColor;
+      expect(raya('Factura de compra')).toBe('rgb(242, 177, 52)');
+      expect(raya('Artículos')).toBe('rgba(0, 0, 0, 0)');
     });
 
     it('CA3 · cambiar de sección por el menú no recarga la aplicación ni pierde la sesión', async () => {
@@ -170,5 +179,18 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       expect(pantalla(fixture, '#pantalla-admin')).toBeNull();
       expect(TestBed.inject(Router).url).toBe('/articulos');
     });
+  });
+});
+
+describe('appConfig · el cableado real de la aplicación', () => {
+  it('con los providers de producción, el menú del operador lleva a Artículos y a Factura de compra', async () => {
+    TestBed.configureTestingModule({ imports: [App], providers: [...appConfig.providers, provideHttpClientTesting()] });
+    const fixture = TestBed.createComponent(App);
+    fixture.autoDetectChanges();
+    entrarComo('OPERADOR');
+    await ir(fixture, '/factura-compra');
+
+    expect(enlacesDelMenu(fixture).map(a => a.getAttribute('href'))).toEqual(['/articulos', '/factura-compra']);
+    expect(pantalla(fixture, 'app-factura-compra')).not.toBeNull();
   });
 });
