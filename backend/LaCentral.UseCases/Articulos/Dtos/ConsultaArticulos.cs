@@ -81,5 +81,5 @@ public sealed record FichaArticuloDto(
     string? UbicacionDeposito = null, string? MotivoBaja = null)
 {
     /// <summary>HU-STK-01 CA-001: la suma de todas las sucursales.</summary>
-    public decimal TotalExistencias => 0m;
+    public decimal TotalExistencias => Existencias.Sum(e => e.Cantidad);
 }
