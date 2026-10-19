@@ -30,3 +30,6 @@ export function modulosPara(rol: string, modulos: readonly Modulo[]): Modulo[] {
 export function habilitadoPara(roles: readonly string[]): CanMatchFn {
   return () => roles.includes(rolActual());
 }
+
+/** Deja entrar solo con sesión. */
+export const conSesion: CanMatchFn = () => false;
