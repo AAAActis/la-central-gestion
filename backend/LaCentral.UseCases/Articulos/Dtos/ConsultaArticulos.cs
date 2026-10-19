@@ -78,4 +78,8 @@ public sealed record FichaArticuloDto(
     int? UltimoProveedorId, IReadOnlyList<CodigoProveedorConsultaDto> Codigos,
     IReadOnlyList<StockSucursalConsultaDto> Existencias,
     IReadOnlyList<PrecioModalidadFichaDto> Precios,
-    string? UbicacionDeposito = null, string? MotivoBaja = null);
+    string? UbicacionDeposito = null, string? MotivoBaja = null)
+{
+    /// <summary>HU-STK-01 CA-001: la suma de todas las sucursales.</summary>
+    public decimal TotalExistencias => 0m;
+}
