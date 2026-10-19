@@ -134,7 +134,7 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       expect(pantalla(fixture, 'app-articulos')).toBeNull();
     });
 
-    for (const ancho of [1024, 768]) {
+    for (const ancho of [1024, 768, 480]) {
       it(`CA4 · a ${ancho} px de ancho, el menú y el contenido no desbordan a lo ancho`, async () => {
         const raiz = fixture.nativeElement as HTMLElement;
         raiz.style.display = 'block';
