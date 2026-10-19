@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiLaCentral, mensajeDeError } from './api';
-import { SesionActual } from './sesion';
+import { ApiLaCentral, mensajeDeError } from '../../nucleo/api';
+import { SesionActual } from '../../nucleo/sesion';
 
 @Component({
   selector: 'app-login',

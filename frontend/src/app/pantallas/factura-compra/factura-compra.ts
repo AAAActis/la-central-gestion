@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import {
   ApiLaCentral, ArticuloResultado, FacturaCompraNueva, FichaArticulo, ProveedorResumen, mensajeDeError,
-} from './api';
+} from '../../nucleo/api';
 
 interface LineaEnCarga {
   articulo: ArticuloResultado;

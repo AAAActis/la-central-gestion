@@ -1,8 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
-import { Articulos } from './articulos';
-import { FacturaCompra } from './factura-compra';
-import { Login } from './login';
-import { SesionActual } from './sesion';
+import { Articulos } from './pantallas/articulos/articulos';
+import { FacturaCompra } from './pantallas/factura-compra/factura-compra';
+import { Login } from './pantallas/login/login';
+import { SesionActual } from './nucleo/sesion';
 
 @Component({
   selector: 'app-root',

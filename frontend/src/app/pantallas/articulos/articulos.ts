@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import {
   AltaArticulo, ApiLaCentral, ArticuloResultado, FichaArticulo, Modalidad, ModificacionArticulo, PaginaArticulos,
   RazonAusencia, mensajeDeError,
-} from './api';
-import { SesionActual } from './sesion';
+} from '../../nucleo/api';
+import { SesionActual } from '../../nucleo/sesion';
 
 const NOMBRE_MODALIDAD: Record<Modalidad, string> = {
   Lista: 'Lista',

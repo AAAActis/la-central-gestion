@@ -1,6 +1,6 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { agregarToken } from './sesion';
+import { agregarToken } from './nucleo/sesion';
 
 export const appConfig: ApplicationConfig = {
   providers: [
