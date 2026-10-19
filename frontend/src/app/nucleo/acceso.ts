@@ -1,5 +1,6 @@
-import { InjectionToken, Type } from '@angular/core';
+import { InjectionToken, Type, inject } from '@angular/core';
 import { CanMatchFn } from '@angular/router';
+import { SesionActual } from './sesion';
 
 /** Un módulo de la aplicación: su ruta, su nombre en el menú y los roles que lo habilitan. */
 export interface Modulo {
@@ -12,9 +13,14 @@ export interface Modulo {
 /** La lista de la que salen el menú y las rutas. Se provee en app.config. */
 export const MODULOS = new InjectionToken<readonly Modulo[]>('MODULOS');
 
+/** El rol de la sesión, o '' si no hay sesión: '' no habilita ningún módulo. */
+export function rolActual(): string {
+  return inject(SesionActual).sesion()?.rol ?? '';
+}
+
 /** Los módulos que el rol tiene habilitados, en el orden de la lista. */
-export function modulosPara(rol: string | undefined, modulos: readonly Modulo[]): Modulo[] {
-  return [];
+export function modulosPara(rol: string, modulos: readonly Modulo[]): Modulo[] {
+  return modulos.filter(m => m.roles.includes(rol));
 }
 
 /**
@@ -22,5 +28,5 @@ export function modulosPara(rol: string | undefined, modulos: readonly Modulo[])
  * rol no usa: ocultar no es autorizar, los permisos los sigue decidiendo la API.
  */
 export function habilitadoPara(roles: readonly string[]): CanMatchFn {
-  return () => false;
+  return () => roles.includes(rolActual());
 }

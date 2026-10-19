@@ -27,7 +27,7 @@ describe('modulosPara · CA1 y CA2', () => {
   });
 
   it('sin rol no muestra ningún módulo', () => {
-    expect(modulosPara(undefined, DE_PRUEBA)).toEqual([]);
+    expect(modulosPara('', DE_PRUEBA)).toEqual([]);
   });
 
   it('los dos roles de la base ven Artículos y Factura de compra, en ese orden', () => {
