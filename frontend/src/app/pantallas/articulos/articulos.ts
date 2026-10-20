@@ -130,9 +130,14 @@ const TEXTO_RAZON: Record<RazonAusencia, string> = {
         @if (errorCodigos()) { <p class="error">{{ errorCodigos() }}</p> }
 
         <h3>Stock</h3>
-        @for (e of f.existencias; track e.sucursalId) {
-          <p>{{ e.sucursal }}: {{ e.cantidad | number: '1.0-3' }}</p>
-        } @empty { <p class="tenue">Sin stock registrado.</p> }
+        <table>
+          <tbody>
+            @for (e of f.existencias; track e.sucursalId) {
+              <tr><td>{{ e.sucursal }}</td><td [class.error]="e.cantidad < 0">{{ e.cantidad | number: '1.0-3' }}</td></tr>
+            }
+            <tr><th>Total</th><th [class.error]="f.totalExistencias < 0">{{ f.totalExistencias | number: '1.0-3' }}</th></tr>
+          </tbody>
+        </table>
 
         @if (f.activo) {
           <h3>Modificar</h3>

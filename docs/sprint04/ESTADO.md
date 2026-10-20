@@ -260,6 +260,9 @@ la vinculación funcionando con su pantalla. Todo lo demás es negociable; eso n
 | D14 | Efectivo = **L1 −10 %**, también cuando la fila de Lista es manual. | 17/10/2026 | Sergio, vía Javi |
 | D15 | Baja y reactivación de artículo: **todos los roles**, Administrador y Operador. | 17/10/2026 | Sergio, vía Javi |
 | D16 | El comparador, **etapa 1 sobre datos propios**. La ingesta automatizada es etapa 2, con un proveedor como prueba de concepto. | 18/10/2026 | Equipo |
+| D17 | **Corrección del protocolo:** "las compuertas se cierran antes de que arranque cualquier pista" fue un error de redacción. Cada compuerta bloquea historias concretas: **C1** (script L2 / retiro de tarjetas) bloquea HU-CMP-03 y los tests de tarjetas; **C2** (`proveedor_articulo`) bloquea HU-CMP-06, HU-CMP-07 y HU-CMP-08; **C3** (`lacentral_demo`) bloquea solo el punto 10 de la DoD. | 19/10/2026 | Equipo |
+| D18 | **Arrancar HU-STK-01 (Pista C · C1) antes del re-scaffold global fue autorizado por el equipo**, con el riesgo aceptado: cuando entren los scripts de C1 y C2, el re-scaffold puede conflictuar con esta rama en el contexto; se rebasea. HU-STK-01 lee `stock`, que existe desde el Sprint 3, y no toca `articulo_precio_modalidad` ni `proveedor_articulo`. | 19/10/2026 | Equipo |
+| D19 | HU-STK-01: la existencia se muestra en la **ficha del artículo** (`GET /api/articulos/{id}`), sin endpoint nuevo: los CA dicen "cuando el vendedor abre su detalle". La ficha trae **todas** las sucursales (cero sin fila en `stock`) y `totalExistencias`. | 19/10/2026 | Agente, dentro del alcance de los CA |
 
 ---
 
@@ -275,14 +278,30 @@ la vinculación funcionando con su pantalla. Todo lo demás es negociable; eso n
 
 ---
 
+## Fases del sprint
+
+| Fase | HU | Estado | Rama | PR | Tests (PG) |
+|---|---|---|---|---|---|
+| Pista C · C1 | 017 · HU-STK-01 | Compuerta APTO (verificador y auditor, 20/10/2026); PR abierto, a revisar. Cuerpo en `docs/sprint04/pr-hu-stk-01.md` | `feature/HU-STK-01-existencias-ubicacion` | #131 · Refs #24 | 435 (148) |
+
+**Deuda nueva, de entorno (19/10/2026):** con un rol personal de PostgreSQL con tope de
+conexiones (`lacentral_lauti`), `dotnet test` en paralelo da **140 fallos falsos**
+(`53300: too many connections for role`). En serie, `develop` da 431/431. Mientras el equipo
+no suba el tope o no use `lacentral_tests`, en esa máquina la suite se corre con
+`dotnet test -- xUnit.ParallelizeTestCollections=false` (≈36 min).
+
+---
+
 ## PRÓXIMA SESIÓN
 
 **Arrancá leyendo esto y `docs/PROMPT-FASE.md`.** Después:
 
-1. **Confirmá que las compuertas C1, C2 y C3 están cerradas.** Si alguna no lo está, **PARÁ**:
-   son scripts del equipo y agente no toca el esquema.
-2. Corré `dotnet build --no-incremental` y `dotnet test` desde `backend/`. Tiene que dar
-   **431 tests, 145 contra PostgreSQL real, 0 omitidos, 0 warnings**. Si no coincide, **PARÁ y
+1. Las compuertas bloquean historias concretas, no pistas enteras (D17). Confirmá que la de
+   **tu** HU está cerrada; si no lo está, **PARÁ**.
+2. Corré `dotnet build --no-incremental` y `dotnet test` desde `backend/`. Con HU-STK-01
+   mergeada tiene que dar **435 tests, 148 contra PostgreSQL real, 0 omitidos, 0 warnings**
+   (sin ella, 431 y 145). Si da cientos de fallos `53300`, es el tope de conexiones del rol:
+   corré en serie (ver la deuda de entorno arriba). Si no coincide por otra causa, **PARÁ y
    averiguá por qué** antes de tocar nada.
 3. Tu primera unidad de trabajo es **`RestablecerContrasenaUseCase.cs:43`**, no una HU: el
    UPDATE no verifica que escribió y el caso de uso informa éxito igual. Un test en rojo por el

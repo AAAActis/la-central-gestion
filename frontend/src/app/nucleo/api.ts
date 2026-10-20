@@ -49,6 +49,7 @@ export interface FichaArticulo {
   ultimoProveedorId: number | null;
   codigos: { proveedorId: number; razonSocial: string; codigoOriginal: string; claveNormalizada: string }[];
   existencias: { sucursalId: number; sucursal: string; cantidad: number }[];
+  totalExistencias: number;
   precios: PrecioFicha[];
   ubicacionDeposito: string | null;
   motivoBaja: string | null;

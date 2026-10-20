@@ -60,6 +60,22 @@ public class ObtenerArticuloDetalleUseCaseTests
         Assert.Equal(2.5m, Assert.Single(ficha.Existencias).Cantidad);
     }
 
+    // HU-STK-01 CA-001 y CA-003: el total suma cada sucursal, y un negativo resta, no se ignora.
+    [Fact]
+    public async Task Ficha_TotalExistencias_SumaLasSucursalesConSuSigno()
+    {
+        _consulta.Setup(c => c.ObtenerDetallePorIdAsync(Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ArticuloDetalleConsultaDto(Id, "LC-000007", "Bujía", true, null, null,
+                Array.Empty<CodigoProveedorConsultaDto>(),
+                new[] { new StockSucursalConsultaDto(1, "FR", 5m), new StockSucursalConsultaDto(2, "SV", -1.5m) },
+                Array.Empty<PrecioModalidadConsultaDto>()));
+
+        var resultado = await Caso().EjecutarAsync(Id);
+
+        Assert.True(resultado.IsSuccess);
+        Assert.Equal(3.5m, resultado.Value!.TotalExistencias);
+    }
+
     [Fact]
     public async Task Ficha_SinFilas_SeisModalidadesSinConfiguracionEnElOrdenDelEnum()
     {
