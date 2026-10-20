@@ -220,7 +220,7 @@ la vinculación funcionando con su pantalla. Todo lo demás es negociable; eso n
 
 | Fase | HU | Estado | Rama | PR | Tests (PG) |
 |---|---|---|---|---|---|
-| Pista C · C1 | 017 · HU-STK-01 | Compuerta APTO (verificador y auditor, 20/10/2026); PR por abrir, cuerpo en `docs/sprint04/pr-hu-stk-01.md` | `feature/HU-STK-01-existencias-ubicacion` | por abrir · Refs #24 | 435 (148) |
+| Pista C · C1 | 017 · HU-STK-01 | Compuerta APTO (verificador y auditor, 20/10/2026); PR abierto, a revisar. Cuerpo en `docs/sprint04/pr-hu-stk-01.md` | `feature/HU-STK-01-existencias-ubicacion` | #131 · Refs #24 | 435 (148) |
 
 **Deuda nueva, de entorno (19/10/2026):** con un rol personal de PostgreSQL con tope de
 conexiones (`lacentral_lauti`), `dotnet test` en paralelo da **140 fallos falsos**
