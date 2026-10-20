@@ -132,13 +132,16 @@ Esta pantalla es **el entregable del sprint**: es la que se le muestra a Sergio.
 
 | # | Estado | Rama | PR | Tests | PG |
 |---|---|---|---|---|---|
-| B1 | **Hecha, esperando revisión y merge.** verificador-tdd: ronda 1 NO APTO (3 mutaciones sobrevivientes), ronda 2 **APTO**. auditor-persistencia: no aplica (no toca backend). | `feature/HU-UI-01-estructura-base` | se abre a mano; cuerpo en `docs/sprint04/pr-b1-hu-ui-01.md` | frontend 21/21 (antes no había) · backend 431/431 sin cambios | 0 nuevos · 145 sin cambios |
+| B1 | **Aprobada con correcciones por Lauti (20/10/2026); correcciones aplicadas, esperando merge.** Actualizada con develop por merge (trae #131). verificador-tdd: ronda 1 NO APTO (3 mutaciones sobrevivientes), ronda 2 **APTO**; correcciones (merge y título, ronda 3 acotada): **APTO**. auditor-persistencia: no aplica (no toca backend). | `feature/HU-UI-01-estructura-base` | #130 · Refs #40; cuerpo en `docs/sprint04/pr-b1-hu-ui-01.md` | frontend 21/21 (antes no había) · backend 435/435 después del merge | 0 nuevos · 148 |
 | B2 | Pendiente. Arranca cuando B1 entre en develop. | — | — | — | — |
 | B3 | Pendiente. Depende de B2 y del endpoint de A2. | — | — | — | — |
 
-**CA de HU-UI-01:** CA1 verificado · CA2 **verificado parcialmente**: no hay pantalla de gestión
-de usuarios; se verificó el filtro por rol con un módulo exclusivo de ADMINISTRADOR que existe
-solo en el test · CA3 verificado · CA4 verificado (test a 1024, 768 y 480 px más prueba manual en
+**CA de HU-UI-01:** CA1 verificado · CA2 · NO verificado como está escrito. Motivo: no existe
+pantalla de gestión de usuarios en frontend/, así que no hay opción real que ocultar. Lo que SÍ
+está verificado es el mecanismo de filtrado por rol: un módulo exclusivo de ADMINISTRADOR,
+definido solo en el test, aparece para el administrador, no aparece para el operador, y si el
+operador escribe la ruta queda en su primer módulo (acceso.spec.ts). El CA queda pendiente de
+verificación hasta que exista esa pantalla. · CA3 verificado · CA4 verificado (test a 1024, 768 y 480 px más prueba manual en
 Chrome a 1024×768 y 1366×768, sin backend). DoD 9: `docs/manual/navegacion.md`. DoD 10: **NO
 verificada**, porque C3 (`lacentral_demo`) está pendiente.
 
@@ -155,7 +158,15 @@ verificada**, porque C3 (`lacentral_demo`) está pendiente.
   guardar el token es una decisión de seguridad del equipo.
 - El `flex-wrap` del `nav` (`frontend/src/styles.css`, regla `nav`) no tiene test que lo
   discrimine mientras haya solo dos módulos.
-- `frontend/src/index.html`: el título sigue siendo "La Central · Artículos".
+- **npm bloquea install scripts** (20/10/2026, revisión de #130, N4). `npm ci` en `frontend/`
+  bloquea los install scripts de @parcel/watcher, esbuild, lmdb y msgpackr-extract. No hay
+  `.npmrc` en el repo ni en el usuario; `ignore-scripts` es `false`. Es el comportamiento por
+  defecto de npm 12.0.2 (`allow-scripts = [""]`, `dangerously-allow-all-scripts = false`).
+  **Ya pasaba antes de B1:** `npm ci` sobre c0c6b86 bloquea los mismos 4. El build y los tests
+  andan igual. No se cambió nada; si hace falta, se aprueban con
+  `npm install-scripts approve <paquete>` (decisión del equipo).
+- La tabla de stock de HU-STK-01 (fila Total, negativos en rojo) no tiene test de frontend:
+  ningún spec monta la ficha de artículo.
 
 ### PISTA C · Lauti · de dónde sale «lo que cuesta» — 11 SP
 
@@ -283,6 +294,7 @@ la vinculación funcionando con su pantalla. Todo lo demás es negociable; eso n
 | Fase | HU | Estado | Rama | PR | Tests (PG) |
 |---|---|---|---|---|---|
 | Pista C · C1 | 017 · HU-STK-01 | Compuerta APTO (verificador y auditor, 20/10/2026); PR abierto, a revisar. Cuerpo en `docs/sprint04/pr-hu-stk-01.md` | `feature/HU-STK-01-existencias-ubicacion` | #131 · Refs #24 | 435 (148) |
+| Pista B · B1 | 039 · HU-UI-01 | Aprobada con correcciones (Lauti, 20/10/2026); correcciones aplicadas, esperando merge. CA2 NO verificado como está escrito | `feature/HU-UI-01-estructura-base` | #130 · Refs #40 | backend 435 (148) · frontend 21 |
 
 **Deuda nueva, de entorno (19/10/2026):** con un rol personal de PostgreSQL con tope de
 conexiones (`lacentral_lauti`), `dotnet test` en paralelo da **140 fallos falsos**
@@ -308,8 +320,10 @@ no suba el tope o no use `lacentral_tests`, en esa máquina la suite se corre co
    camino real, y después el arreglo.
 4. Recién entonces, la HU que te toque según tu pista.
 
-**Pista B (Javi), aparte de los puntos 1 a 3, que son de la pista A:** B1 está hecha y espera
-merge (`feature/HU-UI-01-estructura-base`). La siguiente es **B2 · 042 · HU-UI-04 · componente
+**Pista B (Javi), aparte de los puntos 1 a 3, que son de la pista A:** B1 está aprobada con
+correcciones (#130), ya aplicadas, y espera merge (`feature/HU-UI-01-estructura-base`). Con B1
+y HU-STK-01 en develop, los números son **435 tests y 148 contra PostgreSQL**, más la suite de
+frontend (`ng test`, 21 tests). La siguiente es **B2 · 042 · HU-UI-04 · componente
 de listado reutilizable**. Sale de develop **después** de que B1 entre; si B1 no entró, sale de
 la rama de B1 y se declara en el PR. Va en `frontend/src/app/compartido/` y se prueba con
 `ng test` (ver `frontend/src/app/README.md`). Antes de B2, leé la habilidad de diseño y los

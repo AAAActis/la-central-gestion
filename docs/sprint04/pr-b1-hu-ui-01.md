@@ -3,6 +3,9 @@
 Refs #40
 
 Pista B (Javi). Base: `develop` (c0c6b86), con `docs/sprint04-estado` ya mergeado (#129).
+Actualizada con `develop` por merge (a0a1c61, trae #131 · HU-STK-01), sin conflictos: git
+siguió los renombres y los cambios de la tabla de stock quedaron en
+`pantallas/articulos/articulos.ts` y `nucleo/api.ts`.
 
 ## Qué hace
 
@@ -16,9 +19,9 @@ Pista B (Javi). Base: `develop` (c0c6b86), con `docs/sprint04-estado` ya mergead
   derecha, el usuario con **Salir**. Los botones-pestaña pasan a ser enlaces (`routerLink`). El
   módulo activo lleva una raya ámbar debajo y `aria-current="page"`. En pantallas angostas el
   encabezado se acomoda en dos líneas.
-- **Carpetas** donde van a vivir B2, B3 y el Sprint 5: `nucleo/` (sesión, API, acceso por rol),
-  `diseno/` (menú), `compartido/` (para el listado de HU-UI-04) y `pantallas/<pantalla>/`. Están
-  descritas en `frontend/src/app/README.md`.
+- **Carpetas** donde van a vivir B2, B3 y el Sprint 5: se crean `nucleo/` (sesión, API, acceso
+  por rol), `diseno/` (menú) y `pantallas/<pantalla>/`. `compartido/` no se crea (git no versiona
+  carpetas vacías): está descrita en `frontend/src/app/README.md` como destino de HU-UI-04.
 - **Tests de frontend con `ng test`**, usando Karma + Jasmine, el stack que instala `ng new` en
   Angular 20. Antes no había tests de frontend.
 - `docs/manual/navegacion.md`: la nota de uso (punto 9 de la DoD).
@@ -40,7 +43,7 @@ Pista B (Javi). Base: `develop` (c0c6b86), con `docs/sprint04-estado` ya mergead
 | CA | Estado | Cómo |
 |---|---|---|
 | CA1 · menú con los módulos del rol | **Verificado** | `acceso.spec.ts` (filtro por rol, con la lista real para los dos roles de la base). En `app.spec.ts`: el menú con sus rutas, la marca del activo (`aria-current` y la raya visible) y el cableado real de `appConfig`. |
-| CA2 · el Operador no ve gestión de usuarios | **Verificado parcialmente** | Se verificó el filtro: un módulo exclusivo de ADMINISTRADOR, que existe solo en el test, aparece para el administrador y no para el operador, y si el operador escribe la ruta queda en su primer módulo. **Motivo:** no existe pantalla de gestión de usuarios en `frontend/`, así que no hay una opción real que ocultar. |
+| CA2 · el Operador no ve gestión de usuarios | **NO verificado como está escrito** | Motivo: no existe pantalla de gestión de usuarios en frontend/, así que no hay opción real que ocultar. Lo que SÍ está verificado es el mecanismo de filtrado por rol: un módulo exclusivo de ADMINISTRADOR, definido solo en el test, aparece para el administrador, no aparece para el operador, y si el operador escribe la ruta queda en su primer módulo (acceso.spec.ts). El CA queda pendiente de verificación hasta que exista esa pantalla. |
 | CA3 · conserva la sesión sin recargar | **Verificado** | `app.spec.ts`: un clic en el menú cambia de pantalla con el router, el `header` sigue siendo el mismo nodo del DOM y el token sigue en memoria. Verificación manual: lo mismo en Chrome real (ver abajo). F5 no es parte del CA. |
 | CA4 · baja resolución sin desplazamiento horizontal | **Verificado** | Test en Chrome headless a 1024, 768 y 480 px, en las dos pantallas. Verificación manual en Chrome a 1024×768 y 1366×768 (y 480×800). |
 
@@ -51,14 +54,27 @@ extensión de Chrome no estaba conectada. **Sin backend:** la sesión se cargó 
 desarrollo de Angular (`ng.getComponent(app-root).sesion.iniciar(...)`, rol OPERADOR, token
 falso). Lo que se ve es el layout, no datos.
 
-| Ventana | Pantalla | Ancho del documento | Encabezado | Menú |
+| Ventana | Pantallas medidas | Ancho del documento | Encabezado | Menú |
 |---|---|---|---|---|
 | 1024×768 | login · artículos · factura | 1024 = 1024 | 1 línea, 50 px | Artículos*, Factura de compra |
 | 1366×768 | login · artículos · factura | 1366 = 1366 | 1 línea, 50 px | ídem |
 | 480×800 | login · artículos · factura | 480 = 480 | 2 líneas, 99 px | ídem |
 
+Las 9 combinaciones se midieron por CDP (ancho del documento contra el viewport), pero hay
+**5 capturas**, en `docs/sprint04/evidencia/b1/`:
+
+- `ca4-1024x768-login.png`
+- `ca4-1024x768-articulos.png`
+- `ca4-1024x768-factura.png`
+- `ca4-1366x768-articulos.png`
+- `ca4-480x800-factura.png`
+
+Las otras 4 combinaciones (login y factura a 1366, login y artículos a 480) no tienen captura.
+El test automatizado (`app.spec.ts`, CA4) cubre los tres anchos (1024, 768 y 480 px) en las dos
+pantallas con sesión, artículos y factura.
+
 Después del clic en "Factura de compra": la URL pasa a `/factura-compra`, cambia la pantalla y el
-token sigue en memoria (`sesionSigue: true`). Las capturas están en `docs/sprint04/evidencia/b1/`.
+token sigue en memoria (`sesionSigue: true`).
 
 ### DoD punto 10 · prueba a mano contra `lacentral_demo`
 
@@ -68,8 +84,14 @@ token sigue en memoria (`sesionSigue: true`). Las capturas están en `docs/sprin
 
 - **Frontend:** `ng test`, 21 tests, 21 pasan, 0 fallan, 0 omitidos. 0 contra PostgreSQL (el
   frontend no toca la base). `ng build` de producción sin warnings.
-- **Backend:** sin cambios. `dotnet build --no-incremental`: 0 warnings. `dotnet test`: 431 de
-  431, 0 omitidos, 145 contra PostgreSQL real. Mismo conteo antes y después.
+- **Backend:** B1 no lo toca. Antes del merge con develop: `dotnet test` 431 de 431, 0 omitidos,
+  145 contra PostgreSQL real. Después del merge (trae #131): `dotnet build --no-incremental` 0
+  warnings, `dotnet test` **435 de 435, 0 omitidos, 148 contra PostgreSQL real**.
+- **Correcciones de la revisión de Lauti (merge a0a1c61 y f77e735):** verificador-tdd ronda 3,
+  acotada a esos dos commits: **APTO**. El merge rehecho con `git merge-tree` da el mismo árbol
+  (sin ediciones a mano), y los cambios de #131 en frontend son idénticos línea a línea, en las
+  rutas nuevas. El título no tiene test: Karma no carga `index.html` y nada reescribe el título;
+  se verificó en la salida de `ng build`.
 - **verificador-tdd:** ronda 1 **NO APTO**: sobrevivían tres mutaciones (el cableado de `appConfig` sin test, `routerLinkActive="otra-clase"` y `nav a.activo { }` vacío). Se arregló con tests en 42c085c. Ronda 2, acotada a 42c085c: **APTO**. Las cuatro mutaciones (las tres más el encabezado sin sesión) dan rojo, y no hay dobles absurdos.
 - **auditor-persistencia:** no se corrió, porque no se tocó backend ni la base.
 
@@ -122,13 +144,19 @@ da vacío.
 
 - **F5 pierde la sesión** (`frontend/src/app/nucleo/sesion.ts`, sesión solo en memoria). No es
   parte de CA3. Resolverlo es una decisión de seguridad: dónde guardar el token.
-- **CA2 verificado parcialmente** hasta que exista la pantalla de gestión de usuarios.
+- **CA2 NO verificado como está escrito**, pendiente hasta que exista la pantalla de gestión de
+  usuarios.
 - **El `flex-wrap` del `nav`** no tiene test: con dos módulos nunca se activa a 480 px o más.
   Cuando haya más módulos, CA4 a 480 lo va a cubrir.
-- `frontend/src/index.html` sigue con el título "La Central · Artículos".
-- `npm install` / `npm ci` avisan que bloquearon los install scripts de esbuild, lmdb y
-  msgpackr-extract, que son dependencias del build de Angular y no de esta rama. Compila y corre
-  igual. No se investigó si eso pasaba antes de esta rama.
+- **Install scripts bloqueados.** `npm ci` bloquea los install scripts de @parcel/watcher,
+  esbuild, lmdb y msgpackr-extract. No hay `.npmrc` en el repo ni en el usuario, y
+  `ignore-scripts` es `false`. El bloqueo es el comportamiento por defecto de npm 12.0.2
+  (`allow-scripts = [""]`, `dangerously-allow-all-scripts = false`): solo corren los paquetes
+  aprobados. **Pasaba antes de esta rama:** `npm ci` sobre c0c6b86 bloquea los mismos 4. Compila
+  y corre igual. No se cambió nada (ver ESTADO.md).
 - DoD 10: la prueba contra `lacentral_demo` queda pendiente de C3.
+- La tabla de stock de #131 (fila Total, negativos en rojo) no tiene test de frontend: ningún spec
+  monta la ficha de artículo. B1 no la rompe (build y suite en verde), pero no hay test que lo
+  demuestre.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
