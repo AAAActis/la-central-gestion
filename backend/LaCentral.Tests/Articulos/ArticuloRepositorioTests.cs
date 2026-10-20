@@ -155,10 +155,11 @@ public class ArticuloRepositorioTests
             Codigo = " gn-01 ",
             Proveedor = new() { Codigo = "PRV-1", RazonSocial = "Proveedor de prueba", Activo = true }
         });
-        var sucursal = await context.Sucursal.AsNoTracking().OrderBy(s => s.Id).FirstAsync();
+        var sucursales = await context.Sucursal.AsNoTracking().OrderBy(s => s.Id)
+            .Select(s => new { s.Id, s.Nombre }).ToListAsync();
         articulo.Stock.Add(new()
         {
-            SucursalId = sucursal.Id, Cantidad = 1.5m
+            SucursalId = sucursales[0].Id, Cantidad = 1.5m
         });
         context.Articulo.Add(articulo);
         await context.SaveChangesAsync();
@@ -176,9 +177,63 @@ public class ArticuloRepositorioTests
         Assert.Equal(" gn-01 ", Assert.Single(detalle.Codigos).CodigoOriginal);
         Assert.Equal("GN-01", detalle.Codigos[0].ClaveNormalizada);
         Assert.Equal("Proveedor de prueba", detalle.Codigos[0].RazonSocial);
-        Assert.Equal(1.5m, Assert.Single(detalle.Existencias).Cantidad);
-        Assert.Equal(sucursal.Nombre, detalle.Existencias[0].Sucursal);
+        // HU-STK-01 CA-002: con fila en una sucursal y sin fila en la otra, las dos aparecen.
+        Assert.Equal(new[]
+        {
+            new StockSucursalConsultaDto(sucursales[0].Id, sucursales[0].Nombre, 1.5m),
+            new StockSucursalConsultaDto(sucursales[1].Id, sucursales[1].Nombre, 0m)
+        }, detalle.Existencias);
         Assert.Null(await repo.ObtenerDetallePorIdAsync(checked(articulo.Id + 1)));
+    }
+
+    // HU-STK-01 CA-002: sin ninguna fila en stock (artículo importado, sin movimientos), la
+    // ficha trae cada sucursal con cero, no una lista vacía.
+    [PostgreSqlFact]
+    [Trait("Proveedor", "PostgreSQL")]
+    public async Task Detalle_SinFilasDeStock_CadaSucursalConCantidadCero()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using var context = fixture.CrearContexto();
+        var articulo = CrearArticulo("ART-1", "Sin movimientos");
+        context.Articulo.Add(articulo);
+        await context.SaveChangesAsync();
+        await using var lectura = fixture.CrearContexto();
+        var sucursales = await lectura.Sucursal.AsNoTracking().OrderBy(s => s.Id)
+            .Select(s => new { s.Id, s.Nombre }).ToListAsync();
+        Assert.Equal(2, sucursales.Count);
+        Assert.False(await lectura.Stock.AnyAsync(s => s.ArticuloId == articulo.Id));
+
+        var detalle = await new ArticuloRepositorio(lectura).ObtenerDetallePorIdAsync(articulo.Id);
+
+        Assert.NotNull(detalle);
+        Assert.Equal(sucursales.Select(s => new StockSucursalConsultaDto(s.Id, s.Nombre, 0m)), detalle.Existencias);
+    }
+
+    // HU-STK-01 CA-001 y CA-003: cada sucursal por separado, y la existencia negativa (venta
+    // sin stock, HU-STK-03) tal cual, sin ocultarla ni llevarla a cero.
+    [PostgreSqlFact]
+    [Trait("Proveedor", "PostgreSQL")]
+    public async Task Detalle_ExistenciaNegativa_SeDevuelveTalCualPorSucursal()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using var context = fixture.CrearContexto();
+        var sucursales = await context.Sucursal.AsNoTracking().OrderBy(s => s.Id)
+            .Select(s => new { s.Id, s.Nombre }).ToListAsync();
+        var articulo = CrearArticulo("ART-1", "Vendido sin stock");
+        articulo.Stock.Add(new() { SucursalId = sucursales[0].Id, Cantidad = 5m });
+        articulo.Stock.Add(new() { SucursalId = sucursales[1].Id, Cantidad = -2.5m });
+        context.Articulo.Add(articulo);
+        await context.SaveChangesAsync();
+        await using var lectura = fixture.CrearContexto();
+
+        var detalle = await new ArticuloRepositorio(lectura).ObtenerDetallePorIdAsync(articulo.Id);
+
+        Assert.NotNull(detalle);
+        Assert.Equal(new[]
+        {
+            new StockSucursalConsultaDto(sucursales[0].Id, sucursales[0].Nombre, 5m),
+            new StockSucursalConsultaDto(sucursales[1].Id, sucursales[1].Nombre, -2.5m)
+        }, detalle.Existencias);
     }
 
     [Fact]
