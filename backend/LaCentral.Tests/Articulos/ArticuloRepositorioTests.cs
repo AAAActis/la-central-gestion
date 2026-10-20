@@ -155,10 +155,11 @@ public class ArticuloRepositorioTests
             Codigo = " gn-01 ",
             Proveedor = new() { Codigo = "PRV-1", RazonSocial = "Proveedor de prueba", Activo = true }
         });
-        var sucursal = await context.Sucursal.AsNoTracking().OrderBy(s => s.Id).FirstAsync();
+        var sucursales = await context.Sucursal.AsNoTracking().OrderBy(s => s.Id)
+            .Select(s => new { s.Id, s.Nombre }).ToListAsync();
         articulo.Stock.Add(new()
         {
-            SucursalId = sucursal.Id, Cantidad = 1.5m
+            SucursalId = sucursales[0].Id, Cantidad = 1.5m
         });
         context.Articulo.Add(articulo);
         await context.SaveChangesAsync();
@@ -176,8 +177,12 @@ public class ArticuloRepositorioTests
         Assert.Equal(" gn-01 ", Assert.Single(detalle.Codigos).CodigoOriginal);
         Assert.Equal("GN-01", detalle.Codigos[0].ClaveNormalizada);
         Assert.Equal("Proveedor de prueba", detalle.Codigos[0].RazonSocial);
-        Assert.Equal(1.5m, detalle.Existencias[0].Cantidad);
-        Assert.Equal(sucursal.Nombre, detalle.Existencias[0].Sucursal);
+        // HU-STK-01 CA-002: con fila en una sucursal y sin fila en la otra, las dos aparecen.
+        Assert.Equal(new[]
+        {
+            new StockSucursalConsultaDto(sucursales[0].Id, sucursales[0].Nombre, 1.5m),
+            new StockSucursalConsultaDto(sucursales[1].Id, sucursales[1].Nombre, 0m)
+        }, detalle.Existencias);
         Assert.Null(await repo.ObtenerDetallePorIdAsync(checked(articulo.Id + 1)));
     }
 
