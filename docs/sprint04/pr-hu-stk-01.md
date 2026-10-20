@@ -38,11 +38,14 @@
   - `Detalle_ConservaCostoNuloOriginalDelCodigoYStockDecimalPorSucursal`: con fila en una
     sucursal y sin fila en la otra, aparecen las dos.
   Todos releen con un contexto nuevo. No siembran Ids.
-- **Suite completa (19/10/2026, en serie, según ESTADO.md):** 435 tests, 148 contra PostgreSQL.
-  Antes eran 431 y 145. Tests nuevos: 4, de los cuales 3 corren contra PostgreSQL.
+- **Suite completa (20/10/2026, en `cf416df`, en serie):** `dotnet build --no-incremental` con
+  0 warnings. **435 total · 435 passed · 0 failed · 0 skipped**, 148 `[PostgreSqlFact]` contra
+  PostgreSQL real. Antes eran 431 y 145. Tests nuevos: 4, de los cuales 3 corren contra PostgreSQL.
 - **HTTP:** `ArticulosApiPostgreSqlTests.Get_Ficha_ExistenciasPorSucursalYTotal`, con
   `WebApplicationFactory` contra PostgreSQL. Da de alta un artículo y comprueba `[0, 0]`, total 0.
-  Después pone 7 y −3 y comprueba `[7, −3]`, total 4.
+  Después pone 7 y −3 y comprueba `[7, −3]`, total 4. **No cubre el caso "sin fila en
+  `stock`"**: el alta ya crea las dos filas en cero. Ese caso de CA-002 lo cubre
+  `Detalle_SinFilasDeStock_CadaSucursalConCantidadCero`.
 
 ### Criterios de aceptación → tests
 | CA | Estado | Tests |
@@ -52,20 +55,37 @@
 | CA-003 | verificado | `Detalle_ExistenciaNegativa_SeDevuelveTalCualPorSucursal`, `Ficha_TotalExistencias_SumaLasSucursalesConSuSigno`, `Get_Ficha_ExistenciasPorSucursalYTotal` |
 
 ## TDD
-| Unidad | test → producción (el rojo de cada test lo confirma el verificador) |
+| Unidad | estructura → test (rojo) → producción |
 |---|---|
-| Todas las sucursales, cero sin fila (PG) | `013b7f5` → `21d7450` |
-| Total (Moq) | `79dc66e` (estructura, sin comportamiento) → `88c208a` → `ca30a16` |
-| Ficha HTTP (PG) | `d32e218` |
+| Todas las sucursales, cero sin fila (PG) | `013b7f5`: `Detalle_SinFilasDeStock_...` en rojo por aserción (esperaba dos sucursales en cero, obtuvo `[]`) → `21d7450`. El test viejo pasa de `Assert.Single` a `[0]`, porque la ficha ahora trae dos sucursales |
+| Total (Moq) | `79dc66e` (stub `=> 0m`) → `88c208a`: rojo por aserción (esperaba 3,5, obtuvo 0) → `ca30a16` |
+| Ficha HTTP (PG) | `d32e218`: caracterización, sin producción después |
 | Frontend | `15a5c1c` |
-| Sucursal con fila junto a la sucursal sin fila (PG) | `afc4ee8` |
+| Sucursal con fila junto a la sucursal sin fila (PG) | `afc4ee8`: caracterización, sin producción después |
 
-## Compuerta
-**Pendiente:** el verificador-tdd y el auditor-persistencia todavía no corrieron sobre esta rama.
+**Excepciones declaradas.** Estos tests pasaron a la primera. El verificador comprobó que
+discriminan con mutaciones sin commitear:
+- `Detalle_ExistenciaNegativa_SeDevuelveTalCualPorSucursal`, que entró en `013b7f5`: el código
+  anterior ya devolvía las filas tal cual cuando existían en las dos sucursales. Lo matan M3
+  (truncar los negativos), M6 (orden invertido) y M7 (cruce por `!=`).
+- `Get_Ficha_ExistenciasPorSucursalYTotal` (`d32e218`): lo matan M3, M4, M5, M6 y M7. M1 y M2 los
+  sobrevive solo, porque nunca pasa por "sin fila", y los matan los tests de repositorio.
+- `Detalle_ConservaCostoNulo...` ajustado en `afc4ee8`: lo matan M1, M2, M6 y M7.
+
+## Compuerta (subagentes de a uno, cada uno en su worktree)
+| Pasada | Alcance | Veredicto | Qué |
+|---|---|---|---|
+| verificador | `c0c6b86..cf416df` | **APTO** | Orden test → producción limpio en las dos unidades con producción. Los dos rojos se reproducen por aserción. 7 mutaciones, ninguna sobrevive: M1 solo sucursales con fila, M2 `?? 1m`, M3 `Math.Max(0, …)`, M4 total con `Math.Abs`, M5 total solo con positivos, M6 `OrderByDescending`, M7 `!=` en el cruce. Suite 435/435. No bloqueantes: las caracterizaciones sin declarar y el HTTP sin el caso "sin fila" (→ este cuerpo) |
+| auditor | `c0c6b86..cf416df` | **APTO** | `stock_pkey (articulo_id, sucursal_id)` en el script, en el modelo y en el motor (un duplicado da 23505): `SingleOrDefault` no puede lanzar. `cantidad NUMERIC(12,3)`, 1,2345 se relee como 1,235 con un contexto nuevo. Sin Ids sembrados, relectura con contexto nuevo, sin InMemory, `PostgreSqlSeguridadTests` activo. Dos viajes por ficha, sin N+1 |
 
 ## Deuda nueva
 - **De entorno:** con el rol personal `lacentral_lauti`, que tiene tope de conexiones, la suite
   en paralelo da unos 140 fallos `53300` que no son reales. En esa máquina se corre con
   `dotnet test -- xUnit.ParallelizeTestCollections=false` (≈36 min). Ver ESTADO.md.
+- **Auditor:** la ficha hace un JOIN sin dividir de códigos, stock y precios. Ya era así antes, y
+  hoy está acotado: 2 sucursales y 6 modalidades. Si crecen las sucursales o los códigos,
+  conviene `AsSplitQuery()`.
+- **Auditor, sin verificar:** que no hayan quedado esquemas `pr110_test_*` huérfanos en
+  `lacentral_test`.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
