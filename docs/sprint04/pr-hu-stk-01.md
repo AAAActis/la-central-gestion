@@ -2,7 +2,7 @@
 
 **Rama:** `feature/HU-STK-01-existencias-ubicacion` → **`develop`**
 **Título sugerido:** `feat: existencias por sucursal y total en la ficha de articulo (HU-STK-01)`
-**Issues:** Refs #17 (HU 017 · HU-STK-01).
+**Issues:** Refs #24 (HU 017 · HU-STK-01).
 
 ## Qué hace
 - **Sin endpoint nuevo (D19):** la existencia va en la ficha, `GET /api/articulos/{id}`, porque
