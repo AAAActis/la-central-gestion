@@ -38,9 +38,42 @@ muestra una lista vacía. Diseño completo en `docs/sprint04/METODO-VINCULACION.
 | C1 | Script 05 · agregar modalidad **L2 (+40 %)** y retirar **Tarjeta3 / Tarjeta6**. Cambio de esquema: el CHECK `articulo_precio_modalidad_valida` lista los seis nombres actuales y el alta inserta seis filas por artículo. Script del equipo, aplicado a mano en `lacentral_test` y `lacentral`, re-scaffold después, comparando antes la huella md5 del esquema `public` de las dos bases. Arrastra: borrar o reapuntar `RecalcularPreciosTests.TarjetasConTasasDePrueba_AplicanLaFormula` y `CalcularPreciosArticuloUseCaseTests.PrecioJustoEnElLimiteDeSuColumna_InvalidoYNoEscribe`. | Santi | **Pendiente** |
 | C2 | Script 06 · tabla **`proveedor_articulo`** con clave única `(proveedor_id, codigo_proveedor)`, columna `nombre_normalizado` indexada y `articulo_id` NULLABLE. Más la tabla de vinculaciones aprendidas. | Santi | **Pendiente** |
 | C3 | Base **`lacentral_demo`** con datos sembrados inventados: 5 proveedores, unos 30 artículos con varios códigos por artículo y compras a distinto precio. Bloqueante para que Sergio pruebe algo. Hoy `lacentral_test.public` tiene 124 proveedores y 2108 clientes que parecen copia de datos reales, y `ValidarBase` solo mira el nombre. | Santi | **Pendiente** |
-| C4 | **Decisión de negocio · el código interno.** En la Fase 3 se decidió que lo genera el sistema (`LC-{id:D6}`), y por eso el CA2 de HU-ART-01 quedó NO verificado. Pero la convención del backlog dice que el código interno es la clave única de artículos, y el objetivo 4 del mandato unifica los códigos de proveedor **bajo esa clave**. Pregunta a Sergio: *"cuando cargan un repuesto nuevo, ¿le ponen un código propio de ustedes o les sirve que el sistema le asigne uno?"* Define si el alta lleva campo, si la pantalla de artículos lo lleva, y si N4 se cierra solo. | Santi → Sergio | **Pendiente** |
+| C4 | **Decisión de negocio · el código interno.** En la Fase 3 se decidió que lo genera el sistema (`LC-{id:D6}`), y por eso el CA2 de HU-ART-01 quedó NO verificado. Pero la convención del backlog dice que el código interno es la clave única de artículos, y el objetivo 4 del mandato unifica los códigos de proveedor **bajo esa clave**. Pregunta a Sergio: *"cuando cargan un repuesto nuevo, ¿le ponen un código propio de ustedes o les sirve que el sistema le asigne uno?"* Define si el alta lleva campo, si la pantalla de artículos lo lleva, y si N4 se cierra solo. | Santi → Sergio | **Respondida por Sergio (19/10/2026), pendiente de decisión del equipo.** Ver «Respuestas de Sergio · 19/10/2026». |
 | C5 | **Escribir HU-CMP-06 y HU-CMP-07** (IDs 053 y 054) en el formato de la proforma, y revisarlas antes de implementar. Son reglas de negocio, no tecnicismos. | Santi | **Pendiente** |
 | C6 | **Medición previa, 1 hora.** Tomar 50 artículos reales con sus códigos en dos o tres proveedores, normalizarlos y contar cuántos coinciden exacto. Define si hace falta el nivel 3 de coincidencia o alcanza con los dos primeros. | Santi | **Pendiente** |
+
+---
+
+## Respuestas de Sergio · 19/10/2026 (vía Javi)
+
+Registradas textuales. **No son decisiones**: las toma el equipo. No se numeran como D-nn.
+
+**a. Código del artículo (responde la compuerta C4).** Todos los artículos tienen CÓDIGO
+ORIGINAL (del fabricante) + código del proveedor. El original es la clave normalizada; los de
+proveedor son alternativos. Si dos marcas venden el mismo código original, son DOS artículos: se
+distinguen por marca. El código original se puede corregir después de cargado, y lo puede
+corregir CUALQUIER empleado.
+
+Datos existentes: el `codigo_interno` importado de Multisoft mezcla códigos de proveedor y
+originales; no se puede migrar automáticamente, hay que cargar los originales.
+
+Consecuencias (compuerta del equipo, **NO se implementan en la pista B**):
+- contradice la Fase 3 (`LC-{id}` generado) y la regla de la Fase 7 (cambiar el código solo
+  ADMINISTRADOR);
+- cambio de esquema: marca + código original, columna que no puede nacer NOT NULL por los datos
+  existentes (obligatoria en la aplicación para altas y modificaciones), índice único parcial
+  (código original normalizado + marca), listado de artículos sin código original;
+- cierra N4 en el motor para los que lo tengan;
+- hace falta una HU de carga de códigos originales (y marca) de los existentes;
+- reescribir CA2 de HU-ART-01 con este modelo.
+
+Preguntas abiertas: cuántos artículos hay que completar y de dónde sale la marca de los
+existentes.
+
+**b. Listas de precios.** No hay Excel/CSV; los proveedores publican precios actualizados en su
+web, salvo cuando no hay stock. HU-CMP-08 (055, pista C) no se resuelve con archivo como está
+planteada: **avisar a Lauti y Santi**. Para B3: distinguir precio vigente, precio vencido
+(RNF-014) y "sin precio: el proveedor no tiene stock".
 
 ---
 
@@ -94,6 +127,46 @@ botones por todos lados"*. Esto tiene que poder usarlo alguien sin que nadie le 
   Si vincular cuesta cinco clics, nadie vincula y el sistema no aprende nunca.
 
 Esta pantalla es **el entregable del sprint**: es la que se le muestra a Sergio.
+
+#### Avance de la pista B
+
+| # | Estado | Rama | PR | Tests | PG |
+|---|---|---|---|---|---|
+| B1 | **Aprobada con correcciones por Lauti (20/10/2026); correcciones aplicadas, esperando merge.** Actualizada con develop por merge (trae #131). verificador-tdd: ronda 1 NO APTO (3 mutaciones sobrevivientes), ronda 2 **APTO**; correcciones (merge y título, ronda 3 acotada): **APTO**. auditor-persistencia: no aplica (no toca backend). | `feature/HU-UI-01-estructura-base` | #130 · Refs #40; cuerpo en `docs/sprint04/pr-b1-hu-ui-01.md` | frontend 21/21 (antes no había) · backend 435/435 después del merge | 0 nuevos · 148 |
+| B2 | Pendiente. Arranca cuando B1 entre en develop. | — | — | — | — |
+| B3 | Pendiente. Depende de B2 y del endpoint de A2. | — | — | — | — |
+
+**CA de HU-UI-01:** CA1 verificado · CA2 · NO verificado como está escrito. Motivo: no existe
+pantalla de gestión de usuarios en frontend/, así que no hay opción real que ocultar. Lo que SÍ
+está verificado es el mecanismo de filtrado por rol: un módulo exclusivo de ADMINISTRADOR,
+definido solo en el test, aparece para el administrador, no aparece para el operador, y si el
+operador escribe la ruta queda en su primer módulo (acceso.spec.ts). El CA queda pendiente de
+verificación hasta que exista esa pantalla. · CA3 verificado · CA4 verificado (test a 1024, 768 y 480 px más prueba manual en
+Chrome a 1024×768 y 1366×768, sin backend). DoD 9: `docs/manual/navegacion.md`. DoD 10: **NO
+verificada**, porque C3 (`lacentral_demo`) está pendiente.
+
+**Decisiones de B1 (19/10/2026, agente; las revisa Javi en el PR):**
+- `ng test` con Karma + Jasmine, el stack que instala `ng new` en Angular 20. Sin otras
+  librerías.
+- El rol del menú sale de `SesionActual.rol`, que el login devuelve junto con el token. No se
+  decodifica el JWT en el navegador.
+- Los módulos se definen en `frontend/src/app/modulos.ts`; de ahí salen el menú y las rutas. Sin
+  sesión, cualquier ruta muestra el login.
+
+**Deuda nueva de B1:**
+- F5 pierde la sesión (`frontend/src/app/nucleo/sesion.ts`, solo en memoria). Decidir dónde
+  guardar el token es una decisión de seguridad del equipo.
+- El `flex-wrap` del `nav` (`frontend/src/styles.css`, regla `nav`) no tiene test que lo
+  discrimine mientras haya solo dos módulos.
+- **npm bloquea install scripts** (20/10/2026, revisión de #130, N4). `npm ci` en `frontend/`
+  bloquea los install scripts de @parcel/watcher, esbuild, lmdb y msgpackr-extract. No hay
+  `.npmrc` en el repo ni en el usuario; `ignore-scripts` es `false`. Es el comportamiento por
+  defecto de npm 12.0.2 (`allow-scripts = [""]`, `dangerously-allow-all-scripts = false`).
+  **Ya pasaba antes de B1:** `npm ci` sobre c0c6b86 bloquea los mismos 4. El build y los tests
+  andan igual. No se cambió nada; si hace falta, se aprueban con
+  `npm install-scripts approve <paquete>` (decisión del equipo).
+- La tabla de stock de HU-STK-01 (fila Total, negativos en rojo) no tiene test de frontend:
+  ningún spec monta la ficha de artículo.
 
 ### PISTA C · Lauti · de dónde sale «lo que cuesta» — 11 SP
 
@@ -221,6 +294,7 @@ la vinculación funcionando con su pantalla. Todo lo demás es negociable; eso n
 | Fase | HU | Estado | Rama | PR | Tests (PG) |
 |---|---|---|---|---|---|
 | Pista C · C1 | 017 · HU-STK-01 | Compuerta APTO (verificador y auditor, 20/10/2026); PR abierto, a revisar. Cuerpo en `docs/sprint04/pr-hu-stk-01.md` | `feature/HU-STK-01-existencias-ubicacion` | #131 · Refs #24 | 435 (148) |
+| Pista B · B1 | 039 · HU-UI-01 | Aprobada con correcciones (Lauti, 20/10/2026); correcciones aplicadas, esperando merge. CA2 NO verificado como está escrito | `feature/HU-UI-01-estructura-base` | #130 · Refs #40 | backend 435 (148) · frontend 21 |
 
 **Deuda nueva, de entorno (19/10/2026):** con un rol personal de PostgreSQL con tope de
 conexiones (`lacentral_lauti`), `dotnet test` en paralelo da **140 fallos falsos**
@@ -245,6 +319,16 @@ no suba el tope o no use `lacentral_tests`, en esa máquina la suite se corre co
    UPDATE no verifica que escribió y el caso de uso informa éxito igual. Un test en rojo por el
    camino real, y después el arreglo.
 4. Recién entonces, la HU que te toque según tu pista.
+
+**Pista B (Javi), aparte de los puntos 1 a 3, que son de la pista A:** B1 está aprobada con
+correcciones (#130), ya aplicadas, y espera merge (`feature/HU-UI-01-estructura-base`). Con B1
+y HU-STK-01 en develop, los números son **435 tests y 148 contra PostgreSQL**, más la suite de
+frontend (`ng test`, 21 tests). La siguiente es **B2 · 042 · HU-UI-04 · componente
+de listado reutilizable**. Sale de develop **después** de que B1 entre; si B1 no entró, sale de
+la rama de B1 y se declara en el PR. Va en `frontend/src/app/compartido/` y se prueba con
+`ng test` (ver `frontend/src/app/README.md`). Antes de B2, leé la habilidad de diseño y los
+criterios de la PISTA B. Avisar a Lauti y a Santi de la respuesta (b) de Sergio: HU-CMP-08 no se
+resuelve con archivo.
 
 **Dónde parás de verdad:** si hace falta tocar el esquema, si un CA contradice a otro o al
 esquema, si falta una regla de negocio que nadie definió, si PostgreSQL no está disponible —una
