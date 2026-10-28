@@ -438,6 +438,30 @@ Rama `feature/hu-ui-05-formulario-reutilizable`, que sale de la de la Fase 1. Se
   con su criterio de aceptación. «Qué pasa si la lista está vacía» y «qué pasa si el valor
   guardado ya no está en la lista» son preguntas de negocio, no de interfaz.
 
+## HU-UI-06 · 044 · confirmación con motivo (28/10/2026)
+
+Rama `feature/hu-ui-06-confirmacion-con-motivo`, que sale de la de la 043. Adelantada del
+Sprint 6 al 4 por el replan del 27/10.
+
+- **Issue de la 044: pendiente de creación**, como el de la 043. Va con el milestone Sprint 4.
+- **Proforma v1.1, pendiente de decisión del equipo.** La clave reescrita se exigiría solo en
+  operaciones irreversibles (anular un comprobante), no en la baja lógica, que se puede
+  reactivar. El componente acepta la clave como opcional y el motivo es obligatorio siempre.
+  La pantalla decide si pasa clave.
+- La clave se compara sin espacios en los bordes y sin distinguir mayúsculas, como las
+  búsquedas (`upper(btrim(...))`).
+- §7: `peligro` sólido solo en el punto sin retorno; el botón de la pantalla que abre el
+  diálogo es `peligro-borde`.
+
+**Deuda · el largo del motivo no se decidió (28/10/2026).** En el esquema, todos los motivos
+son `TEXT`, sin límite (`motivo_baja`, `motivo_anulacion`, `*_historial_baja.motivo`). Los
+límites salen de los DTO y no coinciden:
+- `DarDeBajaRequest` (baja genérica: artículos): **200**;
+- `BajaClienteRequest` y `BajaProveedorRequest`: **255**.
+
+Nadie decidió si son dos límites a propósito o uno solo mal replicado. Mientras tanto, el
+componente recibe el máximo de cada endpoint y lo muestra.
+
 ## PRÓXIMA SESIÓN
 
 **Arrancá leyendo esto y `docs/PROMPT-FASE.md`.** Después:

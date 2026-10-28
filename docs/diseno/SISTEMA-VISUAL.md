@@ -174,6 +174,11 @@ principal). Variantes:
 | `peligro-borde` | `--superficie`, borde `--rojo-borde`, texto `--rojo` | `--rojo-tinte` |
 | `oscuro` (sobre grafito) | transparente, borde `--borde-oscuro`, texto blanco | `--rojo` |
 
+**Cuándo `peligro` y cuándo `peligro-borde`:** el relleno sólido `peligro` se usa una sola vez,
+en el punto sin retorno. El botón de la pantalla que abre el diálogo no compromete nada todavía,
+así que es `peligro-borde`; el de confirmar dentro del modal sí, así que es `peligro`. Dentro del
+modal confirmar es la única acción, así que puede ir sólido sin competir con nada (§1.1).
+
 Comportamiento, igual en todas:
 1. Al apoyar el cursor, una capa (`::before`) entra **desde el borde superior** y llena el
    botón: `transform: scaleY(0 → 1)`, `transform-origin: top`, `var(--dur-relleno)` (300 ms),
