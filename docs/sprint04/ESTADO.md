@@ -417,6 +417,20 @@ Lauti** antes de que lo use en el acceso:
   todavía no las subió.
 - `public/fondo-hex.jpg`: la imagen no está. Hoy queda el color de respaldo.
 
+## HU-UI-05 · 043 · formulario reutilizable (28/10/2026)
+
+Rama `feature/hu-ui-05-formulario-reutilizable`, que sale de la de la Fase 1. Se rebasea sobre
+`develop` cuando la Fase 1 entre. **Sin push** hasta que se apruebe. Cuerpo del PR en
+`docs/sprint04/pr-hu-ui-05.md`.
+
+- Componente en `compartido/formulario/`.
+- Frontend 48/48.
+- CA-001, CA-002 y CA-003: verificados.
+- CA-004: **parcialmente verificado**. Verificado para la validación de modelo; NO verificado
+  para las reglas de negocio, que esperan la decisión de backend del campo en el ProblemDetails.
+- HU-UI-04 sigue en curso (Javi).
+- Ninguna pantalla lo usa todavía.
+
 ## PRÓXIMA SESIÓN
 
 **Arrancá leyendo esto y `docs/PROMPT-FASE.md`.** Después:
