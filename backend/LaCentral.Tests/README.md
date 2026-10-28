@@ -86,7 +86,8 @@ Reglas:
   `DosBajasAbiertasSimultaneas_...` abren dos conexiones del mismo esquema a la vez. Con
   P = 1 **pasan igual, y eso es lo peligroso**: el segundo contexto espera a que el primero
   devuelva la conexión, las dos operaciones corren en serie y el test deja de probar la
-  concurrencia (medido: 2/2 en verde con P = 1). P = 3 deja una de margen. Un test que
+  concurrencia (medido: 2/2 en verde con P = 1). Por eso el fixture **rechaza P < 2** antes
+  de conectarse (`PostgreSqlPoolTests`). P = 3 deja una de margen. Un test que
   necesite más de P conexiones a la vez espera el `Timeout` del pool (10 s): si no se libera
   ninguna, falla con timeout; si se libera, se serializa sin avisar.
 - **`Maximum Pool Size` va siempre explícito.** Sin él, P = 100 y la cuenta no garantiza nada.
@@ -103,6 +104,15 @@ Medido el 28/10/2026 contra `lacentral_test`, muestreando `pg_stat_activity` cad
 |---|---|---|---|---|---|
 | 16 (antes: un hilo por núcleo) | 8 | 144 | 17 | 60 | 435/435 |
 | 5 | 3 | 20 | 8 | 60 | 435/435, 3 min |
+| 5 | 3 | 20 | 9 | 25 | colgada a los 10 min, abortada · 0 `53300` |
+| 5 | 3 | 20 | 4 | 25 | 135 fallos de red, abortada · 0 `53300` |
+
+Las dos corridas con L = 25 no fallaron por el límite: ningún `53300`, y el pico nunca pasó
+de 9. Fallaron porque el enlace de Tailscale cayó a un relay en São Paulo (65 % de pérdida,
+RTT promedio de 2.389 ms): `Failed to connect`, `Timeout during reading` y sesiones
+`idle in transaction` cortadas a mitad del DDL. **Lo demostrado:** la demanda medida (≤ 9)
+queda dentro del techo calculado (20) y del límite (25). **Pendiente:** la corrida de
+confirmación 435/435 con L = 25, cuando el enlace vuelva a ser directo.
 
 El pico real está lejos del techo porque casi todos los tests usan una conexión por vez.
 El techo es lo que se garantiza; el pico depende de qué tests coincidan y de la máquina.

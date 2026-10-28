@@ -324,6 +324,36 @@ paralelo × tamaño del pool*, y por eso revienta el `CONNECTION LIMIT` del rol 
 en la configuración de xUnit y documentar en el README la cuenta
 *hilos × pool ≤ límite del rol*, para que el número deje de ser adivinado.
 
+**D-27b · CERRADA (28/10/2026), con confirmación pendiente.** Rama `fix/d27-entorno-de-pruebas`.
+`xunit.runner.json` fija `maxParallelThreads = 5` y `parallelAlgorithm = conservative`, y el
+README de Tests documenta la cuenta **T × (1 + P) + m ≤ L**. Para L = 25, P = 3 y m = 5, da T = 5.
+La validó la medición directa del pico en `pg_stat_activity`:
+
+| T | P | Techo | Pico | L | Resultado |
+|---|---|---|---|---|---|
+| 16 | 8 | 144 | 17 | 60 | 435/435 |
+| 5 | 3 | 20 | 8 | 60 | 435/435, 3 min |
+| 5 | 3 | 20 | 9 | 25 | abortada, 0 `53300` |
+| 5 | 3 | 20 | 4 | 25 | 135 fallos de red, 0 `53300` |
+
+**Pendiente:** la corrida de confirmación con L = 25. Causa: el enlace de Tailscale se degradó
+y pasó por un relay en São Paulo (65 % de pérdida, RTT promedio de 2.389 ms). No es un fallo
+del límite. Mientras tanto, los roles quedan en 60.
+
+**Deuda · falso verde con P = 1 (28/10/2026), resuelta en la misma rama.** Con
+`Maximum Pool Size=1`, `DosAltasSimultaneas_CodigosInternosDistintos` y
+`DosBajasAbiertasSimultaneas_...` pasaban en serie: no probaban la concurrencia que declaran.
+Ahora el fixture exige P ≥ 2 antes de conectarse (`PostgreSqlPoolTests`, con mutación verificada).
+
+**Decisión para el Sprint 5 · PostgreSQL local por desarrollador (propuesta, 28/10/2026).**
+Hoy la suite depende de un enlace de red compartido. Cuando ese enlace se degrada, 148 tests
+fallan por causas que no están en el código, y esos fallos se confunden con regresiones. Además,
+los tres roles comparten el `max_connections = 100` de un solo motor, lo que obliga a racionar el
+`CONNECTION LIMIT`. Con un Postgres local, cada desarrollador tiene su motor: no hay red de por
+medio, la cuenta de conexiones es solo suya, y la base con datos reales queda fuera del camino de
+los tests. Costo: mantener la plantilla local al día con los scripts de `backend/db/`. D-27a
+(verificar la identidad del motor) se vuelve más necesaria con varios motores.
+
 **D-27c · menor.** El prefijo de esquema de test es `pr110_test_`, con el número de
 un PR viejo hardcodeado. Debería ser `lacentral_test_`, y la limpieza debería correr
 en el `DisposeAsync` aunque el test falle — hay un esquema huérfano de agosto que lo
