@@ -16,6 +16,10 @@ export interface CampoFormulario {
   ayuda?: string;
   /** Una lista que se agrega y se quita (teléfonos, direcciones, códigos). */
   multivaluado?: boolean;
+  /** Largo máximo: lo fija el endpoint, no el formulario. */
+  maximo?: number;
+  /** El valor tiene que coincidir con este, sin espacios en los bordes ni distinguir mayúsculas. */
+  coincideCon?: string;
 }
 
 export type ValoresFormulario = Record<string, unknown>;
@@ -106,6 +110,7 @@ export class Formulario {
   readonly enviando = input(false);
   readonly textoEnviar = input('Guardar');
   readonly textoEnviando = input('Guardando…');
+  readonly varianteEnviar = input<'primario' | 'peligro'>('primario');
   readonly erroresPorCampo = input<Record<string, string>>({});
   readonly errorGeneral = input<string | null>(null);
   readonly confirmacion = input<string | null>(null);
