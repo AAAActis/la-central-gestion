@@ -331,6 +331,34 @@ prueba.
 
 ---
 
+## Rediseño visual · Fase 1 · fundamentos (28/10/2026)
+
+Rama `feature/hu-ui-fase1-fundamentos-visuales`, **sin push** hasta que Javi apruebe.
+Material: `docs/sprint04/ADENDA-REDISENO-UI.md`, que manda sobre el prompt.
+
+**Hecho:**
+- Tokens de `SISTEMA-VISUAL.md` §2 a §4 y §9 en `frontend/src/styles.css`.
+- Tres tokens nuevos: `--peligro`, `--peligro-osc` y `--error-texto`. La §2, la §7 y la §8 del documento ya los nombran.
+- Fuentes OFL autoalojadas en `public/fonts/`.
+- Marca provisoria en `diseno/marca.ts`. Todavía no está montada: la monta la Fase 2.
+- Clases globales de base.
+- Botones con los seis requisitos de la §7.
+- `prefers-reduced-motion`.
+- Botón en carga, modal y aviso flotante en `compartido/`.
+
+**Tests:** frontend 32/32 (21 previos + 11 nuevos). El backend no se tocó y no se corrió: el
+enlace a la base está degradado (ver D-27b).
+
+**Evidencia:**
+- 9 combinaciones medidas por CDP: 1024, 768 y 480 px × acceso, artículos y factura. En ninguna hay desplazamiento horizontal.
+- Capturas y estados de botón en `docs/sprint04/evidencia/fase1/`.
+- La capa del botón tarda 0,3 s, y 0 s con movimiento reducido.
+
+**NO verificado / pendiente:**
+- Comparación con el prototipo y las 13 referencias: Javi todavía no las subió.
+- `public/fondo-hex.jpg`: la imagen no está. Hoy queda el color de respaldo.
+- Tiempo del aviso flotante (5 s) y duración del giro (800 ms): la §8 y la §9 no los fijan.
+
 ## PRÓXIMA SESIÓN
 
 **Arrancá leyendo esto y `docs/PROMPT-FASE.md`.** Después:
