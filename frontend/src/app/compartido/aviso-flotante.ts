@@ -1,7 +1,10 @@
 import { Component, effect, input, model } from '@angular/core';
 
-/** Cuánto queda a la vista. shortcut: la §8 no fija el tiempo; confirmarlo con Javi. */
-export const DURACION_AVISO_MS = 5000;
+/** Cuánto queda a la vista un aviso que se va solo: el token --dur-aviso de styles.css. */
+export function duracionAvisoMs(): number {
+  const valor = getComputedStyle(document.documentElement).getPropertyValue('--dur-aviso').trim();
+  return parseFloat(valor) * (valor.endsWith('ms') ? 1 : 1000);
+}
 
 /**
  * Aviso flotante (SISTEMA-VISUAL.md §8): `<app-aviso-flotante [(mensaje)]="…" tipo="ok" />`.
@@ -28,7 +31,7 @@ export class AvisoFlotante {
   constructor() {
     effect(alLimpiar => {
       if (!this.mensaje()) return;
-      const temporizador = setTimeout(() => this.mensaje.set(null), DURACION_AVISO_MS);
+      const temporizador = setTimeout(() => this.mensaje.set(null), duracionAvisoMs());
       alLimpiar(() => clearTimeout(temporizador));
     });
   }

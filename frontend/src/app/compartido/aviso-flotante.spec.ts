@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { AvisoFlotante, DURACION_AVISO_MS } from './aviso-flotante';
+import { AvisoFlotante, duracionAvisoMs } from './aviso-flotante';
 
 @Component({
   imports: [AvisoFlotante],
@@ -29,7 +29,12 @@ describe('AvisoFlotante', () => {
     expect(aviso()?.textContent).toContain('Artículo guardado');
     expect(aviso()?.getAttribute('role')).toBe('status');
 
-    tick(DURACION_AVISO_MS);
+    expect(duracionAvisoMs()).withContext('--dur-aviso').toBeGreaterThan(0);
+    tick(duracionAvisoMs() - 1);
+    fixture.detectChanges();
+    expect(aviso()).withContext('un instante antes de --dur-aviso, sigue a la vista').not.toBeNull();
+
+    tick(1);
     fixture.detectChanges();
 
     expect(fixture.componentInstance.mensaje()).toBeNull();
@@ -46,7 +51,7 @@ describe('AvisoFlotante', () => {
 
     expect(fixture.componentInstance.mensaje()).toBeNull();
     expect(aviso()).toBeNull();
-    tick(DURACION_AVISO_MS);
+    tick(duracionAvisoMs());
   }));
 
   it('un error se anuncia como alerta', fakeAsync(() => {
@@ -54,6 +59,6 @@ describe('AvisoFlotante', () => {
     mostrar('No se pudo guardar');
 
     expect(aviso()?.getAttribute('role')).toBe('alert');
-    tick(DURACION_AVISO_MS);
+    tick(duracionAvisoMs());
   }));
 });

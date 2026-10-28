@@ -89,6 +89,7 @@
   --dur-relleno: 300ms;
   --dur-modal: 220ms;
   --dur-giro: 800ms;
+  --dur-aviso: 5s;
 
   font: var(--t-base) / var(--interlineado) var(--f-texto);
   color: var(--tinta);
