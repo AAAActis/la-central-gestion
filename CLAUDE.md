@@ -96,6 +96,10 @@ Se leen de la sesión autenticada (`IContextoUsuario`), NUNCA del cuerpo de la p
 - Retirar un código de proveedor: SOLO ADMINISTRADOR, operación explícita. Omitir un
   código en una modificación ordinaria NO lo elimina.
 
+## Frontend
+**UI:** toda pantalla o componente de `frontend/` sigue `docs/diseno/SISTEMA-VISUAL.md`.
+No se inventan colores, tamaños ni animaciones fuera de sus tokens.
+
 ## Idioma
 Todo en español: clases, métodos, variables, mensajes, commits.
 
