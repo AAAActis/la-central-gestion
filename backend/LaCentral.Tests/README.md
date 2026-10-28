@@ -32,19 +32,80 @@ Windows (PowerShell, persistente para tu usuario; reabrí la terminal o el IDE d
 
 ```powershell
 [Environment]::SetEnvironmentVariable("LACENTRAL_TEST_PG",
-  "Host=<host>;Port=5432;Database=la_central_test;Username=<usuario>;Password=<clave>", "User")
+  "Host=<host>;Port=5432;Database=la_central_test;Username=<usuario>;Password=<clave>;Maximum Pool Size=3", "User")
 ```
 
 Bash (sesión actual):
 
 ```bash
-export LACENTRAL_TEST_PG="Host=<host>;Port=5432;Database=la_central_test;Username=<usuario>;Password=<clave>"
+export LACENTRAL_TEST_PG="Host=<host>;Port=5432;Database=la_central_test;Username=<usuario>;Password=<clave>;Maximum Pool Size=3"
 ```
 
 Rider o Visual Studio heredan las variables del usuario: reiniciá el IDE después de
 definirla.
 
 `LA_CENTRAL_REQUIRE_POSTGRES` ya no se usa: exigir PostgreSQL es el único comportamiento.
+
+## Cuántas conexiones usa la suite
+
+Tres valores, y una cuenta que los ata. Si el rol de PostgreSQL tiene `CONNECTION LIMIT`,
+la suite tiene que entrar en él, o da fallos `53300: too many connections for role`.
+
+| | Valor | Dónde está |
+|---|---|---|
+| **T** | Tests de PostgreSQL corriendo a la vez | `maxParallelThreads` en `xunit.runner.json` (hoy **5**) |
+| **P** | Tope de conexiones de **cada** pool | `Maximum Pool Size` en tu `LACENTRAL_TEST_PG` (recomendado **3**) |
+| **L** | Conexiones permitidas al rol | `CONNECTION LIMIT` del rol (equipo: **25** por desarrollador) |
+
+```
+T × (1 + P) + m ≤ L
+```
+
+De dónde sale cada término:
+
+- **Un pool por test, no uno total.** Cada test arma su esquema aislado con su propia cadena
+  de conexión (`search_path` distinto), y Npgsql crea un pool por cadena. `Maximum Pool Size`
+  es un techo **por pool**: con T tests a la vez hay T pools, y el techo real es T × P.
+- **El 1** es la conexión de administración que el fixture abre al crear el esquema y tiene
+  abierta hasta borrarlo, al final del test.
+- **m** es tu reserva: todo lo que abras con el mismo rol mientras corre la suite (psql,
+  DBeaver, la API levantada a mano). Reservá **5**.
+- **T acota de verdad** porque `parallelAlgorithm` es `conservative`: xUnit no arranca un test
+  nuevo hasta que termina otro. Con `aggressive`, un test que espera la base libera el hilo,
+  arranca otro, y T deja de ser un techo. No lo cambies.
+
+Despejado, para un L dado:
+
+```
+T = ⌊(L − m) / (1 + P)⌋        con L = 25, m = 5, P = 3:  T = ⌊20 / 4⌋ = 5
+```
+
+Reglas:
+
+- **P ≥ 2.** `DosAltasSimultaneas_CodigosInternosDistintos` y
+  `DosBajasAbiertasSimultaneas_...` abren dos conexiones del mismo esquema a la vez. Con
+  P = 1 **pasan igual, y eso es lo peligroso**: el segundo contexto espera a que el primero
+  devuelva la conexión, las dos operaciones corren en serie y el test deja de probar la
+  concurrencia (medido: 2/2 en verde con P = 1). P = 3 deja una de margen. Un test que
+  necesite más de P conexiones a la vez espera el `Timeout` del pool (10 s): si no se libera
+  ninguna, falla con timeout; si se libera, se serializa sin avisar.
+- **`Maximum Pool Size` va siempre explícito.** Sin él, P = 100 y la cuenta no garantiza nada.
+- **Si tu L es otro**, no toques `xunit.runner.json`: pasá tu T por línea de comandos,
+  `dotnet test -- xUnit.MaxParallelThreads=<T>`.
+- **El límite del equipo.** El motor tiene `max_connections = 100`. Tres roles de
+  desarrollo × 25 = 75, y el resto queda para los roles de la aplicación y las conexiones
+  reservadas de superusuario. Subir el L de un rol se lo come a los otros dos.
+
+Medido el 28/10/2026 contra `lacentral_test`, muestreando `pg_stat_activity` cada 0,5 s
+(el muestreador es 1 de esas conexiones):
+
+| T | P | Techo T × (1 + P) | Pico observado | L | Resultado |
+|---|---|---|---|---|---|
+| 16 (antes: un hilo por núcleo) | 8 | 144 | 17 | 60 | 435/435 |
+| 5 | 3 | 20 | 8 | 60 | 435/435, 3 min |
+
+El pico real está lejos del techo porque casi todos los tests usan una conexión por vez.
+El techo es lo que se garantiza; el pico depende de qué tests coincidan y de la máquina.
 
 ## Qué necesita la base de test
 
