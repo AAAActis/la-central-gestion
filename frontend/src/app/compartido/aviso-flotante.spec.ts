@@ -54,11 +54,17 @@ describe('AvisoFlotante', () => {
     tick(duracionAvisoMs());
   }));
 
-  it('un error se anuncia como alerta', fakeAsync(() => {
+  it('un error se anuncia como alerta y no se va solo: queda hasta que el usuario lo cierra', fakeAsync(() => {
     fixture.componentInstance.tipo.set('error');
     mostrar('No se pudo guardar');
-
     expect(aviso()?.getAttribute('role')).toBe('alert');
-    tick(duracionAvisoMs());
+
+    tick(duracionAvisoMs() * 3);
+    fixture.detectChanges();
+    expect(aviso()).withContext('pasado --dur-aviso, el error sigue a la vista').not.toBeNull();
+
+    aviso()?.querySelector<HTMLButtonElement>('button[aria-label="Cerrar aviso"]')?.click();
+    fixture.detectChanges();
+    expect(aviso()).toBeNull();
   }));
 });
