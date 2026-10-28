@@ -1,13 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { AvisoFlotante, duracionAvisoMs } from './aviso-flotante';
+import { Aviso, AvisoFlotante, duracionAvisoMs } from './aviso-flotante';
 
 @Component({
   imports: [AvisoFlotante],
   template: `<app-aviso-flotante [(mensaje)]="mensaje" [tipo]="tipo()" />`,
 })
 class Anfitrion {
-  readonly mensaje = signal<string | null>(null);
+  readonly mensaje = signal<Aviso | null>(null);
   readonly tipo = signal<'ok' | 'error'>('ok');
 }
 
@@ -15,7 +15,7 @@ describe('AvisoFlotante', () => {
   let fixture: ComponentFixture<Anfitrion>;
   const aviso = () => (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('.aviso-flotante');
   const mostrar = (texto: string) => {
-    fixture.componentInstance.mensaje.set(texto);
+    fixture.componentInstance.mensaje.set({ texto });
     fixture.detectChanges();
   };
 
