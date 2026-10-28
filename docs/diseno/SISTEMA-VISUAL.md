@@ -203,7 +203,7 @@ crear uno nuevo, buscá si ya está.
 | Chip de código | `--f-mono`, fondo `--chip`. |
 | Estado vacío | Ícono, una frase que diga qué pasó y, si aplica, una acción. Nunca una tabla vacía. |
 | Modal | Ancho por defecto 560 px, cabecera `22px 26px 20px`, cuerpo `24px 26px`. Escape cierra, el foco queda atrapado adentro y vuelve al botón que lo abrió. |
-| Aviso flotante (toast) | Ancho `min(420px, calc(100vw - 40px))`, aparece con `subir` y se puede cerrar. Éxito, información y alerta se van solos a los `--dur-aviso`; **un error no se va solo**, queda hasta que el usuario lo cierra (el operador puede estar atendiendo a un cliente). |
+| Aviso flotante (toast) | Ancho `min(420px, calc(100vw - 40px))`, aparece con `subir` y se puede cerrar. Éxito, información y alerta se van solos a los `--dur-aviso`; **un error no se va solo**, queda hasta que el usuario lo cierra (el operador puede estar atendiendo a un cliente). **Un aviso nuevo reemplaza al anterior, no se suma**: tres intentos fallidos dejan un solo cartel, el último, y el aviso nuevo dura su tiempo completo. |
 
 ---
 

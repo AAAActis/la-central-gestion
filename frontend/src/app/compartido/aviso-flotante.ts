@@ -10,6 +10,7 @@ export function duracionAvisoMs(): number {
  * Aviso flotante (SISTEMA-VISUAL.md §8): `<app-aviso-flotante [(mensaje)]="…" tipo="ok" />`.
  * Aparece con el mensaje y se puede cerrar. Éxito, información y alerta se van solos a los
  * --dur-aviso; un error se anuncia como alerta y queda hasta que el usuario lo cierra.
+ * Un aviso nuevo reemplaza al anterior (hay un solo lugar: no se apilan) y reinicia el tiempo.
  */
 @Component({
   selector: 'app-aviso-flotante',

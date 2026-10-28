@@ -376,11 +376,26 @@ enlace a la base está degradado (ver D-27b).
 Firefox ni en Safari: por ejemplo, que `<dialog>` devuelva el foco al cerrarse, que hoy es una
 caracterización.
 
-**Esquemas huérfanos en `lacentral_test`** (consulta de solo lectura, 28/10/2026; **no se borró
-nada**, espera visto bueno):
-- `pr110_test_5bef5661630743e4b6d09c409f11fafa`, 26 tablas. Es el de agosto.
-- `pr110_test_7d2e734c4b0345a686683e52b70f6c44`, 26 tablas. Es de una corrida de D-27b abortada
-  el 28/10 durante la caída del enlace.
+**Esquemas huérfanos en `lacentral_test`: borrados el 28/10/2026, con aprobación.**
+- `pr110_test_5bef5661630743e4b6d09c409f11fafa` (26 tablas, de agosto).
+- `pr110_test_7d2e734c4b0345a686683e52b70f6c44` (26 tablas, de una corrida de D-27b abortada
+  durante la caída del enlace).
+
+Cómo se borraron: un `DROP SCHEMA … CASCADE` por nombre exacto, sin comodín ni bucle. Justo
+antes de cada uno se volvió a consultar el esquema y se confirmó que no tenía sesión activa
+(`application_name`). Después, la consulta no devuelve ninguno.
+
+**Lo que demuestra el de agosto:** sobrevivió dos meses. No es un residuo: es la evidencia de
+**D-27c**, la limpieza no corre cuando el test falla. El DROP manual lo sacó; mientras no se
+arregle el `DisposeAsync`, vuelve a pasar.
+
+**Aviso flotante (28/10/2026): un aviso nuevo reemplaza al anterior, no se suma.** Está en la §8
+y en el componente, con dos tests de caracterización verificados por mutación. **Avisar a
+Lauti** antes de que lo use en el acceso:
+- el error no se va solo;
+- reintentar no apila carteles;
+- el componente tiene un solo lugar, así que un aviso de otro tipo también reemplaza al que
+  estaba.
 
 **NO verificado / pendiente:**
 - Comparación con el prototipo y las 13 referencias, incluida la forma de la marca: Javi

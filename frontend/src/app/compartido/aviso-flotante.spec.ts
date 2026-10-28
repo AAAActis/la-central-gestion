@@ -54,6 +54,29 @@ describe('AvisoFlotante', () => {
     tick(duracionAvisoMs());
   }));
 
+  it('un aviso nuevo reemplaza al anterior: tres errores seguidos dejan un solo cartel, el último', () => {
+    fixture.componentInstance.tipo.set('error');
+    for (const intento of ['Intento 1 rechazado', 'Intento 2 rechazado', 'Intento 3 rechazado']) mostrar(intento);
+
+    const avisos = (fixture.nativeElement as HTMLElement).querySelectorAll('.aviso-flotante');
+    expect(avisos.length).toBe(1);
+    expect(avisos[0].textContent).toContain('Intento 3 rechazado');
+  });
+
+  it('el aviso nuevo dura su tiempo completo: no se lo lleva el temporizador del anterior', fakeAsync(() => {
+    mostrar('Guardado');
+    tick(duracionAvisoMs() - 1);
+    mostrar('Guardado otra vez');
+
+    tick(1);
+    fixture.detectChanges();
+    expect(aviso()?.textContent).toContain('Guardado otra vez');
+
+    tick(duracionAvisoMs());
+    fixture.detectChanges();
+    expect(aviso()).toBeNull();
+  }));
+
   it('un error se anuncia como alerta y no se va solo: queda hasta que el usuario lo cierra', fakeAsync(() => {
     fixture.componentInstance.tipo.set('error');
     mostrar('No se pudo guardar');
