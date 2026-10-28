@@ -8,7 +8,8 @@ export function duracionAvisoMs(): number {
 
 /**
  * Aviso flotante (SISTEMA-VISUAL.md §8): `<app-aviso-flotante [(mensaje)]="…" tipo="ok" />`.
- * Aparece con el mensaje, se va solo y se puede cerrar. Un error se anuncia como alerta.
+ * Aparece con el mensaje y se puede cerrar. Éxito, información y alerta se van solos a los
+ * --dur-aviso; un error se anuncia como alerta y queda hasta que el usuario lo cierra.
  */
 @Component({
   selector: 'app-aviso-flotante',
@@ -30,7 +31,8 @@ export class AvisoFlotante {
 
   constructor() {
     effect(alLimpiar => {
-      if (!this.mensaje()) return;
+      // Un error no se va solo: el operador puede estar mirando a un cliente y no a la pantalla.
+      if (!this.mensaje() || this.tipo() === 'error') return;
       const temporizador = setTimeout(() => this.mensaje.set(null), duracionAvisoMs());
       alLimpiar(() => clearTimeout(temporizador));
     });
