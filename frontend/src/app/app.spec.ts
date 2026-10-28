@@ -93,12 +93,16 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       expect(activos.map(a => a.textContent?.trim())).toEqual(['Factura de compra']);
     });
 
-    it('CA1 · la marca se ve: solo el módulo activo lleva la raya de color debajo', async () => {
+    // Sin valores de color (CLAUDE.md, Frontend): lo que importa es que el activo se distinga.
+    it('CA1 · la marca se ve: solo el módulo activo lleva la raya debajo, y se distingue del resto', async () => {
       entrarComo('OPERADOR');
       await ir(fixture, '/factura-compra');
-      const raya = (titulo: string) => getComputedStyle(enlace(fixture, titulo)!).borderBottomColor;
-      expect(raya('Factura de compra')).toBe('rgb(255, 255, 255)');
-      expect(raya('Artículos')).toBe('rgba(0, 0, 0, 0)');
+      const activo = enlace(fixture, 'Factura de compra')!;
+      const otro = enlace(fixture, 'Artículos')!;
+      expect(activo.classList).toContain('activo');
+      expect(otro.classList).not.toContain('activo');
+      expect(parseFloat(getComputedStyle(activo).borderBottomWidth)).toBeGreaterThan(0);
+      expect(getComputedStyle(activo).borderBottomColor).not.toBe(getComputedStyle(otro).borderBottomColor);
     });
 
     it('CA3 · cambiar de sección por el menú no recarga la aplicación ni pierde la sesión', async () => {
