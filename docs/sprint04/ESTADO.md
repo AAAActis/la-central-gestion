@@ -132,8 +132,8 @@ Esta pantalla es **el entregable del sprint**: es la que se le muestra a Sergio.
 
 | # | Estado | Rama | PR | Tests | PG |
 |---|---|---|---|---|---|
-| B1 | **Aprobada con correcciones por Lauti (20/10/2026); correcciones aplicadas, esperando merge.** Actualizada con develop por merge (trae #131). verificador-tdd: ronda 1 NO APTO (3 mutaciones sobrevivientes), ronda 2 **APTO**; correcciones (merge y título, ronda 3 acotada): **APTO**. auditor-persistencia: no aplica (no toca backend). | `feature/HU-UI-01-estructura-base` | #130 · Refs #40; cuerpo en `docs/sprint04/pr-b1-hu-ui-01.md` | frontend 21/21 (antes no había) · backend 435/435 después del merge | 0 nuevos · 148 |
-| B2 | Pendiente. Arranca cuando B1 entre en develop. | — | — | — | — |
+| B1 | **Mergeada en develop (#130, 20/10/2026).** Aprobada con correcciones por Lauti; correcciones aplicadas antes del merge. Actualizada con develop por merge (trae #131). verificador-tdd: ronda 1 NO APTO (3 mutaciones sobrevivientes), ronda 2 **APTO**; correcciones (merge y título, ronda 3 acotada): **APTO**. auditor-persistencia: no aplica (no toca backend). | `feature/HU-UI-01-estructura-base` | #130 · Refs #40; cuerpo en `docs/sprint04/pr-b1-hu-ui-01.md` | frontend 21/21 (antes no había) · backend 435/435 después del merge | 0 nuevos · 148 |
+| B2 | Pendiente. Desbloqueada: B1 está en develop desde el 20/10. | — | — | — | — |
 | B3 | Pendiente. Depende de B2 y del endpoint de A2. | — | — | — | — |
 
 **CA de HU-UI-01:** CA1 verificado · CA2 · NO verificado como está escrito. Motivo: no existe
@@ -293,8 +293,8 @@ la vinculación funcionando con su pantalla. Todo lo demás es negociable; eso n
 
 | Fase | HU | Estado | Rama | PR | Tests (PG) |
 |---|---|---|---|---|---|
-| Pista C · C1 | 017 · HU-STK-01 | Compuerta APTO (verificador y auditor, 20/10/2026); PR abierto, a revisar. Cuerpo en `docs/sprint04/pr-hu-stk-01.md` | `feature/HU-STK-01-existencias-ubicacion` | #131 · Refs #24 | 435 (148) |
-| Pista B · B1 | 039 · HU-UI-01 | Aprobada con correcciones (Lauti, 20/10/2026); correcciones aplicadas, esperando merge. CA2 NO verificado como está escrito | `feature/HU-UI-01-estructura-base` | #130 · Refs #40 | backend 435 (148) · frontend 21 |
+| Pista C · C1 | 017 · HU-STK-01 | **Mergeada en develop (#131, 20/10/2026).** Compuerta APTO (verificador y auditor). Cuerpo en `docs/sprint04/pr-hu-stk-01.md` | `feature/HU-STK-01-existencias-ubicacion` | #131 · Refs #24 | 435 (148) |
+| Pista B · B1 | 039 · HU-UI-01 | **Mergeada en develop (#130, 20/10/2026).** Aprobada con correcciones (Lauti), aplicadas antes del merge. CA2 NO verificado como está escrito | `feature/HU-UI-01-estructura-base` | #130 · Refs #40 | backend 435 (148) · frontend 21 |
 
 **Deuda nueva, de entorno (19/10/2026):** con un rol personal de PostgreSQL con tope de
 conexiones (`lacentral_lauti`), `dotnet test` en paralelo da **140 fallos falsos**
@@ -347,12 +347,12 @@ prueba.
    camino real, y después el arreglo.
 4. Recién entonces, la HU que te toque según tu pista.
 
-**Pista B (Javi), aparte de los puntos 1 a 3, que son de la pista A:** B1 está aprobada con
-correcciones (#130), ya aplicadas, y espera merge (`feature/HU-UI-01-estructura-base`). Con B1
+**Pista B (Javi), aparte de los puntos 1 a 3, que son de la pista A:** B1 está mergeada en
+develop (#130, 20/10/2026). Con B1
 y HU-STK-01 en develop, los números son **435 tests y 148 contra PostgreSQL**, más la suite de
 frontend (`ng test`, 21 tests). La siguiente es **B2 · 042 · HU-UI-04 · componente
-de listado reutilizable**. Sale de develop **después** de que B1 entre; si B1 no entró, sale de
-la rama de B1 y se declara en el PR. Va en `frontend/src/app/compartido/` y se prueba con
+de listado reutilizable**. Sale de develop, que ya tiene B1.
+Va en `frontend/src/app/compartido/` y se prueba con
 `ng test` (ver `frontend/src/app/README.md`). Antes de B2, leé la habilidad de diseño y los
 criterios de la PISTA B. Avisar a Lauti y a Santi de la respuesta (b) de Sergio: HU-CMP-08 no se
 resuelve con archivo.
