@@ -354,10 +354,38 @@ enlace a la base está degradado (ver D-27b).
 - Capturas y estados de botón en `docs/sprint04/evidencia/fase1/`.
 - La capa del botón tarda 0,3 s, y 0 s con movimiento reducido.
 
+**Decisiones (28/10/2026):**
+- `--dur-giro` 800 ms.
+- `--dur-aviso` 5 s para éxito, información y alerta. **El error no se va solo**: queda hasta
+  que el usuario lo cierra.
+- Detrás del modal va el velo, no el panal. La ambigüedad de la §5 queda marcada en el documento.
+- Cinco tokens sin nombre entran a la §2: `--borde-oscuro`, `--velo`, `--fondo-hex-respaldo`,
+  `--grosor-foco` y `--dur-giro`.
+- **Un `button` sin clase es secundario**; el primario se declara con `.primario`. Hasta las
+  Fases 3 y 4, artículos, factura y acceso no tienen primario.
+- Regla nueva en `CLAUDE.md`: un spec no afirma valores de color. Se reescribió CA1 en ese sentido.
+
+**Fuentes, medidas** (`evidencia/fase1/mediciones-cdp.txt`):
+- Para las 3 familias y sus 8 pesos y estilos, `document.fonts.load()` da `loaded` y
+  `document.fonts.check()` da `true`.
+- Un chip de código de ejemplo resuelve a JetBrains Mono.
+- Control negativo: una cara que apunta a un archivo inexistente da `error` y `check() = false`.
+- Los archivos llegan a `dist/`.
+
+**La suite de frontend corre solo en Chromium.** Lo que depende del motor no está cubierto en
+Firefox ni en Safari: por ejemplo, que `<dialog>` devuelva el foco al cerrarse, que hoy es una
+caracterización.
+
+**Esquemas huérfanos en `lacentral_test`** (consulta de solo lectura, 28/10/2026; **no se borró
+nada**, espera visto bueno):
+- `pr110_test_5bef5661630743e4b6d09c409f11fafa`, 26 tablas. Es el de agosto.
+- `pr110_test_7d2e734c4b0345a686683e52b70f6c44`, 26 tablas. Es de una corrida de D-27b abortada
+  el 28/10 durante la caída del enlace.
+
 **NO verificado / pendiente:**
-- Comparación con el prototipo y las 13 referencias: Javi todavía no las subió.
+- Comparación con el prototipo y las 13 referencias, incluida la forma de la marca: Javi
+  todavía no las subió.
 - `public/fondo-hex.jpg`: la imagen no está. Hoy queda el color de respaldo.
-- Tiempo del aviso flotante (5 s) y duración del giro (800 ms): la §8 y la §9 no los fijan.
 
 ## PRÓXIMA SESIÓN
 
