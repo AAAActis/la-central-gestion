@@ -452,6 +452,11 @@ Sprint 6 al 4 por el replan del 27/10.
   búsquedas (`upper(btrim(...))`).
 - §7: `peligro` sólido solo en el punto sin retorno; el botón de la pantalla que abre el
   diálogo es `peligro-borde`.
+- Componente `compartido/confirmacion-motivo.ts`, compuesto del modal y del formulario.
+  Frontend 59/59 (48 previos + 11 nuevos). **Sin push.** Ninguna pantalla lo usa todavía.
+- CA-001: verificado el motivo obligatorio; la clave queda capaz, pendiente de la v1.1.
+- CA-002: verificado; botón activo y error junto al campo, como en la 043.
+- CA-003: verificado, con Escape y con Cancelar.
 
 **Deuda · el largo del motivo no se decidió (28/10/2026).** En el esquema, todos los motivos
 son `TEXT`, sin límite (`motivo_baja`, `motivo_anulacion`, `*_historial_baja.motivo`). Los
