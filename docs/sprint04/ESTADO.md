@@ -254,7 +254,7 @@ la vinculación funcionando con su pantalla. Todo lo demás es negociable; eso n
 | **HU-CMP-02 · consulta en vivo a los sitios** (13 SP, riesgo Alto) | Credenciales de La Central guardadas, un integrador por proveedor, dependencia de cinco sitios ajenos. Se declara como **etapa 2 del objetivo 4**, Sprint 7 u 8, con **un** proveedor como prueba de concepto. Antes, la medición de cuánto tarda un login más una búsqueda. |
 | HU-STK-04 · transferencias (8 SP) | Sale por las dos HU nuevas de vinculación. Sprint 5. |
 | HU-CMP-04 · Vista Venta (3 SP) | Sprint 5. |
-| HU-UI-05 formulario, HU-UI-08 artículos | La de artículos espera C4: dibujarla antes es rehacerla. |
+| HU-UI-08 artículos | Espera C4: dibujarla antes es rehacerla. (HU-UI-05, el formulario, **sí entra**: se adelantó por el replan del 27/10 y está en curso desde el 28/10.) |
 | HU-019 · descuento de stock por venta | Depende de la factura de venta, Sprint 6. Hacerlo sin la venta es código sin usuario. |
 | HU nueva de precio manual / CasoEspecial | La escriben Javi y Sergio; arrastra tres problemas de concurrencia. Sprint 5. |
 | **N4** · carrera código interno / código de proveedor | Depende de C4: si el código interno deja de ser editable a mano, la carrera se cierra sola. **Se decide acá, se implementa en el siguiente.** |
@@ -323,6 +323,21 @@ paralelo × tamaño del pool*, y por eso revienta el `CONNECTION LIMIT` del rol 
 `53300`. Subir el límite del rol es un parche. Corresponde acotar `maxParallelThreads`
 en la configuración de xUnit y documentar en el README la cuenta
 *hilos × pool ≤ límite del rol*, para que el número deje de ser adivinado.
+
+**Decisión de backend pendiente (28/10/2026) · el campo en el ProblemDetails.**
+`MapeoResultado.Falla` tiene que agregar a qué campo corresponde el error, como miembro de
+extensión del ProblemDetails, para `Conflicto` e `Invalido`. Solo el backend sabe qué regla
+se disparó.
+
+Mientras no esté, el CA-004 de HU-UI-05 queda **parcialmente verificado**: verificado para los
+errores de validación de modelo (`errors` por propiedad) y **NO verificado** para los de regla
+de negocio, que hoy llegan como mensaje general del formulario.
+
+Cuando se agregue, el componente de formulario no cambia: cambia lo que cada pantalla le pasa
+en el mapa campo → mensaje. Descartados:
+- traducir el texto del error a un campo en el frontend, porque deduce reglas de negocio de una
+  prosa (§1.7);
+- reescribir el CA, porque debilita el criterio para acomodarlo a una limitación de hoy.
 
 **D-27c · menor.** El prefijo de esquema de test es `pr110_test_`, con el número de
 un PR viejo hardcodeado. Debería ser `lacentral_test_`, y la limpieza debería correr
