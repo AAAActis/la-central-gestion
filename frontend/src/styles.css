@@ -296,7 +296,7 @@ dialog.modal::backdrop { background: var(--velo); }
 
 .logo { display: inline-flex; flex-direction: column; color: var(--blanco); font-family: var(--f-titulo); font-style: italic; font-weight: 800; line-height: 1; }
 .logo-repuestos { font-size: var(--t-etiqueta); letter-spacing: var(--tracking-marca); }
-.logo-nombre { display: inline-flex; align-items: baseline; gap: .25em; font-size: var(--t-h1); }
+.logo-nombre { display: inline-flex; align-items: baseline; font-size: var(--t-h1); }
 .logo-c { width: .8em; height: .8em; color: var(--rojo-marca); align-self: center; }
 .logo.compacta .logo-repuestos { font-size: var(--t-chip); }
 .logo.compacta .logo-nombre { font-size: var(--t-h2); }
