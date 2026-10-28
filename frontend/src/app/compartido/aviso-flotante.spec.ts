@@ -77,6 +77,24 @@ describe('AvisoFlotante', () => {
     expect(aviso()).toBeNull();
   }));
 
+  it('dos errores idénticos seguidos: la región se vacía y se vuelve a llenar, para que se anuncie de nuevo', fakeAsync(() => {
+    const textoDe = (region: HTMLElement) => region.querySelector('span')?.textContent?.trim();
+    fixture.componentInstance.tipo.set('error');
+    mostrar('Contraseña incorrecta');
+    tick(0);
+    fixture.detectChanges();
+    const region = aviso()!;
+    expect(textoDe(region)).toBe('Contraseña incorrecta');
+
+    mostrar('Contraseña incorrecta');
+    expect(aviso()).withContext('es la misma región viva, no una nueva').toBe(region);
+    expect(textoDe(region)).withContext('vaciada').toBe('');
+
+    tick(0);
+    fixture.detectChanges();
+    expect(textoDe(region)).withContext('vuelta a llenar en el ciclo siguiente').toBe('Contraseña incorrecta');
+  }));
+
   it('un error se anuncia como alerta y no se va solo: queda hasta que el usuario lo cierra', fakeAsync(() => {
     fixture.componentInstance.tipo.set('error');
     mostrar('No se pudo guardar');
