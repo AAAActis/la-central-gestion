@@ -430,6 +430,13 @@ Rama `feature/hu-ui-05-formulario-reutilizable`, que sale de la de la Fase 1. Se
   para las reglas de negocio, que esperan la decisión de backend del campo en el ProblemDetails.
 - HU-UI-04 sigue en curso (Javi).
 - Ninguna pantalla lo usa todavía.
+- **Issue de la 043: pendiente de creación.** No existe: los Issues creados uno por HU son 016,
+  017, 030, 032, 039, 042, 050, 053 y 054, y la 043 estaba fuera del sprint hasta el replan
+  del 27/10. Al crearlo, va con el milestone Sprint 4.
+- **Viene un `select`.** El formulario no tiene campos de selección porque ningún CA los pide.
+  Cuando una pantalla lo necesite (probablemente la 045, clientes y proveedores), tiene que llegar
+  con su criterio de aceptación. «Qué pasa si la lista está vacía» y «qué pasa si el valor
+  guardado ya no está en la lista» son preguntas de negocio, no de interfaz.
 
 ## PRÓXIMA SESIÓN
 

@@ -11,7 +11,8 @@ porque era un resto del plan viejo: el formulario no usa el listado.
 ### Qué se hizo
 
 Todo vive en `frontend/src/app/compartido/formulario/`. No se tocó nada fuera de ese directorio:
-ni `styles.css`, ni el README de `app/`, ni pantallas.
+ni `styles.css` ni pantallas. La única excepción es una línea en el README de `app/` que nombra
+la carpeta nueva.
 
 - **`Formulario`** (`app-formulario`) se arma a partir de una lista de campos
   (`CampoFormulario[]`). El campo sigue la anatomía de la §8 de `SISTEMA-VISUAL.md` y el botón,
@@ -79,8 +80,8 @@ La señal `intentado` sobrevivió a su mutación, porque `markAllAsTouched` ya l
   no hay capturas ni medición de desplazamiento horizontal: no hay pantalla que lo monte, y no se
   crean pantallas nuevas.
 - No hay campos de selección (`select`) ni de texto largo. Ningún CA los pide; se agregan cuando
-  una pantalla los necesite.
-- El README de `frontend/src/app/` no menciona el formulario: está fuera de este directorio y
-  Javi lo puede tocar por la HU 042.
+  una pantalla los necesite. Un `select` tiene que llegar con su CA: qué pasa si la lista está
+  vacía y qué pasa si el valor guardado ya no está en la lista son preguntas de negocio.
+- **El Issue de la 043 no existe todavía**: pendiente de creación, con el milestone Sprint 4.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
