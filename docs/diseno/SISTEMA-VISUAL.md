@@ -43,6 +43,9 @@ nadie la explique:
 | `--rojo-tinte` | `#fbebe9` | Relleno de botones blancos al apoyar el cursor, fondo de aviso de error |
 | `--rojo-borde` | `#e3a6a2` | Borde de `peligro-borde` y foco de botones blancos |
 | `--rojo-foco` | `rgba(196,33,27,.32)` | Contorno de foco (3 px) |
+| `--peligro` | `#a91c16` | Botón `peligro` |
+| `--peligro-osc` | `#7c110d` | Relleno del botón `peligro` al apoyar el cursor |
+| `--error-texto` | `#7d1410` | Texto del aviso de error |
 | `--tinta` | `#1c1c1f` | Texto principal |
 | `--texto-2` | `#5b5c62` | Texto secundario, íconos en reposo |
 | `--texto-3` | `#7b7c83` | Texto terciario, ayudas |
@@ -66,7 +69,7 @@ Reglas:
   contraste de ~5,9:1 (cumple AA), mientras que el rojo de marca da ~4,5:1 y queda justo en el
   límite para texto chico. Por eso un botón nunca usa `--rojo-marca`.
 - **Rojo = marca y acción**, no decoración. Para errores se usa el aviso de error
-  (`--rojo-tinte` con texto `#7d1410`), no texto rojo suelto.
+  (`--rojo-tinte` con texto `--error-texto`), no texto rojo suelto.
 - Un valor negativo (por ejemplo, stock) se marca con el estilo de error, no con otro rojo.
 - No hay tema oscuro. `color-scheme: light`.
 
@@ -155,7 +158,7 @@ Alto 40 px (`chico`: 32 px, `padding: 0 12px`, 13 px). Variantes:
 | Variante | Reposo | Relleno al apoyar el cursor |
 |---|---|---|
 | `primario` | `--rojo`, texto blanco | `--rojo-osc` |
-| `peligro` | `#a91c16`, texto blanco | `#7c110d` |
+| `peligro` | `--peligro`, texto blanco | `--peligro-osc` |
 | `secundario` | `--superficie`, borde `--linea-2`, texto `--tinta` | `--rojo-tinte` |
 | `peligro-borde` | `--superficie`, borde `--rojo-borde`, texto `--rojo` | `--rojo-tinte` |
 | `oscuro` (sobre grafito) | transparente, borde `rgba(255,255,255,.32)`, texto blanco | `--rojo` |
@@ -184,7 +187,7 @@ crear uno nuevo, buscá si ya está.
 | Campo | Etiqueta arriba (13 px), 8 px de separación, ayuda debajo en `--texto-3`, error debajo como aviso de error. Etiqueta asociada con `for`/`id`. |
 | Tarjeta | §4. Cabecera con título y, como mucho, una acción. |
 | Tabla | 13.5 px, encabezado fijo dentro de la caja, filas alternas con `--superficie-2`. |
-| Aviso | `info` (`--chip`), `alerta` (`--aviso-*`), `error` (`--rojo-tinte` / `#7d1410`), `ok` (`--ok-fondo`). Padding `12px 16px`, radio 3 px, con ícono. |
+| Aviso | `info` (`--chip`), `alerta` (`--aviso-*`), `error` (`--rojo-tinte` / `--error-texto`), `ok` (`--ok-fondo`). Padding `12px 16px`, radio 3 px, con ícono. |
 | Etiqueta de estado | Activo (`--ok-*`) / Inactivo (`--deshab-*`). Texto, no solo color. |
 | Chip de código | `--f-mono`, fondo `--chip`. |
 | Estado vacío | Ícono, una frase que diga qué pasó y, si aplica, una acción. Nunca una tabla vacía. |

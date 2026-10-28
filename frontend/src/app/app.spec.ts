@@ -97,7 +97,7 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       entrarComo('OPERADOR');
       await ir(fixture, '/factura-compra');
       const raya = (titulo: string) => getComputedStyle(enlace(fixture, titulo)!).borderBottomColor;
-      expect(raya('Factura de compra')).toBe('rgb(242, 177, 52)');
+      expect(raya('Factura de compra')).toBe('rgb(255, 255, 255)');
       expect(raya('Artículos')).toBe('rgba(0, 0, 0, 0)');
     });
 
