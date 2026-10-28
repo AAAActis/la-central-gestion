@@ -1,3 +1,5 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { mensajeDeError } from '../../nucleo/api';
 import { CampoFormulario } from './formulario';
 
 export interface ErroresServidor {
@@ -11,5 +13,17 @@ export interface ErroresServidor {
  * ProblemDetails, al general. No interpreta el texto de ningún mensaje.
  */
 export function erroresDelServidor(error: unknown, campos: readonly CampoFormulario[]): ErroresServidor {
-  return { porCampo: {}, general: null };
+  const errores = error instanceof HttpErrorResponse ? (error.error?.errors as Record<string, string[]> | undefined) : undefined;
+  if (!errores) return { porCampo: {}, general: mensajeDeError(error) };
+
+  const porCampo: Record<string, string> = {};
+  const sueltos: string[] = [];
+  for (const [clave, mensajes] of Object.entries(errores)) {
+    // "CodigosProveedor[0].Codigo" o "$.nombre": cuenta la propiedad raíz, sin distinguir mayúsculas.
+    const raiz = clave.replace(/^\$\./, '').split(/[.[]/)[0].toLowerCase();
+    const campo = campos.find(c => c.nombre.toLowerCase() === raiz);
+    if (campo) porCampo[campo.nombre] = [porCampo[campo.nombre], ...mensajes].filter(Boolean).join(' ');
+    else sueltos.push(...mensajes);
+  }
+  return { porCampo, general: sueltos.length ? sueltos.join(' ') : null };
 }
