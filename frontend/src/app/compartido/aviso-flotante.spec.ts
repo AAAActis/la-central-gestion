@@ -18,6 +18,11 @@ describe('AvisoFlotante', () => {
     fixture.componentInstance.mensaje.set({ texto });
     fixture.detectChanges();
   };
+  // El texto se escribe en el ciclo siguiente al aviso (ver el test de errores idénticos).
+  const escrito = () => {
+    tick(0);
+    fixture.detectChanges();
+  };
 
   beforeEach(() => {
     fixture = TestBed.createComponent(Anfitrion);
@@ -26,6 +31,7 @@ describe('AvisoFlotante', () => {
 
   it('aparece con el mensaje y se va solo', fakeAsync(() => {
     mostrar('Artículo guardado');
+    escrito();
     expect(aviso()?.textContent).toContain('Artículo guardado');
     expect(aviso()?.getAttribute('role')).toBe('status');
 
@@ -54,14 +60,15 @@ describe('AvisoFlotante', () => {
     tick(duracionAvisoMs());
   }));
 
-  it('un aviso nuevo reemplaza al anterior: tres errores seguidos dejan un solo cartel, el último', () => {
+  it('un aviso nuevo reemplaza al anterior: tres errores seguidos dejan un solo cartel, el último', fakeAsync(() => {
     fixture.componentInstance.tipo.set('error');
     for (const intento of ['Intento 1 rechazado', 'Intento 2 rechazado', 'Intento 3 rechazado']) mostrar(intento);
+    escrito();
 
     const avisos = (fixture.nativeElement as HTMLElement).querySelectorAll('.aviso-flotante');
     expect(avisos.length).toBe(1);
     expect(avisos[0].textContent).toContain('Intento 3 rechazado');
-  });
+  }));
 
   it('el aviso nuevo dura su tiempo completo: no se lo lleva el temporizador del anterior', fakeAsync(() => {
     mostrar('Guardado');
