@@ -28,6 +28,7 @@ type Lista = FormArray<FormControl<string | null>>;
 
 const OBLIGATORIO = 'Este campo es obligatorio.';
 const FORMATO = 'El formato no es válido.';
+const normalizar = (v: unknown) => String(v ?? '').trim().toUpperCase();
 let siguienteId = 0;
 
 /** Obligatorio sin aceptar solo espacios; en una lista, al menos un valor. */
@@ -59,7 +60,7 @@ function obligatorio(control: AbstractControl): ValidationErrors | null {
     .campo-item > input { flex: 1; min-width: 0; }
     .campo-agregar { align-self: flex-start; }
     .formulario-avisos > p { margin: 0 0 var(--esp-16); }
-    .formulario-pie { display: flex; justify-content: flex-end; }
+    .formulario-pie { display: flex; justify-content: flex-end; gap: var(--esp-12); }
   `,
   template: `
     <form [formGroup]="grupo()" (ngSubmit)="intentarEnviar()" novalidate>
@@ -89,7 +90,7 @@ function obligatorio(control: AbstractControl): ValidationErrors | null {
         } @else {
           <div class="campo">
             <label [for]="id(c)">{{ c.etiqueta }}</label>
-            <input [id]="id(c)" [type]="c.tipo ?? 'text'" [formControlName]="c.nombre"
+            <input [id]="id(c)" [type]="c.tipo ?? 'text'" [formControlName]="c.nombre" [attr.maxlength]="c.maximo ?? null"
                    [attr.aria-required]="c.obligatorio ? 'true' : null"
                    [attr.aria-invalid]="error(c) ? 'true' : null" [attr.aria-describedby]="descriptores(c)" />
             @if (c.ayuda) { <p class="ayuda" [id]="id(c) + '-ayuda'">{{ c.ayuda }}</p> }
@@ -99,7 +100,8 @@ function obligatorio(control: AbstractControl): ValidationErrors | null {
       }
 
       <div class="formulario-pie">
-        <button type="submit" class="primario" [cargando]="enviando()" [textoCarga]="textoEnviando()">{{ textoEnviar() }}</button>
+        <ng-content select="[acciones]" />
+        <button type="submit" [class]="varianteEnviar()" [cargando]="enviando()" [textoCarga]="textoEnviando()">{{ textoEnviar() }}</button>
       </div>
     </form>
   `,
@@ -129,6 +131,9 @@ export class Formulario {
         controles[c.nombre] = new FormArray(items.map(v => this.nuevoItem(c, v)), validadores);
       } else {
         if (c.patron) validadores.push(Validators.pattern(c.patron));
+        if (c.maximo) validadores.push(Validators.maxLength(c.maximo));
+        const clave = c.coincideCon;
+        if (clave) validadores.push(control => normalizar(control.value) === normalizar(clave) ? null : { coincide: true });
         const inicial = valores[c.nombre];
         controles[c.nombre] = new FormControl(inicial === null || inicial === undefined ? '' : String(inicial), validadores);
       }
@@ -156,6 +161,8 @@ export class Formulario {
     const mostrar = control.touched || items.some(i => i.touched);
     if (mostrar && control.hasError('obligatorio')) return OBLIGATORIO;
     if (mostrar && items.some(i => i.hasError('pattern'))) return c.mensajeFormato ?? FORMATO;
+    if (mostrar && control.hasError('maxlength')) return `Hasta ${c.maximo} caracteres.`;
+    if (mostrar && control.hasError('coincide')) return `No coincide con ${c.coincideCon}.`;
     return this.erroresPorCampo()[c.nombre] ?? null;
   }
 

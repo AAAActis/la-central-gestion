@@ -88,7 +88,7 @@ describe('ConfirmacionMotivo (HU-UI-06)', () => {
 
     expect(confirmar().classList).toContain('peligro');
     expect(confirmar().classList).not.toContain('primario');
-    expect(confirmar().textContent?.trim()).toBe('Dar de baja');
+    expect(confirmar().innerText.trim()).withContext('texto visible').toBe('Dar de baja');
   });
 
   it('muestra el límite del motivo que fija el endpoint', () => {
@@ -122,6 +122,17 @@ describe('ConfirmacionMotivo (HU-UI-06)', () => {
     expect(anfitrion().confirmados).toEqual([]);
     expect(anfitrion().abierto()).toBeFalse();
     expect(document.activeElement).toBe(abridor());
+  });
+
+  it('al reabrir, el motivo de la vez anterior no queda cargado', () => {
+    abrir();
+    escribir(motivo(), 'Discontinuado');
+    cancelar().click();
+    fixture.detectChanges();
+
+    abrir();
+
+    expect(motivo().value).toBe('');
   });
 
   it('sin clave, no pide reescribir nada', () => {
