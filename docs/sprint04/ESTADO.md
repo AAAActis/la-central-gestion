@@ -362,6 +362,77 @@ prueba.
 
 ---
 
+## Rediseño visual · Fase 1 · fundamentos (28/10/2026)
+
+Rama `feature/hu-ui-fase1-fundamentos-visuales`, PR #135. Cuerpo del PR en `docs/sprint04/pr-fase1-ui.md`.
+Material: `docs/sprint04/ADENDA-REDISENO-UI.md`, que manda sobre el prompt.
+
+**Hecho:**
+- Tokens de `SISTEMA-VISUAL.md` §2 a §4 y §9 en `frontend/src/styles.css`.
+- Tres tokens nuevos: `--peligro`, `--peligro-osc` y `--error-texto`. La §2, la §7 y la §8 del documento ya los nombran.
+- Fuentes OFL autoalojadas en `public/fonts/`.
+- Marca provisoria en `diseno/marca.ts`. Todavía no está montada: la monta la Fase 2.
+- Clases globales de base.
+- Botones con los seis requisitos de la §7.
+- `prefers-reduced-motion`.
+- Botón en carga, modal y aviso flotante en `compartido/`.
+
+**Tests:** frontend 35/35 (21 previos + 14 nuevos). El backend no se tocó y no se corrió: el
+enlace a la base está degradado (ver D-27b).
+
+**Evidencia:**
+- 9 combinaciones medidas por CDP: 1024, 768 y 480 px × acceso, artículos y factura. En ninguna hay desplazamiento horizontal.
+- Capturas y estados de botón en `docs/sprint04/evidencia/fase1/`.
+- La capa del botón tarda 0,3 s, y 0 s con movimiento reducido.
+
+**Decisiones (28/10/2026):**
+- `--dur-giro` 800 ms.
+- `--dur-aviso` 5 s para éxito, información y alerta. **El error no se va solo**: queda hasta
+  que el usuario lo cierra.
+- Detrás del modal va el velo, no el panal. La ambigüedad de la §5 queda marcada en el documento.
+- Cinco tokens sin nombre entran a la §2: `--borde-oscuro`, `--velo`, `--fondo-hex-respaldo`,
+  `--grosor-foco` y `--dur-giro`.
+- **Un `button` sin clase es secundario**; el primario se declara con `.primario`. Hasta las
+  Fases 3 y 4, artículos, factura y acceso no tienen primario.
+- Regla nueva en `CLAUDE.md`: un spec no afirma valores de color. Se reescribió CA1 en ese sentido.
+
+**Fuentes, medidas** (`evidencia/fase1/mediciones-cdp.txt`):
+- Para las 3 familias y sus 8 pesos y estilos, `document.fonts.load()` da `loaded` y
+  `document.fonts.check()` da `true`.
+- Un chip de código de ejemplo resuelve a JetBrains Mono.
+- Control negativo: una cara que apunta a un archivo inexistente da `error` y `check() = false`.
+- Los archivos llegan a `dist/`.
+
+**La suite de frontend corre solo en Chromium.** Lo que depende del motor no está cubierto en
+Firefox ni en Safari: por ejemplo, que `<dialog>` devuelva el foco al cerrarse, que hoy es una
+caracterización.
+
+**Esquemas huérfanos en `lacentral_test`: borrados el 28/10/2026, con aprobación.**
+- `pr110_test_5bef5661630743e4b6d09c409f11fafa` (26 tablas, de agosto).
+- `pr110_test_7d2e734c4b0345a686683e52b70f6c44` (26 tablas, de una corrida de D-27b abortada
+  durante la caída del enlace).
+
+Cómo se borraron: un `DROP SCHEMA … CASCADE` por nombre exacto, sin comodín ni bucle. Justo
+antes de cada uno se volvió a consultar el esquema y se confirmó que no tenía sesión activa
+(`application_name`). Después, la consulta no devuelve ninguno.
+
+**Lo que demuestra el de agosto:** sobrevivió dos meses. No es un residuo: es la evidencia de
+**D-27c**, la limpieza no corre cuando el test falla. El DROP manual lo sacó; mientras no se
+arregle el `DisposeAsync`, vuelve a pasar.
+
+**Aviso flotante (28/10/2026): un aviso nuevo reemplaza al anterior, no se suma.** Está en la §8
+y en el componente, con dos tests de caracterización verificados por mutación. **Avisar a
+Lauti** antes de que lo use en el acceso:
+- el error no se va solo;
+- reintentar no apila carteles;
+- el componente tiene un solo lugar, así que un aviso de otro tipo también reemplaza al que
+  estaba.
+
+**NO verificado / pendiente:**
+- Comparación con el prototipo y las 13 referencias, incluida la forma de la marca: Javi
+  todavía no las subió.
+- `public/fondo-hex.jpg`: la imagen no está. Hoy queda el color de respaldo.
+
 **Ramas y bases de los PR (28/10/2026, revisión de Javi).** Los commits 792d183 (proformas de
 las 52 HU y replan) y 7f92eb2 (sistema visual, prompt y adenda) se commitearon en el `develop`
 local y las tres ramas salieron de ahí: cada PR los revisaba de nuevo. Pasan a su propio PR,

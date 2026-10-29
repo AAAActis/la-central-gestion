@@ -1,88 +1,310 @@
+/* Sistema visual: docs/diseno/SISTEMA-VISUAL.md. Los colores, tamaños y duraciones viven
+   SOLO en este :root; el resto del frontend usa var(--token). */
+
+@font-face { font-family: 'Barlow Semi Condensed'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/barlow-semi-condensed-500.woff2') format('woff2'); }
+@font-face { font-family: 'Barlow Semi Condensed'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/barlow-semi-condensed-600.woff2') format('woff2'); }
+@font-face { font-family: 'Barlow Semi Condensed'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/barlow-semi-condensed-700.woff2') format('woff2'); }
+@font-face { font-family: 'Barlow Semi Condensed'; font-style: italic; font-weight: 800; font-display: swap; src: url('/fonts/barlow-semi-condensed-800-italica.woff2') format('woff2'); }
+@font-face { font-family: 'Noto Sans'; font-style: normal; font-weight: 400 600; font-display: swap; src: url('/fonts/noto-sans-variable.woff2') format('woff2'); }
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400 500; font-display: swap; src: url('/fonts/jetbrains-mono-variable.woff2') format('woff2'); }
+
 :root {
-  --fondo: #f4f5f7;
-  --tarjeta: #ffffff;
-  --texto: #1f2328;
-  --tenue: #6b7280;
-  --borde: #d8dce1;
-  --acento: #1d4ed8;
-  --error: #b42318;
-  --aviso: #92400e;
-  --senal: #f2b134;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color: var(--texto);
+  color-scheme: light;
+
+  /* §2 · Color */
+  --rojo-marca: #e82217;
+  --rojo: #c4211b;
+  --rojo-osc: #931510;
+  --rojo-tinte: #fbebe9;
+  --rojo-borde: #e3a6a2;
+  --rojo-foco: rgba(196, 33, 27, .32);
+  --peligro: #a91c16;
+  --peligro-osc: #7c110d;
+  --error-texto: #7d1410;
+  --tinta: #1c1c1f;
+  --texto-2: #5b5c62;
+  --texto-3: #7b7c83;
+  --grafito: #2a2a2e;
+  --grafito-2: #1f1f22;
+  --fondo: #f2f2f3;
+  --superficie: #ffffff;
+  --superficie-2: #f7f7f8;
+  --chip: #f0f0f2;
+  --linea: #e3e3e6;
+  --linea-2: #c9c9cf;
+  --aviso-fondo: #fcf4e7;
+  --aviso-texto: #6b4a0e;
+  --aviso-chip: #f8ead2;
+  --ok-fondo: #e8f3ec;
+  --ok-texto: #1e6a3b;
+  --deshab-fondo: #e7e7ea;
+  --deshab-texto: #8b8c92;
+  --blanco: #ffffff;
+  --sombra: 0 18px 48px rgba(0, 0, 0, .35);
+  /* §7 botón oscuro y §5 fondos */
+  --borde-oscuro: rgba(255, 255, 255, .32);
+  --velo: rgba(14, 14, 16, .12);
+  --fondo-hex-respaldo: #2b2b2e;
+
+  /* §3 · Tipografía */
+  --f-titulo: 'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif;
+  --f-texto: 'Noto Sans', system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, Consolas, 'Courier New', monospace;
+  --t-base: 14px;
+  --t-h1: 30px;
+  --t-h2: 19px;
+  --t-h2-tarjeta: 17px;
+  --t-tabla: 13.5px;
+  --t-etiqueta: 13px;
+  --t-ayuda: 12.5px;
+  --t-chip: 12px;
+  --t-acceso: clamp(34px, 4.3vw, 52px);
+  --interlineado: 1.5;
+  --interlineado-titulo: 1.15;
+  --tracking-titulo: .005em;
+  --tracking-marca: .32em;
+
+  /* §4 · Espaciado, radios y layout */
+  --esp-6: 6px;
+  --esp-8: 8px;
+  --esp-10: 10px;
+  --esp-12: 12px;
+  --esp-14: 14px;
+  --esp-16: 16px;
+  --esp-18: 18px;
+  --esp-20: 20px;
+  --esp-24: 24px;
+  --radio: 3px;
+  --radio-tarjeta: 4px;
+  --radio-modal: 5px;
+  --ancho-max: 1440px;
+  --ancho-form: 1020px;
+  --ancho-modal: 560px;
+  --alto-boton: 40px;
+  --alto-boton-chico: 32px;
+  --grosor-foco: 3px;
+
+  /* §9 · Animación */
+  --ease: cubic-bezier(.4, 0, .2, 1);
+  --dur-relleno: 300ms;
+  --dur-modal: 220ms;
+  --dur-giro: 800ms;
+  --dur-aviso: 5s;
+
+  font: var(--t-base) / var(--interlineado) var(--f-texto);
+  color: var(--tinta);
+  -webkit-font-smoothing: antialiased;
 }
+
+@keyframes girar { to { transform: rotate(360deg); } }
+@keyframes aparecer { from { opacity: 0; transform: translateY(8px); } }
+@keyframes subir { from { opacity: 0; transform: translateY(10px); } }
+@keyframes aparecer-modal { from { opacity: 0; transform: translateY(10px) scale(.985); } }
+
+/* ── Base ─────────────────────────────────────────────────────────── */
 
 body { margin: 0; background: var(--fondo); }
+h1, h2, h3 {
+  font-family: var(--f-titulo); font-weight: 700; line-height: var(--interlineado-titulo);
+  letter-spacing: var(--tracking-titulo); text-wrap: balance;
+}
+h1 { font-size: var(--t-h1); }
+h2 { font-size: var(--t-h2); margin-top: 0; }
+.tarjeta h2 { font-size: var(--t-h2-tarjeta); }
+h3 { font-size: var(--t-h2-tarjeta); margin-bottom: var(--esp-6); }
+
 header {
   display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
-  gap: 0 24px; padding: 0 24px; background: var(--texto); color: #fff;
+  gap: 0 var(--esp-24); padding: 0 var(--esp-24); background: var(--grafito); color: var(--blanco);
 }
-.usuario { padding: 8px 0; font-size: .9rem; color: #e5e7eb; }
-main { max-width: 1000px; margin: 0 auto; padding: 16px; }
+.usuario { padding: var(--esp-8) 0; font-size: var(--t-etiqueta); color: var(--linea-2); }
+main { max-width: var(--ancho-max); margin: 0 auto; padding: var(--esp-16); }
 
-.tarjeta {
-  background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 8px;
-  padding: 16px 20px; margin-bottom: 16px;
-}
-.login { max-width: 320px; margin: 10vh auto; display: flex; flex-direction: column; gap: 12px; }
-.login h1 { margin: 0 0 8px; font-size: 1.4rem; }
-
-label { display: flex; flex-direction: column; gap: 4px; font-size: .9rem; margin-bottom: 8px; }
-label.check { flex-direction: row; align-items: center; margin: 0; white-space: nowrap; }
-input { font: inherit; padding: 6px 8px; border: 1px solid var(--borde); border-radius: 6px; }
-input.corto { width: 120px; }
-fieldset { border: 1px solid var(--borde); border-radius: 6px; margin: 8px 0; }
-
-button {
-  font: inherit; padding: 6px 14px; border-radius: 6px; cursor: pointer;
-  border: 1px solid var(--acento); background: var(--acento); color: #fff;
-}
-button.secundario { background: transparent; color: var(--acento); }
-header button.secundario { color: #fff; border-color: #fff; margin-left: 8px; }
-button:disabled { opacity: .5; cursor: default; }
-
-.fila { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-.fila > input:not(.corto) { flex: 1; min-width: 180px; }
-.paginado { justify-content: space-between; margin-top: 8px; }
-
-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--borde); }
-th { font-size: .8rem; color: var(--tenue); font-weight: 600; text-transform: uppercase; }
-tbody tr { cursor: pointer; }
-tbody tr:hover { background: #eef2ff; }
-tr.elegido { background: #e0e7ff; }
-tr.inactivo td { color: var(--tenue); }
-
-.mono, .codigo { font-family: ui-monospace, Consolas, monospace; }
-.codigo {
-  display: inline-block; padding: 1px 6px; margin: 1px 4px 1px 0;
-  border: 1px solid var(--borde); border-radius: 4px; font-size: .85rem;
-}
-.etiqueta { font-size: .75rem; padding: 1px 6px; border-radius: 4px; background: #e5e7eb; color: var(--tenue); }
-.razon { color: var(--aviso); font-style: italic; }
-.tenue, .vacio { color: var(--tenue); }
-.error { color: var(--error); }
-h2 { font-size: 1.15rem; margin-top: 0; }
-h3 { font-size: 1rem; margin-bottom: 4px; }
-
-nav { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0 4px; }
-.marca { align-self: center; margin-right: 16px; }
+nav { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0 var(--esp-6); }
+.marca { align-self: center; margin-right: var(--esp-16); }
 nav a {
-  display: flex; align-items: center; padding: 14px 10px 11px;
-  color: #cbd5e1; text-decoration: none; border-bottom: 3px solid transparent;
+  display: flex; align-items: center; padding: var(--esp-14) var(--esp-10) var(--esp-10);
+  color: var(--linea-2); text-decoration: none; border-bottom: var(--grosor-foco) solid transparent;
 }
-nav a:hover { color: #fff; }
-nav a.activo { color: #fff; border-bottom-color: var(--senal); }
-a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
-select { font: inherit; padding: 6px 8px; border: 1px solid var(--borde); border-radius: 6px; background: #fff; }
-.campos { display: flex; gap: 12px; flex-wrap: wrap; }
+nav a:hover { color: var(--blanco); }
+nav a.activo { color: var(--blanco); border-bottom-color: var(--blanco); }
+
+a { color: var(--rojo); }
+a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: var(--grosor-foco) solid var(--rojo-foco); outline-offset: 2px;
+}
+
+/* Campo §8: etiqueta arriba, 8 px hasta el control. */
+label { display: flex; flex-direction: column; gap: var(--esp-8); font-size: var(--t-etiqueta); margin-bottom: var(--esp-8); }
+label.check { flex-direction: row; align-items: center; margin: 0; white-space: nowrap; }
+input, select {
+  font: inherit; font-size: var(--t-base); padding: var(--esp-8) var(--esp-10);
+  border: 1px solid var(--linea-2); border-radius: var(--radio); background: var(--superficie); color: var(--tinta);
+}
+input.corto { width: 120px; }
+fieldset { border: 1px solid var(--linea); border-radius: var(--radio-tarjeta); margin: var(--esp-8) 0; }
+.ayuda { font-size: var(--t-ayuda); color: var(--texto-3); }
+
+.fila { display: flex; gap: var(--esp-12); align-items: center; margin-bottom: var(--esp-8); flex-wrap: wrap; }
+.fila > input:not(.corto) { flex: 1; min-width: 180px; }
+.paginado { justify-content: space-between; margin-top: var(--esp-8); }
+.campos { display: flex; gap: var(--esp-12); flex-wrap: wrap; }
 .campos label { flex: 1; min-width: 150px; }
-button.opcion {
-  display: block; width: 100%; text-align: left; margin: 2px 0;
-  background: transparent; color: var(--texto); border-color: var(--borde);
+.agregar { margin-top: var(--esp-12); }
+
+.mono { font-family: var(--f-mono); }
+.razon { color: var(--aviso-texto); font-style: italic; }
+.tenue, .vacio { color: var(--texto-2); }
+.aparecer { animation: aparecer var(--dur-modal) var(--ease); }
+
+/* ── Componentes de base (clases globales, §8) ───────────────────── */
+
+/* Tarjeta: sola lleva el padding del cuerpo; con secciones, cada una pone el suyo. */
+.tarjeta {
+  background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--radio-tarjeta);
+  padding: var(--esp-20) var(--esp-24); margin-bottom: var(--esp-16);
 }
-button.opcion:hover { background: #eef2ff; }
+.tarjeta:has(> .tarjeta-cuerpo) { padding: 0; }
+.tarjeta-cabecera { padding: var(--esp-18) 22px; border-bottom: 1px solid var(--linea); display: flex; justify-content: space-between; align-items: center; gap: var(--esp-12); }
+.tarjeta-cabecera > h2 { margin: 0; }
+.tarjeta-cuerpo { padding: 22px var(--esp-24); }
+.tarjeta-pie { padding: var(--esp-14) 22px; border-top: 1px solid var(--linea); }
+
+/* Aviso: info, alerta, error, ok. `.error` suelto es el aviso de error de las pantallas actuales. */
+.aviso, .error {
+  display: flex; gap: var(--esp-10); align-items: flex-start;
+  padding: var(--esp-12) var(--esp-16); border-radius: var(--radio); font-size: var(--t-etiqueta);
+}
+.aviso svg { flex: none; width: 18px; height: 18px; }
+.aviso.info { background: var(--chip); color: var(--tinta); }
+.aviso.alerta { background: var(--aviso-fondo); color: var(--aviso-texto); }
+.aviso.error, .error { background: var(--rojo-tinte); color: var(--error-texto); }
+.aviso.ok { background: var(--ok-fondo); color: var(--ok-texto); }
+
+/* Chip de código: interno o de proveedor. */
+.codigo {
+  display: inline-block; padding: 1px var(--esp-6); margin: 1px var(--esp-6) 1px 0;
+  font-family: var(--f-mono); font-size: var(--t-chip); background: var(--chip); border-radius: var(--radio);
+}
+
+/* Etiqueta de estado: inactiva por defecto (el uso actual), `.activa` para Activo. Siempre con texto. */
+.etiqueta {
+  display: inline-block; padding: 1px var(--esp-8); border-radius: var(--radio);
+  font-family: var(--f-texto); font-size: var(--t-chip); font-weight: 600;
+  background: var(--deshab-fondo); color: var(--deshab-texto);
+}
+.etiqueta.activa { background: var(--ok-fondo); color: var(--ok-texto); }
+
+/* Tabla: la caja desplaza a lo ancho, nunca la página. */
+.tabla-caja { overflow: auto; max-width: 100%; }
+table { width: 100%; border-collapse: collapse; margin-top: var(--esp-8); font-size: var(--t-tabla); }
+th, td { text-align: left; padding: var(--esp-8) var(--esp-10); border-bottom: 1px solid var(--linea); }
+th {
+  position: sticky; top: 0; background: var(--superficie);
+  font-size: var(--t-chip); color: var(--texto-2); font-weight: 600; text-transform: uppercase;
+}
+tbody tr:nth-child(even) { background: var(--superficie-2); }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--chip); }
+tr.elegido, tr.elegido:hover { background: var(--rojo-tinte); }
+tr.inactivo td { color: var(--texto-2); }
 table.sin-seleccion tbody tr { cursor: default; }
 table.sin-seleccion tbody tr:hover { background: transparent; }
+table.sin-seleccion tbody tr:nth-child(even):hover { background: var(--superficie-2); }
 table.lineas input.corto { width: 100px; }
-.agregar { margin-top: 12px; }
+
+/* Fondo hexagonal §5: acceso y modales. Sin la imagen, queda el color de respaldo. */
+.fondo-hex { background: var(--fondo-hex-respaldo) url('/fondo-hex.jpg') center / cover no-repeat; color: var(--blanco); }
+
+/* ── Botones §7 ──────────────────────────────────────────────────── */
+
+/* Sin clase, un botón es secundario: el primario se declara (§1: una sola acción principal).
+   1-2: la capa (::before) entra desde arriba, detrás del texto; el color del texto no cambia. */
+button {
+  --capa: var(--rojo-tinte);
+  position: relative; isolation: isolate; overflow: hidden;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--esp-8);
+  min-height: var(--alto-boton); padding: 0 var(--esp-16);
+  font: 600 var(--t-base) / 1 var(--f-texto); white-space: nowrap;
+  border: 1px solid var(--linea-2); border-radius: var(--radio);
+  background: var(--superficie); color: var(--tinta); cursor: pointer;
+}
+button::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: var(--capa); transform: scaleY(0); transform-origin: top;
+  transition: transform var(--dur-relleno) var(--ease);
+}
+button:hover::before, button:focus-visible::before { transform: scaleY(1); }
+/* 3 */
+button:focus-visible { outline: var(--grosor-foco) solid var(--rojo-foco); outline-offset: 2px; }
+/* 4: se oscurece, sin moverse ni cambiar de tamaño. */
+button:active:not(:disabled) { filter: brightness(.88); }
+
+button.peligro { --capa: var(--peligro-osc); background: var(--peligro); }
+button.secundario { --capa: var(--rojo-tinte); background: var(--superficie); border-color: var(--linea-2); color: var(--tinta); }
+button.peligro-borde { --capa: var(--rojo-tinte); background: var(--superficie); border-color: var(--rojo-borde); color: var(--rojo); }
+button.secundario:focus-visible, button.peligro-borde:focus-visible { border-color: var(--rojo-borde); }
+button.oscuro, header button.secundario { --capa: var(--rojo); background: transparent; border-color: var(--borde-oscuro); color: var(--blanco); }
+header button.secundario { margin-left: var(--esp-8); }
+button.chico { min-height: var(--alto-boton-chico); padding: 0 var(--esp-12); font-size: var(--t-etiqueta); }
+
+/* Opción de una lista de resultados (factura de compra). */
+button.opcion {
+  --capa: var(--chip); display: flex; justify-content: flex-start; width: 100%; margin: 2px 0;
+  background: var(--superficie); color: var(--tinta); border-color: var(--linea); font-weight: 400;
+}
+
+/* 6: deshabilitado, sin capa. Un botón en carga también está disabled, pero conserva su variante. */
+button:disabled:not([aria-busy='true']) {
+  background: var(--deshab-fondo); color: var(--deshab-texto); border-color: transparent; cursor: not-allowed;
+}
+button:disabled::before { display: none; }
+
+/* 5: en carga. Las dos etiquetas ocupan la misma celda: el ancho es el de la más ancha y no salta. */
+button[aria-busy='true'] { cursor: progress; }
+.boton-etiquetas { display: inline-grid; }
+.boton-etiquetas > * { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: var(--esp-8); }
+.boton-etiquetas > .oculta { visibility: hidden; }
+.girando {
+  width: 1em; height: 1em; border-radius: 50%;
+  border: 2px solid currentColor; border-right-color: transparent;
+  animation: girar var(--dur-giro) linear infinite;
+}
+
+/* ── Modal y aviso flotante (compartido/) ───────────────────────── */
+
+dialog.modal {
+  width: min(var(--ancho-modal), calc(100vw - 2 * var(--esp-20))); padding: 0;
+  border: 0; border-radius: var(--radio-modal); box-shadow: var(--sombra);
+  background: var(--superficie); color: var(--tinta);
+}
+dialog.modal[open] { animation: aparecer-modal var(--dur-modal) var(--ease); }
+dialog.modal::backdrop { background: var(--velo); }
+.modal-cabecera { padding: 22px 26px var(--esp-20); border-bottom: 1px solid var(--linea); }
+.modal-cabecera h2 { margin: 0; }
+.modal-cuerpo { padding: var(--esp-24) 26px; }
+.modal-pie { display: flex; justify-content: flex-end; gap: var(--esp-12); padding: var(--esp-14) 26px; border-top: 1px solid var(--linea); }
+.modal-pie:empty { display: none; }
+
+.aviso-flotante {
+  position: fixed; right: var(--esp-20); bottom: var(--esp-20); z-index: 10;
+  width: min(420px, calc(100vw - 40px)); box-shadow: var(--sombra);
+  animation: subir var(--dur-modal) var(--ease);
+}
+.aviso-flotante > span { flex: 1; }
+.aviso-flotante > button { min-height: auto; padding: 0 var(--esp-6); background: transparent; color: inherit; --capa: transparent; }
+
+/* ── Marca (diseno/marca.ts) ────────────────────────────────────── */
+
+.logo { display: inline-flex; flex-direction: column; color: var(--blanco); font-family: var(--f-titulo); font-style: italic; font-weight: 800; line-height: 1; }
+.logo-repuestos { font-size: var(--t-etiqueta); letter-spacing: var(--tracking-marca); }
+.logo-nombre { display: inline-flex; align-items: baseline; font-size: var(--t-h1); }
+.logo-c { width: .8em; height: .8em; color: var(--rojo-marca); align-self: center; }
+.logo.compacta .logo-repuestos { font-size: var(--t-chip); }
+.logo.compacta .logo-nombre { font-size: var(--t-h2); }
+.logo.completa .logo-nombre { font-size: var(--t-acceso); }
+
+/* Obligatorio §9: sin transiciones ni giro con movimiento reducido. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}

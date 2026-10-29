@@ -43,6 +43,9 @@ nadie la explique:
 | `--rojo-tinte` | `#fbebe9` | Relleno de botones blancos al apoyar el cursor, fondo de aviso de error |
 | `--rojo-borde` | `#e3a6a2` | Borde de `peligro-borde` y foco de botones blancos |
 | `--rojo-foco` | `rgba(196,33,27,.32)` | Contorno de foco (3 px) |
+| `--peligro` | `#a91c16` | Botón `peligro` |
+| `--peligro-osc` | `#7c110d` | Relleno del botón `peligro` al apoyar el cursor |
+| `--error-texto` | `#7d1410` | Texto del aviso de error |
 | `--tinta` | `#1c1c1f` | Texto principal |
 | `--texto-2` | `#5b5c62` | Texto secundario, íconos en reposo |
 | `--texto-3` | `#7b7c83` | Texto terciario, ayudas |
@@ -59,6 +62,11 @@ nadie la explique:
 | `--deshab-fondo` / `--deshab-texto` | `#e7e7ea` / `#8b8c92` | Deshabilitado |
 | `--blanco` | `#ffffff` | Texto sobre rojo y grafito |
 | `--sombra` | `0 18px 48px rgba(0,0,0,.35)` | Solo modales |
+| `--borde-oscuro` | `rgba(255,255,255,.32)` | Borde del botón `oscuro` (sale de la §7) |
+| `--velo` | `rgba(14,14,16,.12)` | Velo detrás del modal (sale de la §5) |
+| `--fondo-hex-respaldo` | `#2b2b2e` | Color de respaldo del fondo hexagonal (sale de la §5) |
+| `--grosor-foco` | `3px` | Grosor del contorno de foco (sale de la §7.3) |
+| `--dur-giro` | `800ms` | Una vuelta del indicador de carga (sale de la §9; valor decidido el 28/10/2026) |
 
 Reglas:
 - **Dos rojos, y no se mezclan.** `--rojo-marca` (`#e82217`) es el de la identidad y va solo
@@ -66,7 +74,7 @@ Reglas:
   contraste de ~5,9:1 (cumple AA), mientras que el rojo de marca da ~4,5:1 y queda justo en el
   límite para texto chico. Por eso un botón nunca usa `--rojo-marca`.
 - **Rojo = marca y acción**, no decoración. Para errores se usa el aviso de error
-  (`--rojo-tinte` con texto `#7d1410`), no texto rojo suelto.
+  (`--rojo-tinte` con texto `--error-texto`), no texto rojo suelto.
 - Un valor negativo (por ejemplo, stock) se marca con el estilo de error, no con otro rojo.
 - No hay tema oscuro. `color-scheme: light`.
 
@@ -127,7 +135,11 @@ redondea por su cuenta ni recalcula.
   con luz que aclara hacia abajo. Imagen estática `public/fondo-hex.jpg` (1600×1100, JPEG,
   < 250 KB) con color de respaldo `#2b2b2e`. **No** se dibuja con canvas ni JavaScript.
   Sobre el panal, el texto va en blanco y con peso alto, como en la imagen de marca.
-- Detrás del modal: velo `rgba(14,14,16,.12)`.
+- Detrás del modal: velo `--velo`, sobre la pantalla, que sigue a la vista.
+  **Ambigüedad, a confirmar contra la captura de referencia:** el punto anterior dice que el
+  panal va "detrás de los modales", y este define un velo de 0,12 que deja ver la pantalla.
+  Se implementó el velo (28/10/2026): reemplazar el contenido por el panal mientras hay un
+  modal abierto le saca al usuario el contexto que necesita para decidir.
 - No se agregan degradados, imágenes ni texturas que no estén en las referencias.
 
 ---
@@ -150,15 +162,17 @@ redondea por su cuenta ni recalcula.
 
 ## 7 · Botones
 
-Alto 40 px (`chico`: 32 px, `padding: 0 12px`, 13 px). Variantes:
+Alto 40 px (`chico`: 32 px, `padding: 0 12px`, 13 px). Un `button` **sin clase es
+`secundario`**: el `primario` se declara con la clase `.primario` (§1, una sola acción
+principal). Variantes:
 
 | Variante | Reposo | Relleno al apoyar el cursor |
 |---|---|---|
 | `primario` | `--rojo`, texto blanco | `--rojo-osc` |
-| `peligro` | `#a91c16`, texto blanco | `#7c110d` |
+| `peligro` | `--peligro`, texto blanco | `--peligro-osc` |
 | `secundario` | `--superficie`, borde `--linea-2`, texto `--tinta` | `--rojo-tinte` |
 | `peligro-borde` | `--superficie`, borde `--rojo-borde`, texto `--rojo` | `--rojo-tinte` |
-| `oscuro` (sobre grafito) | transparente, borde `rgba(255,255,255,.32)`, texto blanco | `--rojo` |
+| `oscuro` (sobre grafito) | transparente, borde `--borde-oscuro`, texto blanco | `--rojo` |
 
 Comportamiento, igual en todas:
 1. Al apoyar el cursor, una capa (`::before`) entra **desde el borde superior** y llena el
@@ -166,7 +180,7 @@ Comportamiento, igual en todas:
    `var(--ease)` (`cubic-bezier(.4,0,.2,1)`). Al salir, se retrae hacia arriba.
 2. Texto e ícono siempre encima: `isolation: isolate` en el botón, `z-index: -1` en la capa.
    El color del texto no cambia durante la transición.
-3. `:focus-visible`: la misma capa más `outline: 3px solid var(--rojo-foco); outline-offset: 2px`.
+3. `:focus-visible`: la misma capa más `outline: var(--grosor-foco) solid var(--rojo-foco); outline-offset: 2px`.
 4. Al presionar: se oscurece, **sin moverse ni cambiar de tamaño**.
 5. **Cargando:** conserva el ancho, indicador giratorio (`@keyframes girar`), texto
    "Guardando…" (o el que corresponda), `disabled`, `aria-busy="true"`, sin doble envío.
@@ -184,12 +198,12 @@ crear uno nuevo, buscá si ya está.
 | Campo | Etiqueta arriba (13 px), 8 px de separación, ayuda debajo en `--texto-3`, error debajo como aviso de error. Etiqueta asociada con `for`/`id`. |
 | Tarjeta | §4. Cabecera con título y, como mucho, una acción. |
 | Tabla | 13.5 px, encabezado fijo dentro de la caja, filas alternas con `--superficie-2`. |
-| Aviso | `info` (`--chip`), `alerta` (`--aviso-*`), `error` (`--rojo-tinte` / `#7d1410`), `ok` (`--ok-fondo`). Padding `12px 16px`, radio 3 px, con ícono. |
+| Aviso | `info` (`--chip`), `alerta` (`--aviso-*`), `error` (`--rojo-tinte` / `--error-texto`), `ok` (`--ok-fondo`). Padding `12px 16px`, radio 3 px, con ícono. |
 | Etiqueta de estado | Activo (`--ok-*`) / Inactivo (`--deshab-*`). Texto, no solo color. |
 | Chip de código | `--f-mono`, fondo `--chip`. |
 | Estado vacío | Ícono, una frase que diga qué pasó y, si aplica, una acción. Nunca una tabla vacía. |
 | Modal | Ancho por defecto 560 px, cabecera `22px 26px 20px`, cuerpo `24px 26px`. Escape cierra, el foco queda atrapado adentro y vuelve al botón que lo abrió. |
-| Aviso flotante (toast) | Ancho `min(420px, calc(100vw - 40px))`, aparece con `subir`, se va solo y se puede cerrar. |
+| Aviso flotante (toast) | Ancho `min(420px, calc(100vw - 40px))`, aparece con `subir` y se puede cerrar. Éxito, información y alerta se van solos a los `--dur-aviso`; **un error no se va solo**, queda hasta que el usuario lo cierra (el operador puede estar atendiendo a un cliente). **Un aviso nuevo reemplaza al anterior, no se suma**: tres intentos fallidos dejan un solo cartel, el último, y el aviso nuevo dura su tiempo completo. **Un aviso que repite el texto se vuelve a anunciar**: la región viva se vacía y se escribe en el ciclo siguiente (no se agrega un contador invisible, que el lector de pantalla leería). |
 
 ---
 
@@ -201,7 +215,8 @@ crear uno nuevo, buscá si ya está.
 | Modal | 200–220 ms | opacidad + `translateY(10px) scale(.985) → none` |
 | Contenido que aparece | `aparecer` | opacidad + `translateY(8px) → none` |
 | Toast | `subir` | opacidad + `translateY(10px) → none` |
-| Carga | `girar` | `rotate(360deg)` en bucle |
+| Toast a la vista | `--dur-aviso` (5 s) | Éxito, información y alerta. El error no se va solo (§8). |
+| Carga | `girar`, `--dur-giro` (800 ms) | `rotate(360deg)` en bucle |
 
 - **`prefers-reduced-motion: reduce`** elimina transiciones y el giro. Es obligatorio en todo
   componente con movimiento.
