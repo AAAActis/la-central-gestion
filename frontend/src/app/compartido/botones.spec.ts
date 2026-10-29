@@ -49,3 +49,62 @@ describe('Botones · la variante primario (§7)', () => {
     expect(estilo(boton('primario', { cargando: true })).backgroundColor).not.toBe(estilo(boton(null, { cargando: true })).backgroundColor);
   });
 });
+
+/** Luminancia relativa de un color calculado (WCAG 2.x): se mide el contraste, no se afirma un valor. */
+function luminancia(color: string): number {
+  const [r, g, b] = (color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number).map(c => {
+    const v = c / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+function contraste(a: string, b: string): number {
+  const [claro, oscuro] = [luminancia(a), luminancia(b)].sort((x, y) => y - x);
+  return (claro + 0.05) / (oscuro + 0.05);
+}
+const transparente = (color: string) => color === 'transparent' || /rgba\(.*,\s*0\)$/.test(color);
+
+describe('Botones · las cinco variantes de la §7', () => {
+  // `oscuro` va sobre grafito (§7): su relleno es transparente y lo que se lee es el fondo.
+  const VARIANTES = [
+    { clase: 'primario', fondo: null },
+    { clase: 'peligro', fondo: null },
+    { clase: 'secundario', fondo: null },
+    { clase: 'peligro-borde', fondo: null },
+    { clase: 'oscuro', fondo: 'var(--grafito)' },
+  ] as const;
+  let caja: HTMLElement;
+
+  function medir(clase: string, fondo: string | null) {
+    const contenedor = document.createElement('div');
+    if (fondo) contenedor.style.background = fondo;
+    const b = document.createElement('button');
+    b.className = clase;
+    b.textContent = 'Acción';
+    contenedor.appendChild(b);
+    caja.appendChild(contenedor);
+    const e = getComputedStyle(b);
+    const relleno = transparente(e.backgroundColor) ? getComputedStyle(contenedor).backgroundColor : e.backgroundColor;
+    return { relleno, borde: e.borderTopColor, texto: e.color };
+  }
+
+  beforeEach(() => {
+    caja = document.createElement('div');
+    document.body.appendChild(caja);
+  });
+
+  afterEach(() => caja.remove());
+
+  for (const { clase, fondo } of VARIANTES) {
+    it(`${clase} · se distingue de las otras cuatro y su texto se lee sobre su relleno (AA, 4,5:1)`, () => {
+      const propia = medir(clase, fondo);
+      for (const otra of VARIANTES.filter(v => v.clase !== clase)) {
+        const ajena = medir(otra.clase, otra.fondo);
+        expect([propia.relleno, propia.borde, propia.texto]).withContext(`contra ${otra.clase}`)
+          .not.toEqual([ajena.relleno, ajena.borde, ajena.texto]);
+      }
+      // Un texto heredado de la base (--tinta) sobre un relleno oscuro no llega: es el defecto de peligro.
+      expect(contraste(propia.texto, propia.relleno)).withContext('contraste texto / relleno').toBeGreaterThanOrEqual(4.5);
+    });
+  }
+});
