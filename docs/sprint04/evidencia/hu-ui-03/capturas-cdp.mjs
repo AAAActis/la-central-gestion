@@ -31,7 +31,7 @@ const esperar = ms => new Promise(r => setTimeout(r, ms));
 const captura = async nombre => writeFileSync(`${SALIDA}/${nombre}.png`, Buffer.from((await cdp('Page.captureScreenshot', { format: 'png' })).data, 'base64'));
 const desborde = () => js('[document.documentElement.scrollWidth, document.documentElement.clientWidth]');
 const foco = () => js(`(() => { const e = document.activeElement; return e === document.body ? 'body' :
-  e.tagName.toLowerCase() + (e.getAttribute('aria-label') ? '[' + e.getAttribute('aria-label') + ']' : '') + ' ' + (e.name || e.textContent.trim().slice(0, 30)); })()`);
+  e.tagName.toLowerCase() + (e.getAttribute('aria-label') ? '[' + e.getAttribute('aria-label') + ']' : '') + ' ' + (e.name || e.labels?.[0]?.textContent.trim() || e.textContent.trim().slice(0, 30)); })()`);
 const tecla = async (key, code, keyCode) => { for (const type of ['keyDown', 'keyUp']) await cdp('Input.dispatchKeyEvent', { type, key, code, windowsVirtualKeyCode: keyCode, ...(type === 'keyDown' && key === 'Enter' ? { text: String.fromCharCode(13) } : {}) }); await esperar(150); };
 const tab = () => tecla('Tab', 'Tab', 9), escribir = async t => { await cdp('Input.insertText', { text: t }); await esperar(100); };
 const log = (...a) => console.log(...a);
@@ -78,7 +78,7 @@ await js('document.activeElement?.blur()');
 const acceso = [];
 for (let i = 0; i < 4; i++) { await tab(); acceso.push(await foco()); }
 log('Tab en el acceso:', acceso.join(' → '));
-await js(`document.querySelector('input[name=usuario]').focus()`);
+await js(`document.querySelector('app-login input').focus()`);
 await escribir('admin'); await tab(); await escribir('mala'); await tecla('Enter', 'Enter', 13); await esperar(1200);
 log('Enter con contraseña mala → aviso:', await js(`document.querySelector('.aviso-flotante')?.getAttribute('role') + ' · ' + document.querySelector('.aviso-flotante')?.textContent.trim()`), '· foco:', await foco());
 await tecla('Escape', 'Escape', 27);
