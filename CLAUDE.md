@@ -96,6 +96,19 @@ Se leen de la sesión autenticada (`IContextoUsuario`), NUNCA del cuerpo de la p
 - Retirar un código de proveedor: SOLO ADMINISTRADOR, operación explícita. Omitir un
   código en una modificación ordinaria NO lo elimina.
 
+## Frontend
+**UI:** toda pantalla o componente de `frontend/` sigue `docs/diseno/SISTEMA-VISUAL.md`.
+No se inventan colores, tamaños ni animaciones fuera de sus tokens.
+
+Un spec NO afirma un valor de color (`toBe('#2d6cdf')`, `rgb(...)`): se rompe con cada cambio
+de paleta y no verifica nada que importe. Afirma el comportamiento: que la clase esté aplicada,
+que `aria-current` esté presente, que el activo se distinga del resto, que el botón quede
+deshabilitado mientras carga.
+
+La suite de frontend corre solo en Chromium (ChromeHeadless): verifica un motor. Lo que depende
+del navegador —por ejemplo, que `<dialog>` devuelva el foco al cerrarse— no está probado en
+Firefox ni en Safari.
+
 ## Idioma
 Todo en español: clases, métodos, variables, mensajes, commits.
 
