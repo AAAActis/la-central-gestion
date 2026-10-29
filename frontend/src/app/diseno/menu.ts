@@ -9,7 +9,6 @@ import { SesionActual } from '../nucleo/sesion';
   imports: [RouterLink, RouterLinkActive],
   template: `
     <nav aria-label="Módulos">
-      <strong class="marca">La Central</strong>
       @for (m of modulos(); track m.ruta) {
         <a [routerLink]="'/' + m.ruta" routerLinkActive="activo" ariaCurrentWhenActive="page">{{ m.titulo }}</a>
       }

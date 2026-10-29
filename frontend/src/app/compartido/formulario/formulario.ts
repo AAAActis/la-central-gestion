@@ -8,7 +8,7 @@ import { BotonCarga } from '../boton-carga';
 export interface CampoFormulario {
   nombre: string;
   etiqueta: string;
-  tipo?: 'text' | 'number' | 'date' | 'email' | 'tel';
+  tipo?: 'text' | 'number' | 'date' | 'email' | 'tel' | 'password';
   obligatorio?: boolean;
   /** Formato, como el atributo pattern: la expresión tiene que cubrir todo el valor. */
   patron?: string;
@@ -16,6 +16,8 @@ export interface CampoFormulario {
   ayuda?: string;
   /** Una lista que se agrega y se quita (teléfonos, direcciones, códigos). */
   multivaluado?: boolean;
+  /** El atributo autocomplete: sin username y current-password, los gestores de contraseñas no completan el acceso. */
+  autocompletar?: string;
 }
 
 export type ValoresFormulario = Record<string, unknown>;
@@ -86,7 +88,7 @@ function obligatorio(control: AbstractControl): ValidationErrors | null {
           <div class="campo">
             <label [for]="id(c)">{{ c.etiqueta }}</label>
             <input [id]="id(c)" [type]="c.tipo ?? 'text'" [formControlName]="c.nombre"
-                   [attr.aria-required]="c.obligatorio ? 'true' : null"
+                   [attr.autocomplete]="c.autocompletar ?? null" [attr.aria-required]="c.obligatorio ? 'true' : null"
                    [attr.aria-invalid]="error(c) ? 'true' : null" [attr.aria-describedby]="descriptores(c)" />
             @if (c.ayuda) { <p class="ayuda" [id]="id(c) + '-ayuda'">{{ c.ayuda }}</p> }
             @if (error(c); as mensaje) { <p class="aviso error" role="alert" [id]="id(c) + '-error'">{{ mensaje }}</p> }

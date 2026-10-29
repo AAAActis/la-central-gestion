@@ -240,13 +240,16 @@ button:focus-visible { outline: var(--grosor-foco) solid var(--rojo-foco); outli
 /* 4: se oscurece, sin moverse ni cambiar de tamaño. */
 button:active:not(:disabled) { filter: brightness(.88); }
 
-button.peligro { --capa: var(--peligro-osc); background: var(--peligro); }
+/* Texto y borde: hueco de la Fase 1, el texto quedaba en --tinta (2,3:1, no cumple AA). */
+button.peligro { --capa: var(--peligro-osc); background: var(--peligro); border-color: var(--peligro); color: var(--blanco); }
 button.secundario { --capa: var(--rojo-tinte); background: var(--superficie); border-color: var(--linea-2); color: var(--tinta); }
 button.peligro-borde { --capa: var(--rojo-tinte); background: var(--superficie); border-color: var(--rojo-borde); color: var(--rojo); }
 button.secundario:focus-visible, button.peligro-borde:focus-visible { border-color: var(--rojo-borde); }
 button.oscuro, header button.secundario { --capa: var(--rojo); background: transparent; border-color: var(--borde-oscuro); color: var(--blanco); }
 header button.secundario { margin-left: var(--esp-8); }
 button.chico { min-height: var(--alto-boton-chico); padding: 0 var(--esp-12); font-size: var(--t-etiqueta); }
+/* Primario §7: hueco de la Fase 1, la clase se declaraba sin regla. Uno solo por pantalla (§1). */
+button.primario { --capa: var(--rojo-osc); background: var(--rojo); border-color: var(--rojo); color: var(--blanco); }
 
 /* Opción de una lista de resultados (factura de compra). */
 button.opcion {

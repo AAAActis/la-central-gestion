@@ -178,3 +178,54 @@ describe('Formulario (HU-UI-05)', () => {
     expect(alertas).toEqual(['Ya existe un proveedor con ese CUIT.']);
   });
 });
+
+const CAMPOS_ACCESO: CampoFormulario[] = [
+  { nombre: 'nombreUsuario', etiqueta: 'Usuario', obligatorio: true, autocompletar: 'username' },
+  { nombre: 'contrasena', etiqueta: 'Contraseña', tipo: 'password', obligatorio: true, autocompletar: 'current-password' },
+  { nombre: 'nota', etiqueta: 'Nota' },
+];
+
+@Component({
+  imports: [Formulario],
+  template: `<app-formulario [campos]="campos" />`,
+})
+class AnfitrionAcceso {
+  readonly campos = CAMPOS_ACCESO;
+}
+
+describe('Formulario · contraseña y autocompletado (extensión de HU-UI-03)', () => {
+  let fixture: ComponentFixture<AnfitrionAcceso>;
+  const raiz = () => fixture.nativeElement as HTMLElement;
+  const control = (etiqueta: string) => {
+    const label = Array.from(raiz().querySelectorAll('label')).find(l => l.textContent?.trim() === etiqueta)!;
+    return label.control as HTMLInputElement;
+  };
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(AnfitrionAcceso);
+    fixture.detectChanges();
+  });
+
+  it('una contraseña sale como input type="password"', () => {
+    expect(control('Contraseña').type).toBe('password');
+  });
+
+  it('el valor escrito en la contraseña no queda expuesto en el marcado', () => {
+    const contrasena = control('Contraseña');
+    contrasena.value = 'secreto-de-prueba';
+    contrasena.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(contrasena.hasAttribute('value')).toBeFalse();
+    expect(raiz().innerHTML).not.toContain('secreto-de-prueba');
+  });
+
+  it('cada campo lleva su autocomplete, para que el gestor de contraseñas complete el acceso', () => {
+    expect(control('Usuario').getAttribute('autocomplete')).toBe('username');
+    expect(control('Contraseña').getAttribute('autocomplete')).toBe('current-password');
+  });
+
+  it('un campo sin autocompletar no lleva el atributo', () => {
+    expect(control('Nota').hasAttribute('autocomplete')).toBeFalse();
+  });
+});

@@ -38,6 +38,8 @@ describe('modulosPara · CA1 y CA2', () => {
 });
 
 describe('habilitadoPara · la ruta solo entra con sesión y rol habilitado', () => {
+  // La sesión se guarda en sessionStorage (HU-UI-03): sin limpiarlo, un test hereda la del anterior.
+  beforeEach(() => sessionStorage.clear());
   const ruta: Route = {};
 
   function entra(roles: readonly string[]) {
