@@ -46,7 +46,7 @@ const CREDENCIALES = 'Usuario o contraseña incorrectos.';
       <form class="tarjeta-cuerpo" (ngSubmit)="entrar()">
         <h1>Acceso al sistema</h1>
         <label>Usuario
-          <input name="usuario" [(ngModel)]="usuario" autocomplete="username" required />
+          <input #usuario name="usuario" [(ngModel)]="usuario" autocomplete="username" required />
         </label>
         <label>Contraseña
           <input name="contrasena" type="password" [(ngModel)]="contrasena" autocomplete="current-password" required />
