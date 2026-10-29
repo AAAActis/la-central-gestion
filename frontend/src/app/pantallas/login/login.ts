@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, ElementRef, afterNextRender, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Aviso, AvisoFlotante } from '../../compartido/aviso-flotante';
 import { BotonCarga } from '../../compartido/boton-carga';
@@ -67,10 +67,13 @@ export class Login {
   readonly enviando = signal(false);
   /** Un objeto por intento: dos errores iguales seguidos se vuelven a anunciar (aviso-flotante.ts). */
   protected readonly aviso = signal<Aviso | null>(null);
+  private readonly campoUsuario = viewChild.required<ElementRef<HTMLInputElement>>('usuario');
 
   constructor() {
     const motivo = this.sesion.avisoAlCerrar();
     if (motivo) this.aviso.set({ texto: motivo });
+    // Al salir o vencer la sesión, el botón que tenía el foco desaparece con el marco.
+    afterNextRender(() => this.campoUsuario().nativeElement.focus());
   }
 
   entrar() {
