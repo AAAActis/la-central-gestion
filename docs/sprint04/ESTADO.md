@@ -329,9 +329,9 @@ en la configuración de xUnit y documentar en el README la cuenta
 extensión del ProblemDetails, para `Conflicto` e `Invalido`. Solo el backend sabe qué regla
 se disparó.
 
-Mientras no esté, el CA-004 de HU-UI-05 queda **parcialmente verificado**: verificado para los
-errores de validación de modelo (`errors` por propiedad) y **NO verificado** para los de regla
-de negocio, que hoy llegan como mensaje general del formulario.
+Mientras no esté, el CA-004 de HU-UI-05 se declara en dos partes: **verificado** para los
+errores de validación de modelo (`errors` por propiedad) y **NO verificado**, con motivo, para
+los de regla de negocio, que hoy llegan como mensaje general del formulario.
 
 Cuando se agregue, el componente de formulario no cambia: cambia lo que cada pantalla le pasa
 en el mapa campo → mensaje. Descartados:
@@ -419,15 +419,17 @@ Lauti** antes de que lo use en el acceso:
 
 ## HU-UI-05 · 043 · formulario reutilizable (28/10/2026)
 
-Rama `feature/hu-ui-05-formulario-reutilizable`, que sale de la de la Fase 1. Se rebasea sobre
-`develop` cuando la Fase 1 entre. **Sin push** hasta que se apruebe. Cuerpo del PR en
+Rama `feature/hu-ui-05-formulario-reutilizable`, PR #134, con base en la rama de la Fase 1
+(#135): no se rebasea, GitHub reapunta el PR cuando la Fase 1 entre. Cuerpo del PR en
 `docs/sprint04/pr-hu-ui-05.md`.
 
 - Componente en `compartido/formulario/`.
 - Frontend 48/48.
 - CA-001, CA-002 y CA-003: verificados.
-- CA-004: **parcialmente verificado**. Verificado para la validación de modelo; NO verificado
-  para las reglas de negocio, que esperan la decisión de backend del campo en el ProblemDetails.
+- CA-004, en dos partes (28/10, revisión de Javi: «parcialmente verificado» no es un estado de
+  la DoD): **verificado** para la validación de modelo; **NO verificado** para las reglas de
+  negocio, con motivo: el ProblemDetails no dice el campo. Espera la decisión de backend del
+  campo en el ProblemDetails. Igual en la proforma (v1.2) y en el cuerpo del PR.
 - HU-UI-04 sigue en curso (Javi).
 - Ninguna pantalla lo usa todavía.
 - **Issue de la 043: pendiente de creación.** No existe: los Issues creados uno por HU son 016,

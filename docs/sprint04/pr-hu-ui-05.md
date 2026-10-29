@@ -1,10 +1,10 @@
 ## 043 · HU-UI-05 · Componente de formulario reutilizable
 
-Rama `feature/hu-ui-05-formulario-reutilizable`. Sale de `feature/hu-ui-fase1-fundamentos-visuales`,
-que todavía no está en develop, porque necesita sus tokens y el botón en carga. **Cuando la Fase 1
-entre en `develop`, esta rama se rebasea sobre `develop` y el diff se revisa ahí.**
+Rama `feature/hu-ui-05-formulario-reutilizable`. **Base: `feature/hu-ui-fase1-fundamentos-visuales`**
+(#135), porque necesita sus tokens y el botón en carga. El diff de este PR es solo el de la HU;
+cuando la Fase 1 entre en `develop`, GitHub reapunta este PR solo.
 
-Los CA salen de `docs/historias/043-HU-UI-05.md` (v1.1). **HU-UI-04 (el listado, HU 042) sigue en
+Los CA salen de `docs/historias/043-HU-UI-05.md` (v1.2). **HU-UI-04 (el listado, HU 042) sigue en
 curso**: Javi la está haciendo en paralelo. Su precondición se quitó de la proforma en la v1.1
 porque era un resto del plan viejo: el formulario no usa el listado.
 
@@ -30,16 +30,21 @@ la carpeta nueva.
 | CA-001 · completo y válido → envía y confirma | Verificado | `CA-001 · completo y válido…` |
 | CA-002 · obligatorio vacío o formato inválido → bloquea, indica el campo, no llama a la API | Verificado | dos tests `CA-002 · …` |
 | CA-003 · agregar o quitar un multivaluado sin afectar el resto | Verificado | `CA-003 · agregar y quitar un teléfono…` |
-| CA-004 · motivo del servidor junto al campo | **Parcialmente verificado** | ver abajo |
+| CA-004 · motivo del servidor junto al campo, por **validación de modelo** | Verificado | `CA-004 · un error del servidor por campo…` y `los errors de un 400 de validación…` |
+| CA-004 · motivo del servidor junto al campo, por **regla de negocio** | **NO verificado** | ver abajo |
 
-**CA-004, parcialmente verificado.** Para los errores de **validación de modelo** (los `errors`
-por propiedad de un 400) está verificado. Para los de **regla de negocio** (409 y 400 de un caso
-de uso) **no**: hoy la API devuelve el motivo como `detail` de texto, sin decir a qué campo
-corresponde, así que va al mensaje general del formulario.
+**CA-004 se declara en dos partes**, porque la DoD no tiene un estado intermedio:
+- **Validación de modelo** (los `errors` por propiedad de un 400): **verificado**. Cada error va
+  junto a su campo, vinculado y con `role="alert"`.
+- **Regla de negocio** (409 y 400 de un caso de uso): **NO verificado**. Motivo: el ProblemDetails
+  no indica a qué campo corresponde el error; la API devuelve el motivo como `detail` de texto, y
+  el formulario lo muestra en el mensaje general. Lo deja fijado
+  `el detail de un ProblemDetails (regla de negocio) va al mensaje general: hoy no dice el campo`.
 
-Queda pendiente una decisión de backend, registrada en `ESTADO.md`: agregar el campo como
-miembro de extensión del ProblemDetails en `MapeoResultado.Falla`, para `Conflicto` e `Invalido`.
-Cuando esté, el componente no cambia: cambia lo que la pantalla le pasa en `erroresPorCampo`.
+Lo destraba la **decisión de backend del 28/10/2026**, registrada en `docs/sprint04/ESTADO.md`:
+agregar el campo como miembro de extensión del ProblemDetails en `MapeoResultado.Falla`, para
+`Conflicto` e `Invalido`. Cuando esté, el componente no cambia: cambia lo que la pantalla le pasa
+en `erroresPorCampo`. La proforma (v1.2) registra el mismo estado.
 
 Además, con una prueba cada uno:
 - etiqueta asociada por for/id;
