@@ -105,8 +105,9 @@ describe('Login · pantalla de acceso (HU-UI-03)', () => {
     expect(servidor.match('/api/acceso/login').length).withContext('pedidos de login').toBe(1);
   }));
 
-  it('un ingreso envía lo que el usuario escribió en cada campo', () => {
+  it('un ingreso envía lo que el usuario escribió en cada campo', async () => {
     montar();
+    await fixture.whenStable(); // NgForm registra los controles en una microtarea.
     intentar('admin', 'buena');
     expect(servidor.expectOne('/api/acceso/login').request.body).toEqual({ nombreUsuario: 'admin', contrasena: 'buena' });
   });

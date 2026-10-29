@@ -46,7 +46,7 @@ const CREDENCIALES = 'Usuario o contraseña incorrectos.';
       <form class="tarjeta-cuerpo" (ngSubmit)="entrar()">
         <h1>Acceso al sistema</h1>
         <label>Usuario
-          <input #usuario name="usuario" [(ngModel)]="usuario" autocomplete="username" required />
+          <input #campoUsuario name="usuario" [(ngModel)]="usuario" autocomplete="username" required />
         </label>
         <label>Contraseña
           <input name="contrasena" type="password" [(ngModel)]="contrasena" autocomplete="current-password" required />
@@ -67,7 +67,7 @@ export class Login {
   readonly enviando = signal(false);
   /** Un objeto por intento: dos errores iguales seguidos se vuelven a anunciar (aviso-flotante.ts). */
   protected readonly aviso = signal<Aviso | null>(null);
-  private readonly campoUsuario = viewChild.required<ElementRef<HTMLInputElement>>('usuario');
+  private readonly campoUsuario = viewChild.required<ElementRef<HTMLInputElement>>('campoUsuario');
 
   constructor() {
     const motivo = this.sesion.avisoAlCerrar();
