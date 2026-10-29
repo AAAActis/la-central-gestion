@@ -295,7 +295,7 @@ la vinculación funcionando con su pantalla. Todo lo demás es negociable; eso n
 |---|---|---|---|---|---|
 | Pista C · C1 | 017 · HU-STK-01 | **Mergeada en develop (#131, 20/10/2026).** Compuerta APTO (verificador y auditor). Cuerpo en `docs/sprint04/pr-hu-stk-01.md` | `feature/HU-STK-01-existencias-ubicacion` | #131 · Refs #24 | 435 (148) |
 | Pista B · B1 | 039 · HU-UI-01 | **Mergeada en develop (#130, 20/10/2026).** Aprobada con correcciones (Lauti), aplicadas antes del merge. CA2 NO verificado como está escrito | `feature/HU-UI-01-estructura-base` | #130 · Refs #40 | backend 435 (148) · frontend 21 |
-| Pista C · HU 041 + Fase 2 | 041 · HU-UI-03 | **PR abierto contra develop (29/10/2026).** CA-001 a CA-004 pasan. Acceso NO verificado contra 01-acceso.png (no está en el repo) | `feature/hu-ui-03-control-de-sesion` (de `develop`) | cuerpo en `docs/sprint04/pr-hu-ui-03.md` | frontend 83 (48 + 35) · backend 436, 148 sin enlace |
+| Pista C · HU 041 + Fase 2 | 041 · HU-UI-03 | **PR abierto contra develop (29/10/2026).** CA-001 a CA-004 pasan. Acceso NO verificado contra 01-acceso.png (no está en el repo) | `feature/hu-ui-03-control-de-sesion` (de `develop`) | #138 · cuerpo en `docs/sprint04/pr-hu-ui-03.md` | frontend 83 (48 + 35) · backend 436, 148 sin enlace |
 
 **Deuda nueva, de entorno (19/10/2026):** con un rol personal de PostgreSQL con tope de
 conexiones (`lacentral_lauti`), `dotnet test` en paralelo da **140 fallos falsos**
@@ -490,7 +490,7 @@ commitea en `develop`, todo entra por PR.
 ## HU-UI-03 · 041 + Fase 2 · control de sesión, marco y acceso (29/10/2026)
 
 Rama `feature/hu-ui-03-control-de-sesion`, sale de `develop` (6a4a942): la Fase 1 (#135) y la
-HU-UI-05 (#134) ya están ahí. Push aprobado el 29/10/2026; PR contra `develop`, con el cuerpo en
+HU-UI-05 (#134) ya están ahí. Push aprobado el 29/10/2026; **PR #138** contra `develop`, con el cuerpo en
 `docs/sprint04/pr-hu-ui-03.md`.
 
 **Hecho:**
@@ -637,7 +637,7 @@ Va en `frontend/src/app/compartido/` y se prueba con
 criterios de la PISTA B. Avisar a Lauti y a Santi de la respuesta (b) de Sergio: HU-CMP-08 no se
 resuelve con archivo.
 
-**HU-UI-03 (041):** PR abierto contra `develop` (`docs/sprint04/pr-hu-ui-03.md`), en revisión.
+**HU-UI-03 (041):** PR #138 abierto contra `develop` (`docs/sprint04/pr-hu-ui-03.md`), en revisión.
 Faltan las referencias y el fondo de Javi para cerrar las tres declaraciones NO verificadas. Si
 entra HU-UI-06, va a necesitar un merge sobre `formulario.ts`.
 
