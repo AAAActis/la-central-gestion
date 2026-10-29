@@ -90,7 +90,8 @@ describe('Login · pantalla de acceso (HU-UI-03)', () => {
     montar();
     const primarios = Array.from(raiz().querySelectorAll('button.primario'));
     expect(primarios).toEqual([ingresar()]);
-    expect(ingresar().textContent?.trim()).toBe('Ingresar');
+    // El botón en carga guarda las dos etiquetas para no cambiar de ancho: cuenta la visible.
+    expect(ingresar().querySelector('.boton-etiquetas > :not(.oculta)')?.textContent?.trim()).toBe('Ingresar');
   });
 
   it('mientras ingresa, el botón queda deshabilitado y ocupado, y no envía dos veces', fakeAsync(() => {
