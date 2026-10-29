@@ -68,6 +68,10 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
 
         var config = new NpgsqlConnectionStringBuilder(conexion);
         ValidarBase(config.Database);
+        // Con una sola conexión, los tests de dos conexiones simultáneas se serializan y pasan sin probar nada.
+        if (config.MaxPoolSize < 2)
+            throw new InvalidOperationException($"Maximum Pool Size = {config.MaxPoolSize} en la conexión de test: " +
+                "tiene que ser al menos 2. Ver la cuenta de conexiones en LaCentral.Tests/README.md.");
         var origen = Environment.GetEnvironmentVariable("LA_CENTRAL_TEST_SCHEMA") ?? "public";
         if (!Regex.IsMatch(origen, "^[a-z_][a-z0-9_]*$"))
             throw new InvalidOperationException("El esquema fuente de test no es un identificador válido.");

@@ -132,8 +132,8 @@ Esta pantalla es **el entregable del sprint**: es la que se le muestra a Sergio.
 
 | # | Estado | Rama | PR | Tests | PG |
 |---|---|---|---|---|---|
-| B1 | **Aprobada con correcciones por Lauti (20/10/2026); correcciones aplicadas, esperando merge.** Actualizada con develop por merge (trae #131). verificador-tdd: ronda 1 NO APTO (3 mutaciones sobrevivientes), ronda 2 **APTO**; correcciones (merge y título, ronda 3 acotada): **APTO**. auditor-persistencia: no aplica (no toca backend). | `feature/HU-UI-01-estructura-base` | #130 · Refs #40; cuerpo en `docs/sprint04/pr-b1-hu-ui-01.md` | frontend 21/21 (antes no había) · backend 435/435 después del merge | 0 nuevos · 148 |
-| B2 | Pendiente. Arranca cuando B1 entre en develop. | — | — | — | — |
+| B1 | **Mergeada en develop (#130, 20/10/2026).** Aprobada con correcciones por Lauti; correcciones aplicadas antes del merge. Actualizada con develop por merge (trae #131). verificador-tdd: ronda 1 NO APTO (3 mutaciones sobrevivientes), ronda 2 **APTO**; correcciones (merge y título, ronda 3 acotada): **APTO**. auditor-persistencia: no aplica (no toca backend). | `feature/HU-UI-01-estructura-base` | #130 · Refs #40; cuerpo en `docs/sprint04/pr-b1-hu-ui-01.md` | frontend 21/21 (antes no había) · backend 435/435 después del merge | 0 nuevos · 148 |
+| B2 | Pendiente. Desbloqueada: B1 está en develop desde el 20/10. | — | — | — | — |
 | B3 | Pendiente. Depende de B2 y del endpoint de A2. | — | — | — | — |
 
 **CA de HU-UI-01:** CA1 verificado · CA2 · NO verificado como está escrito. Motivo: no existe
@@ -293,8 +293,8 @@ la vinculación funcionando con su pantalla. Todo lo demás es negociable; eso n
 
 | Fase | HU | Estado | Rama | PR | Tests (PG) |
 |---|---|---|---|---|---|
-| Pista C · C1 | 017 · HU-STK-01 | Compuerta APTO (verificador y auditor, 20/10/2026); PR abierto, a revisar. Cuerpo en `docs/sprint04/pr-hu-stk-01.md` | `feature/HU-STK-01-existencias-ubicacion` | #131 · Refs #24 | 435 (148) |
-| Pista B · B1 | 039 · HU-UI-01 | Aprobada con correcciones (Lauti, 20/10/2026); correcciones aplicadas, esperando merge. CA2 NO verificado como está escrito | `feature/HU-UI-01-estructura-base` | #130 · Refs #40 | backend 435 (148) · frontend 21 |
+| Pista C · C1 | 017 · HU-STK-01 | **Mergeada en develop (#131, 20/10/2026).** Compuerta APTO (verificador y auditor). Cuerpo en `docs/sprint04/pr-hu-stk-01.md` | `feature/HU-STK-01-existencias-ubicacion` | #131 · Refs #24 | 435 (148) |
+| Pista B · B1 | 039 · HU-UI-01 | **Mergeada en develop (#130, 20/10/2026).** Aprobada con correcciones (Lauti), aplicadas antes del merge. CA2 NO verificado como está escrito | `feature/HU-UI-01-estructura-base` | #130 · Refs #40 | backend 435 (148) · frontend 21 |
 
 **Deuda nueva, de entorno (19/10/2026):** con un rol personal de PostgreSQL con tope de
 conexiones (`lacentral_lauti`), `dotnet test` en paralelo da **140 fallos falsos**
@@ -323,6 +323,37 @@ paralelo × tamaño del pool*, y por eso revienta el `CONNECTION LIMIT` del rol 
 `53300`. Subir el límite del rol es un parche. Corresponde acotar `maxParallelThreads`
 en la configuración de xUnit y documentar en el README la cuenta
 *hilos × pool ≤ límite del rol*, para que el número deje de ser adivinado.
+
+**D-27b · CERRADA y confirmada (28/10/2026).** Rama `fix/d27-entorno-de-pruebas`.
+`xunit.runner.json` fija `maxParallelThreads = 5` y `parallelAlgorithm = conservative`, y el
+README de Tests documenta la cuenta **T × (1 + P) + m ≤ L**. Para L = 25, P = 3 y m = 5, da T = 5.
+La validó la medición directa del pico en `pg_stat_activity`:
+
+| T | P | Techo | Pico | L | Resultado |
+|---|---|---|---|---|---|
+| 16 | 8 | 144 | 17 | 60 | 435/435 |
+| 5 | 3 | 20 | 8 | 60 | 435/435, 3 min |
+| 5 | 3 | 20 | 9 | 25 | abortada, 0 `53300` |
+| 5 | 3 | 20 | 4 | 25 | 135 fallos de red, 0 `53300` |
+| 5 | 3 | 20 | 8 | 25 | **436/436, 2 min 57 s · 0 `53300`** |
+
+**Confirmación con L = 25 (28/10/2026):** con el enlace sano y el rol en 25, `dotnet test`
+completo dio **436/436, 0 `53300`**, pico de 8 conexiones. La cota T × (1 + P) + m ≤ L deja de
+ser una recomendación: está demostrada. El rol de Santi queda en 25.
+
+**Deuda · falso verde con P = 1 (28/10/2026), resuelta en la misma rama.** Con
+`Maximum Pool Size=1`, `DosAltasSimultaneas_CodigosInternosDistintos` y
+`DosBajasAbiertasSimultaneas_...` pasaban en serie: no probaban la concurrencia que declaran.
+Ahora el fixture exige P ≥ 2 antes de conectarse (`PostgreSqlPoolTests`, con mutación verificada).
+
+**Decisión para el Sprint 5 · PostgreSQL local por desarrollador (propuesta, 28/10/2026).**
+Hoy la suite depende de un enlace de red compartido. Cuando ese enlace se degrada, 148 tests
+fallan por causas que no están en el código, y esos fallos se confunden con regresiones. Además,
+los tres roles comparten el `max_connections = 100` de un solo motor, lo que obliga a racionar el
+`CONNECTION LIMIT`. Con un Postgres local, cada desarrollador tiene su motor: no hay red de por
+medio, la cuenta de conexiones es solo suya, y la base con datos reales queda fuera del camino de
+los tests. Costo: mantener la plantilla local al día con los scripts de `backend/db/`. D-27a
+(verificar la identidad del motor) se vuelve más necesaria con varios motores.
 
 **D-27c · menor.** El prefijo de esquema de test es `pr110_test_`, con el número de
 un PR viejo hardcodeado. Debería ser `lacentral_test_`, y la limpieza debería correr
@@ -427,6 +458,7 @@ commitea en `develop`, todo entra por PR.
    **tu** HU está cerrada; si no lo está, **PARÁ**.
 2. Corré `dotnet build --no-incremental` y `dotnet test` desde `backend/`. Con HU-STK-01
    mergeada tiene que dar **435 tests, 148 contra PostgreSQL real, 0 omitidos, 0 warnings**
+   (436 con D-27 mergeada: suma `PostgreSqlPoolTests`, que no se conecta)
    (sin ella, 431 y 145). Si da cientos de fallos `53300`, es el tope de conexiones del rol:
    corré en serie (ver la deuda de entorno arriba). Si no coincide por otra causa, **PARÁ y
    averiguá por qué** antes de tocar nada.
@@ -435,12 +467,12 @@ commitea en `develop`, todo entra por PR.
    camino real, y después el arreglo.
 4. Recién entonces, la HU que te toque según tu pista.
 
-**Pista B (Javi), aparte de los puntos 1 a 3, que son de la pista A:** B1 está aprobada con
-correcciones (#130), ya aplicadas, y espera merge (`feature/HU-UI-01-estructura-base`). Con B1
+**Pista B (Javi), aparte de los puntos 1 a 3, que son de la pista A:** B1 está mergeada en
+develop (#130, 20/10/2026). Con B1
 y HU-STK-01 en develop, los números son **435 tests y 148 contra PostgreSQL**, más la suite de
 frontend (`ng test`, 21 tests). La siguiente es **B2 · 042 · HU-UI-04 · componente
-de listado reutilizable**. Sale de develop **después** de que B1 entre; si B1 no entró, sale de
-la rama de B1 y se declara en el PR. Va en `frontend/src/app/compartido/` y se prueba con
+de listado reutilizable**. Sale de develop, que ya tiene B1.
+Va en `frontend/src/app/compartido/` y se prueba con
 `ng test` (ver `frontend/src/app/README.md`). Antes de B2, leé la habilidad de diseño y los
 criterios de la PISTA B. Avisar a Lauti y a Santi de la respuesta (b) de Sergio: HU-CMP-08 no se
 resuelve con archivo.
