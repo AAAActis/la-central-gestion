@@ -361,6 +361,23 @@ prueba.
 
 ---
 
+**Ramas y bases de los PR (28/10/2026, revisión de Javi).** Los commits 792d183 (proformas de
+las 52 HU y replan) y 7f92eb2 (sistema visual, prompt y adenda) se commitearon en el `develop`
+local y las tres ramas salieron de ahí: cada PR los revisaba de nuevo. Pasan a su propio PR,
+`docs/proformas-y-sistema-visual`, y las bases quedan:
+
+| Rama | PR | Base |
+|---|---|---|
+| `docs/proformas-y-sistema-visual` | nuevo | `develop` |
+| `fix/d27-entorno-de-pruebas` | #133 | `docs/proformas-y-sistema-visual` |
+| `feature/hu-ui-fase1-fundamentos-visuales` | #135 | `docs/proformas-y-sistema-visual` |
+| `feature/hu-ui-05-formulario-reutilizable` | #134 | `feature/hu-ui-fase1-fundamentos-visuales` |
+
+No hizo falta reescribir historia: las tres ramas ya estaban encima de 7f92eb2, cuyo padre es
+`origin/develop`. Orden de merge: docs → #133 y #135 (cualquiera primero) → #134. GitHub reapunta
+cada PR cuando su base se mergea. **El `develop` local se realineó con `origin/develop`:** nada se
+commitea en `develop`, todo entra por PR.
+
 ## PRÓXIMA SESIÓN
 
 **Arrancá leyendo esto y `docs/PROMPT-FASE.md`.** Después:
