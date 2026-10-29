@@ -295,7 +295,7 @@ la vinculación funcionando con su pantalla. Todo lo demás es negociable; eso n
 |---|---|---|---|---|---|
 | Pista C · C1 | 017 · HU-STK-01 | **Mergeada en develop (#131, 20/10/2026).** Compuerta APTO (verificador y auditor). Cuerpo en `docs/sprint04/pr-hu-stk-01.md` | `feature/HU-STK-01-existencias-ubicacion` | #131 · Refs #24 | 435 (148) |
 | Pista B · B1 | 039 · HU-UI-01 | **Mergeada en develop (#130, 20/10/2026).** Aprobada con correcciones (Lauti), aplicadas antes del merge. CA2 NO verificado como está escrito | `feature/HU-UI-01-estructura-base` | #130 · Refs #40 | backend 435 (148) · frontend 21 |
-| Pista C · HU 041 + Fase 2 | 041 · HU-UI-03 | **PR abierto contra develop (29/10/2026).** CA-001 a CA-004 pasan. Acceso NO verificado contra 01-acceso.png (no está en el repo) | `feature/hu-ui-03-control-de-sesion` (de `develop`) | #138 · cuerpo en `docs/sprint04/pr-hu-ui-03.md` | frontend 83 (48 + 35) · backend 436, 148 sin enlace |
+| Pista C · HU 041 + Fase 2 | 041 · HU-UI-03 | **PR abierto contra develop (29/10/2026).** CA-001 a CA-004 pasan. Acceso NO verificado contra 01-acceso.png (no está en el repo) | `feature/hu-ui-03-control-de-sesion` (de `develop`) | #138 · cuerpo en `docs/sprint04/pr-hu-ui-03.md` | frontend 88 (48 + 40) · backend 436, 148 sin enlace |
 
 **Deuda nueva, de entorno (19/10/2026):** con un rol personal de PostgreSQL con tope de
 conexiones (`lacentral_lauti`), `dotnet test` en paralelo da **140 fallos falsos**
@@ -391,6 +391,14 @@ Material: `docs/sprint04/ADENDA-REDISENO-UI.md`, que manda sobre el prompt.
 - Botones con los seis requisitos de la §7.
 - `prefers-reduced-motion`.
 - Botón en carga, modal y aviso flotante en `compartido/`.
+
+**Corrección al registro (29/10/2026).** El cuerpo del PR #135 declaró «los botones con los seis
+requisitos de la §7», pero **dos de las cinco variantes estaban incompletas**:
+- `primario` no tenía regla: la clase se declaraba y el botón se veía secundario;
+- `peligro` no ponía el texto en blanco: `--tinta` sobre `--peligro`, 2,32:1, no cumple AA.
+
+Las dos se cerraron en la HU-UI-03 (PR #138), con un test por variante en
+`compartido/botones.spec.ts`. Se registra porque la tesis cita estos PR como evidencia.
 
 **Tests:** frontend 35/35 (21 previos + 14 nuevos). El backend no se tocó y no se corrió: el
 enlace a la base está degradado (ver D-27b).
@@ -514,6 +522,9 @@ HU-UI-05 (#134) ya están ahí. Push aprobado el 29/10/2026; **PR #138** contra 
   Motivo: el componente no soportó su primer uso real. Sin `password`, la contraseña se ve en
   claro. Sin `username` y `current-password`, los gestores de contraseñas no completan el acceso
   y el operador escribe a mano todos los días. Lo revisa Javi sabiendo que está.
+- **`button.peligro` con texto blanco y borde propio: otro hueco de la Fase 1, cerrado acá.**
+  `botones.spec.ts` prueba las cinco variantes de la §7, un test por variante: se distingue de las
+  otras cuatro, el texto contrasta AA con su relleno y lleva su propio color de texto.
 - **`button.primario` en `styles.css`: hueco de la Fase 1 que este PR cierra.** La clase se
   declaraba (formulario, acceso) pero ninguna regla la pintaba, y no la hubo en ninguna rama. Sale
   de la §7: relleno `--rojo`, texto `--blanco`, `--rojo-osc` al apoyar el cursor. La capa, el foco,
@@ -522,6 +533,11 @@ HU-UI-05 (#134) ya están ahí. Push aprobado el 29/10/2026; **PR #138** contra 
 - Manual: `docs/manual/acceso.md` (DoD 9) y `navegacion.md` corregido (F5 y la raya blanca).
 - Proforma 041 en E4 con los CA marcados.
 
+**Lo que entrega contra CA:** dos de cuatro, CA-002 y CA-004. CA-001 y CA-003 ya se cumplían
+desde B1. El trabajo visual de la Fase 2 no responde a ningún CA: viene del prompt del rediseño.
+Su único criterio es la comparación con las referencias, NO verificada porque
+`docs/diseno/referencias/` no existe en el repo.
+
 **CA (proforma `docs/historias/041-HU-UI-03.md`, leídos de ahí):**
 - **CA-001** pasa. Es caracterización: ya se cumplía desde B1.
 - **CA-002** pasa. La expiración se detecta por el 401 de la API.
@@ -529,12 +545,12 @@ HU-UI-05 (#134) ya están ahí. Push aprobado el 29/10/2026; **PR #138** contra 
   entrar, el usuario queda en la pantalla que pidió.
 - **CA-004** pasa. En Chrome real, `history.back()` después de Salir muestra el acceso.
 
-**Tests:** frontend **83/83** (48 previos + 35 nuevos). Backend: **436 en total; 288 verdes y 148
+**Tests:** frontend **88/88** (48 previos + 40 nuevos). Backend: **436 en total; 288 verdes y 148
 en rojo por `Timeout during connection attempt` contra 100.125.169.91:5432** (enlace de
 Tailscale). No hubo `53300`. Son exactamente los 148 de PostgreSQL, y esta rama no toca backend.
 
-**Mutaciones:** 35 distintas sobre producción: `sesion.ts`, `login.ts`, `app.ts`, `formulario.ts`
-y la regla `button.primario`. Todas dejan al menos un test en rojo. Dos sobrevivieron
+**Mutaciones:** 41 distintas sobre producción: `sesion.ts`, `login.ts`, `app.ts`, `formulario.ts`
+y las reglas de las variantes de botón. Todas dejan al menos un test en rojo. Dos sobrevivieron
 después de migrar el acceso al formulario (la contraseña como texto, sin `autocompletar`): el
 formulario lo probaba en general, pero no que la pantalla lo pidiera. Se agregó ese test y las dos
 mueren. El bug de `#usuario` (abajo), reintroducido tal cual, deja en rojo solo el test del cuerpo
@@ -590,12 +606,10 @@ teclado, así que el usuario de teclado queda con un cartel del que solo sale co
   pantalla, nunca a `body`.»
 
 **Observaciones sin decidir:**
-1. **Grosor del filete y del panel de marca.** Se usó `--grosor-foco` (3 px), como ya hace la raya
-   del activo en `styles.css`. Si el filete tiene otro grosor, hace falta un token.
-2. **`button.peligro` no pone el texto en blanco.** La §7 dice «`--peligro`, texto blanco», y la
-   regla solo pone el relleno, así que el texto queda en `--tinta` sobre rojo oscuro. Es otro hueco
-   de la Fase 1 y está fuera del alcance de este PR: no se tocó.
-3. **`node_modules` sin Karma.** `ng test` fallaba con `Cannot find module 'karma-jasmine'`. Se
+1. **Filete del encabezado y del panel de marca (decisión del 29/10/2026).** Queda con
+   `--grosor-foco` (3 px), como la raya del activo. Corresponde un token propio, `--filete`, cuando
+   llegue `01-acceso.png` y se pueda medir. No se cambia a ciegas.
+2. **`node_modules` sin Karma.** `ng test` fallaba con `Cannot find module 'karma-jasmine'`. Se
    arregló con `npm ci` (el lock no cambió). `npm` sigue bloqueando los 4 install scripts de N4.
 
 **Deuda registrada · insumo del RNF de seguridad (29/10/2026).**

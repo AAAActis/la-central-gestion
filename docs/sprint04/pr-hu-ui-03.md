@@ -27,7 +27,7 @@ Los CA salen de `docs/historias/041-HU-UI-03.md`, que queda en E4.
   - Al abrirse, el foco queda en Usuario, también después de Salir o de un vencimiento.
 - Manual (DoD 9): `docs/manual/acceso.md`, y `navegacion.md` corregido (F5 y la raya blanca).
 
-### ⚠ Dos cambios en código ajeno ya mergeado · para revisar sabiendo que están
+### ⚠ Tres cambios en código ajeno ya mergeado · para revisar sabiendo que están
 
 **1 · Extensión de `compartido/formulario/` (HU-UI-05, recién mergeado).** El acceso es el primer
 uso real del componente, y el componente no lo soportó:
@@ -54,6 +54,19 @@ al apoyar el cursor. La capa, el foco, la carga y el deshabilitado son los de la
 de las variantes de botón, así que un conflicto con otro cambio en el archivo es trivial. La prueba
 está en `compartido/botones.spec.ts`, que afirma diferencias entre variantes y no valores de color.
 
+**3 · `button.peligro` sin texto blanco: otro hueco de la Fase 1, cerrado acá.** La regla solo
+ponía el relleno, y el texto quedaba en `--tinta` sobre `--peligro`: **2,32:1, no cumple AA**. Se
+agregaron `color: var(--blanco)` y el borde propio, con el mismo criterio que `.primario`.
+`botones.spec.ts` ahora prueba **las cinco variantes de la §7, un test por variante**: cada una se
+distingue de las otras cuatro, su texto contrasta AA con su relleno (calculado de los valores
+calculados, sin afirmar colores) y lleva su propio color de texto. Sin esta última afirmación
+sobrevivía una mutación: `peligro-borde` sin su texto `--rojo`. Es la familia de defectos de la
+Fase 1 (variantes incompletas); el test la cierra para la próxima.
+
+**Filete del encabezado y del panel de marca:** usa `--grosor-foco` (3 px), igual que la raya del
+ítem activo. Corresponde un token propio, `--filete`, cuando llegue `01-acceso.png` y se pueda
+medir. No se cambió a ciegas.
+
 ### Criterios de aceptación
 
 | CA | Estado | Prueba |
@@ -63,12 +76,22 @@ está en `compartido/botones.spec.ts`, que afirma diferencias entre variantes y 
 | CA-003 · sin sesión, una URL interna lleva al ingreso | Verificado (caracterización) | `CA-003 · sin sesión, escribir la dirección…` |
 | CA-004 · Salir descarta el token y volver atrás no deja operar | Verificado | `CA-004 · Salir descarta el token…`, `CA-004 · después de Salir, las llamadas…`, `CA-004 · después de Salir, volver a la pantalla anterior…`; en Chrome, `history.back()` muestra el acceso |
 
+**Qué entrega este PR contra criterios de aceptación, y qué no.** De los cuatro CA de la
+proforma, este PR entrega dos: **CA-002 y CA-004**. **CA-001 y CA-003 son caracterización**: ya se
+cumplían desde B1 (#130), y acá solo quedan cubiertos por tests. Además, **todo el trabajo visual
+de la Fase 2** (marco, marca, tarjeta partida, fondo hexagonal) **no responde a ningún criterio de
+aceptación**: viene del prompt del rediseño (`docs/sprint04/PROMPT-REDISENO-UI.md` §3, Fase 2), no
+de una HU. Su único criterio es la comparación con las referencias aprobadas, y esa comparación
+está **NO verificada**, porque `docs/diseno/referencias/` no existe en el repo: no está
+`01-acceso.png` ni ninguna de las otras doce capturas, y tampoco `docs/diseno/prototipo/`. Lo
+visual de este PR está construido sobre `SISTEMA-VISUAL.md` y sin contrastar con su referencia.
+
 ### Verificación
 
 - `npx ng build`: OK.
-- `npx ng test --watch=false --browsers=ChromeHeadless`: **83/83** (48 previos + 35 nuevos).
-- **Mutaciones:** 35 distintas, sobre `sesion.ts`, `login.ts`, `app.ts`, `formulario.ts` y la regla
-  `button.primario`. Todas dejan al menos un test en rojo.
+- `npx ng test --watch=false --browsers=ChromeHeadless`: **88/88** (48 previos + 40 nuevos).
+- **Mutaciones:** 41 distintas, sobre `sesion.ts`, `login.ts`, `app.ts`, `formulario.ts` y las reglas
+  de las variantes de botón. Todas dejan al menos un test en rojo.
 - `dotnet test`: **436 en total; 288 verdes y 148 en rojo por `Timeout during connection attempt`**
   contra el PostgreSQL de Tailscale. No hubo `53300`. Son exactamente los 148 de PostgreSQL, y este
   PR no toca `backend/`.
@@ -93,7 +116,6 @@ está en `compartido/botones.spec.ts`, que afirma diferencias entre variantes y 
   interceptada.
 - **Aviso flotante: registrado como deuda, no arreglado.** Pierde el foco al cerrarse y no se cierra
   con Escape. Hay propuesta de agregado a la §8 en `ESTADO.md`.
-- **`button.peligro` sin texto blanco** (§7): otro hueco de la Fase 1, fuera de alcance. Anotado.
 - **Deuda de seguridad (insumo del RNF):** cookie `httpOnly` con refresco y CSRF en vez de
   `sessionStorage`. Se postergó porque exige tocar el backend. Detalle en `ESTADO.md`.
 - La suite de frontend corre solo en Chromium.
