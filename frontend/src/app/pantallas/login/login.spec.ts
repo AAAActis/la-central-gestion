@@ -121,6 +121,12 @@ describe('Login · pantalla de acceso (HU-UI-03)', () => {
     expect(aviso()?.textContent?.trim()).toBe(AVISO_SESION_VENCIDA);
   }));
 
+  it('al abrirse, el foco queda en Usuario: después de Salir o de un vencimiento no se pierde', async () => {
+    montar();
+    await fixture.whenStable();
+    expect(document.activeElement).toBe(campo('Usuario'));
+  });
+
   it('la tarjeta lleva el panel con la marca en su variante completa', () => {
     montar();
     expect(raiz().querySelector('app-marca .logo.completa')).not.toBeNull();
