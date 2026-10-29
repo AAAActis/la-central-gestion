@@ -8,7 +8,7 @@ import { BotonCarga } from '../boton-carga';
 export interface CampoFormulario {
   nombre: string;
   etiqueta: string;
-  tipo?: 'text' | 'number' | 'date' | 'email' | 'tel';
+  tipo?: 'text' | 'number' | 'date' | 'email' | 'tel' | 'password';
   obligatorio?: boolean;
   /** Formato, como el atributo pattern: la expresión tiene que cubrir todo el valor. */
   patron?: string;
@@ -16,6 +16,8 @@ export interface CampoFormulario {
   ayuda?: string;
   /** Una lista que se agrega y se quita (teléfonos, direcciones, códigos). */
   multivaluado?: boolean;
+  /** El atributo autocomplete: sin username y current-password, los gestores de contraseñas no completan el acceso. */
+  autocompletar?: string;
 }
 
 export type ValoresFormulario = Record<string, unknown>;
