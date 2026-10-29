@@ -1,14 +1,14 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { App } from './app';
 import { appConfig } from './app.config';
 import { rutasDe } from './app.routes';
 import { MODULOS_DEL_SISTEMA } from './modulos';
 import { MODULOS, Modulo } from './nucleo/acceso';
-import { SesionActual } from './nucleo/sesion';
+import { AVISO_SESION_VENCIDA, SesionActual, agregarToken } from './nucleo/sesion';
 
 @Component({ template: '<p id="pantalla-admin">Pantalla de administrador</p>' })
 class PantallaDeAdministrador {}
@@ -24,7 +24,7 @@ async function armar(modulos: readonly Modulo[]): Promise<ComponentFixture<App>>
     providers: [
       provideRouter(rutasDe(modulos)),
       { provide: MODULOS, useValue: modulos },
-      provideHttpClient(),
+      provideHttpClient(withInterceptors([agregarToken])),
       provideHttpClientTesting(),
     ],
   });
@@ -56,6 +56,9 @@ function pantalla(fixture: ComponentFixture<App>, selector: string): Element | n
 }
 
 describe('App · marco común y navegación (HU-UI-01)', () => {
+  // La sesión se guarda en sessionStorage (HU-UI-03): sin limpiarlo, un test hereda la del anterior.
+  beforeEach(() => sessionStorage.clear());
+
   describe('con los módulos del sistema', () => {
     let fixture: ComponentFixture<App>;
 
@@ -147,6 +150,16 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       expect(pantalla(fixture, 'app-articulos')).toBeNull();
     });
 
+    it('el encabezado lleva la marca compacta, el usuario con su rol y Salir; abajo va el pie', async () => {
+      entrarComo('OPERADOR', 'mostrador');
+      await ir(fixture, '/articulos');
+      const encabezado = (fixture.nativeElement as HTMLElement).querySelector('header')!;
+      expect(encabezado.querySelector('app-marca .logo.compacta')).not.toBeNull();
+      expect(encabezado.textContent).toContain('mostrador');
+      expect(encabezado.textContent).toContain('OPERADOR');
+      expect((fixture.nativeElement as HTMLElement).querySelector('footer')).not.toBeNull();
+    });
+
     for (const ancho of [1024, 768, 480]) {
       it(`CA4 · a ${ancho} px de ancho, el menú y el contenido no desbordan a lo ancho`, async () => {
         const raiz = fixture.nativeElement as HTMLElement;
@@ -186,7 +199,66 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
   });
 });
 
+describe('App · control de sesión (HU-UI-03)', () => {
+  // La sesión se guarda en sessionStorage (HU-UI-03): sin limpiarlo, un test hereda la del anterior.
+  beforeEach(() => sessionStorage.clear());
+
+  let fixture: ComponentFixture<App>;
+
+  beforeEach(async () => {
+    fixture = await armar(MODULOS_DEL_SISTEMA);
+  });
+
+  function enLogin() {
+    return pantalla(fixture, 'app-login') !== null && (fixture.nativeElement as HTMLElement).querySelector('header') === null;
+  }
+
+  it('F5 · recargar la página no pierde la sesión ni la pantalla', async () => {
+    entrarComo('OPERADOR');
+    await ir(fixture, '/factura-compra');
+
+    TestBed.resetTestingModule();
+    const recargada = await armar(MODULOS_DEL_SISTEMA);
+    await ir(recargada, '/factura-compra');
+
+    expect((recargada.nativeElement as HTMLElement).querySelector('main app-factura-compra')).not.toBeNull();
+    expect((recargada.nativeElement as HTMLElement).querySelector('header')).not.toBeNull();
+  });
+
+  it('CA-002 · si la API rechaza el token vencido, vuelve al ingreso e informa que la sesión venció', async () => {
+    entrarComo('OPERADOR');
+    await ir(fixture, '/articulos');
+
+    TestBed.inject(HttpClient).get('/api/articulos').subscribe({ error: () => {} });
+    TestBed.inject(HttpTestingController).expectOne('/api/articulos').flush(null, { status: 401, statusText: 'Unauthorized' });
+    await fixture.whenStable();
+
+    expect(enLogin()).toBeTrue();
+    expect(pantalla(fixture, '.aviso-flotante')?.textContent?.trim()).toBe(AVISO_SESION_VENCIDA);
+  });
+
+  it('CA-003 · sin sesión, escribir la dirección de una pantalla interna lleva al ingreso', async () => {
+    await ir(fixture, '/articulos');
+    expect(enLogin()).toBeTrue();
+    expect(pantalla(fixture, 'app-articulos')).toBeNull();
+  });
+
+  it('CA-004 · después de Salir, volver a la pantalla anterior no deja seguir operando', async () => {
+    entrarComo('OPERADOR');
+    await ir(fixture, '/factura-compra');
+    TestBed.inject(SesionActual).cerrar();
+    await fixture.whenStable();
+
+    await ir(fixture, '/factura-compra');
+    expect(enLogin()).toBeTrue();
+    expect(pantalla(fixture, 'app-factura-compra')).toBeNull();
+  });
+});
+
 describe('appConfig · el cableado real de la aplicación', () => {
+  // La sesión se guarda en sessionStorage (HU-UI-03): sin limpiarlo, un test hereda la del anterior.
+  beforeEach(() => sessionStorage.clear());
+
   it('con los providers de producción, el menú del operador lleva a Artículos y a Factura de compra', async () => {
     TestBed.configureTestingModule({ imports: [App], providers: [...appConfig.providers, provideHttpClientTesting()] });
     const fixture = TestBed.createComponent(App);
