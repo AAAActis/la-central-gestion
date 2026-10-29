@@ -254,7 +254,7 @@ la vinculación funcionando con su pantalla. Todo lo demás es negociable; eso n
 | **HU-CMP-02 · consulta en vivo a los sitios** (13 SP, riesgo Alto) | Credenciales de La Central guardadas, un integrador por proveedor, dependencia de cinco sitios ajenos. Se declara como **etapa 2 del objetivo 4**, Sprint 7 u 8, con **un** proveedor como prueba de concepto. Antes, la medición de cuánto tarda un login más una búsqueda. |
 | HU-STK-04 · transferencias (8 SP) | Sale por las dos HU nuevas de vinculación. Sprint 5. |
 | HU-CMP-04 · Vista Venta (3 SP) | Sprint 5. |
-| HU-UI-05 formulario, HU-UI-08 artículos | La de artículos espera C4: dibujarla antes es rehacerla. |
+| HU-UI-08 artículos | Espera C4: dibujarla antes es rehacerla. (HU-UI-05, el formulario, **sí entra**: se adelantó por el replan del 27/10 y está en curso desde el 28/10.) |
 | HU-019 · descuento de stock por venta | Depende de la factura de venta, Sprint 6. Hacerlo sin la venta es código sin usuario. |
 | HU nueva de precio manual / CasoEspecial | La escriben Javi y Sergio; arrastra tres problemas de concurrencia. Sprint 5. |
 | **N4** · carrera código interno / código de proveedor | Depende de C4: si el código interno deja de ser editable a mano, la carrera se cierra sola. **Se decide acá, se implementa en el siguiente.** |
@@ -324,6 +324,20 @@ paralelo × tamaño del pool*, y por eso revienta el `CONNECTION LIMIT` del rol 
 en la configuración de xUnit y documentar en el README la cuenta
 *hilos × pool ≤ límite del rol*, para que el número deje de ser adivinado.
 
+**Decisión de backend pendiente (28/10/2026) · el campo en el ProblemDetails.**
+`MapeoResultado.Falla` tiene que agregar a qué campo corresponde el error, como miembro de
+extensión del ProblemDetails, para `Conflicto` e `Invalido`. Solo el backend sabe qué regla
+se disparó.
+
+Mientras no esté, el CA-004 de HU-UI-05 se declara en dos partes: **verificado** para los
+errores de validación de modelo (`errors` por propiedad) y **NO verificado**, con motivo, para
+los de regla de negocio, que hoy llegan como mensaje general del formulario.
+
+Cuando se agregue, el componente de formulario no cambia: cambia lo que cada pantalla le pasa
+en el mapa campo → mensaje. Descartados:
+- traducir el texto del error a un campo en el frontend, porque deduce reglas de negocio de una
+  prosa (§1.7);
+- reescribir el CA, porque debilita el criterio para acomodarlo a una limitación de hoy.
 **D-27b · CERRADA y confirmada (28/10/2026).** Rama `fix/d27-entorno-de-pruebas`.
 `xunit.runner.json` fija `maxParallelThreads = 5` y `parallelAlgorithm = conservative`, y el
 README de Tests documenta la cuenta **T × (1 + P) + m ≤ L**. Para L = 25, P = 3 y m = 5, da T = 5.
@@ -433,6 +447,28 @@ Lauti** antes de que lo use en el acceso:
   todavía no las subió.
 - `public/fondo-hex.jpg`: la imagen no está. Hoy queda el color de respaldo.
 
+## HU-UI-05 · 043 · formulario reutilizable (28/10/2026)
+
+Rama `feature/hu-ui-05-formulario-reutilizable`, PR #134, con base en la rama de la Fase 1
+(#135): no se rebasea, GitHub reapunta el PR cuando la Fase 1 entre. Cuerpo del PR en
+`docs/sprint04/pr-hu-ui-05.md`.
+
+- Componente en `compartido/formulario/`.
+- Frontend 48/48.
+- CA-001, CA-002 y CA-003: verificados.
+- CA-004, en dos partes (28/10, revisión de Javi: «parcialmente verificado» no es un estado de
+  la DoD): **verificado** para la validación de modelo; **NO verificado** para las reglas de
+  negocio, con motivo: el ProblemDetails no dice el campo. Espera la decisión de backend del
+  campo en el ProblemDetails. Igual en la proforma (v1.2) y en el cuerpo del PR.
+- HU-UI-04 sigue en curso (Javi).
+- Ninguna pantalla lo usa todavía.
+- **Issue de la 043: pendiente de creación.** No existe: los Issues creados uno por HU son 016,
+  017, 030, 032, 039, 042, 050, 053 y 054, y la 043 estaba fuera del sprint hasta el replan
+  del 27/10. Al crearlo, va con el milestone Sprint 4.
+- **Viene un `select`.** El formulario no tiene campos de selección porque ningún CA los pide.
+  Cuando una pantalla lo necesite (probablemente la 045, clientes y proveedores), tiene que llegar
+  con su criterio de aceptación. «Qué pasa si la lista está vacía» y «qué pasa si el valor
+  guardado ya no está en la lista» son preguntas de negocio, no de interfaz.
 **Ramas y bases de los PR (28/10/2026, revisión de Javi).** Los commits 792d183 (proformas de
 las 52 HU y replan) y 7f92eb2 (sistema visual, prompt y adenda) se commitearon en el `develop`
 local y las tres ramas salieron de ahí: cada PR los revisaba de nuevo. Pasan a su propio PR,
