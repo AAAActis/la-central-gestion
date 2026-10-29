@@ -19,13 +19,13 @@ guardado: lacentral.sesion | localStorage: 0 claves
 Tab en el marco: a Artículos → a Factura de compra → button Salir
 aria-current: Artículos=null, Factura de compra=page
 Enter sobre button Salir
-  después: [ '/factura-compra', false, true, 0 ] foco: input usuario
+  después: [ '/factura-compra', false, true, 0 ] foco: input Usuario
 history.back() después de Salir: [ '/articulos', false, true ]
 
 # Recorrido con teclado por el acceso
-Tab en el acceso: input contrasena → button IngresarIngresando… → body → input usuario
-Enter con contraseña mala → aviso: alert · Usuario o contraseña incorrectos. · foco: input contrasena
-Escape: aviso sigue: true · foco: input contrasena
+Tab en el acceso: input Contraseña → button IngresarIngresando… → body → input Usuario
+Enter con contraseña mala → aviso: alert · Usuario o contraseña incorrectos. · foco: input Contraseña
+Escape: aviso sigue: true · foco: input Contraseña
 Enter sobre Cerrar aviso: aviso sigue: false · foco: body
 
 # CA-002 · sesión vencida en el navegador
