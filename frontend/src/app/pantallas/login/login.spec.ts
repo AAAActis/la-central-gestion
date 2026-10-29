@@ -105,6 +105,12 @@ describe('Login · pantalla de acceso (HU-UI-03)', () => {
     expect(servidor.match('/api/acceso/login').length).withContext('pedidos de login').toBe(1);
   }));
 
+  it('un ingreso envía lo que el usuario escribió en cada campo', () => {
+    montar();
+    intentar('admin', 'buena');
+    expect(servidor.expectOne('/api/acceso/login').request.body).toEqual({ nombreUsuario: 'admin', contrasena: 'buena' });
+  });
+
   it('un ingreso correcto inicia la sesión con lo que devuelve la API', () => {
     montar();
     intentar('admin', 'buena');
