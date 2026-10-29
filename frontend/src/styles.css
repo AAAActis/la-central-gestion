@@ -247,6 +247,8 @@ button.secundario:focus-visible, button.peligro-borde:focus-visible { border-col
 button.oscuro, header button.secundario { --capa: var(--rojo); background: transparent; border-color: var(--borde-oscuro); color: var(--blanco); }
 header button.secundario { margin-left: var(--esp-8); }
 button.chico { min-height: var(--alto-boton-chico); padding: 0 var(--esp-12); font-size: var(--t-etiqueta); }
+/* Primario §7: hueco de la Fase 1, la clase se declaraba sin regla. Uno solo por pantalla (§1). */
+button.primario { --capa: var(--rojo-osc); background: var(--rojo); border-color: var(--rojo); color: var(--blanco); }
 
 /* Opción de una lista de resultados (factura de compra). */
 button.opcion {
