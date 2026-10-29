@@ -149,7 +149,9 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       expect(pantalla(fixture, 'app-login')).not.toBeNull();
       expect(pantalla(fixture, 'app-articulos')).toBeNull();
       // El botón Salir desaparece con el marco: el foco no puede quedar en la nada.
-      expect(document.activeElement).toBe(pantalla(fixture, 'app-login input[name=usuario]'));
+      const usuario = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('app-login label'))
+        .find(l => l.textContent?.trim() === 'Usuario') as HTMLLabelElement | undefined;
+      expect(document.activeElement).toBe(usuario?.control ?? null);
     });
 
     it('el encabezado lleva la marca compacta, el usuario con su rol y Salir; abajo va el pie', async () => {

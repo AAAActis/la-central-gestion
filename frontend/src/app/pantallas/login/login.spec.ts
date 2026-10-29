@@ -134,6 +134,13 @@ describe('Login · pantalla de acceso (HU-UI-03)', () => {
     expect(document.activeElement).toBe(campo('Usuario'));
   });
 
+  it('la contraseña no se ve y los dos campos los completa el gestor de contraseñas', () => {
+    montar();
+    expect(campo('Contraseña').type).toBe('password');
+    expect(campo('Usuario').getAttribute('autocomplete')).toBe('username');
+    expect(campo('Contraseña').getAttribute('autocomplete')).toBe('current-password');
+  });
+
   it('la tarjeta lleva el panel con la marca en su variante completa', () => {
     montar();
     expect(raiz().querySelector('app-marca .logo.completa')).not.toBeNull();

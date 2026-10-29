@@ -1,8 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, afterNextRender, inject, signal, viewChild } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, ElementRef, afterNextRender, inject, signal } from '@angular/core';
 import { Aviso, AvisoFlotante } from '../../compartido/aviso-flotante';
-import { BotonCarga } from '../../compartido/boton-carga';
+import { CampoFormulario, Formulario, ValoresFormulario } from '../../compartido/formulario/formulario';
 import { Marca } from '../../diseno/marca';
 import { ApiLaCentral, mensajeDeError } from '../../nucleo/api';
 import { SesionActual } from '../../nucleo/sesion';
@@ -10,14 +9,18 @@ import { SesionActual } from '../../nucleo/sesion';
 /** Un ingreso fallido no dice cuál de los dos datos falló: no se confirma que un usuario existe. */
 const CREDENCIALES = 'Usuario o contraseña incorrectos.';
 
+const CAMPOS: CampoFormulario[] = [
+  { nombre: 'nombreUsuario', etiqueta: 'Usuario', obligatorio: true, autocompletar: 'username' },
+  { nombre: 'contrasena', etiqueta: 'Contraseña', tipo: 'password', obligatorio: true, autocompletar: 'current-password' },
+];
+
 /**
  * Pantalla de acceso: tarjeta partida (formulario y panel de marca) sobre el fondo hexagonal (§5).
- * shortcut: los campos son propios y no de compartido/formulario/, porque CampoFormulario no admite
- * tipo password ni autocomplete; se migra cuando el formulario los tenga (ESTADO.md, HU-UI-03).
+ * Los errores no van al formulario sino al aviso flotante: el acceso es donde el usuario reintenta.
  */
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, AvisoFlotante, BotonCarga, Marca],
+  imports: [AvisoFlotante, Formulario, Marca],
   styles: `
     :host {
       position: fixed; inset: 0; overflow-y: auto;
@@ -27,10 +30,7 @@ const CREDENCIALES = 'Usuario o contraseña incorrectos.';
       display: grid; grid-template-columns: 1fr 1fr; width: min(var(--ancho-form), 100%);
       margin: 0; overflow: hidden; color: var(--tinta); box-shadow: var(--sombra);
     }
-    form { display: flex; flex-direction: column; }
     h1 { margin: 0 0 var(--esp-20); }
-    label { margin-bottom: var(--esp-16); }
-    button.primario { align-self: flex-start; margin-top: var(--esp-8); }
     .acceso-marca {
       display: grid; place-items: center; padding: var(--esp-24);
       background: var(--grafito); border-left: var(--grosor-foco) solid var(--rojo);
@@ -43,16 +43,11 @@ const CREDENCIALES = 'Usuario o contraseña incorrectos.';
   host: { class: 'fondo-hex' },
   template: `
     <div class="tarjeta acceso-tarjeta">
-      <form class="tarjeta-cuerpo" (ngSubmit)="entrar()">
+      <div class="tarjeta-cuerpo">
         <h1>Acceso al sistema</h1>
-        <label>Usuario
-          <input #campoUsuario name="usuario" [(ngModel)]="usuario" autocomplete="username" required />
-        </label>
-        <label>Contraseña
-          <input name="contrasena" type="password" [(ngModel)]="contrasena" autocomplete="current-password" required />
-        </label>
-        <button type="submit" class="primario" [cargando]="enviando()" textoCarga="Ingresando…">Ingresar</button>
-      </form>
+        <app-formulario [campos]="campos" [enviando]="enviando()" textoEnviar="Ingresar" textoEnviando="Ingresando…"
+                        (enviar)="entrar($event)" />
+      </div>
       <div class="acceso-marca"><app-marca variante="completa" /></div>
     </div>
     <app-aviso-flotante [(mensaje)]="aviso" tipo="error" />
@@ -62,23 +57,23 @@ export class Login {
   private readonly api = inject(ApiLaCentral);
   private readonly sesion = inject(SesionActual);
 
-  usuario = '';
-  contrasena = '';
+  private readonly anfitrion = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  protected readonly campos = CAMPOS;
   readonly enviando = signal(false);
   /** Un objeto por intento: dos errores iguales seguidos se vuelven a anunciar (aviso-flotante.ts). */
   protected readonly aviso = signal<Aviso | null>(null);
-  private readonly campoUsuario = viewChild.required<ElementRef<HTMLInputElement>>('campoUsuario');
 
   constructor() {
     const motivo = this.sesion.avisoAlCerrar();
     if (motivo) this.aviso.set({ texto: motivo });
     // Al salir o vencer la sesión, el botón que tenía el foco desaparece con el marco.
-    afterNextRender(() => this.campoUsuario().nativeElement.focus());
+    afterNextRender(() => this.anfitrion.nativeElement.querySelector('input')?.focus());
   }
 
-  entrar() {
+  entrar(valores: ValoresFormulario) {
     this.enviando.set(true);
-    this.api.login(this.usuario, this.contrasena).subscribe({
+    this.api.login(String(valores['nombreUsuario']), String(valores['contrasena'])).subscribe({
       next: s => this.sesion.iniciar(s),
       error: e => {
         this.aviso.set({ texto: e instanceof HttpErrorResponse && e.status === 401 ? CREDENCIALES : mensajeDeError(e) });
