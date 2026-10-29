@@ -88,7 +88,7 @@ function obligatorio(control: AbstractControl): ValidationErrors | null {
           <div class="campo">
             <label [for]="id(c)">{{ c.etiqueta }}</label>
             <input [id]="id(c)" [type]="c.tipo ?? 'text'" [formControlName]="c.nombre"
-                   [attr.aria-required]="c.obligatorio ? 'true' : null"
+                   [attr.autocomplete]="c.autocompletar ?? null" [attr.aria-required]="c.obligatorio ? 'true' : null"
                    [attr.aria-invalid]="error(c) ? 'true' : null" [attr.aria-describedby]="descriptores(c)" />
             @if (c.ayuda) { <p class="ayuda" [id]="id(c) + '-ayuda'">{{ c.ayuda }}</p> }
             @if (error(c); as mensaje) { <p class="aviso error" role="alert" [id]="id(c) + '-error'">{{ mensaje }}</p> }
