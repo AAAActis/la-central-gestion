@@ -16,15 +16,21 @@ export interface Sesion {
 @Injectable({ providedIn: 'root' })
 export class SesionActual {
   readonly sesion = signal<Sesion | null>(null);
+  /** Por qué terminó la última sesión, si no fue por Salir: lo informa la pantalla de acceso. */
+  readonly avisoAlCerrar = signal<string | null>(null);
 
   iniciar(sesion: Sesion) {
     this.sesion.set(sesion);
   }
 
-  cerrar() {
+  cerrar(aviso: string | null = null) {
     this.sesion.set(null);
   }
 }
+
+/** Dónde se guarda la sesión en sessionStorage. */
+export const CLAVE_SESION = 'lacentral.sesion';
+export const AVISO_SESION_VENCIDA = 'Tu sesión venció. Volvé a entrar.';
 
 /** Agrega el Bearer a toda llamada a /api, salvo al login. */
 export const agregarToken: HttpInterceptorFn = (peticion, siguiente) => {
