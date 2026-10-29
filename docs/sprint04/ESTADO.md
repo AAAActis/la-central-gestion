@@ -324,7 +324,7 @@ paralelo × tamaño del pool*, y por eso revienta el `CONNECTION LIMIT` del rol 
 en la configuración de xUnit y documentar en el README la cuenta
 *hilos × pool ≤ límite del rol*, para que el número deje de ser adivinado.
 
-**D-27b · CERRADA (28/10/2026), con confirmación pendiente.** Rama `fix/d27-entorno-de-pruebas`.
+**D-27b · CERRADA y confirmada (28/10/2026).** Rama `fix/d27-entorno-de-pruebas`.
 `xunit.runner.json` fija `maxParallelThreads = 5` y `parallelAlgorithm = conservative`, y el
 README de Tests documenta la cuenta **T × (1 + P) + m ≤ L**. Para L = 25, P = 3 y m = 5, da T = 5.
 La validó la medición directa del pico en `pg_stat_activity`:
@@ -335,10 +335,11 @@ La validó la medición directa del pico en `pg_stat_activity`:
 | 5 | 3 | 20 | 8 | 60 | 435/435, 3 min |
 | 5 | 3 | 20 | 9 | 25 | abortada, 0 `53300` |
 | 5 | 3 | 20 | 4 | 25 | 135 fallos de red, 0 `53300` |
+| 5 | 3 | 20 | 8 | 25 | **436/436, 2 min 57 s · 0 `53300`** |
 
-**Pendiente:** la corrida de confirmación con L = 25. Causa: el enlace de Tailscale se degradó
-y pasó por un relay en São Paulo (65 % de pérdida, RTT promedio de 2.389 ms). No es un fallo
-del límite. Mientras tanto, los roles quedan en 60.
+**Confirmación con L = 25 (28/10/2026):** con el enlace sano y el rol en 25, `dotnet test`
+completo dio **436/436, 0 `53300`**, pico de 8 conexiones. La cota T × (1 + P) + m ≤ L deja de
+ser una recomendación: está demostrada. El rol de Santi queda en 25.
 
 **Deuda · falso verde con P = 1 (28/10/2026), resuelta en la misma rama.** Con
 `Maximum Pool Size=1`, `DosAltasSimultaneas_CodigosInternosDistintos` y
@@ -386,6 +387,7 @@ commitea en `develop`, todo entra por PR.
    **tu** HU está cerrada; si no lo está, **PARÁ**.
 2. Corré `dotnet build --no-incremental` y `dotnet test` desde `backend/`. Con HU-STK-01
    mergeada tiene que dar **435 tests, 148 contra PostgreSQL real, 0 omitidos, 0 warnings**
+   (436 con D-27 mergeada: suma `PostgreSqlPoolTests`, que no se conecta)
    (sin ella, 431 y 145). Si da cientos de fallos `53300`, es el tope de conexiones del rol:
    corré en serie (ver la deuda de entorno arriba). Si no coincide por otra causa, **PARÁ y
    averiguá por qué** antes de tocar nada.

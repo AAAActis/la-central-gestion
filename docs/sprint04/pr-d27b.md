@@ -51,19 +51,21 @@ Pico de conexiones medido leyendo `pg_stat_activity` cada 0,5 s:
 | 5 | 3 | 20 | 8 | 60 | 435/435, 3 min |
 | 5 | 3 | 20 | 9 | 25 | corrida abortada — ver abajo |
 | 5 | 3 | 20 | 4 | 25 | corrida abortada — ver abajo |
+| 5 | 3 | 20 | 8 | 25 | **436/436, 2 min 57 s · 0 `53300`** |
 
 En las dos corridas con `L = 25`: **cero errores `53300`** y pico de 9 sobre 25. Los fallos
 fueron de red (`Failed to connect`, `Timeout during reading`, sesiones en
 `idle in transaction` durante el DDL), con el enlace privado degradado a relay en São Paulo
 —65 % de pérdida, latencia promedio de 2.389 ms y picos de 6.157 ms—.
 
-**La fórmula queda validada por la medición directa del pico.** Lo que falta es una corrida
-limpia de confirmación de punta a punta.
+**Quinta fila · la corrida de confirmación (28/10/2026).** Con el enlace sano y el rol de Santi
+en `L = 25`, `dotnet test` completo: **436 superadas, 0 con error, 0 omitidas, 0 `53300`**, en
+2 min 57 s. Pico de 8 conexiones del rol, muestreado cada 0,5 s sin contar al muestreador, sobre
+un límite de 25 leído de `pg_roles`. La cota `T × (1 + P) + m ≤ L` deja de ser una recomendación
+escrita: está demostrada.
 
 ## Qué NO se hizo
 
-- **Corrida de confirmación con `L = 25`:** pendiente por la degradación del enlace, no por
-  la cuenta. El rol queda en 60 mientras tanto.
 - **D-27a** (verificar la identidad del motor al inicio de la corrida) y **D-27c** (prefijo
   de esquema con el número de un PR viejo y limpieza en `DisposeAsync`): registradas, no
   implementadas.
@@ -73,9 +75,8 @@ limpia de confirmación de punta a punta.
 | Punto | Estado |
 |---|---|
 | 9 · Revisado por otro integrante | Pendiente de esta revisión |
-| 10 · Verificado contra la base real | **NO verificado**, y el motivo es el mismo que esta rama documenta: el enlace al servidor está degradado. Las 148 pruebas de integración no se pudieron correr de forma concluyente |
+| 10 · Verificado contra la base real | **Verificado** (28/10/2026): suite completa contra `lacentral_test` con `L = 25`, 436/436, 0 `53300` |
 
-El punto 10 se declara no verificado en lugar de omitirse. No existe un estado intermedio.
 
 ## Nota para quien revise
 

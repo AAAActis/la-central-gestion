@@ -106,13 +106,15 @@ Medido el 28/10/2026 contra `lacentral_test`, muestreando `pg_stat_activity` cad
 | 5 | 3 | 20 | 8 | 60 | 435/435, 3 min |
 | 5 | 3 | 20 | 9 | 25 | colgada a los 10 min, abortada · 0 `53300` |
 | 5 | 3 | 20 | 4 | 25 | 135 fallos de red, abortada · 0 `53300` |
+| 5 | 3 | 20 | 8 | 25 | **436/436, 2 min 57 s · 0 `53300`** |
 
 Las dos corridas con L = 25 no fallaron por el límite: ningún `53300`, y el pico nunca pasó
 de 9. Fallaron porque el enlace de Tailscale cayó a un relay en São Paulo (65 % de pérdida,
 RTT promedio de 2.389 ms): `Failed to connect`, `Timeout during reading` y sesiones
 `idle in transaction` cortadas a mitad del DDL. **Lo demostrado:** la demanda medida (≤ 9)
-queda dentro del techo calculado (20) y del límite (25). **Pendiente:** la corrida de
-confirmación 435/435 con L = 25, cuando el enlace vuelva a ser directo.
+queda dentro del techo calculado (20) y del límite (25). **Confirmado (28/10/2026):** con el
+enlace sano, la corrida completa con L = 25 dio 436/436 y ningún `53300`, con un pico de 8
+(en esa corrida el muestreador no se cuenta).
 
 El pico real está lejos del techo porque casi todos los tests usan una conexión por vez.
 El techo es lo que se garantiza; el pico depende de qué tests coincidan y de la máquina.
