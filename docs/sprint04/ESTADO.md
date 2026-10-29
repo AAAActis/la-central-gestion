@@ -302,6 +302,33 @@ conexiones (`lacentral_lauti`), `dotnet test` en paralelo da **140 fallos falsos
 no suba el tope o no use `lacentral_tests`, en esa máquina la suite se corre con
 `dotnet test -- xUnit.ParallelizeTestCollections=false` (≈36 min).
 
+**Deuda nueva registrada el 27/10** (fuente: `docs/sprint04/REPLAN-SPRINT4-v2.md`; registrada,
+no implementada). Las dos salieron de la noche de infraestructura y las dos son de la misma
+familia: el harness confía en lo que está escrito en la configuración en vez de medir lo que
+pasa de verdad.
+
+**D-27a · El harness no verifica la identidad del motor.**
+`PostgreSqlPruebas` valida que el *nombre* de la base sea `test_*` o `*_test`, pero
+no comprueba qué motor atendió la conexión. Esta noche un reenvío de red mandó las
+pruebas a la base de otro proyecto, y Postgres respondió `28P01 password
+authentication failed` en lugar de `28000 role does not exist` —por diseño, para no
+revelar qué usuarios existen—, con lo que el síntoma pareció una credencial vencida
+durante cuarenta minutos. Falta una verificación al inicio de la corrida:
+`current_database()`, versión del servidor, y fallar si no coinciden con lo esperado.
+
+**D-27b · `Maximum Pool Size` no es un techo total.**
+El harness arma una cadena de conexión aislada por esquema de test, así que Npgsql
+crea **un pool por esquema**. La demanda real de conexiones es *colecciones en
+paralelo × tamaño del pool*, y por eso revienta el `CONNECTION LIMIT` del rol con
+`53300`. Subir el límite del rol es un parche. Corresponde acotar `maxParallelThreads`
+en la configuración de xUnit y documentar en el README la cuenta
+*hilos × pool ≤ límite del rol*, para que el número deje de ser adivinado.
+
+**D-27c · menor.** El prefijo de esquema de test es `pr110_test_`, con el número de
+un PR viejo hardcodeado. Debería ser `lacentral_test_`, y la limpieza debería correr
+en el `DisposeAsync` aunque el test falle — hay un esquema huérfano de agosto que lo
+prueba.
+
 ---
 
 ## PRÓXIMA SESIÓN
