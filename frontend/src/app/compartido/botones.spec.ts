@@ -105,6 +105,10 @@ describe('Botones · las cinco variantes de la §7', () => {
       }
       // Un texto heredado de la base (--tinta) sobre un relleno oscuro no llega: es el defecto de peligro.
       expect(contraste(propia.texto, propia.relleno)).withContext('contraste texto / relleno').toBeGreaterThanOrEqual(4.5);
+      // Su propio color de texto: un button sin clase es secundario (§7), así que solo él lleva el de la base.
+      const base = medir('', null).texto;
+      if (clase === 'secundario') expect(propia.texto).withContext('texto de la base').toBe(base);
+      else expect(propia.texto).withContext('texto propio, no el de la base').not.toBe(base);
     });
   }
 });
