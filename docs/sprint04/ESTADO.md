@@ -486,35 +486,87 @@ No hizo falta reescribir historia: las tres ramas ya estaban encima de 7f92eb2, 
 cada PR cuando su base se mergea. **El `develop` local se realineó con `origin/develop`:** nada se
 commitea en `develop`, todo entra por PR.
 
+## CIERRE DEL SPRINT 4 · 30/10/2026 (escrito el 04/11/2026)
+
+El sprint cerró por calendario el viernes 30/10 (el replan v2 corrió el cierre del 31, que es
+sábado). Este cierre se escribió el 04/11, con el estado verificado contra Git
+(`git fetch --prune`, `git merge-base --is-ancestor` sobre `origin/develop`). La tabla de la
+`PRÓXIMA SESIÓN` del 28/10 estaba desactualizada: cuatro de las cinco ramas que daba por
+pendientes ya habían entrado el 29/10.
+
+### Qué entró en develop
+
+| PR | Qué | Rama | Merge |
+|---|---|---|---|
+| #131 | 017 · HU-STK-01 · existencias por ubicación | `feature/HU-STK-01-existencias-ubicacion` | 20/10 |
+| #130 | 039 · HU-UI-01 · estructura base (B1) | `feature/HU-UI-01-estructura-base` | 20/10 |
+| #136 | Proformas y sistema visual (documentación, sin SP) | `docs/proformas-y-sistema-visual` | 29/10 |
+| #135 | Rediseño visual · Fase 1 · fundamentos (adenda, sin SP) | `feature/hu-ui-fase1-fundamentos-visuales` | 29/10 |
+| #133 | D-27b · techo de paralelismo de la suite (deuda, sin SP) | `fix/d27-entorno-de-pruebas` | 29/10 |
+| #134 | 043 · HU-UI-05 · formulario reutilizable | `feature/hu-ui-05-formulario-reutilizable` | 29/10 |
+
+### Qué quedó sin mergear · arrastre del Sprint 4 al Sprint 5
+
+Es arrastre, no trabajo nuevo del Sprint 5, y así se cuenta en la velocidad.
+
+| Qué | Rama | Estado al 04/11 | Motivo |
+|---|---|---|---|
+| 044 · HU-UI-06 · confirmación con motivo (1 SP) | `feature/hu-ui-06-confirmacion-con-motivo` | Pusheada, 5 commits propios sobre develop, sin PR, sin veredicto de `verificador-tdd` ni cuerpo de PR. Fusiona sin conflictos con develop | Primera en la lista de «qué se cae» del replan v2 |
+| 041 · HU-UI-03 · control de sesión (3 SP) | `feature/hu-ui-03-control-de-sesion` | PR #138 abierto (Lauti, 29/10). **Choca con la 044 en `compartido/formulario/formulario.ts`**: la que entre segunda resuelve el conflicto | Sin revisión ni merge antes del cierre |
+| 042 · HU-UI-04 · listado reutilizable (5 SP) | — | Sin rama | No se empezó |
+| 045 · pantallas de clientes y proveedores (3 SP) | — | Sin rama | No se empezó |
+
+### SP comprometidos contra entregados
+
+Cuento como entregado solo lo que está mergeado en develop al 30/10. Los SP salen de las
+tablas de este archivo y de `REPLAN-SPRINT4-v2.md`.
+
+| Momento | Comprometido | Entregado (mergeado) |
+|---|---|---|
+| Plan original (20/10) | 48 SP en tres pistas | B1 · 039 (3) + C1 · 017 (3) = **6 SP** |
+| Replan v2 (27/10), sobre 3 días hábiles | 17 SP: 041 (3), 042 (5), 043 (5), 045 (3), 044 (1) | 043 (5) = **5 SP** |
+| **Total del sprint** | | **11 SP** |
+
+Terminado sin mergear: 044 (1 SP) y 041 (3 SP, PR #138 abierto). Sumarían 15 SP.
+
+**Por qué la diferencia:**
+- La base de la tesis estuvo caída del 20/10 al 27/10, y el martes 27 se consumió entero en
+  recuperarla (REPLAN-SPRINT4-v2). Del plan original, toda la pista A dependía de C1, C2, C5 y
+  C6, que no se cerraron: ninguna de sus HU (21 SP) pudo empezar.
+- El replan v2 comprometió 17 SP contra una capacidad medida de ~10 (3,4 SP/día × 3 días), y lo
+  declaró así.
+- La Fase 1 del rediseño visual (#135) y D-27b (#133) consumieron capacidad sin SP asignados.
+
+**Pendiente, no está en el repo:** las horas reales por persona y si el 30/10 se trabajó
+completo. Sin eso, la velocidad del Sprint 4 en SP/día no se puede calcular con honestidad, y
+para planificar el Sprint 5 sigue valiendo la del Sprint 3 (34 SP, 3,4 SP/día).
+
+### Compuertas que siguen abiertas
+
+| # | Estado al 04/11 |
+|---|---|
+| C1 · L2 y retiro de Tarjeta3/6 | Pendiente. Va en la ventana única de esquema del Sprint 5 |
+| C2 · `proveedor_articulo` | Pendiente. Misma ventana |
+| C3 · `lacentral_demo` | Pendiente. Prerrequisito de la demo a Sergio del 06/11 |
+| C4 · código interno, código original y marca | Respondida por Sergio el 19/10; decisión del equipo pendiente |
+| C5 · escribir HU-CMP-06 y 07 | Pendiente |
+| C6 · medición sobre 50 artículos | Pendiente |
+
+Ninguna compuerta se cerró en el Sprint 4. La normalización a 3FN (N-3, N-5, N-7, N-9, N-11)
+se aplicó el 04/11, ya en el Sprint 5, a `lacentral_test` y `lacentral`. N-6 quedó afuera a
+propósito, porque espera una decisión de negocio. El re-scaffold todavía no se corrió.
+
+### Pendiente de verificar
+
+- **PR #137:** no aparece en ningún commit de develop ni de las ramas remotas. No hay `gh` en la
+  máquina, así que no se pudo consultar su estado.
+- **Issues de la 043 y de la 044:** según este archivo, pendientes de creación. No se pudo
+  verificar contra GitHub por la misma razón.
+
+---
+
 ## PRÓXIMA SESIÓN
 
-**Arrancá leyendo esto y `docs/PROMPT-FASE.md`.** Después:
-
-1. Las compuertas bloquean historias concretas, no pistas enteras (D17). Confirmá que la de
-   **tu** HU está cerrada; si no lo está, **PARÁ**.
-2. Corré `dotnet build --no-incremental` y `dotnet test` desde `backend/`. Con HU-STK-01
-   mergeada tiene que dar **435 tests, 148 contra PostgreSQL real, 0 omitidos, 0 warnings**
-   (436 con D-27 mergeada: suma `PostgreSqlPoolTests`, que no se conecta)
-   (sin ella, 431 y 145). Si da cientos de fallos `53300`, es el tope de conexiones del rol:
-   corré en serie (ver la deuda de entorno arriba). Si no coincide por otra causa, **PARÁ y
-   averiguá por qué** antes de tocar nada.
-3. Tu primera unidad de trabajo es **`RestablecerContrasenaUseCase.cs:43`**, no una HU: el
-   UPDATE no verifica que escribió y el caso de uso informa éxito igual. Un test en rojo por el
-   camino real, y después el arreglo.
-4. Recién entonces, la HU que te toque según tu pista.
-
-**Pista B (Javi), aparte de los puntos 1 a 3, que son de la pista A:** B1 está mergeada en
-develop (#130, 20/10/2026). Con B1
-y HU-STK-01 en develop, los números son **435 tests y 148 contra PostgreSQL**, más la suite de
-frontend (`ng test`, 21 tests). La siguiente es **B2 · 042 · HU-UI-04 · componente
-de listado reutilizable**. Sale de develop, que ya tiene B1.
-Va en `frontend/src/app/compartido/` y se prueba con
-`ng test` (ver `frontend/src/app/README.md`). Antes de B2, leé la habilidad de diseño y los
-criterios de la PISTA B. Avisar a Lauti y a Santi de la respuesta (b) de Sergio: HU-CMP-08 no se
-resuelve con archivo.
-
-**Dónde parás de verdad:** si hace falta tocar el esquema, si un CA contradice a otro o al
-esquema, si falta una regla de negocio que nadie definió, si PostgreSQL no está disponible —una
-prueba no ejecutada NO es una prueba aprobada—, o si llevás más de tres intentos en el mismo
-problema. En todos esos casos explicás qué encontraste, qué opciones ves y qué recomendás. **No
-decidís vos.**
+**El Sprint 4 está cerrado.** Lo que seguía acá (escrito el 28/10) ya no aplica. La sesión
+siguiente arranca con `docs/sprint05/21-INSTRUCCIONES-CLAUDE-CODE-04-11.md` y con el
+`ESTADO.md` del Sprint 5. El arrastre está en la sección de arriba: la 044 y la 041 (#138).
