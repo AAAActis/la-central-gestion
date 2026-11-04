@@ -110,7 +110,7 @@ public class RegistrarFacturaCompraUseCase
             // de los comprados se recalculan con el costo que se acaba de escribir. Si el
             // recálculo rechaza, la unidad de trabajo descarta también la compra.
             return await _calcularPrecios.EjecutarAsync(
-                factura.Lineas.Select(l => l.ArticuloId).Distinct().ToArray(), factura.FechaRegistro, token);
+                factura.Lineas.Select(l => l.ArticuloId).ToArray(), factura.FechaRegistro, token);
         }, ct);
 
         // Si la unidad de trabajo dio éxito, la operación terminó y asignó `registrada`.
