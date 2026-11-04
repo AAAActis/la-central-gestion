@@ -108,3 +108,51 @@
 - 15:26 · Paso 5: `verificador-tdd` lanzado sobre el #141 (b766225), en su propio worktree. El `auditor-persistencia` va después: nunca dos a la vez.
 - 15:27 · `verificador-tdd` devolvió **NO VERIFICADO** sin correr, por su regla R1: además del árbol principal hay 4 worktrees (`bitacora`, `demo`, `rescaffold`, `cierre-s4`). Los cuatro son de Claude, están limpios y pusheados. Quitarlos con `git worktree remove --force` lo bloqueó el clasificador de permisos.
 **BLOQUEADO EN:** las dos compuertas del #141. Depende de Santi: que quite los 4 worktrees (o autorice quitarlos) para relanzar `verificador-tdd` y, después, `auditor-persistencia`. Sigue pendiente también la decisión del grafo (paso 4).
+
+---
+
+## 04/11/2026 15:38 · worktrees fuera, compuertas del #141 y el grafo viejo se conserva
+
+**Instrucción recibida (verbatim):**
+> Las dos decisiones:
+>
+> 1 · WORKTREES · sacalos, pero sin --force. El --force es lo que saltea la verificación de
+> que están limpios, y si ya confirmaste que lo están, git los va a sacar sin quejarse. Si
+> alguno se queja, NO lo fuerces: miralo y decime qué tiene.
+>
+> Hacelo en tres pasos, no con el bucle:
+>   a. git worktree list y git -C <cada uno> status --short --branch, para ver cuál está
+>      sucio o sin pushear.
+>   b. Confirmá en qué worktree estás parado vos: no saques ese, terminá ahí primero o
+>      mudate al principal.
+>   c. git worktree remove <ruta>, uno por uno, y al final git worktree prune.
+>
+> Las ramas no se borran, así que no se pierde nada aunque haya que rehacer un worktree.
+>
+> Después relanzá verificador-tdd y, cuando termine, auditor-persistencia. De a uno, como
+> dijiste.
+>
+> 2 · EL GRAFO · no lo fuerces. Conservá el viejo. Coincido con tu recomendación y hay un
+> motivo más: el grafo nuevo es de la rama de la 044, así que describe código sin el
+> re-scaffold y estaría mal igual. La reindexación desde develop ya está agendada para
+> cuando entren el #141 y la 044, y ahí van a entrar los .sql y el detalle de los documentos
+> juntos. Perder 838 nodos ahora para ganar los .sql dos días antes no vale.
+>
+> Lo de los siete documentos leídos a una línea del final: anotalo en el ESTADO como algo a
+> verificar en la reindexación, no lo persigas ahora. Si es un error de conteo sistemático,
+> se está perdiendo la última línea de cada documento, y eso en un .md puede ser una
+> conclusión. Se comprueba de una comparando el conteo de líneas de uno de esos siete
+> archivos contra lo que el grafo dice que leyó — pero después de la reindexación.
+
+**Plan:**
+1. Anotar en el ESTADO del #141 lo de los siete documentos (verificar en la reindexación).
+2. Grafo: no se fuerza; queda el `graph.json` vigente.
+3. Worktrees: a) `git worktree list` + `status --short --branch` de cada uno; b) confirmar
+   dónde estoy parado (árbol principal); c) `git worktree remove` uno por uno, sin
+   `--force`, y `git worktree prune`. Este worktree (`bitacora`) se saca último, después
+   de pushear este bloque; mientras corren las compuertas, las líneas de la bitácora se
+   juntan fuera del repo y se agregan al rehacer el worktree.
+4. `verificador-tdd` sobre el #141; cuando termine, `auditor-persistencia`. NO APTO →
+   arreglar y volver a correr, hasta 3 rondas.
+
+**Estado:** en curso
