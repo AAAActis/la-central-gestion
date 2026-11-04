@@ -99,7 +99,7 @@
 5. `verificador-tdd` y `auditor-persistencia` sobre el #141, uno por vez, cada uno en su
    worktree. NO APTO → arreglar y volver a correr, hasta 3 rondas.
 
-**Estado:** en curso
+**Estado:** terminada
 - 15:27 · Paso 1: sección en `CLAUDE.md` y esta bitácora en `6de11ab`; `REGLA-BITACORA.md` borrado (no estaba versionado: solo existía en el árbol principal).
 - 15:24 · Paso 2: `Distinct()` declarado en el cuerpo del #141, con commit (`9dafabe`) y motivo.
 - 15:24 · Paso 3: D-S5-05 en `docs/sprint05/ESTADO.md` del #141 (`b766225`, pusheado): el grafo es de la rama de la 044; reindexar desde `develop` con el #141 y la 044 mergeados.
@@ -110,6 +110,8 @@
 **BLOQUEADO EN:** las dos compuertas del #141. Depende de Santi: que quite los 4 worktrees (o autorice quitarlos) para relanzar `verificador-tdd` y, después, `auditor-persistencia`. Sigue pendiente también la decisión del grafo (paso 4).
 
 ---
+
+**Quedó abierto:** las compuertas del #141 y la decisión del grafo, que siguieron en el bloque siguiente.
 
 ## 04/11/2026 15:38 · worktrees fuera, compuertas del #141 y el grafo viejo se conserva
 
@@ -155,4 +157,21 @@
 4. `verificador-tdd` sobre el #141; cuando termine, `auditor-persistencia`. NO APTO →
    arreglar y volver a correr, hasta 3 rondas.
 
-**Estado:** en curso
+**Estado:** terminada
+- 15:39 · Paso 1: D-S5-06 en el ESTADO del #141 (`44df50a`, pusheado).
+- 15:39 · Paso 2: grafo no forzado; `graphify-out/graph.json` sin tocar.
+- 15:39 · Paso 3: los 4 worktrees limpios y al día con su remoto (`status --short --branch`); parado en el árbol principal; `git worktree remove` sin `--force`, de a uno (cierre-s4, demo, rescaffold, bitacora): ninguno se quejó; `prune`. Queda solo el principal.
+- 15:39 · Paso 4: `verificador-tdd` relanzado sobre el #141 (`44df50a`).
+- 15:59 · `verificador-tdd` ronda 1: **NO APTO**. Sobreviven M18 (`ClienteRepositorio.cs:134`, orden de las bajas) y F2 (`articulos.ts:317`, error tragado). Además: 13 de los 17 rojos de `f2bb5a9` eran `NotImplementedException`; 3 de los 6 de `694f53c`, `TypeError`; N-11 entró con los tests adaptados en `0307800`. Suite del verificador: 456/456 y 94/94 sobre `44df50a`.
+- 15:59 · Arreglo, sin tocar producción: `b5e0ca5` (dos bajas: M18 da rojo, «Expected 2, Actual 1») y `79606e8` (error de la API en la ficha: F2 da rojo). Una corrida completa: **457/457**, frontend **95/95**. ESTADO (`0d41569`) y cuerpo del #141 corregidos, incluido que esos rojos eran stubs.
+- 16:40 · `verificador-tdd` ronda 2 sobre `0d41569`: **APTO**. M18 y F2 mueren por aserción; 10 mutaciones re-muestreadas, ninguna sobrevive; 457/457 y 95/95; los rojos declarados coinciden. No bloqueantes: el PR cita `79606e8` (HEAD es `0d41569`, solo docs); no hay test de API que afirme específicamente que OPERADOR recibe 204 en el PUT de ubicación (el rol es de toda la clase).
+- 16:40 · `auditor-persistencia` lanzado sobre el #141 (`0d41569`).
+- 16:46 · `auditor-persistencia` sobre `0d41569`: **APTO**. Catálogo de `lacentral_test` en solo lectura, 46/46 filtrados contra PostgreSQL, 3 mutaciones detectadas. Observaciones anotadas como D-S5-07 a D-S5-09 en el ESTADO (`7c4ddc1`); cuerpo del #141 actualizado con las dos compuertas.
+- 16:46 · Worktrees: el del #141 sacado sin `--force`; este (`bitacora`) se saca después de pushear.
+
+**Quedó abierto:**
+- #139, #140, #141 y #142 sin mergear (los mergea Santi).
+- 07 y 08 en `lacentral_demo`: el lunes 09/11 o con el #141 mergeado y verificado (S5-06).
+- Reindexar el grafo desde `develop` con el #141 y la 044 mergeados (D-S5-05), y ahí verificar los siete documentos a una línea del final (D-S5-06).
+- Deuda nueva: D-S5-07 a D-S5-09.
+- Pendientes del 04/11: `git merge develop` en la 044 (`formulario.ts`) y el aviso flotante (foco y Escape).
