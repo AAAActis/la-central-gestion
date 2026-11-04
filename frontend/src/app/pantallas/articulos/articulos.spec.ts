@@ -20,7 +20,7 @@ describe('Articulos · ubicación por sucursal', () => {
       { sucursalId: 1, sucursal: 'Fragueiro', cantidad: 5, ubicacionDeposito: 'Estante 4' },
       { sucursalId: 2, sucursal: 'San Vicente', cantidad: 0, ubicacionDeposito: null },
     ],
-  } as unknown as FichaArticulo; // rojo: el tipo todavía tiene la ubicación del artículo
+  };
 
   function etiquetas() {
     return Array.from(raiz().querySelectorAll('label')).map(l => l.textContent?.trim() ?? '');

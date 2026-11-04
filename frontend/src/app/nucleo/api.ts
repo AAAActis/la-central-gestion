@@ -51,20 +51,18 @@ export interface FichaArticulo {
   existencias: { sucursalId: number; sucursal: string; cantidad: number; ubicacionDeposito: string | null }[];
   totalExistencias: number;
   precios: PrecioFicha[];
-  ubicacionDeposito: string | null;
   motivoBaja: string | null;
 }
 
+/** La ubicación no va en el alta: se carga desde la ficha, por sucursal (N-9). */
 export interface AltaArticulo {
   nombre: string;
-  ubicacionDeposito: string | null;
   codigosProveedor: { proveedorId: number; codigo: string }[];
 }
 
 /** PUT /api/articulos/{id}. codigoInterno null = no se cambia; los códigos omitidos NO se retiran. */
 export interface ModificacionArticulo {
   nombre: string;
-  ubicacionDeposito: string | null;
   codigoInterno: string | null;
   codigosProveedor: { proveedorId: number; codigo: string }[];
 }
@@ -124,6 +122,11 @@ export class ApiLaCentral {
 
   modificar(id: number, cambios: ModificacionArticulo): Observable<void> {
     return this.http.put<void>(`/api/articulos/${id}`, cambios);
+  }
+
+  /** N-9 · ubicación en depósito de ESA sucursal. null la borra. */
+  asignarUbicacion(id: number, sucursalId: number, ubicacionDeposito: string | null): Observable<void> {
+    return this.http.put<void>(`/api/articulos/${id}/ubicaciones/${sucursalId}`, { ubicacionDeposito });
   }
 
   /** Solo ADMINISTRADOR: lo decide la API con el rol de la sesión. */
