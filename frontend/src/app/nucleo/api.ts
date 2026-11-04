@@ -48,7 +48,7 @@ export interface FichaArticulo {
   costoVigente: number | null;
   ultimoProveedorId: number | null;
   codigos: { proveedorId: number; razonSocial: string; codigoOriginal: string; claveNormalizada: string }[];
-  existencias: { sucursalId: number; sucursal: string; cantidad: number }[];
+  existencias: { sucursalId: number; sucursal: string; cantidad: number; ubicacionDeposito: string | null }[];
   totalExistencias: number;
   precios: PrecioFicha[];
   ubicacionDeposito: string | null;
