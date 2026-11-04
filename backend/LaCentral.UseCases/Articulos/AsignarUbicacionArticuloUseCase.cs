@@ -19,6 +19,26 @@ public class AsignarUbicacionArticuloUseCase
         _consulta = consulta;
     }
 
-    public Task<Result> EjecutarAsync(int id, short sucursalId, string? ubicacionDeposito, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    private const string MensajeDadoDeBaja = "El artículo está dado de baja: reactivalo antes de modificarlo.";
+
+    public async Task<Result> EjecutarAsync(int id, short sucursalId, string? ubicacionDeposito, CancellationToken ct = default)
+    {
+        var validacion = ArticuloValidaciones.ValidarUbicacion(ubicacionDeposito);
+        if (!validacion.IsSuccess)
+            return validacion;
+
+        var articulo = await _consulta.ObtenerDetallePorIdAsync(id, ct);
+        if (articulo is null)
+            return Result.Failure(TipoError.NoEncontrado, "El artículo indicado no existe.");
+        if (!articulo.Activo)
+            return Result.Failure(TipoError.Invalido, MensajeDadoDeBaja);
+        if (!(await _articulos.ObtenerSucursalesAsync(ct)).Contains(sucursalId))
+            return Result.Failure(TipoError.NoEncontrado, "La sucursal indicada no existe.");
+
+        var ubicacion = string.IsNullOrWhiteSpace(ubicacionDeposito) ? null : ubicacionDeposito.Trim();
+        // La condición "activo" va en la escritura: otra sesión pudo darlo de baja.
+        return await _articulos.AsignarUbicacionAsync(id, sucursalId, ubicacion, ct)
+            ? Result.Success()
+            : Result.Failure(TipoError.Invalido, MensajeDadoDeBaja);
+    }
 }

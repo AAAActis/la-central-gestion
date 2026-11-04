@@ -110,7 +110,7 @@ public class RegistrarFacturaCompraUseCase
             // de los comprados se recalculan con el costo que se acaba de escribir. Si el
             // recálculo rechaza, la unidad de trabajo descarta también la compra.
             return await _calcularPrecios.EjecutarAsync(
-                factura.Lineas.Select(l => l.ArticuloId).ToArray(), factura.FechaRegistro, token);
+                factura.Lineas.Select(l => l.ArticuloId).Distinct().ToArray(), factura.FechaRegistro, token);
         }, ct);
 
         // Si la unidad de trabajo dio éxito, la operación terminó y asignó `registrada`.
@@ -154,9 +154,11 @@ public class RegistrarFacturaCompraUseCase
             if (!EntraEnColumna(linea.DescuentoPorcentaje, Descuento))
                 return Result.Failure(TipoError.Invalido, $"El descuento del artículo {linea.ArticuloId} admite hasta 2 decimales.");
         }
-        // Una línea por artículo: es la clave primaria del detalle.
-        if (request.Lineas.GroupBy(l => l.ArticuloId).FirstOrDefault(g => g.Count() > 1) is { } repetido)
-            return Result.Failure(TipoError.Invalido, $"El artículo {repetido.Key} aparece en más de una línea.");
+        // Una línea por artículo y sucursal: es la clave primaria del detalle (07). El mismo
+        // artículo puede ir a dos sucursales en la misma factura (D9).
+        if (request.Lineas.GroupBy(l => (l.ArticuloId, l.SucursalId)).FirstOrDefault(g => g.Count() > 1) is { } repetido)
+            return Result.Failure(TipoError.Invalido,
+                $"El artículo {repetido.Key.ArticuloId} aparece en más de una línea con destino a la sucursal {repetido.Key.SucursalId}.");
 
         return Result.Success();
     }

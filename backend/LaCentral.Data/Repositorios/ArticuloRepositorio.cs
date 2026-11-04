@@ -110,8 +110,14 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
         return filas == 1;
     }
 
-    public Task<bool> AsignarUbicacionAsync(int id, short sucursalId, string? ubicacionDeposito, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    // Un solo INSERT ... SELECT: la condición "activo" y el alta de la fila de stock (en cero,
+    // si no existía) van en la misma sentencia. Con fila, solo cambia la ubicación.
+    public async Task<bool> AsignarUbicacionAsync(int id, short sucursalId, string? ubicacionDeposito, CancellationToken ct = default)
+        => await _context.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO stock (articulo_id, sucursal_id, cantidad, ubicacion_deposito)
+            SELECT a.id, {sucursalId}, 0, {ubicacionDeposito} FROM articulo a WHERE a.id = {id} AND a.activo
+            ON CONFLICT (articulo_id, sucursal_id) DO UPDATE SET ubicacion_deposito = EXCLUDED.ubicacion_deposito
+            """, ct) == 1;
 
     // Solo inserta: los códigos que el artículo ya tiene no se tocan. Una carrera con otro
     // artículo la cierran codigo_unico_global y un_codigo_por_proveedor (23505 → 409).
@@ -240,7 +246,8 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
                     c.Codigo, NormalizacionArticulo.Codigo(c.Codigo))).ToArray(),
             // HU-STK-01 CA-002: toda sucursal aparece; sin fila en stock (sin movimientos) es cero, no vacío.
             sucursales.Select(s => new StockSucursalConsultaDto(s.Id, s.Nombre,
-                articulo.Stock.SingleOrDefault(e => e.SucursalId == s.Id)?.Cantidad ?? 0m)).ToArray(),
+                articulo.Stock.SingleOrDefault(e => e.SucursalId == s.Id)?.Cantidad ?? 0m,
+                articulo.Stock.SingleOrDefault(e => e.SucursalId == s.Id)?.UbicacionDeposito)).ToArray(),
             // D1: precios estampados en articulo_precio_modalidad, sin recalcular.
             // Sin filas, lista vacía: la razón de cada ausencia la arma ObtenerArticuloDetalleUseCase.
             PreciosPorModalidad: articulo.ArticuloPrecioModalidad
