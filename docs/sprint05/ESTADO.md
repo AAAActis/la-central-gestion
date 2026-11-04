@@ -109,6 +109,12 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
   costo vigente queda en el de la última línea. No hay regla de negocio que diga otra cosa.
 - **D-S5-04 · entorno:** `dotnet-ef` necesita `DOTNET_ROOT=$HOME/.dotnet` y `~/.dotnet/tools`
   en el PATH. No hay `psql` en la máquina. `CHROME_BIN=/usr/bin/chromium`.
+- **D-S5-05 · el grafo de `graphify-out/` describe la rama de la 044, no el esquema nuevo.**
+  Se armó el 04/11 desde el árbol principal, que está en
+  `feature/hu-ui-06-confirmacion-con-motivo`: no ve el re-scaffold, la ubicación por sucursal
+  ni el 08. Una pregunta al grafo sobre el esquema nuevo contesta mal. **Reindexar desde
+  `develop` cuando el #141 y la 044 estén mergeados**, ya con `graphifyy[sql]` para que entren
+  los scripts de `backend/db/` (Database First: son la fuente de verdad del esquema).
 - Sigue de antes: D-27a, D-27c, el campo en el `ProblemDetails`, el largo del motivo (200/255),
   `RestablecerContrasenaUseCase.cs:43`.
 
