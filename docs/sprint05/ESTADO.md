@@ -17,6 +17,7 @@ Cierre del Sprint 4 y arrastre: `docs/sprint04/ESTADO.md` (PR #139).
 | S5-02 | **`stock.ubicacion_deposito` pasa de `VARCHAR(30)` a `VARCHAR(60)`** en las dos bases (Santi, con el superusuario). Versionado en `08_Ubicacion_Deposito_60.sql`. La validación de la API no cambia. | El 30 del 07 fue un número sin fundamento; la validación ya estaba en 60 y la columna de origen, `articulo.ubicacion_deposito`, era de 60. |
 | S5-03 | **La ubicación sale del alta y de la modificación del artículo.** Se carga desde la ficha, **por sucursal**, igual que se ve la cantidad. | El estante se asigna cuando la mercadería llega; en el alta no hay existencia en ninguna sucursal. Copiarla a todas afirmaría que la pieza está en el mismo estante en las dos: la redundancia que N-9 eliminó. |
 | S5-04 | **Numeración de scripts:** la normalización llegó como `05_…` y queda **07**. El 05 es `05_rol_tests.sql`; el **06 sigue reservado para C2**. | Primer número libre. |
+| S5-06 | **El 07 y el 08 NO se aplican a `lacentral_demo` antes de la demo.** Van el lunes 09/11, o antes si el #141 está mergeado y verificado — **nunca jueves ni viernes**. | La demo no puede depender de que el #141 entre a tiempo. |
 | S5-05 | **La comparación de esquemas `lacentral_test` ↔ `lacentral` la hace Santi** con el superusuario: el rol de desarrollo no tiene `CONNECT` sobre `lacentral` y no se le va a dar. 04/11: md5 de columnas idéntico. | Seguridad de los datos reales. |
 
 ---
@@ -28,10 +29,23 @@ Cierre del Sprint 4 y arrastre: `docs/sprint04/ESTADO.md` (PR #139).
 | a · C3 | `lacentral_demo` creada (owner `lacentral_santi`), con Parte A + 01 a 04, y **sembrada** con `backend/db/demo/sembrar_demo.cs` contra la API de `develop` | `feature/c3-lacentral-demo` | ver abajo | **Hecha 04/11.** Esquema igual al de `develop` (huella comparada). 2 usuarios, 5 proveedores, 30 artículos, 90 códigos, 15 facturas, 180 líneas, 15 fechas. Login de `operador.demo` y búsqueda verificados por HTTP |
 | b · re-scaffold | 07 versionado, re-scaffold, arreglos del modelo, ubicación por sucursal (backend y ficha) | `feature/normalizacion-3fn-rescaffold` | ver abajo | **Hecha 04/11.** Sin veredicto de `verificador-tdd` ni `auditor-persistencia` |
 | c · tests | Los 7 del esquema y la corrida completa | idem | idem | **Hecha.** Ver «Tests» |
-| d · 07 en demo | Aplicar 07 y 08 a `lacentral_demo` | — | — | **Pendiente de confirmación de Santi** (ver PRÓXIMA SESIÓN) |
+| d · 07 en demo | Aplicar 07 y 08 a `lacentral_demo` | — | — | **Postergada (S5-06):** lunes 09/11 o con el #141 mergeado y verificado; nunca jueves ni viernes |
 
-**C3 (compuerta del Sprint 4): cerrada el 04/11/2026.** La clave de los usuarios de demo no
-está en el repo.
+**C3 (compuerta del Sprint 4): cerrada el 04/11/2026.** La demo del viernes corre sobre
+`lacentral_demo` con el esquema de `develop`. **No se toca hasta después de la demo.** La clave
+de `admin.demo` y `operador.demo` está en `~/.config/lacentral/clave-demo.txt` (600), en la
+máquina de Santi; no está en el repo.
+
+### Script 08 · dónde está aplicado
+
+| Base | 08 (`ubicacion_deposito` a 60) |
+|---|---|
+| `lacentral_test` | **Aplicado** a mano por Santi, 04/11 |
+| `lacentral` | **Aplicado** a mano por Santi, 04/11 |
+| `lacentral_demo` | **Pendiente**, después del 07 (S5-06) |
+
+Es idempotente: si la columna ya es de 60 no hace el `ALTER`. Probado en `lacentral_test` en
+una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
 
 ### Qué cambió con el modelo nuevo (fase b)
 
@@ -39,14 +53,17 @@ está en el repo.
   lee su **última** baja (reactivado la conserva, como motivo y fecha, D10); el usuario, la
   **abierta** (su reactivación la limpia). Sin cambio de comportamiento. `usuario_alta_id`
   salió de las entidades: nadie lo leía.
-- **`provincia_id` (N-5):** ningún código leía ni escribía la provincia (las direcciones se
-  mapean solo con `Calle`). No hubo JOIN que agregar. La pantalla que la muestre lo va a
-  necesitar.
+- **`provincia_id` (N-5):** hoy ningún código la usa (las direcciones se mapean solo con
+  `Calle`), así que no hubo JOIN que agregar. **Las pantallas de clientes y proveedores (HU 045)
+  lo van a necesitar:** un JOIN a `provincia` para proyectar el nombre, y un combo en lugar de
+  un campo de texto. Ver D-S5-02.
 - **`factura_compra_detalle` con clave de tres columnas:** el repositorio solo inserta, no
   busca por clave. La guarda del caso de uso decía «una línea por artículo: es la clave
   primaria»; pasa a **(artículo, sucursal)**. El test `ArticuloRepetidoEnDosLineas_Invalido`
-  afirmaba la regla vieja con dos sucursales distintas: pasó a la misma sucursal. El recálculo
-  de precios recibe cada artículo una vez.
+  afirmaba la regla vieja con dos sucursales distintas: pasó a la misma sucursal. La regla
+  nueva la cubre `VeinteDelMismoArticulo_DiezParaCadaSucursal_EntraYElStockQuedaRepartido`:
+  el caso de uso real contra PostgreSQL, 20 bujías del mismo código, 10 a cada sucursal; entra y
+  el stock queda en 13 y 10. Con la guarda vieja (mutación), ese test y el de Moq dan rojo.
 - **Ubicación (S5-03):** `PUT /api/articulos/{id}/ubicaciones/{sucursalId}` (ADMINISTRADOR y
   OPERADOR, máximo 60, vacío borra; sin fila de stock la crea en cero; dado de baja → 400). La
   ficha trae la ubicación en cada existencia; en la pantalla, la tabla de stock tiene un campo y
@@ -57,16 +74,23 @@ está en el repo.
 
 ### Tests
 
-- **Backend: 456** (línea de base 436 − 5 borrados + 25 nuevos). Una sola corrida completa:
-  **455/456**, 0 omitidos, 0 warnings, 0 `53300`, 3 min 6 s. El que falló
-  (`RestriccionesUnicasPostgreSqlTests.TelefonosYFacturaDeVentaDuplicados_…`) era el
-  `medio_cobro` de arriba; arreglado, su clase dio 5/5. **La suite completa no se volvió a
-  correr después del arreglo.**
-- Borrados (5): los que afirmaban la ubicación en el alta y la modificación; la regla del máximo
-  de 60 se volvió a probar en la operación nueva.
+- **Backend: 456/456** (línea de base 436 − 5 eliminados + 25 nuevos), 0 omitidos, 0 warnings,
+  2 min 36 s, en **una corrida completa** sobre `a4179f4`. Una corrida anterior dio 455/456
+  por el `medio_cobro` NOT NULL en el dato de `RestriccionesUnicasPostgreSqlTests` (arreglado
+  en `7acfe72`); no cuenta.
+- **Eliminados (5), con su motivo:**
+
+  | Test | Motivo |
+  |---|---|
+  | `CrearArticuloUseCaseTests.UbicacionDeMasDe60_Invalido` | El alta ya no recibe ubicación (S5-03). El máximo de 60 lo prueba `AsignarUbicacionArticuloUseCaseTests.UbicacionDeMasDe60_Invalido` / `UbicacionDe60_Entra`. |
+  | `CrearArticuloUseCaseTests.Alta_SinUbicacion_GuardaNull` | Sin el campo en el alta no hay caso. Que un artículo sin fila de stock dé ubicación null lo prueba `AsignarUbicacionPostgreSqlTests.Ficha_TraeLaUbicacionDeCadaSucursal`. |
+  | `ModificarArticuloUseCaseTests.UbicacionDeMasDe60_Invalido` | La modificación ya no recibe ubicación (S5-03). Mismo reemplazo que el primero. |
+  | `ModificarArticuloUseCaseTests.UbicacionEnBlanco_SeGuardaComoNull` | Idem. Lo reemplaza `AsignarUbicacionArticuloUseCaseTests.UbicacionEnBlanco_LaBorra` (null y blancos) y `AsignarUbicacionPostgreSqlTests.Null_BorraLaUbicacion`. |
+  | `ModificarArticuloApiPostgreSqlTests.Get_Ficha_TraeLaUbicacion` | La ficha ya no tiene ubicación del artículo, sino por sucursal. Lo reemplaza `Put_Ubicacion_204YLaFichaLaMuestraEnEsaSucursal`. |
+
 - Nuevos (25): 9 del caso de uso de ubicación (Moq), 5 de su persistencia (PostgreSQL, releídos
-  con contexto nuevo), 2 HTTP, 2 de la compra con el mismo artículo en dos sucursales (Moq y
-  PostgreSQL), y **los 7 del esquema 07** en `EsquemaNormalizacionPostgreSqlTests`: cada FALLA
+  con contexto nuevo), 2 HTTP, 2 de la compra con el mismo artículo en dos sucursales (Moq y el
+  caso de negocio de las 20 bujías, contra PostgreSQL), y **los 7 del esquema 07** en `EsquemaNormalizacionPostgreSqlTests`: cada FALLA
   verifica el código SQL y el nombre de la restricción.
 - Rojo por la razón correcta antes de producción, en commits separados (`f2bb5a9`, `694f53c`).
   Los 7 del esquema nacieron en verde: el 07 ya estaba aplicado.
@@ -79,8 +103,8 @@ está en el repo.
 ## Deuda
 
 - **D-S5-01 · `medio_cobro`:** la HU de ventas tiene que pedirlo; la columna es NOT NULL.
-- **D-S5-02 · `provincia_id`:** sin JOIN ni combo todavía; aparece cuando una pantalla muestre
-  direcciones.
+- **D-S5-02 · `provincia_id`:** sin JOIN ni combo. La HU 045 (clientes y proveedores) los
+  necesita: JOIN para proyectar el nombre y combo en vez de texto.
 - **D-S5-03 · costo con dos líneas del mismo artículo:** si llegan a precios distintos, el
   costo vigente queda en el de la última línea. No hay regla de negocio que diga otra cosa.
 - **D-S5-04 · entorno:** `dotnet-ef` necesita `DOTNET_ROOT=$HOME/.dotnet` y `~/.dotnet/tools`
@@ -92,10 +116,9 @@ está en el repo.
 
 ## PRÓXIMA SESIÓN
 
-1. **Decisión pendiente (fase d):** aplicar 07 y 08 a `lacentral_demo`. Con eso, la demo **tiene
-   que correr con esta rama** (`develop` deja de funcionar contra esa base, porque lee
-   `articulo.ubicacion_deposito`). Si la rama no entra antes del viernes, conviene no aplicarlos
-   hasta después de la demo.
+1. **Fase d (S5-06):** el lunes 09/11 (o con el #141 mergeado y verificado, nunca jueves ni
+   viernes), 07 y después 08 a `lacentral_demo`. Desde ahí la demo corre solo con el código del
+   #141: `develop` lee `articulo.ubicacion_deposito`, que el 07 borra.
 2. Veredicto de `verificador-tdd` y `auditor-persistencia` sobre la fase b.
 3. Pendientes del 04/11, en este orden: `git merge develop` en la 044 (resolver
    `formulario.ts` sin perder `password` ni `autocompletar`); aviso flotante con foco devuelto y
