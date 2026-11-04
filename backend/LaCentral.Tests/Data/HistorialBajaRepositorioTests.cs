@@ -159,6 +159,35 @@ public class HistorialBajaRepositorioTests
         }
     }
 
+    // N-11: con dos bajas en el historial, el detalle del cliente dice quién dio la ÚLTIMA,
+    // también después de reactivarlo (es su rastro, como motivo y fecha, D10).
+    [PostgreSqlFact]
+    public async Task Cliente_DosBajas_ElDetalleDiceQuienDioLaUltima()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var primera = await fixture.CrearUsuarioAsync("primera.baja");
+        var segunda = await fixture.CrearUsuarioAsync("segunda.baja");
+        var quienReactiva = await fixture.CrearUsuarioAsync("reactiva");
+        var clienteId = await SembrarAsync(fixture, EntidadConHistorialBaja.Cliente);
+
+        await using (var c = fixture.CrearContexto())
+            Assert.True((await CasosDeBajaPostgreSql.DarDeBajaCliente(c, primera).EjecutarAsync(clienteId, $"CLI-{clienteId}", "Mudanza")).IsSuccess);
+        await using (var c = fixture.CrearContexto())
+            Assert.True((await CasosDeBajaPostgreSql.ReactivarCliente(c, quienReactiva).EjecutarAsync(clienteId)).IsSuccess);
+        await using (var c = fixture.CrearContexto())
+            Assert.True((await CasosDeBajaPostgreSql.DarDeBajaCliente(c, segunda).EjecutarAsync(clienteId, $"CLI-{clienteId}", "Cierre")).IsSuccess);
+
+        await using (var lectura = fixture.CrearContexto())
+            Assert.Equal(segunda, (await new ClienteRepositorio(lectura).ObtenerDetallePorIdAsync(clienteId))!.UsuarioBajaId);
+
+        await using (var c = fixture.CrearContexto())
+            Assert.True((await CasosDeBajaPostgreSql.ReactivarCliente(c, quienReactiva).EjecutarAsync(clienteId)).IsSuccess);
+
+        await using var relectura = fixture.CrearContexto();
+        Assert.Equal(2, await ContarFilasAsync(relectura, EntidadConHistorialBaja.Cliente, clienteId));
+        Assert.Equal(segunda, (await new ClienteRepositorio(relectura).ObtenerDetallePorIdAsync(clienteId))!.UsuarioBajaId);
+    }
+
     // ---------- Atomicidad: la baja y su historial, juntos o ninguno ----------
 
     [PostgreSqlFact]
