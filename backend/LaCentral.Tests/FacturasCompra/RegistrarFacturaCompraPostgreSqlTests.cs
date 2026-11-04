@@ -111,6 +111,34 @@ public class RegistrarFacturaCompraPostgreSqlTests
 
     // ---- CA1, CA4 y D9 ----
 
+    // D9 + 07: la clave del detalle es (factura, artículo, sucursal). El mismo artículo a
+    // las dos sucursales en una factura es una compra normal y tiene que entrar.
+    [PostgreSqlFact]
+    public async Task MismoArticuloEnDosSucursales_DosLineasYElStockEnCadaUna()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+
+        Result<RegistrarFacturaCompraResponse> resultado;
+        await using (var contexto = fixture.CrearContexto())
+            resultado = await Caso(contexto, e).EjecutarAsync(Compra(e) with
+            {
+                Lineas = new[]
+                {
+                    new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal1, 5m, 200m, 0m),
+                    new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal2, 2m, 200m, 0m)
+                }
+            });
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        await using var relectura = fixture.CrearContexto();
+        Assert.Equal(new[] { (e.Sucursal1, 5m), (e.Sucursal2, 2m) },
+            (await relectura.FacturaCompraDetalle.AsNoTracking().Where(d => d.FacturaCompraId == resultado.Value.Id)
+                .OrderBy(d => d.SucursalId).ToListAsync()).Select(d => (d.SucursalId, d.Cantidad)));
+        var stock = await StockAsync(relectura);
+        Assert.Equal((8m, 2m), (stock[(e.Comprado1, e.Sucursal1)], stock[(e.Comprado1, e.Sucursal2)]));
+    }
+
     [PostgreSqlFact]
     public async Task Registrar_EscribeFacturaStockCostoUltimoProveedorEHistorial_SoloDeLosComprados()
     {

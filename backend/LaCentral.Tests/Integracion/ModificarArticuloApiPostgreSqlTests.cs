@@ -260,4 +260,41 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
             errores.EnumerateObject().Select(e => e.Name).OrderBy(n => n, StringComparer.Ordinal));
         Assert.Equal("Bujía", (await LeerAsync(fixture, id)).Nombre);
     }
+
+    // N-9 · la ubicación se carga desde la ficha, por sucursal. OPERADOR alcanza.
+    [PostgreSqlFact]
+    public async Task Put_Ubicacion_204YLaFichaLaMuestraEnEsaSucursal()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var usuario = await fixture.CrearUsuarioAsync();
+        using var cliente = Cliente(fixture, "OPERADOR", usuario);
+        var id = await CrearArticuloAsync(cliente, "Bujía");
+
+        var respuesta = await cliente.PutAsJsonAsync($"/api/articulos/{id}/ubicaciones/1", new { ubicacionDeposito = "Estante 4" });
+
+        Assert.Equal(HttpStatusCode.NoContent, respuesta.StatusCode);
+        var ficha = await cliente.GetFromJsonAsync<JsonElement>($"/api/articulos/{id}");
+        var ubicaciones = ficha.GetProperty("existencias").EnumerateArray()
+            .ToDictionary(x => x.GetProperty("sucursalId").GetInt32(), x => x.GetProperty("ubicacionDeposito").GetString());
+        Assert.Equal(new Dictionary<int, string?> { [1] = "Estante 4", [2] = null }, ubicaciones);
+        Assert.False(ficha.TryGetProperty("ubicacionDeposito", out _), "La ubicación ya no es del artículo: es de cada sucursal.");
+    }
+
+    // El máximo de 60 no cambió: se mudó del alta y la modificación a esta operación.
+    [PostgreSqlFact]
+    public async Task Put_UbicacionDeMasDe60_400PorCampoYNoSeEscribe()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var usuario = await fixture.CrearUsuarioAsync();
+        using var cliente = Cliente(fixture, "OPERADOR", usuario);
+        var id = await CrearArticuloAsync(cliente, "Bujía");
+
+        var respuesta = await cliente.PutAsJsonAsync($"/api/articulos/{id}/ubicaciones/1", new { ubicacionDeposito = new string('u', 61) });
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.True((await respuesta.Content.ReadFromJsonAsync<JsonElement>()).TryGetProperty("errors", out var errores));
+        Assert.Equal(new[] { "UbicacionDeposito" }, errores.EnumerateObject().Select(x => x.Name));
+        await using var relectura = fixture.CrearContexto();
+        Assert.All(await relectura.Stock.AsNoTracking().Where(x => x.ArticuloId == id).ToListAsync(), x => Assert.Null(x.UbicacionDeposito));
+    }
 }
