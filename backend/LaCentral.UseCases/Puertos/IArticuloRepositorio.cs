@@ -23,13 +23,20 @@ public interface IArticuloRepositorio
     Task<IReadOnlyList<short>> ObtenerSucursalesAsync(CancellationToken ct = default);
 
     /// <summary>
-    /// Nombre, ubicación y, si no es null, código interno. Con null la columna no se toca: no
+    /// Nombre y, si no es null, código interno. Con null la columna no se toca: no
     /// se pisa un cambio que otra sesión hizo entre la lectura y la escritura. false si no hay
     /// un artículo ACTIVO con ese Id: la condición va en la escritura, así que vale lo que la
     /// fila es al escribir.
     /// </summary>
-    Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string? codigoInterno,
+    Task<bool> ActualizarDatosAsync(int id, string nombre, string? codigoInterno,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// N-9 · ubicación del artículo en ESA sucursal (null la borra). Sin fila de stock, la crea
+    /// con cantidad cero; con fila, no toca la cantidad. false si no hay un artículo ACTIVO con
+    /// ese Id: la condición va en la escritura.
+    /// </summary>
+    Task<bool> AsignarUbicacionAsync(int id, short sucursalId, string? ubicacionDeposito, CancellationToken ct = default);
 
     /// <summary>Agrega códigos de proveedor sin tocar los que el artículo ya tiene.</summary>
     Task AgregarCodigosAsync(int id, IReadOnlyList<CodigoAlternativo> codigos, CancellationToken ct = default);

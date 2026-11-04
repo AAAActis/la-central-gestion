@@ -46,7 +46,7 @@ public class CrearArticuloUseCaseTests
         new(_articulos.Object, _consulta.Object, _proveedores.Object, _unidad.Object);
 
     private static CrearArticuloRequest Request(params (int ProveedorId, string Codigo)[] codigos) =>
-        new("Bujía NGK BPR6ES", "Estante 4", codigos.Select(c => new CodigoProveedorRequest(c.ProveedorId, c.Codigo)).ToArray());
+        new("Bujía NGK BPR6ES", codigos.Select(c => new CodigoProveedorRequest(c.ProveedorId, c.Codigo)).ToArray());
 
     private void NoSeEscribioNada()
     {
@@ -61,7 +61,7 @@ public class CrearArticuloUseCaseTests
     [InlineData("   ")]
     public async Task NombreVacio_Invalido(string nombre)
     {
-        var resultado = await Caso().EjecutarAsync(new(nombre, null, Array.Empty<CodigoProveedorRequest>()));
+        var resultado = await Caso().EjecutarAsync(new(nombre, Array.Empty<CodigoProveedorRequest>()));
 
         Assert.Equal(TipoError.Invalido, resultado.Tipo);
         NoSeEscribioNada();
@@ -70,16 +70,7 @@ public class CrearArticuloUseCaseTests
     [Fact]
     public async Task NombreDeMasDe200_Invalido()
     {
-        var resultado = await Caso().EjecutarAsync(new(new string('a', 201), null, Array.Empty<CodigoProveedorRequest>()));
-
-        Assert.Equal(TipoError.Invalido, resultado.Tipo);
-        NoSeEscribioNada();
-    }
-
-    [Fact]
-    public async Task UbicacionDeMasDe60_Invalido()
-    {
-        var resultado = await Caso().EjecutarAsync(new("Bujía", new string('u', 61), Array.Empty<CodigoProveedorRequest>()));
+        var resultado = await Caso().EjecutarAsync(new(new string('a', 201), Array.Empty<CodigoProveedorRequest>()));
 
         Assert.Equal(TipoError.Invalido, resultado.Tipo);
         NoSeEscribioNada();
@@ -186,13 +177,12 @@ public class CrearArticuloUseCaseTests
     [Fact]
     public async Task Alta_ArmaElArticuloCompleto()
     {
-        var resultado = await Caso().EjecutarAsync(new("  Bujía NGK BPR6ES ", " Estante 4 ",
+        var resultado = await Caso().EjecutarAsync(new("  Bujía NGK BPR6ES ",
             new CodigoProveedorRequest[] { new(10, " bpr-6es "), new(20, "ngk 4321") }));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
         Assert.NotNull(_agregado);
         Assert.Equal("Bujía NGK BPR6ES", _agregado.Nombre);
-        Assert.Equal("Estante 4", _agregado.UbicacionDeposito);
         Assert.True(_agregado.Activo);
         Assert.Null(_agregado.CostoVigente);
         // NormalizacionArticulo.Codigo: la misma función con la que se busca.
@@ -200,17 +190,6 @@ public class CrearArticuloUseCaseTests
             _agregado.CodigosAlternativos.Select(c => (c.Codigo, c.ProveedorId)));
         Assert.Equal(new[] { (1, 0m), (2, 0m) }, _agregado.Existencias.Select(e => (e.SucursalId, e.Cantidad)));
         Assert.Equal(ReglasPrecioModalidad.ConfiguracionInicial(), _agregado.Precios);
-    }
-
-    [Fact]
-    public async Task Alta_SinUbicacion_GuardaNull()
-    {
-        var resultado = await Caso().EjecutarAsync(new("Bujía", "   ", Array.Empty<CodigoProveedorRequest>()));
-
-        Assert.True(resultado.IsSuccess, resultado.Error);
-        Assert.NotNull(_agregado);
-        Assert.Null(_agregado.UbicacionDeposito);
-        Assert.Empty(_agregado.CodigosAlternativos);
     }
 
     // Sin MAX+1: el código sale del Id que generó la base, no de contar los existentes.

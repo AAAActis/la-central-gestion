@@ -58,6 +58,7 @@ builder.Services.AddScoped<CrearArticuloUseCase>();
 builder.Services.AddScoped<ConsultarArticulosUseCase>();
 builder.Services.AddScoped<ObtenerArticuloDetalleUseCase>();
 builder.Services.AddScoped<ModificarArticuloUseCase>();
+builder.Services.AddScoped<AsignarUbicacionArticuloUseCase>();
 builder.Services.AddScoped<RetirarCodigoProveedorUseCase>();
 builder.Services.AddScoped<DarDeBajaArticuloUseCase>();
 builder.Services.AddScoped<ReactivarArticuloUseCase>();

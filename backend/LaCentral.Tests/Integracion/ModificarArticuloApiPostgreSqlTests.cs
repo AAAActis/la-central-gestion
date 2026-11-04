@@ -72,7 +72,6 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
         var respuesta = await cliente.PostAsJsonAsync("/api/articulos", new
         {
             nombre,
-            ubicacionDeposito = "Estante 1",
             codigosProveedor = codigos.Select(c => new { proveedorId = c.ProveedorId, codigo = c.Codigo }).ToArray()
         });
         Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
@@ -102,13 +101,13 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
 
         var respuesta = await cliente.PutAsJsonAsync($"/api/articulos/{id}", new
         {
-            nombre = "Bujía NGK", ubicacionDeposito = "Pasillo 9",
+            nombre = "Bujía NGK",
             codigosProveedor = new[] { new { proveedorId = sur, codigo = "ngk-1" } }
         });
 
         Assert.Equal(HttpStatusCode.NoContent, respuesta.StatusCode);
         var articulo = await LeerAsync(fixture, id);
-        Assert.Equal(("Bujía NGK", "Pasillo 9", $"LC-{id:D6}"), (articulo.Nombre, articulo.UbicacionDeposito, articulo.CodigoInterno));
+        Assert.Equal(("Bujía NGK", $"LC-{id:D6}"), (articulo.Nombre, articulo.CodigoInterno));
         Assert.Equal(new[] { ("BPR-6ES", norte), ("NGK-1", sur) },
             articulo.ArticuloCodigoAlternativo.OrderBy(c => c.ProveedorId).Select(c => (c.Codigo, c.ProveedorId)));
     }
@@ -240,21 +239,6 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
         Assert.Equal((usuario, (int?)usuario), (historial.UsuarioBajaId!.Value, historial.UsuarioReactivacionId));
     }
 
-    // La ficha trae la ubicación, para editarla.
-    [PostgreSqlFact]
-    public async Task Get_Ficha_TraeLaUbicacion()
-    {
-        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
-        var usuario = await fixture.CrearUsuarioAsync();
-        using var cliente = Cliente(fixture, "OPERADOR", usuario);
-        var id = await CrearArticuloAsync(cliente, "Bujía");
-
-        var ficha = await cliente.GetFromJsonAsync<JsonElement>($"/api/articulos/{id}");
-
-        Assert.Equal("Estante 1", ficha.GetProperty("ubicacionDeposito").GetString());
-        Assert.Equal(JsonValueKind.Null, ficha.GetProperty("motivoBaja").ValueKind);
-    }
-
     // El contrato del 400 por formato: ValidationProblemDetails con el error POR CAMPO.
     [PostgreSqlFact]
     public async Task Put_FormatoInvalido_400ConErroresPorCampoYNoSeEscribe()
@@ -266,14 +250,13 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
 
         var respuesta = await cliente.PutAsJsonAsync($"/api/articulos/{id}", new
         {
-            ubicacionDeposito = new string('u', 61),
             codigoInterno = new string('c', 41)
         });
 
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
         Assert.True((await respuesta.Content.ReadFromJsonAsync<JsonElement>()).TryGetProperty("errors", out var errores),
             "El 400 tiene que traer los errores por campo.");
-        Assert.Equal(new[] { "CodigoInterno", "Nombre", "UbicacionDeposito" },
+        Assert.Equal(new[] { "CodigoInterno", "Nombre" },
             errores.EnumerateObject().Select(e => e.Name).OrderBy(n => n, StringComparer.Ordinal));
         Assert.Equal("Bujía", (await LeerAsync(fixture, id)).Nombre);
     }

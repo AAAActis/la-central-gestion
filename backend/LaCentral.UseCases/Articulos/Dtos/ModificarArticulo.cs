@@ -6,7 +6,7 @@ namespace LaCentral.UseCases.Articulos.Dtos;
 /// (retirar es una operación explícita, solo de administrador).
 /// </summary>
 public sealed record ModificarArticuloRequest(
-    string Nombre, string? UbicacionDeposito, string? CodigoInterno,
+    string Nombre, string? CodigoInterno,
     IReadOnlyList<CodigoProveedorRequest>? CodigosProveedor);
 
 public sealed record DarDeBajaArticuloRequest(string Motivo);

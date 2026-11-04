@@ -76,7 +76,6 @@ public class ArticulosApiPostgreSqlTests : IClassFixture<WebApplicationFactory<P
         var respuesta = await cliente.PostAsJsonAsync("/api/articulos", new
         {
             nombre = "Filtro de aceite",
-            ubicacionDeposito = "Pasillo 2",
             codigosProveedor = new[] { new { proveedorId = proveedor, codigo = " fa-100 " } }
         });
 
@@ -124,7 +123,6 @@ public class ArticulosApiPostgreSqlTests : IClassFixture<WebApplicationFactory<P
 
         var respuesta = await cliente.PostAsJsonAsync("/api/articulos", new
         {
-            ubicacionDeposito = new string('u', 61),
             codigosProveedor = new object[]
             {
                 new { proveedorId = 1, codigo = new string('c', 61) },
@@ -136,7 +134,6 @@ public class ArticulosApiPostgreSqlTests : IClassFixture<WebApplicationFactory<P
         var errores = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("errors");
         var campos = errores.EnumerateObject().Select(e => e.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         Assert.Contains("Nombre", campos);
-        Assert.Contains("UbicacionDeposito", campos);
         Assert.Contains("CodigosProveedor[0].Codigo", campos);
         Assert.Contains("CodigosProveedor[1].Codigo", campos);
 

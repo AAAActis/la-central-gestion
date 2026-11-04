@@ -62,7 +62,6 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
         {
             CodigoInterno = "TMP-" + Guid.NewGuid().ToString("N"),
             Nombre = articulo.Nombre,
-            UbicacionDeposito = articulo.UbicacionDeposito,
             PrecioCosto = articulo.CostoVigente,
             Activo = articulo.Activo,
             MotivoBaja = articulo.MotivoBaja,
@@ -98,20 +97,21 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
     // escribir, no lo que era al leer (otra sesión pudo darla de baja entre medio).
     // Sin código interno nuevo, la columna no entra en el SET: escribir el valor leído pisaría
     // el que otra sesión pudo cambiar entre la lectura y la escritura.
-    public async Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string? codigoInterno,
+    public async Task<bool> ActualizarDatosAsync(int id, string nombre, string? codigoInterno,
         CancellationToken ct = default)
     {
         var articulo = _context.Articulo.Where(a => a.Id == id && a.Activo);
         var filas = codigoInterno is null
             ? await articulo.ExecuteUpdateAsync(s => s
-                .SetProperty(a => a.Nombre, nombre)
-                .SetProperty(a => a.UbicacionDeposito, ubicacionDeposito), ct)
+                .SetProperty(a => a.Nombre, nombre), ct)
             : await articulo.ExecuteUpdateAsync(s => s
                 .SetProperty(a => a.Nombre, nombre)
-                .SetProperty(a => a.UbicacionDeposito, ubicacionDeposito)
                 .SetProperty(a => a.CodigoInterno, codigoInterno), ct);
         return filas == 1;
     }
+
+    public Task<bool> AsignarUbicacionAsync(int id, short sucursalId, string? ubicacionDeposito, CancellationToken ct = default)
+        => throw new NotImplementedException();
 
     // Solo inserta: los códigos que el artículo ya tiene no se tocan. Una carrera con otro
     // artículo la cierran codigo_unico_global y un_codigo_por_proveedor (23505 → 409).
@@ -248,7 +248,6 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
                         ModalidadPersistida.LeerBase(p.Base), p.Porcentaje, p.Precio,
                         p.CalculoManual, p.FechaCalculo, p.UsuarioId))
                     .OrderBy(p => p.Modalidad).ToArray(),
-            UbicacionDeposito: articulo.UbicacionDeposito,
             MotivoBaja: articulo.MotivoBaja);
     }
 
