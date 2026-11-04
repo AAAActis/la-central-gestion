@@ -115,6 +115,14 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
   ni el 08. Una pregunta al grafo sobre el esquema nuevo contesta mal. **Reindexar desde
   `develop` cuando el #141 y la 044 estén mergeados**, ya con `graphifyy[sql]` para que entren
   los scripts de `backend/db/` (Database First: son la fuente de verdad del esquema).
+- **D-S5-06 · siete documentos «leídos a una línea del final» en la extracción del 04/11.**
+  Los subagentes de graphify reportaron N−1 líneas en `auditor-persistencia.md`, `README.md`,
+  los README de `Controllers/` y `Dtos/`, `entorno-local.md`, `PLAN_SPRINT3.md` y
+  `pr-fase1-deuda-bloqueante.md`. Si es un error de conteo sistemático, se pierde la última
+  línea de cada documento, que en un `.md` puede ser una conclusión. **Verificar en la
+  reindexación desde `develop`** (D-S5-05): comparar el conteo real de líneas de uno de esos
+  archivos con lo que el grafo dice que leyó. No antes. Ese grafo de la 044 no se grabó: queda
+  el `graph.json` anterior (decisión del 04/11).
 - Sigue de antes: D-27a, D-27c, el campo en el `ProblemDetails`, el largo del motivo (200/255),
   `RestablecerContrasenaUseCase.cs:43`.
 
