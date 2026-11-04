@@ -295,6 +295,7 @@ la vinculación funcionando con su pantalla. Todo lo demás es negociable; eso n
 |---|---|---|---|---|---|
 | Pista C · C1 | 017 · HU-STK-01 | **Mergeada en develop (#131, 20/10/2026).** Compuerta APTO (verificador y auditor). Cuerpo en `docs/sprint04/pr-hu-stk-01.md` | `feature/HU-STK-01-existencias-ubicacion` | #131 · Refs #24 | 435 (148) |
 | Pista B · B1 | 039 · HU-UI-01 | **Mergeada en develop (#130, 20/10/2026).** Aprobada con correcciones (Lauti), aplicadas antes del merge. CA2 NO verificado como está escrito | `feature/HU-UI-01-estructura-base` | #130 · Refs #40 | backend 435 (148) · frontend 21 |
+| Pista C · HU 041 + Fase 2 | 041 · HU-UI-03 | **PR abierto contra develop (29/10/2026).** CA-001 a CA-004 pasan. Acceso NO verificado contra 01-acceso.png (no está en el repo) | `feature/hu-ui-03-control-de-sesion` (de `develop`) | #138 · cuerpo en `docs/sprint04/pr-hu-ui-03.md` | frontend 88 (48 + 40) · backend 436, 148 sin enlace |
 
 **Deuda nueva, de entorno (19/10/2026):** con un rol personal de PostgreSQL con tope de
 conexiones (`lacentral_lauti`), `dotnet test` en paralelo da **140 fallos falsos**
@@ -391,6 +392,14 @@ Material: `docs/sprint04/ADENDA-REDISENO-UI.md`, que manda sobre el prompt.
 - `prefers-reduced-motion`.
 - Botón en carga, modal y aviso flotante en `compartido/`.
 
+**Corrección al registro (29/10/2026).** El cuerpo del PR #135 declaró «los botones con los seis
+requisitos de la §7», pero **dos de las cinco variantes estaban incompletas**:
+- `primario` no tenía regla: la clase se declaraba y el botón se veía secundario;
+- `peligro` no ponía el texto en blanco: `--tinta` sobre `--peligro`, 2,32:1, no cumple AA.
+
+Las dos se cerraron en la HU-UI-03 (PR #138), con un test por variante en
+`compartido/botones.spec.ts`. Se registra porque la tesis cita estos PR como evidencia.
+
 **Tests:** frontend 35/35 (21 previos + 14 nuevos). El backend no se tocó y no se corrió: el
 enlace a la base está degradado (ver D-27b).
 
@@ -486,6 +495,135 @@ No hizo falta reescribir historia: las tres ramas ya estaban encima de 7f92eb2, 
 cada PR cuando su base se mergea. **El `develop` local se realineó con `origin/develop`:** nada se
 commitea en `develop`, todo entra por PR.
 
+## HU-UI-03 · 041 + Fase 2 · control de sesión, marco y acceso (29/10/2026)
+
+Rama `feature/hu-ui-03-control-de-sesion`, sale de `develop` (6a4a942): la Fase 1 (#135) y la
+HU-UI-05 (#134) ya están ahí. Push aprobado el 29/10/2026; **PR #138** contra `develop`, con el cuerpo en
+`docs/sprint04/pr-hu-ui-03.md`.
+
+**Hecho:**
+- **Sesión en `sessionStorage`** (decisión de la adenda §5): sobrevive a F5 en la misma pestaña
+  y muere al cerrarla. Salir la borra. Un valor ilegible cuenta como sin sesión. El token no se
+  decodifica en el navegador: el rol es el que devuelve el login (B1).
+- **CA-002:** un 401 con el token vigente cierra la sesión y el acceso dice «Tu sesión venció.
+  Volvé a entrar.». Un 403 no la cierra (la sesión vale, el rol no alcanza). Un 401 tardío de un
+  token anterior no cierra la sesión nueva.
+- **Marco:** `diseno/marca.ts` montada por primera vez (compacta en el encabezado, completa en el
+  acceso), filete rojo bajo el encabezado grafito, usuario y rol a la derecha con Salir (`oscuro`),
+  pie en `--grafito-2`. El activo conserva la raya blanca y `aria-current="page"`.
+- **Acceso:** tarjeta partida (formulario | panel de marca) sobre `.fondo-hex`. Usa
+  `compartido/formulario/`: es su primer consumidor. Ingresar es el único `.primario`, con estado
+  de carga. Los errores van al aviso flotante de error, un objeto
+  `{ texto }` por intento. Un 401 dice siempre «Usuario o contraseña incorrectos.», aunque el
+  servidor dijera de más. Al abrirse, el foco queda en Usuario.
+- **Extensión de `compartido/formulario/` (componente ajeno, recién mergeado).** Decisión del
+  29/10/2026: va en este PR y no en uno aparte, por calendario (el sprint cierra el 30/10). Se
+  agregó `'password'` a `CampoFormulario.tipo` y `autocompletar` (el atributo `autocomplete`).
+  Motivo: el componente no soportó su primer uso real. Sin `password`, la contraseña se ve en
+  claro. Sin `username` y `current-password`, los gestores de contraseñas no completan el acceso
+  y el operador escribe a mano todos los días. Lo revisa Javi sabiendo que está.
+- **`button.peligro` con texto blanco y borde propio: otro hueco de la Fase 1, cerrado acá.**
+  `botones.spec.ts` prueba las cinco variantes de la §7, un test por variante: se distingue de las
+  otras cuatro, el texto contrasta AA con su relleno y lleva su propio color de texto.
+- **`button.primario` en `styles.css`: hueco de la Fase 1 que este PR cierra.** La clase se
+  declaraba (formulario, acceso) pero ninguna regla la pintaba, y no la hubo en ninguna rama. Sale
+  de la §7: relleno `--rojo`, texto `--blanco`, `--rojo-osc` al apoyar el cursor. La capa, el foco,
+  la carga y el deshabilitado son los de la base. Se levantó, con motivo, la restricción de no
+  tocar `styles.css`: es un defecto en código mergeado, no trabajo en paralelo.
+- Manual: `docs/manual/acceso.md` (DoD 9) y `navegacion.md` corregido (F5 y la raya blanca).
+- Proforma 041 en E4 con los CA marcados.
+
+**Lo que entrega contra CA:** dos de cuatro, CA-002 y CA-004. CA-001 y CA-003 ya se cumplían
+desde B1. El trabajo visual de la Fase 2 no responde a ningún CA: viene del prompt del rediseño.
+Su único criterio es la comparación con las referencias, NO verificada porque
+`docs/diseno/referencias/` no existe en el repo.
+
+**CA (proforma `docs/historias/041-HU-UI-03.md`, leídos de ahí):**
+- **CA-001** pasa. Es caracterización: ya se cumplía desde B1.
+- **CA-002** pasa. La expiración se detecta por el 401 de la API.
+- **CA-003** pasa, también caracterización. El ingreso se muestra en la misma dirección; al
+  entrar, el usuario queda en la pantalla que pidió.
+- **CA-004** pasa. En Chrome real, `history.back()` después de Salir muestra el acceso.
+
+**Tests:** frontend **88/88** (48 previos + 40 nuevos). Backend: **436 en total; 288 verdes y 148
+en rojo por `Timeout during connection attempt` contra 100.125.169.91:5432** (enlace de
+Tailscale). No hubo `53300`. Son exactamente los 148 de PostgreSQL, y esta rama no toca backend.
+
+**Mutaciones:** 41 distintas sobre producción: `sesion.ts`, `login.ts`, `app.ts`, `formulario.ts`
+y las reglas de las variantes de botón. Todas dejan al menos un test en rojo. Dos sobrevivieron
+después de migrar el acceso al formulario (la contraseña como texto, sin `autocompletar`): el
+formulario lo probaba en general, pero no que la pantalla lo pidiera. Se agregó ese test y las dos
+mueren. El bug de `#usuario` (abajo), reintroducido tal cual, deja en rojo solo el test del cuerpo
+del login.
+
+**Bug encontrado por la evidencia, no por los tests:** la referencia `#usuario` tapaba a la
+propiedad `usuario` del `ngModel`, y el campo mostraba `[object HTMLInputElement]`. Ningún test
+afirmaba qué credenciales se envían. Ciclo rojo → arreglo en `d14a0bd`.
+
+**Evidencia** (`docs/sprint04/evidencia/hu-ui-03/`, script `capturas-cdp.mjs`, salida en
+`mediciones-cdp.txt`):
+- 12 capturas a 1024, 768 y 480 px (acceso, acceso con error, artículos, factura) y la sesión vencida.
+- Sin desplazamiento horizontal en ninguna.
+- F5 en Chrome real conserva la ruta y la sesión; `localStorage` queda con 0 claves.
+- Teclado: Tab en el marco recorre Artículos → Factura de compra → Salir. Enter en Salir lleva al
+  acceso con el foco en Usuario. Enter con la contraseña mala deja el foco en Contraseña.
+- Movimiento reducido: la capa de Ingresar pasa de 0,3 s a 0 s y el aviso de `subir` a `none`.
+- `grep` de hexadecimales fuera de `styles.css`: ninguno.
+
+**NO verificado:**
+- **Acceso y marco contra su referencia.** `docs/diseno/referencias/` y `docs/diseno/prototipo/`
+  no están en el repo. Sin la referencia no se sabe si el filete va arriba o abajo, ni el texto del
+  pie, ni el título del formulario. Quedaron: filete abajo, pie «La Central Repuestos», título
+  «Acceso al sistema».
+- **Fondo hexagonal.** `public/fondo-hex.jpg` no está. `.fondo-hex` apunta al archivo y se ve el
+  respaldo `--fondo-hex-respaldo` (#2b2b2e).
+- **DoD 10** (contra `lacentral_demo`): C3 sigue pendiente. El recorrido en el navegador fue con
+  la API interceptada (401/200 en el login, 503 o 401 en el resto), sin backend.
+- **Solo Chromium.**
+
+**Referencias y fondo:** los sube Javi. Se le pidieron el 29/10/2026, porque bloquean tres
+declaraciones de esta HU: acceso contra 01-acceso.png, marco contra su referencia y fondo
+hexagonal. Se le ofreció hacer la recompresión de las cuatro capturas pesadas que tiene
+pendiente el PR #132.
+
+**HU-UI-06 · pendiente (29/10/2026).** No está en develop: `confirmacion-motivo.ts` vive solo en
+`origin/feature/hu-ui-06-confirmacion-con-motivo`, y no se tocó. Esa rama modifica `formulario.ts`
+(`maximo`, `coincideCon`, `varianteEnviar`, slot de acciones) y este PR también (`password`,
+`autocompletar`). Cuando entre, necesita un merge con lo de acá.
+
+**Deuda · `compartido/aviso-flotante.ts`, foco y Escape (29/10/2026).** Medido en Chrome:
+- al cerrar el aviso con teclado, el foco cae en `body`;
+- Escape no lo cierra.
+
+No viola la especificación: la §8 exige Escape para el modal y no dice nada del aviso. El hueco
+está en el documento antes que en el código. Un aviso de error no se va solo y no se cierra con
+teclado, así que el usuario de teclado queda con un cartel del que solo sale con el mouse.
+- **Deuda del componente:** al cerrarse, devolver el foco al elemento que lo originó, y cerrar con
+  Escape.
+- **Propuesta de agregado a la §8** (fila «Aviso flotante»; la aprueba Javi antes de implementarla):
+  «Escape cierra el aviso que tiene el foco o, si ninguno lo tiene, el de error a la vista. Al
+  cerrarse, el foco vuelve al elemento que lo originó; si ya no existe, al primer control de la
+  pantalla, nunca a `body`.»
+
+**Observaciones sin decidir:**
+1. **Filete del encabezado y del panel de marca (decisión del 29/10/2026).** Queda con
+   `--grosor-foco` (3 px), como la raya del activo. Corresponde un token propio, `--filete`, cuando
+   llegue `01-acceso.png` y se pueda medir. No se cambia a ciegas.
+2. **`node_modules` sin Karma.** `ng test` fallaba con `Cannot find module 'karma-jasmine'`. Se
+   arregló con `npm ci` (el lock no cambió). `npm` sigue bloqueando los 4 install scripts de N4.
+
+**Deuda registrada · insumo del RNF de seguridad (29/10/2026).**
+- **Decisión:** token en `sessionStorage`.
+- **Alternativa rigurosa:** cookie `httpOnly` + `Secure` + `SameSite`, con un endpoint de refresco
+  y protección CSRF (token de doble envío o encabezado propio verificado por la API).
+- **Por qué es más segura:** un token en `sessionStorage` lo lee cualquier script de la página, así
+  que una XSS lo roba. En una cookie `httpOnly`, el script no lo ve.
+- **Por qué se postergó:** exige tocar el backend (emitir la cookie, el endpoint de refresco, la
+  validación CSRF y la configuración de CORS). Esta semana el objetivo es la demo, y el sistema es
+  de uso interno.
+- **Riesgo aceptado mientras tanto:** una pestaña abierta en un puesto sin vigilar sigue operando
+  hasta que el token vence (12 h, `GeneradorToken.cs`). El manual pide salir al dejar el puesto.
+
 ## PRÓXIMA SESIÓN
 
 **Arrancá leyendo esto y `docs/PROMPT-FASE.md`.** Después:
@@ -512,6 +650,10 @@ Va en `frontend/src/app/compartido/` y se prueba con
 `ng test` (ver `frontend/src/app/README.md`). Antes de B2, leé la habilidad de diseño y los
 criterios de la PISTA B. Avisar a Lauti y a Santi de la respuesta (b) de Sergio: HU-CMP-08 no se
 resuelve con archivo.
+
+**HU-UI-03 (041):** PR #138 abierto contra `develop` (`docs/sprint04/pr-hu-ui-03.md`), en revisión.
+Faltan las referencias y el fondo de Javi para cerrar las tres declaraciones NO verificadas. Si
+entra HU-UI-06, va a necesitar un merge sobre `formulario.ts`.
 
 **Dónde parás de verdad:** si hace falta tocar el esquema, si un CA contradice a otro o al
 esquema, si falta una regla de negocio que nadie definió, si PostgreSQL no está disponible —una
