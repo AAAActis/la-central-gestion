@@ -113,7 +113,7 @@ public class RestriccionesUnicasPostgreSqlTests
             sucursalId = await setup.Sucursal.OrderBy(s => s.Id).Select(s => s.Id).FirstAsync();
             setup.AddRange(cliente, proveedor);
             setup.FacturaVenta.Add(new FacturaVenta { Cliente = cliente, Numero = "0001-00000001", Fecha = new DateOnly(2026, 10, 1),
-                SucursalId = sucursalId, Estado = "ACTIVA", UsuarioId = usuarioId });
+                SucursalId = sucursalId, Estado = "ACTIVA", UsuarioId = usuarioId, MedioCobro = "EFECTIVO" });
             await setup.SaveChangesAsync();
         }
 
@@ -128,7 +128,7 @@ public class RestriccionesUnicasPostgreSqlTests
         Assert.NotNull(await MensajeAlDuplicarAsync(c => c.ClienteTelefono.Add(new ClienteTelefono { ClienteId = cliente.Id, Numero = "351-555-0001" })));
         Assert.NotNull(await MensajeAlDuplicarAsync(c => c.ProveedorTelefono.Add(new ProveedorTelefono { ProveedorId = proveedor.Id, Numero = "351-555-0002" })));
         Assert.NotNull(await MensajeAlDuplicarAsync(c => c.FacturaVenta.Add(new FacturaVenta { ClienteId = cliente.Id, Numero = "0001-00000001",
-            Fecha = new DateOnly(2026, 10, 2), SucursalId = sucursalId, Estado = "ACTIVA", UsuarioId = usuarioId })));
+            Fecha = new DateOnly(2026, 10, 2), SucursalId = sucursalId, Estado = "ACTIVA", UsuarioId = usuarioId, MedioCobro = "EFECTIVO" })));
     }
 
     [PostgreSqlFact]
