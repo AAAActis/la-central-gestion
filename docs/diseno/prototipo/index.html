@@ -1,0 +1,1627 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La Central Gestión</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:ital,wght@0,500;0,600;0,700;1,800&family=Noto+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: barra superior grafito con filete rojo; contenido en tarjetas blancas sobre gris claro; modales sobre fondo hexagonal. Tema claro único, como las referencias. */
+:root{
+  --rojo:#c4211b; --rojo-osc:#931510; --rojo-tinte:#fbebe9; --rojo-borde:#e3a6a2; --rojo-foco:rgba(196,33,27,.32);
+  --tinta:#1c1c1f; --grafito:#2a2a2e; --grafito-2:#1f1f22; --texto-2:#5b5c62; --texto-3:#7b7c83;
+  --linea:#e3e3e6; --linea-2:#c9c9cf; --fondo:#f2f2f3; --superficie:#ffffff; --superficie-2:#f7f7f8; --chip:#f0f0f2;
+  --aviso-fondo:#fcf4e7; --aviso-texto:#6b4a0e; --aviso-chip:#f8ead2;
+  --ok-fondo:#e8f3ec; --ok-texto:#1e6a3b; --deshab-fondo:#e7e7ea; --deshab-texto:#8b8c92;
+  --blanco:#ffffff; --sombra:0 18px 48px rgba(0,0,0,.35);
+  --f-titulo:'Barlow Semi Condensed','Arial Narrow',Arial,sans-serif;
+  --f-texto:'Noto Sans',system-ui,'Segoe UI',Roboto,Arial,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Consolas,'Courier New',monospace;
+  --dur-relleno:300ms; --ease:cubic-bezier(.4,0,.2,1);
+  --hex:none;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{background:var(--fondo)}
+body{margin:0;color:var(--tinta);font:14px/1.5 var(--f-texto);-webkit-font-smoothing:antialiased}
+body.con-modal{overflow:hidden}
+h1,h2,h3{font-family:var(--f-titulo);font-weight:700;margin:0;text-wrap:balance;letter-spacing:.005em}
+h1{font-size:30px;line-height:1.15}
+h1:focus{outline:none}
+p{margin:0}
+a{color:inherit}
+code{font-family:var(--f-mono);font-size:.92em}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ic{width:18px;height:18px;flex:none}
+.mono{font-family:var(--f-mono);font-size:12.5px;letter-spacing:.02em}
+.num{font-variant-numeric:tabular-nums}
+.tenue{color:var(--texto-3)}
+.der{text-align:right}
+
+/* ---------- Botones con relleno direccional ---------- */
+.btn{
+  --relleno:var(--rojo-tinte);
+  position:relative;isolation:isolate;overflow:hidden;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  height:40px;padding:0 16px;border:1px solid transparent;border-radius:3px;
+  font:500 15px/1 var(--f-texto);white-space:nowrap;cursor:pointer;text-decoration:none;
+  transition:border-color var(--dur-relleno) var(--ease),color var(--dur-relleno) var(--ease),box-shadow .12s,filter .12s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn::before{
+  content:"";position:absolute;inset:-1px;z-index:-1;background:var(--relleno);
+  transform:scaleY(0);transform-origin:top center;
+  transition:transform var(--dur-relleno) var(--ease);
+}
+.btn:hover::before,.btn:focus-visible::before{transform:scaleY(1)}
+.btn:focus-visible{outline:3px solid var(--rojo-foco);outline-offset:2px}
+.btn:active:not(:disabled){box-shadow:inset 0 2px 4px rgba(0,0,0,.22);filter:brightness(.94)}
+.btn .ic{position:relative}
+.btn-primario{background:var(--rojo);color:var(--blanco);--relleno:var(--rojo-osc)}
+.btn-peligro{background:#a91c16;color:var(--blanco);--relleno:#7c110d}
+.btn-secundario{background:var(--superficie);color:var(--tinta);border-color:var(--linea-2)}
+.btn-secundario:hover,.btn-secundario:focus-visible{border-color:var(--rojo-borde)}
+.btn-secundario:hover .ic,.btn-secundario:focus-visible .ic{color:var(--rojo)}
+.btn-peligro-borde{background:var(--superficie);color:var(--rojo);border-color:var(--rojo-borde)}
+.btn-oscuro{background:transparent;color:var(--blanco);border-color:rgba(255,255,255,.32);--relleno:var(--rojo)}
+.btn-oscuro:hover,.btn-oscuro:focus-visible{border-color:var(--rojo)}
+.btn-chico{height:32px;padding:0 12px;font-size:13px;gap:6px}
+.btn-chico .ic{width:16px;height:16px}
+.btn-bloque{width:100%}
+.btn:disabled:not(.cargando){background:var(--deshab-fondo);color:var(--deshab-texto);border-color:var(--deshab-fondo);cursor:not-allowed}
+.btn:disabled:not(.cargando)::before{display:none}
+.btn.cargando{cursor:progress}
+.btn.cargando::before{transform:scaleY(1)}
+.giro{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:girar .7s linear infinite;flex:none}
+@keyframes girar{to{transform:rotate(360deg)}}
+
+.enlace{background:none;border:0;padding:0;font:inherit;color:var(--rojo);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;border-radius:2px}
+.enlace:hover{text-decoration:underline;text-underline-offset:3px}
+.enlace:focus-visible{outline:3px solid var(--rojo-foco);outline-offset:2px}
+.enlace-gris{color:var(--texto-2)}
+.btn-icono{width:36px;height:36px;display:inline-grid;place-items:center;border:0;background:none;border-radius:3px;color:var(--texto-2);cursor:pointer}
+.btn-icono:hover{background:var(--chip);color:var(--tinta)}
+.btn-icono:focus-visible{outline:3px solid var(--rojo-foco)}
+
+/* ---------- Estructura ---------- */
+.contenedor{max-width:1440px;margin:0 auto;padding-left:max(clamp(16px,2.9vw,42px),env(safe-area-inset-left,0px));padding-right:max(clamp(16px,2.9vw,42px),env(safe-area-inset-right,0px))}
+.barra{background:var(--grafito);border-bottom:3px solid var(--rojo);color:var(--blanco)}
+.barra .contenedor{display:flex;align-items:center;gap:clamp(16px,4vw,64px);min-height:72px;flex-wrap:wrap}
+.marca{display:inline-flex;text-decoration:none;border-radius:2px}
+.marca:focus-visible{outline:3px solid var(--rojo-foco);outline-offset:4px}
+.logo{display:inline-flex;align-items:center;gap:6px}
+.logo-c{width:30px;height:32px}
+.logo-txt{display:flex;flex-direction:column;line-height:1}
+.logo-a{font:italic 800 21px/1 var(--f-titulo);letter-spacing:.02em;color:var(--blanco)}
+.logo-b{font:600 9.5px/1 var(--f-texto);letter-spacing:.32em;color:#d8d8dc;margin-top:4px;padding-left:1px}
+.nav{display:flex;gap:30px;align-self:stretch}
+.nav a{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:#c9c9ce;font:600 16.5px/1 var(--f-titulo);letter-spacing:.01em;border-bottom:3px solid transparent;padding-top:3px;transition:color .2s,border-color .2s}
+.nav a:hover{color:var(--blanco)}
+.nav a[aria-current="page"]{color:var(--blanco);font-weight:700;border-bottom-color:var(--blanco)}
+.nav a:focus-visible{outline:3px solid var(--rojo-foco);outline-offset:-3px}
+.usuario{margin-left:auto;display:flex;align-items:center;gap:20px}
+.usuario-datos{display:flex;flex-direction:column;line-height:1.35}
+.usuario-datos strong{font-weight:500;font-size:13.5px}
+.usuario-datos span{font-size:12.5px;color:#bdbdc3}
+main{padding-block:26px 8px}
+.migas{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--texto-2);margin-bottom:14px;flex-wrap:wrap}
+.migas a{text-decoration:none}
+.migas a:hover{text-decoration:underline}
+.migas .ic{width:16px;height:16px}
+.cabecera{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:24px}
+.cabecera-titulo{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.bajada{color:var(--texto-2);margin-top:12px;font-size:14px}
+.acciones{display:flex;gap:12px;flex-wrap:wrap}
+.pie{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--texto-2);padding-block:16px 28px}
+.pie .enlace{font-size:11.5px}
+
+.tarjeta{background:var(--superficie);border:1px solid var(--linea);border-radius:4px}
+.tarjeta + .tarjeta{margin-top:20px}
+.tarjeta-cab{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--linea);flex-wrap:wrap}
+.tarjeta-cab h2{font-size:17px}
+.tarjeta-cab .meta{font-size:12.5px;color:var(--texto-2)}
+.tarjeta-cuerpo{padding:22px 24px}
+.tarjeta-pie{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 22px;border-top:1px solid var(--linea);flex-wrap:wrap}
+.separador{border:0;border-top:1px solid var(--linea);margin:24px 0}
+.titulo-sec{font-size:17px}
+.titulo-sec small{font:600 11.5px var(--f-titulo);color:var(--texto-2);letter-spacing:.02em}
+
+/* ---------- Formularios ---------- */
+.campo{display:flex;flex-direction:column;gap:8px;min-width:0}
+.campo label,.etiqueta{font-size:13px;color:var(--tinta)}
+.req{color:var(--rojo)}
+.entrada,select.entrada,textarea.entrada{
+  width:100%;height:42px;border:1px solid var(--linea-2);border-radius:3px;background:var(--superficie);
+  font:13.5px var(--f-texto);color:var(--tinta);padding:0 12px;transition:border-color .15s,box-shadow .15s;
+}
+textarea.entrada{height:auto;min-height:94px;padding:10px 12px;resize:vertical}
+.entrada::placeholder{color:#8a8b91}
+.entrada:hover{border-color:#a9aab1}
+.entrada:focus{outline:none;border-color:var(--grafito);box-shadow:0 0 0 3px var(--rojo-foco)}
+.entrada[readonly],.entrada:disabled{background:#efeff1;color:var(--texto-2);border-color:var(--linea-2);cursor:not-allowed}
+.entrada[aria-invalid="true"]{border-color:var(--rojo);box-shadow:0 0 0 1px var(--rojo) inset}
+.entrada-num{text-align:right;font-variant-numeric:tabular-nums}
+.con-icono{position:relative}
+.con-icono .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--texto-2);pointer-events:none}
+.con-icono .entrada{padding-left:40px}
+.ayuda{font-size:11.5px;color:var(--texto-2)}
+.error-campo{font-size:12px;color:var(--rojo);display:flex;gap:6px;align-items:flex-start}
+.error-campo[hidden]{display:none}
+.casilla{display:inline-flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;white-space:nowrap}
+.casilla input{width:18px;height:18px;margin:0;accent-color:var(--rojo);cursor:pointer}
+.grilla-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.grilla-3{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:18px}
+.grilla-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.fila-cod{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto;gap:12px;align-items:start}
+.fila-cod + .fila-cod{margin-top:14px}
+.fila-cod .quitar{height:42px;padding:0 14px;font-size:15px}
+.contador{font-variant-numeric:tabular-nums}
+
+.aviso{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-radius:3px;font-size:13px;line-height:1.55}
+.aviso .ic{margin-top:1px}
+.aviso-info{background:#f0f0f2;color:var(--tinta)}
+.aviso-info .ic{color:var(--texto-2)}
+.aviso-alerta{background:var(--aviso-fondo);color:var(--aviso-texto)}
+.aviso-error{background:var(--rojo-tinte);color:#7d1410}
+.aviso-ok{background:var(--ok-fondo);color:var(--tinta)}
+.aviso-ok .ic{color:var(--ok-texto)}
+
+/* ---------- Tablas ---------- */
+.tabla-caja{overflow-x:auto;position:relative}
+.tabla{width:100%;border-collapse:collapse;font-size:13.5px}
+.tabla th{font-weight:400;font-size:12.5px;color:var(--texto-2);background:var(--superficie-2);text-align:left;padding:12px 20px;border-bottom:1px solid var(--linea);white-space:nowrap}
+.tabla td{padding:14px 20px;border-bottom:1px solid var(--linea);vertical-align:middle}
+.tabla tbody tr:last-child td{border-bottom:0}
+.tabla .der{text-align:right}
+.tabla-art tbody tr{cursor:pointer;transition:background .15s}
+.tabla-art tbody tr:hover{background:#fafafa}
+.tabla-art td{padding-block:15px}
+.fila-inactiva td{color:var(--texto-2)}
+.th-orden{display:inline-flex;align-items:center;gap:4px;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:2px}
+.th-orden:hover{color:var(--tinta)}
+.th-orden .ic{width:14px;height:14px;opacity:.55}
+.th-orden[data-activo] .ic{opacity:1;color:var(--rojo)}
+.th-orden:focus-visible{outline:3px solid var(--rojo-foco);outline-offset:2px}
+.chip-cod{display:inline-block;font:500 11.5px/1 var(--f-mono);background:var(--chip);border:1px solid var(--linea);padding:5px 7px;border-radius:2px;color:var(--tinta);white-space:nowrap;letter-spacing:.03em}
+.estado{display:inline-block;font-size:11px;padding:3px 8px;border-radius:2px;font-weight:500;vertical-align:middle}
+.estado-activo{background:#eef6f0;color:var(--ok-texto)}
+.estado-inactivo{background:#ececef;color:var(--texto-2)}
+.chip-aviso{display:inline-block;background:var(--aviso-chip);color:var(--aviso-texto);font-size:12px;padding:3px 8px;border-radius:2px;white-space:nowrap}
+.paginacion{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--texto-2)}
+
+/* ---------- Búsqueda de artículos ---------- */
+.busqueda{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;column-gap:16px;row-gap:8px;align-items:center;padding:22px 22px 20px}
+.busqueda > label{grid-column:1/-1;font-size:13px}
+.busqueda .ayuda{grid-column:1/-1;margin-top:2px}
+.busqueda .entrada{height:42px}
+.busqueda .btn{height:40px}
+.vacio{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:72px 20px 80px;color:var(--texto-2)}
+.vacio .ic{width:28px;height:28px;color:var(--texto-2);margin-bottom:4px}
+.vacio h2{font-size:19px;color:var(--tinta)}
+.vacio p{font-size:14.5px;line-height:1.6}
+.vacio .btn{margin-top:10px}
+
+/* ---------- Ficha ---------- */
+.resumen{display:flex;gap:clamp(24px,4.5vw,64px);flex-wrap:wrap;padding:18px 24px;background:var(--superficie);border-block:1px solid var(--linea);margin-bottom:22px}
+.resumen dt{font-size:13px;color:var(--texto-2)}
+.resumen dd{margin:6px 0 0;font-size:21px;font-variant-numeric:tabular-nums}
+.resumen dd small{font-size:12px;color:var(--texto-2)}
+.resumen dd.txt{font-size:14.5px;font-weight:600}
+.ficha-grilla{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:20px;align-items:start}
+.ficha-col{display:flex;flex-direction:column;gap:20px;min-width:0}
+.ficha-col .tarjeta + .tarjeta{margin-top:0}
+.tarjeta-cab.grande{padding:20px 22px}
+.tarjeta-cab.grande h2{font-size:19px}
+.codigos-lista{list-style:none;margin:0;padding:6px 22px 16px}
+.codigos-lista li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--linea)}
+.codigos-lista li:last-child{border-bottom:0}
+.codigos-lista .prov{font-size:12.5px;color:var(--texto-2);margin-top:6px}
+.pie-ficha{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:22px;flex-wrap:wrap;font-size:12.5px;color:var(--texto-2)}
+.banda-aviso{margin-bottom:20px}
+
+/* ---------- Editar ---------- */
+.edicion{max-width:1020px}
+.edicion .tarjeta-cuerpo{padding:24px 24px 24px}
+.edicion .tarjeta-pie{justify-content:flex-end;background:var(--superficie-2);padding:18px 26px}
+.vigentes{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--texto-2);margin-top:12px}
+
+/* ---------- Compra ---------- */
+.prov-lista{border:1px solid var(--linea);border-radius:3px;margin-top:10px}
+.prov-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px}
+.prov-item + .prov-item{border-top:1px solid var(--linea)}
+.prov-item .nom{font-size:14px}
+.prov-item .det{font-size:12px;color:var(--texto-2);margin-top:4px}
+.prov-elegido{display:flex;align-items:center;gap:14px;background:var(--superficie-2);border:1px solid var(--linea);border-radius:3px;padding:16px 18px}
+.prov-elegido .avatar{width:38px;height:38px;border-radius:3px;background:#ebebee;display:grid;place-items:center;color:var(--texto-2)}
+.prov-elegido .enlace{margin-left:auto;font-size:15px;padding:4px 8px}
+.fila-buscar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}
+.tabla-lineas td{padding:12px 14px;vertical-align:top}
+.tabla-lineas th{padding:12px 14px}
+.tabla-lineas td:first-child,.tabla-lineas th:first-child{padding-left:14px}
+.tabla-lineas .entrada{height:38px}
+.tabla-lineas .w-dest{width:150px}
+.tabla-lineas .w-cant{width:86px}
+.tabla-lineas .w-prec{width:136px}
+.tabla-lineas .w-desc{width:78px}
+.tabla-lineas .error-campo{margin-top:6px;max-width:170px}
+.celda-art{min-width:220px;padding-top:16px!important}
+.celda-art .mono{display:block;margin-bottom:6px}
+.agregar-art{padding:18px 22px 22px;border-top:1px solid var(--linea)}
+.res-art{border:1px solid var(--linea);border-radius:3px;margin-top:10px}
+.res-art li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px}
+.res-art li + li{border-top:1px solid var(--linea)}
+.res-art ul{list-style:none;margin:0;padding:0}
+.importe-linea{font-size:12px;color:var(--texto-2);margin-top:6px;text-align:right}
+.pie-accion{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:22px;flex-wrap:wrap;font-size:12.5px;color:var(--texto-2)}
+.pie-accion .btn{height:40px}
+.ok-circulo{width:48px;height:48px;border-radius:50%;background:var(--ok-fondo);display:grid;place-items:center;color:var(--ok-texto);margin-bottom:24px}
+.ok-circulo .ic{width:22px;height:22px}
+
+/* ---------- Acceso ---------- */
+.fondo-hex{background-color:#2b2b2e;background-image:var(--hex);background-size:cover;background-position:center}
+.acceso{min-height:100vh;display:grid;place-items:center;padding:clamp(16px,6vw,140px) max(16px,env(safe-area-inset-right,0px)) clamp(16px,6vw,140px) max(16px,env(safe-area-inset-left,0px))}
+.acceso-tarjeta{width:min(1080px,100%);display:grid;grid-template-columns:1fr 1fr;border-radius:4px;overflow:hidden;box-shadow:var(--sombra);animation:aparecer .35s var(--ease)}
+.acceso-form{background:var(--superficie);padding:clamp(28px,10vw,148px) clamp(24px,5.2vw,75px) 56px}
+.acceso-form .eyebrow{font-size:13px;color:var(--texto-2)}
+.acceso-form h1{font-size:36px;margin:18px 0 14px}
+.acceso-form .bajada{margin:0 0 30px}
+.acceso-form form{display:flex;flex-direction:column;gap:20px}
+.acceso-form .btn{height:44px;margin-top:8px}
+.acceso-form hr{border:0;border-top:1px solid var(--linea);margin:28px 0 20px}
+.acceso-form .minimo{font-size:11.5px;color:var(--texto-2)}
+.acceso-form .demo{margin-top:8px;line-height:1.7}
+.acceso-marca{position:relative;background:#18181a;color:var(--blanco);padding:56px 48px 52px;display:flex;flex-direction:column;border-bottom:4px solid var(--rojo)}
+.acceso-marca::before{content:"";position:absolute;inset:0;background-image:var(--hex);background-size:cover;opacity:.12;pointer-events:none}
+.acceso-marca > *{position:relative}
+.acceso-marca .logo-c{width:42px;height:46px}
+.acceso-marca .logo-a{font-size:28px}
+.acceso-marca .logo-b{font-size:11.5px;margin-top:6px}
+.acceso-marca .raya{width:58px;height:3px;background:var(--rojo);margin:auto 0 26px}
+.acceso-marca h2{font-size:clamp(34px,4.3vw,52px);line-height:1.12;font-weight:700}
+.acceso-marca p{margin-top:26px;font-size:15px;line-height:1.7;color:#e6e6e9}
+.acceso-marca .firma{margin-top:auto;padding-top:40px;font-size:12px;color:#d6d6da}
+
+/* ---------- Modales ---------- */
+.modal-raiz{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
+.modal-fondo{position:absolute;inset:0;opacity:0;transition:opacity .2s var(--ease)}
+.modal-fondo::after{content:"";position:absolute;inset:0;background:rgba(14,14,16,.12)}
+.modal{position:relative;width:min(var(--ancho,560px),100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:var(--superficie);border-radius:5px;box-shadow:var(--sombra);opacity:0;transform:translateY(10px) scale(.985);transition:opacity .2s var(--ease),transform .22s var(--ease)}
+.modal-raiz.abierto .modal-fondo{opacity:1}
+.modal-raiz.abierto .modal{opacity:1;transform:none}
+.modal-raiz.cerrando .modal{transition-duration:.14s;transform:translateY(6px) scale(.99)}
+.modal-raiz.cerrando .modal-fondo{transition-duration:.14s}
+.modal-cab{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:22px 26px 20px;border-bottom:1px solid var(--linea)}
+.modal-cab h2{font-size:24px}
+.modal-cab p{font-size:13px;color:var(--texto-2);margin-top:10px}
+.modal-cuerpo{padding:24px 26px;overflow:auto;display:flex;flex-direction:column;gap:18px}
+.modal-pie{display:flex;justify-content:flex-end;gap:10px;padding:18px 26px;border-top:1px solid var(--linea);background:var(--superficie-2);border-radius:0 0 5px 5px}
+
+/* ---------- Avisos flotantes ---------- */
+.avisos{position:fixed;right:max(20px,env(safe-area-inset-right,0px));bottom:max(20px,env(safe-area-inset-bottom,0px));z-index:80;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:12px;background:var(--grafito);color:var(--blanco);padding:12px 14px 12px 16px;border-radius:4px;border-left:3px solid var(--rojo);font-size:13.5px;box-shadow:0 10px 28px rgba(0,0,0,.25);max-width:min(420px,calc(100vw - 40px));animation:subir .22s var(--ease)}
+.toast.ok{border-left-color:#3fa66a}
+.toast .ic{color:#9fd8b4}
+.toast.error .ic{color:#ff9d97}
+.toast .enlace{color:#ffb3ad;font-weight:600}
+.toast.saliendo{opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s}
+@keyframes subir{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes aparecer{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.vista{animation:aparecer .22s var(--ease)}
+
+/* ---------- Interacción ---------- */
+.muestra{max-width:916px;margin:0 auto;padding-block:8px 40px}
+.muestra .tarjeta-cuerpo{padding:28px 24px}
+.muestra-botones{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
+.muestra-cols{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:30px}
+.muestra-cols h2{font-size:16px;margin-bottom:14px}
+.muestra-cols p{color:var(--texto-2);line-height:1.65;font-size:14.5px}
+.pantallas{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.pantalla{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--superficie);border:1px solid var(--linea);border-radius:4px;padding:16px 18px;cursor:pointer;font:inherit;color:inherit}
+.pantalla:hover{border-color:var(--rojo-borde)}
+.pantalla:focus-visible{outline:3px solid var(--rojo-foco);outline-offset:2px}
+.pantalla strong{font:700 16px var(--f-titulo)}
+.pantalla span{font-size:12.5px;color:var(--texto-2)}
+.pantalla .n{font:500 11px var(--f-mono);color:var(--rojo)}
+
+/* ---------- Movimiento reducido ---------- */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .giro{animation:none;border-right-color:currentColor;opacity:.6}
+}
+.reducir-mov *,.reducir-mov *::before,.reducir-mov *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+.reducir-mov .giro{animation:none;border-right-color:currentColor;opacity:.6}
+
+/* ---------- Responsive ---------- */
+@media (max-width:980px){
+  .ficha-grilla{grid-template-columns:minmax(0,1fr)}
+  .grilla-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grilla-3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .grilla-3 > :first-child{grid-column:1/-1}
+}
+@media (max-width:760px){
+  .acceso-tarjeta{grid-template-columns:1fr}
+  .acceso-marca{order:-1;padding:28px 24px}
+  .acceso-marca h2,.acceso-marca p,.acceso-marca .raya,.acceso-marca .firma{display:none}
+  .busqueda{grid-template-columns:1fr 1fr}
+  .busqueda .con-icono,.busqueda .casilla,.busqueda .ayuda{grid-column:1/-1}
+  .usuario-datos{display:none}
+  .nav{order:3;width:100%;gap:22px;min-height:44px}
+  .barra .contenedor{row-gap:0;padding-top:10px}
+  .grilla-2,.grilla-3,.grilla-4{grid-template-columns:minmax(0,1fr)}
+  .muestra-cols{grid-template-columns:1fr;gap:24px}
+  .fila-cod{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .fila-cod .quitar{grid-column:1/-1;justify-self:start;height:auto;padding:0}
+  .fila-buscar{grid-template-columns:1fr}
+  h1{font-size:26px}
+}
+</style>
+</head>
+<body>
+
+
+<div id="app"></div>
+<div class="avisos" id="avisos" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* =========================================================
+   Utilidades
+   ========================================================= */
+const CLAVE = 'lacentral-demo-v1';
+const SUCURSALES = [{ id: 1, nombre: 'Casa central' }, { id: 2, nombre: 'Sucursal norte' }];
+const USUARIOS = {
+  'admin.muestra': { clave: 'demo1234', nombre: 'Usuario de muestra', rol: 'ADMINISTRADOR' },
+  'operador.muestra': { clave: 'demo1234', nombre: 'Operador de muestra', rol: 'OPERADOR' }
+};
+const ROL_TXT = { ADMINISTRADOR: 'Administrador', OPERADOR: 'Operador' };
+const POR_PAGINA = 20;
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const fmt2 = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const num2 = n => fmt2.format(n);
+const pesos = n => '$ ' + fmt2.format(n);
+const redondear = n => Math.round(n * 100) / 100;
+function hoyISO() { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+function fechaTxt(iso) { if (!iso) return ''; const [a, m, d] = iso.slice(0, 10).split('-'); return `${d}/${m}/${a}`; }
+function parseAR(s) {
+  s = String(s ?? '').trim().replace(/^\$\s*/, '');
+  if (!s) return 0;
+  if (/^\d+\.\d{1,2}$/.test(s)) return Number(s);
+  if (!/^(\d{1,3}(\.\d{3})+|\d+)(,\d{1,2})?$/.test(s)) return NaN;
+  return Number(s.replace(/\./g, '').replace(',', '.'));
+}
+
+const P = {
+  caja: '<path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9L12 3Z"/><path d="m3.5 7.5 8.5 4.5 8.5-4.5M12 12v9"/>',
+  factura: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  salir: '<path d="M10 4H5v16h5"/><path d="M14 8l4 4-4 4M18 12H9"/>',
+  buscar: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
+  mas: '<path d="M12 5v14M5 12h14"/>',
+  flechaDer: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  flechaIzq: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+  lapiz: '<path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/>',
+  tacho: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  cruz: '<path d="M6 6l12 12M18 6 6 18"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  alerta: '<path d="M12 3.5 2.5 20h19L12 3.5Z"/><path d="M12 10v4.5M12 17.2h.01"/>',
+  chevDer: '<path d="m9 6 6 6-6 6"/>',
+  orden: '<path d="m8 9 4-4 4 4M8 15l4 4 4-4"/>',
+  ordenAsc: '<path d="m7 14 5-5 5 5"/>',
+  ordenDesc: '<path d="m7 10 5 5 5-5"/>',
+  reactivar: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/>'
+};
+const I = (n, extra = '') => `<svg class="ic" ${extra} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${P[n]}</svg>`;
+const LOGO = `<span class="logo"><svg class="logo-c" viewBox="0 0 44 46" aria-hidden="true"><path fill="#d9241c" d="M42 7.6 38 17.2c-2.8-2.9-6-4.3-9.8-4.3-7.6 0-13.2 5.5-14.4 12.6-1 6.4 2.8 10.1 8.6 10.1 3.8 0 7-1.4 10-4l-1.8 11.3C27 44.3 23.3 45 19.4 45 7.5 45 .4 36.6 2.4 24.6 4.4 12.1 14.6 2 28.4 2c5 0 9.4 1.9 13.6 5.6Z"/></svg><span class="logo-txt"><span class="logo-a">LA CENTRAL</span><span class="logo-b">REPUESTOS</span></span></span>`;
+
+/* =========================================================
+   Datos de demostración
+   ========================================================= */
+function rng(seed) { return () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }; }
+
+function semilla() {
+  const r = rng(20261027);
+  const ent = (a, b) => a + Math.floor(r() * (b - a + 1));
+  const proveedores = [
+    { id: 8, codigo: 'PR-008', razon: 'Electricidad Automotor Sur', cuit: '30-70988123-4', activo: true },
+    { id: 12, codigo: 'PR-012', razon: 'Autopartes Córdoba S.A.', cuit: '30-71455210-9', activo: true },
+    { id: 19, codigo: 'PR-019', razon: 'Lubricentro Mayorista Norte', cuit: '30-70612344-1', activo: true },
+    { id: 27, codigo: 'PR-027', razon: 'Distribuidora Demo del Sur', cuit: '30-71234567-8', activo: true },
+    { id: 35, codigo: 'PR-035', razon: 'Frenos y Embragues del Interior', cuit: '30-70877456-2', activo: true },
+    { id: 41, codigo: 'PR-041', razon: 'Repuestos de Muestra S.A.', cuit: '30-71098765-3', activo: true },
+    { id: 52, codigo: 'PR-052', razon: 'Importadora Demo Ruta 9 S.A.', cuit: '30-71550321-6', activo: false },
+    { id: 63, codigo: 'PR-063', razon: 'Filtros del Centro Demo S.R.L.', cuit: '30-71322789-0', activo: true }
+  ];
+  const provPorPrefijo = { FA: 27, FO: 41, FD: 27, FU: 27, AR: 63, AU: 63, AC: 12, FC: 19, CD: 19, HC: 12, HE: 41, HU: 63, CO: 35, BU: 8, PF: 35, AM: 12, BA: 19, EL: 8, TE: 19 };
+  const ubic = () => r() < .12 ? null : `${'ABCD'[ent(0, 3)]}-0${ent(1, 9)} · Estante ${ent(1, 4)}`;
+  const costo = () => Math.round(ent(1800, 19500) / 10) * 10;
+
+  const fijos = [
+    ['LC-1042', 'Filtro de aceite para motor 1.6', ['FA-160', 'FO-208'], 5500, [12, 6], 'A-03 · Estante 2'],
+    ['LC-1078', 'Filtro de aire rectangular 1.6', ['AR-016'], 7800, [3, 5], 'A-05 · Estante 1'],
+    ['LC-1123', 'Filtro de combustible en línea', ['FC-300'], 6240, [8, 2]],
+    ['LC-1186', 'Filtro de habitáculo con carbón activado', ['HC-225'], 9150, [4, 4]],
+    ['LC-1210', 'Filtro de aceite para motor diésel', ['FD-410'], 6980, [10, 3]],
+    ['LC-1246', 'Filtro de aire para utilitario', ['AU-180'], 8420, [2, 6]],
+    ['LC-1280', 'Filtro de aceite compacto', ['FO-112'], 4350, [15, 7]],
+    ['LC-1315', 'Filtro de combustible diésel', ['CD-070'], null, [0, 3]],
+    ['LC-1382', 'Filtro de aire de alto caudal', ['AC-320'], 14600, [3, 0]],
+    ['LC-1407', 'Filtro de habitáculo estándar', ['HE-088'], 5120, [9, 5]],
+    ['LC-1436', 'Filtro de aceite para motor 2.0', ['FA-200'], 6100, [11, 4]],
+    ['LC-1478', 'Filtro de aire circular', ['AC-090'], 7250, [5, 2]],
+    ['LC-1502', 'Filtro de aceite de rosca corta', ['FO-015'], 4890, [7, 7]],
+    ['LC-1539', 'Filtro de aire para motor 1.4', ['AR-014'], 6930, [6, 3]],
+    ['LC-1581', 'Filtro de combustible metálico', ['FC-090'], 8110, [4, 1]],
+    ['LC-1627', 'Filtro de habitáculo compacto', ['HC-040'], 4760, [12, 0]],
+    ['LC-1672', 'Filtro de aceite para utilitario', ['FU-022'], 7340, [5, 5]],
+    ['LC-1720', 'Filtro de aire para motor 2.0', ['AR-020'], 7980, [3, 4]],
+    ['LC-1793', 'Filtro de combustible para utilitario', ['FC-120'], 9420, [2, 2]],
+    ['LC-1830', 'Filtro de habitáculo para utilitario', ['HU-018'], 6010, [6, 1]]
+  ];
+  const variantes = {
+    aceite: [['FA', 'FO'], ['para motor 1.4', 'para motor 1.8', 'para motor 1.5 turbo', 'para pick-up', 'de rosca larga', 'de alto rendimiento', 'para motor naftero 1.3', 'para SUV', 'reforzado', 'de larga duración', 'para camioneta 3.0', 'para motor 1.0']],
+    aire: [['AR', 'AC'], ['para motor 1.8', 'para pick-up', 'cónico deportivo', 'para SUV', 'de panel reforzado', 'para motor 1.3', 'para camioneta 3.0', 'con prefiltro', 'para motor 1.5 turbo', 'de espuma lavable', 'para motor 1.0', 'ovalado']],
+    combustible: [['FC', 'CD'], ['para motor 1.6', 'para motor 2.0', 'con decantador de agua', 'para pick-up', 'plástico', 'para inyección directa', 'para SUV', 'de alta presión', 'para motor 1.4', 'con sensor de agua', 'para camioneta 3.0', 'para motor 1.8']],
+    habitáculo: [['HC', 'HE'], ['para motor 1.6', 'antipolen', 'para pick-up', 'con doble carbón activado', 'para SUV', 'de alto rendimiento', 'para camioneta', 'antibacterial', 'para motor 2.0', 'económico', 'premium', 'plegado']]
+  };
+  const articulos = [];
+  let id = 1;
+  const nuevo = (codigo, nombre, cods, c, st, u, activo = true, motivo = null, fecha = null) => {
+    articulos.push({
+      id: id++, codigo, nombre, ubicacion: u === undefined ? ubic() : u, costo: c,
+      activo, motivoBaja: motivo, fechaBaja: fecha, fechaReactivacion: null,
+      stock: { 1: st[0], 2: st[1] },
+      codigos: cods.map(k => ({ proveedorId: provPorPrefijo[k.slice(0, 2)], codigo: k }))
+    });
+  };
+  fijos.forEach(f => nuevo(f[0], f[1], f[2], f[3], f[4], f[5]));
+  let n = 1850, k = 400;
+  for (let i = 0; i < 12; i++) {
+    for (const tipo of Object.keys(variantes)) {
+      const [pref, vars] = variantes[tipo];
+      n += ent(9, 41);
+      k += ent(3, 9);
+      nuevo(`LC-${n}`, `Filtro de ${tipo} ${vars[i]}`, [`${pref[i % 2]}-${k}`], i % 9 === 4 ? null : costo(), [ent(0, 18), ent(0, 12)]);
+    }
+  }
+  const otros = [
+    ['Correa de distribución 1.6 16V', 'CO'], ['Correa poli-V 6PK1070', 'CO'], ['Correa poli-V 5PK1200', 'CO'],
+    ['Bujía de iridio rosca 14 mm', 'BU'], ['Bujía de níquel estándar', 'BU'], ['Pastillas de freno delanteras', 'PF'],
+    ['Pastillas de freno traseras', 'PF'], ['Disco de freno ventilado 256 mm', 'PF'], ['Kit de embrague 200 mm', 'PF'],
+    ['Amortiguador delantero a gas', 'AM'], ['Amortiguador trasero a gas', 'AM'], ['Rótula de suspensión inferior', 'AM'],
+    ['Bomba de agua con junta', 'BA'], ['Termostato 87 °C', 'TE'], ['Junta de tapa de cilindros 1.6', 'TE'],
+    ['Sensor de oxígeno 4 cables', 'EL'], ['Lámpara H4 12 V 60/55 W', 'EL'], ['Escobilla limpiaparabrisas 22"', 'EL'],
+    ['Aceite 10W-40 semisintético 4 L', 'BA'], ['Líquido refrigerante concentrado 1 L', 'BA'], ['Bobina de encendido', 'EL'],
+    ['Tensor de correa de distribución', 'CO'], ['Kit de distribución 1.4 8V', 'CO'], ['Cazoleta de amortiguador', 'AM']
+  ];
+  let m = 2104, q = 500;
+  otros.forEach(([nom, pref], i) => {
+    m += ent(11, 47); q += ent(4, 13);
+    nuevo(`LC-${m}`, nom, [`${pref}-${q}`], i % 11 === 6 ? null : costo(), [ent(0, 14), ent(0, 9)]);
+  });
+  nuevo('LC-0987', 'Filtro de aceite para motor 1.0 carburado', ['FO-098'], 3900, [0, 2], 'D-07 · Estante 1', false, 'Referencia discontinuada por el fabricante', '2026-09-14');
+  nuevo('LC-2096', 'Correa de distribución 1.4 modelo anterior', [], 6120, [1, 0], null, false, 'Reemplazada por LC-2730', '2026-08-02');
+
+  return {
+    v: 1, articulos, proveedores, facturas: [],
+    sesion: null,
+    ui: { q: '', inactivos: false, pagina: 1, orden: { campo: 'codigo', dir: 'asc' }, reducir: false, destino: null },
+    borrador: null
+  };
+}
+
+let db;
+function cargar() {
+  try {
+    const crudo = localStorage.getItem(CLAVE);
+    if (crudo) { const d = JSON.parse(crudo); if (d && d.v === 1 && Array.isArray(d.articulos)) { db = d; return; } }
+  } catch (e) { /* almacenamiento no disponible */ }
+  db = semilla();
+}
+function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(db)); } catch (e) { /* sin persistencia */ } }
+let guardarDiferido = null;
+function guardarPronto() { clearTimeout(guardarDiferido); guardarDiferido = setTimeout(guardar, 250); }
+
+const art = id => db.articulos.find(a => a.id === id);
+const prov = id => db.proveedores.find(p => p.id === id);
+const esAdmin = () => db.sesion && db.sesion.rol === 'ADMINISTRADOR';
+const stockTotal = a => SUCURSALES.reduce((s, x) => s + (a.stock[x.id] || 0), 0);
+const sucNombre = id => (SUCURSALES.find(s => s.id === +id) || {}).nombre || '—';
+
+/* =========================================================
+   Fondo hexagonal (canvas, una sola vez)
+   ========================================================= */
+function fondoHex() {
+  try {
+    const W = 1600, H = 1100, c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#141416'); bg.addColorStop(1, '#3b3b3f');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    const R = 132, w = Math.sqrt(3) * R, hueco = 9;
+    const camino = (cx, cy, r) => { g.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 180 * (60 * i - 90); g.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a)); } g.closePath(); };
+    for (let fila = -1; fila * R * 1.5 < H + R; fila++) {
+      for (let col = -1; col * w < W + w; col++) {
+        const cx = col * w + (Math.abs(fila) % 2 ? w / 2 : 0), cy = fila * R * 1.5, r = R - hueco / 2;
+        const t = Math.max(0, Math.min(1, cy / H)), luz = (cx / W) * .25;
+        camino(cx + 6, cy + 10, r); g.fillStyle = 'rgba(0,0,0,.6)'; g.fill();
+        camino(cx, cy, r);
+        const base = 30 + t * 46 + luz * 20;
+        const lg = g.createLinearGradient(cx - r, cy - r, cx + r * .6, cy + r);
+        lg.addColorStop(0, `rgb(${base + 22},${base + 22},${base + 25})`);
+        lg.addColorStop(1, `rgb(${base - 8},${base - 8},${base - 6})`);
+        g.fillStyle = lg; g.fill();
+        g.save(); camino(cx, cy, r); g.clip();
+        g.lineWidth = 5; g.strokeStyle = `rgba(255,255,255,${.07 + t * .1})`; camino(cx - 2, cy - 3, r); g.stroke();
+        g.restore();
+        camino(cx, cy, r - 16);
+        const ig = g.createLinearGradient(cx, cy - r, cx, cy + r);
+        ig.addColorStop(0, `rgba(255,255,255,${.02 + t * .05})`); ig.addColorStop(1, 'rgba(0,0,0,.14)');
+        g.fillStyle = ig; g.fill();
+      }
+    }
+    const v = g.createRadialGradient(W * .5, H * .5, H * .25, W * .5, H * .5, H);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.38)');
+    g.fillStyle = v; g.fillRect(0, 0, W, H);
+    document.documentElement.style.setProperty('--hex', `url(${c.toDataURL('image/jpeg', .82)})`);
+  } catch (e) { /* queda el color de respaldo */ }
+}
+
+/* =========================================================
+   Avisos, modales y confirmaciones
+   ========================================================= */
+function aviso(texto, { tipo = 'ok', accion, alAccion, ms = 3800 } = {}) {
+  const t = document.createElement('div');
+  t.className = `toast ${tipo}`;
+  t.innerHTML = `${I(tipo === 'error' ? 'alerta' : 'check')}<span>${esc(texto)}</span>${accion ? `<button type="button" class="enlace">${esc(accion)}</button>` : ''}`;
+  $('#avisos').appendChild(t);
+  const cerrar = () => { t.classList.add('saliendo'); setTimeout(() => t.remove(), 220); };
+  if (accion) t.querySelector('button').addEventListener('click', () => { alAccion && alAccion(); cerrar(); });
+  setTimeout(cerrar, ms);
+}
+
+const pila = [];
+let nModal = 0;
+function abrirModal({ titulo, subtitulo = '', cuerpo, pie = '', ancho = 560, alMontar, antesDeCerrar, foco }) {
+  const previo = document.activeElement;
+  const n = ++nModal;
+  const raiz = document.createElement('div');
+  raiz.className = 'modal-raiz';
+  raiz.innerHTML = `<div class="modal-fondo fondo-hex" data-fondo></div>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt-${n}" style="--ancho:${ancho}px">
+      <header class="modal-cab"><div><h2 id="mt-${n}">${titulo}</h2>${subtitulo ? `<p>${subtitulo}</p>` : ''}</div>
+        <button type="button" class="btn-icono" data-cerrar aria-label="Cerrar">${I('cruz')}</button></header>
+      <div class="modal-cuerpo">${cuerpo}</div>
+      ${pie ? `<footer class="modal-pie">${pie}</footer>` : ''}
+    </div>`;
+  document.body.appendChild(raiz);
+  document.body.classList.add('con-modal');
+  requestAnimationFrame(() => requestAnimationFrame(() => raiz.classList.add('abierto')));
+  const ctl = {
+    raiz,
+    cerrar(forzar) {
+      if (!forzar && antesDeCerrar && antesDeCerrar(ctl) === false) return;
+      const i = pila.indexOf(ctl); if (i < 0) return;
+      pila.splice(i, 1);
+      raiz.classList.remove('abierto'); raiz.classList.add('cerrando');
+      setTimeout(() => raiz.remove(), 160);
+      if (!pila.length) document.body.classList.remove('con-modal');
+      if (previo && previo.isConnected) previo.focus({ preventScroll: true });
+    }
+  };
+  raiz.addEventListener('click', e => { if (e.target.closest('[data-cerrar]')) { e.preventDefault(); ctl.cerrar(); } });
+  raiz.querySelector('[data-fondo]').addEventListener('click', () => ctl.cerrar());
+  pila.push(ctl);
+  alMontar && alMontar(ctl);
+  setTimeout(() => {
+    const el = (foco && raiz.querySelector(foco)) || raiz.querySelector('input:not([readonly]):not([disabled]),textarea,select') || raiz.querySelector('.modal-pie .btn');
+    el && el.focus();
+  }, 40);
+  return ctl;
+}
+document.addEventListener('keydown', e => {
+  const tope = pila[pila.length - 1];
+  if (!tope) return;
+  if (e.key === 'Escape') { e.preventDefault(); tope.cerrar(); return; }
+  if (e.key === 'Tab') {
+    const f = $$('button:not([disabled]),input:not([disabled]),textarea,select,a[href],[tabindex]:not([tabindex="-1"])', tope.raiz.querySelector('.modal'));
+    if (!f.length) return;
+    const pri = f[0], ult = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === pri) { e.preventDefault(); ult.focus(); }
+    else if (!e.shiftKey && document.activeElement === ult) { e.preventDefault(); pri.focus(); }
+  }
+});
+
+function confirmar({ titulo, subtitulo = '', mensaje, textoOk = 'Confirmar', peligro = false, icono = '', onOk, ms = 0 }) {
+  const ctl = abrirModal({
+    titulo, subtitulo, ancho: 520, foco: '[data-cerrar].btn',
+    cuerpo: `<div class="aviso aviso-alerta">${I('alerta')}<p>${mensaje}</p></div>`,
+    pie: `<button type="button" class="btn btn-secundario" data-cerrar>Cancelar</button><button type="button" class="btn ${peligro ? 'btn-peligro' : 'btn-primario'}" data-ok>${icono ? I(icono) : ''}<span>${textoOk}</span></button>`
+  });
+  ctl.raiz.querySelector('[data-ok]').addEventListener('click', e => {
+    if (ms) conCarga(e.currentTarget, 'Procesando…', ms, () => { ctl.cerrar(true); onOk && onOk(); });
+    else { ctl.cerrar(true); onOk && onOk(); }
+  });
+  return ctl;
+}
+
+/* Estado de carga: conserva el ancho y bloquea clics repetidos */
+function conCarga(btn, texto, ms, fn) {
+  if (btn.classList.contains('cargando')) return;
+  const ancho = btn.offsetWidth, previo = btn.innerHTML;
+  btn.style.minWidth = ancho + 'px';
+  btn.classList.add('cargando'); btn.disabled = true; btn.setAttribute('aria-busy', 'true');
+  btn.innerHTML = `<span class="giro" aria-hidden="true"></span><span>${texto}</span>`;
+  setTimeout(() => {
+    if (btn.isConnected) {
+      btn.classList.remove('cargando'); btn.disabled = false; btn.removeAttribute('aria-busy');
+      btn.innerHTML = previo; btn.style.minWidth = '';
+    }
+    fn && fn();
+  }, ms);
+}
+
+/* Errores de formulario */
+function limpiarErrores(ambito) {
+  $$('.error-campo', ambito).forEach(p => { p.hidden = true; p.textContent = ''; });
+  $$('[aria-invalid="true"]', ambito).forEach(i => i.removeAttribute('aria-invalid'));
+}
+function mostrarErrores(ambito, errores) {
+  limpiarErrores(ambito);
+  let primero = null;
+  for (const [id, msg] of Object.entries(errores)) {
+    const el = document.getElementById(id);
+    const p = document.getElementById(id + '-err');
+    if (el) { el.setAttribute('aria-invalid', 'true'); primero = primero || el; }
+    if (p) { p.textContent = msg; p.hidden = false; }
+  }
+  if (primero) { primero.focus({ preventScroll: true }); primero.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches || db.ui.reducir ? 'auto' : 'smooth' }); }
+  return !primero;
+}
+const err = id => `<p class="error-campo" id="${id}-err" hidden></p>`;
+const desc = id => `aria-describedby="${id}-err"`;
+
+/* =========================================================
+   Navegación
+   ========================================================= */
+let guardia = null, ignorarHash = false, hashPrevio = location.hash;
+
+function ruta() {
+  const h = location.hash.replace(/^#/, '');
+  let m;
+  if (!db.sesion) return { nombre: 'acceso' };
+  if (h === '' || h === 'acceso' || h === 'articulos') return { nombre: 'articulos' };
+  if ((m = h.match(/^ficha-(\d+)$/))) return { nombre: 'ficha', id: +m[1] };
+  if ((m = h.match(/^editar-(\d+)$/))) return { nombre: 'editar', id: +m[1] };
+  if (h === 'compra') return { nombre: 'compra' };
+  if ((m = h.match(/^compra-registrada-(\d+)$/))) return { nombre: 'registrada', id: +m[1] };
+  if (h === 'interaccion') return { nombre: 'interaccion' };
+  if (h === 'pantallas') return { nombre: 'pantallas' };
+  return { nombre: 'noEncontrado' };
+}
+function ir(h) { if (location.hash === '#' + h) render(); else location.hash = h; }
+
+window.addEventListener('hashchange', () => {
+  if (ignorarHash) { ignorarHash = false; hashPrevio = location.hash; return; }
+  if (guardia && guardia()) {
+    const destino = location.hash;
+    ignorarHash = true; location.hash = hashPrevio;
+    confirmar({
+      titulo: 'Descartar cambios', mensaje: 'Hay cambios sin guardar en este artículo. Si salís, se pierden.',
+      textoOk: 'Descartar y salir', peligro: true,
+      onOk: () => { guardia = null; location.hash = destino; }
+    });
+    return;
+  }
+  hashPrevio = location.hash;
+  render();
+});
+
+function shell(r, html) {
+  const actA = ['articulos', 'ficha', 'editar'].includes(r.nombre), actC = ['compra', 'registrada'].includes(r.nombre);
+  return `<header class="barra"><div class="contenedor">
+      <a class="marca" href="#articulos" aria-label="La Central Repuestos, ir a Artículos">${LOGO}</a>
+      <nav class="nav" aria-label="Principal">
+        <a href="#articulos" ${actA ? 'aria-current="page"' : ''}>${I('caja')}Artículos</a>
+        <a href="#compra" ${actC ? 'aria-current="page"' : ''}>${I('factura')}Factura de compra</a>
+      </nav>
+      <div class="usuario"><div class="usuario-datos"><strong>${esc(db.sesion.nombre)}</strong><span>${ROL_TXT[db.sesion.rol]}</span></div>
+        <button type="button" class="btn btn-oscuro btn-chico" data-accion="salir">${I('salir')}<span>Salir</span></button></div>
+    </div></header>
+    <main class="contenedor"><div class="vista">${html}</div></main>
+    <footer class="contenedor"><div class="pie"><span>La Central Repuestos · <a class="enlace enlace-gris" href="#pantallas">Propuesta visual</a></span>
+      <span>Datos ficticios para revisión · <button type="button" class="enlace enlace-gris" data-accion="restablecer">Restablecer datos</button></span></div></footer>`;
+}
+
+function render() {
+  const r = ruta();
+  guardia = null;
+  document.documentElement.classList.toggle('reducir-mov', !!db.ui.reducir);
+  const app = $('#app');
+  if (r.nombre === 'acceso') {
+    app.innerHTML = vistaAcceso();
+    document.title = 'Ingresar · La Central';
+    montarAcceso();
+    return;
+  }
+  const v = VISTAS[r.nombre](r);
+  app.innerHTML = shell(r, v.html);
+  document.title = (v.titulo || 'La Central') + ' · La Central Repuestos';
+  window.scrollTo(0, 0);
+  v.montar && v.montar();
+  if (!v.focoPropio) { const h1 = $('h1', app); h1 && h1.focus({ preventScroll: true }); }
+}
+/* Re-render en la misma vista conservando foco y posición */
+function refrescar(enfocar) {
+  const idFoco = document.activeElement && document.activeElement.id;
+  const y = window.scrollY;
+  const r = ruta();
+  const v = VISTAS[r.nombre](r);
+  $('main .vista').innerHTML = v.html;
+  $('main .vista').style.animation = 'none';
+  v.montar && v.montar();
+  window.scrollTo(0, y);
+  const el = enfocar ? $(enfocar) : (idFoco && document.getElementById(idFoco));
+  el && el.focus({ preventScroll: true });
+}
+
+/* =========================================================
+   Vista: acceso
+   ========================================================= */
+function vistaAcceso() {
+  return `<div class="acceso fondo-hex"><div class="acceso-tarjeta">
+    <div class="acceso-form">
+      <p class="eyebrow">Sistema de gestión</p>
+      <h1 tabindex="-1">Ingresar</h1>
+      <p class="bajada">Ingresá tus datos para comenzar a trabajar.</p>
+      <form id="form-acceso" novalidate>
+        <div class="aviso aviso-error" id="acceso-error" hidden role="alert">${I('alerta')}<p>Usuario o contraseña incorrectos. Revisalos e intentá de nuevo.</p></div>
+        <div class="campo"><label for="acc-usuario">Usuario</label>
+          <input class="entrada" id="acc-usuario" name="usuario" autocomplete="username" autocapitalize="off" spellcheck="false" ${desc('acc-usuario')}>${err('acc-usuario')}</div>
+        <div class="campo"><label for="acc-clave">Contraseña</label>
+          <input class="entrada" id="acc-clave" name="clave" type="password" autocomplete="current-password" ${desc('acc-clave')}>${err('acc-clave')}</div>
+        <button type="submit" class="btn btn-primario btn-bloque">${I('flechaDer')}<span><strong>Ingresar</strong></span></button>
+      </form>
+      <hr>
+      <p class="minimo">Acceso para personal autorizado</p>
+      <p class="minimo demo">Prueba: <code>admin.muestra</code> u <code>operador.muestra</code> · contraseña <code>demo1234</code></p>
+    </div>
+    <div class="acceso-marca">${LOGO}<div class="raya"></div><h2>Todo en orden.<br>Listos para seguir.</h2><p>Gestión comercial de<br>La Central Repuestos.</p><span class="firma">La Central Repuestos</span></div>
+  </div></div>`;
+}
+function montarAcceso() {
+  const f = $('#form-acceso');
+  setTimeout(() => $('#acc-usuario').focus(), 50);
+  f.addEventListener('submit', e => {
+    e.preventDefault();
+    $('#acceso-error').hidden = true;
+    const u = $('#acc-usuario').value.trim().toLowerCase(), c = $('#acc-clave').value;
+    const errores = {};
+    if (!u) errores['acc-usuario'] = 'Ingresá tu usuario.';
+    if (!c) errores['acc-clave'] = 'Ingresá tu contraseña.';
+    if (!mostrarErrores(f, errores)) return;
+    conCarga(f.querySelector('button[type=submit]'), 'Ingresando…', 650, () => {
+      const usr = USUARIOS[u];
+      if (!usr || usr.clave !== c) { $('#acceso-error').hidden = false; $('#acc-clave').value = ''; $('#acc-clave').focus(); return; }
+      db.sesion = { usuario: u, nombre: usr.nombre, rol: usr.rol };
+      const destino = db.ui.destino; db.ui.destino = null;
+      guardar();
+      aviso(`Hola, ${usr.nombre}. Ingresaste como ${ROL_TXT[usr.rol].toLowerCase()}.`);
+      ir(destino && destino !== 'acceso' ? destino : 'articulos');
+    });
+  });
+}
+
+/* =========================================================
+   Vista: artículos (búsqueda)
+   ========================================================= */
+function buscarArticulos(q, inactivos) {
+  const alts = q.split('*').map(a => norm(a).trim().split(/\s+/).filter(Boolean)).filter(a => a.length);
+  return db.articulos.filter(a => {
+    if (!inactivos && !a.activo) return false;
+    if (!alts.length) return true;
+    const pajar = norm(`${a.nombre} ${a.codigo} ${a.codigos.map(c => c.codigo).join(' ')}`);
+    return alts.some(toks => toks.every(t => pajar.includes(t)));
+  });
+}
+function ordenar(lista) {
+  const { campo, dir } = db.ui.orden;
+  const s = dir === 'asc' ? 1 : -1;
+  return lista.slice().sort((a, b) => s * String(a[campo]).localeCompare(String(b[campo]), 'es', { numeric: true, sensitivity: 'base' }));
+}
+function thOrden(campo, txt) {
+  const o = db.ui.orden, act = o.campo === campo;
+  const aria = act ? (o.dir === 'asc' ? 'ascending' : 'descending') : 'none';
+  return `<th aria-sort="${aria}"><button type="button" class="th-orden" id="ord-${campo}" data-accion="ordenar" data-campo="${campo}" ${act ? 'data-activo' : ''}>${txt}${I(act ? (o.dir === 'asc' ? 'ordenAsc' : 'ordenDesc') : 'orden')}<span class="sr">, ordenar</span></button></th>`;
+}
+function vistaArticulos() {
+  const { q, inactivos } = db.ui;
+  const lista = ordenar(buscarArticulos(q, inactivos));
+  const total = lista.length, paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+  const p = Math.min(Math.max(1, db.ui.pagina), paginas);
+  const desde = (p - 1) * POR_PAGINA, items = lista.slice(desde, desde + POR_PAGINA);
+
+  let resultados;
+  if (!total) {
+    resultados = `<div class="vacio">${I('buscar')}
+      <h2>${q.trim() ? `Sin resultados para «${esc(q.trim())}»` : 'No hay artículos para mostrar'}</h2>
+      <p>Revisá el código o probá con otra palabra.<br>${inactivos ? 'La búsqueda ya incluye artículos inactivos.' : 'Si el artículo está dado de baja, activá «Incluir inactivos».'}</p>
+      <button type="button" class="btn btn-secundario" id="btn-volver-buscar" data-accion="volver-buscar">${I('flechaIzq')}<span>Volver a buscar</span></button></div>`;
+  } else {
+    resultados = `<div class="tarjeta-cab" style="border-top:1px solid var(--linea)"><h2 style="font-size:15.5px">${q.trim() ? 'Resultados de la búsqueda' : 'Todos los artículos'}</h2>
+        <span class="meta">${total} ${total === 1 ? 'artículo encontrado' : 'artículos encontrados'}</span></div>
+      <div class="tabla-caja"><table class="tabla tabla-art">
+        <thead><tr>${thOrden('codigo', 'Código interno')}${thOrden('nombre', 'Nombre')}<th>Códigos de proveedor</th><th><span class="sr">Acciones</span></th></tr></thead>
+        <tbody>${items.map(a => `<tr data-fila="${a.id}" class="${a.activo ? '' : 'fila-inactiva'}">
+          <td class="mono" style="width:18%">${a.codigo}</td>
+          <td>${esc(a.nombre)}${a.activo ? '' : ' <span class="estado estado-inactivo">Inactivo</span>'}</td>
+          <td style="width:28%">${a.codigos.length ? `<span class="chip-cod">${a.codigos.map(c => esc(c.codigo)).join(' · ')}</span>` : '<span class="tenue">—</span>'}</td>
+          <td class="der" style="width:12%"><a class="enlace" href="#ficha-${a.id}">Ver ficha <span aria-hidden="true">→</span><span class="sr"> de ${esc(a.nombre)}</span></a></td></tr>`).join('')}
+        </tbody></table></div>
+      <div class="tarjeta-pie"><span style="font-size:13px;color:var(--texto-2)">Mostrando ${desde + 1}–${desde + items.length} de ${total} artículos</span>
+        <div class="paginacion"><button type="button" class="btn btn-secundario btn-chico" id="pag-ant" data-accion="pagina" data-p="${p - 1}" ${p <= 1 ? 'disabled' : ''}>Anterior</button>
+        <span class="num">${p} de ${paginas}</span>
+        <button type="button" class="btn btn-secundario btn-chico" id="pag-sig" data-accion="pagina" data-p="${p + 1}" ${p >= paginas ? 'disabled' : ''}>${I('chevDer')}<span>Siguiente</span></button></div></div>`;
+  }
+
+  return {
+    titulo: 'Artículos',
+    html: `<div class="migas">${I('caja')}<span>Artículos</span></div>
+      <div class="cabecera"><div><h1 tabindex="-1">Artículos</h1><p class="bajada">Buscá repuestos por nombre o código y consultá su ficha.</p></div></div>
+      <section class="tarjeta">
+        <form class="busqueda" id="form-busqueda" role="search" novalidate>
+          <label for="q">Buscar artículos</label>
+          <div class="con-icono">${I('buscar')}<input class="entrada" id="q" type="search" value="${esc(q)}" placeholder="Nombre, código interno o código de proveedor" autocomplete="off"></div>
+          <label class="casilla"><input type="checkbox" id="inactivos" ${inactivos ? 'checked' : ''}> Incluir inactivos</label>
+          <button type="submit" class="btn btn-primario" id="btn-buscar">${I('buscar')}<span>Buscar</span></button>
+          <button type="button" class="btn btn-secundario" id="btn-nuevo" data-accion="nuevo-articulo">${I('mas')}<span>Nuevo artículo</span></button>
+          <p class="ayuda">Usá * para buscar alternativas: filtro * correa</p>
+        </form>
+        ${resultados}
+      </section>`,
+    montar() {
+      $('#form-busqueda').addEventListener('submit', e => {
+        e.preventDefault();
+        db.ui.q = $('#q').value; db.ui.pagina = 1; guardar(); refrescar('#q');
+      });
+      $('#inactivos').addEventListener('change', e => { db.ui.inactivos = e.target.checked; db.ui.pagina = 1; guardar(); refrescar('#inactivos'); });
+    }
+  };
+}
+
+/* =========================================================
+   Vista: ficha
+   ========================================================= */
+function vistaNoEncontrado() {
+  return {
+    titulo: 'No encontrado',
+    html: `<div class="migas">${I('caja')}<a href="#articulos">Artículos</a></div>
+      <section class="tarjeta"><div class="vacio">${I('buscar')}<h1 tabindex="-1" style="font-size:22px">No encontramos esa pantalla o artículo</h1>
+      <p>Puede que el enlace sea antiguo o que se hayan restablecido los datos.</p>
+      <a class="btn btn-secundario" href="#articulos">${I('flechaIzq')}<span>Volver al listado</span></a></div></section>`
+  };
+}
+function filaPrecio(mod, precio, regla) {
+  return `<tr><td>${mod}</td><td class="der num">${precio}</td><td style="color:var(--texto-2)">${regla}</td></tr>`;
+}
+function vistaFicha({ id }) {
+  const a = art(id);
+  if (!a) return vistaNoEncontrado();
+  const c = a.costo, sinCosto = '<span class="chip-aviso">Sin costo</span>';
+  const lista = c == null ? null : redondear(c * 1.5);
+  const admin = esAdmin();
+  const precios = [
+    filaPrecio('Lista', lista == null ? sinCosto : pesos(lista), 'Costo +50 %'),
+    filaPrecio('Efectivo / transferencia', lista == null ? sinCosto : pesos(redondear(lista * .9)), 'Lista −10 %'),
+    filaPrecio('Costo', c == null ? sinCosto : pesos(c), 'Costo +0 %'),
+    filaPrecio('Tarjeta 3 cuotas', '<span class="chip-aviso">Tasa sin definir</span>', '—'),
+    filaPrecio('Tarjeta 6 cuotas', '<span class="chip-aviso">Tasa sin definir</span>', '—'),
+    filaPrecio('Caso especial', '<span style="color:var(--texto-2)">No fijado</span>', 'Manual')
+  ].join('');
+  const codigos = a.codigos.length ? `<ul class="codigos-lista">${a.codigos.map(k => {
+    const pr = prov(k.proveedorId);
+    return `<li><div><span class="chip-cod">${esc(k.codigo)}</span><p class="prov">${esc(pr ? pr.razon : 'Proveedor ' + k.proveedorId)}</p></div>
+      ${a.activo && admin ? `<button type="button" class="enlace" style="font-size:12.5px;padding:4px 14px" data-accion="retirar-codigo" data-cod="${esc(k.codigo)}">Retirar<span class="sr"> ${esc(k.codigo)}</span></button>` : ''}</li>`;
+  }).join('')}</ul>` : `<p style="padding:14px 22px 24px;color:var(--texto-2);font-size:13px">Sin códigos de proveedor vinculados.${a.activo ? ' Podés agregarlos desde «Editar artículo».' : ''}</p>`;
+
+  const rastro = a.activo && a.motivoBaja ? `Última baja: «${esc(a.motivoBaja)}» el ${fechaTxt(a.fechaBaja)}. Reactivado el ${fechaTxt(a.fechaReactivacion)}.` : 'Consultá precios, códigos y existencias desde una misma ficha.';
+
+  return {
+    titulo: `${a.codigo} ${a.nombre}`,
+    html: `<nav class="migas" aria-label="Ubicación">${I('caja')}<a href="#articulos">Artículos</a>${I('chevDer')}<span>${a.codigo}</span></nav>
+      <div class="cabecera">
+        <div><div class="cabecera-titulo"><h1 tabindex="-1">${esc(a.nombre)}</h1><span class="estado ${a.activo ? 'estado-activo' : 'estado-inactivo'}">${a.activo ? 'Activo' : 'Inactivo'}</span></div>
+          <p class="bajada">${a.codigo}</p></div>
+        <div class="acciones">
+          <a class="btn btn-secundario" href="#articulos">${I('flechaIzq')}<span>Volver al listado</span></a>
+          ${a.activo
+            ? `<a class="btn btn-primario" href="#editar-${a.id}">${I('lapiz')}<span>Editar artículo</span></a>`
+            : `<button type="button" class="btn btn-primario" id="btn-reactivar" data-accion="reactivar">${I('reactivar')}<span>Reactivar artículo</span></button>`}
+        </div>
+      </div>
+      ${a.activo ? '' : `<div class="aviso aviso-alerta banda-aviso">${I('alerta')}<p>Artículo dado de baja el ${fechaTxt(a.fechaBaja)}. Motivo: ${esc(a.motivoBaja)}. Reactivalo para modificar sus datos.</p></div>`}
+      <dl class="resumen">
+        <div><dt>Costo vigente</dt><dd>${c == null ? '<span class="chip-aviso" style="font-size:13px">Sin costo</span>' : pesos(c)}</dd></div>
+        <div><dt>Existencias totales</dt><dd>${stockTotal(a)} <small>unidades</small></dd></div>
+        <div><dt>Ubicación en depósito</dt><dd class="txt">${a.ubicacion ? esc(a.ubicacion) : '<span style="font-weight:400;color:var(--texto-2)">Sin ubicación</span>'}</dd></div>
+      </dl>
+      <div class="ficha-grilla">
+        <section class="tarjeta" aria-labelledby="t-precios">
+          <div class="tarjeta-cab grande"><h2 id="t-precios">Precios por modalidad</h2></div>
+          <div class="tabla-caja"><table class="tabla"><thead><tr><th>Modalidad</th><th class="der">Precio</th><th style="width:34%;padding-left:40px">Regla</th></tr></thead>
+          <tbody>${precios.replace(/<td style="color:var\(--texto-2\)">/g, '<td style="color:var(--texto-2);padding-left:40px">')}</tbody></table></div>
+          <div style="padding:6px 24px 24px"><div class="aviso aviso-info">${I('info')}<p>Los precios sin importe muestran el motivo. Un costo desconocido se identifica como «Sin costo».</p></div></div>
+        </section>
+        <div class="ficha-col">
+          <section class="tarjeta" aria-labelledby="t-stock">
+            <div class="tarjeta-cab grande"><h2 id="t-stock">Stock por sucursal</h2></div>
+            <table class="tabla"><thead><tr><th>Sucursal</th><th class="der">Cantidad</th></tr></thead>
+            <tbody>${SUCURSALES.map(s => `<tr><td>${s.nombre}</td><td class="der num">${a.stock[s.id] || 0}</td></tr>`).join('')}
+            <tr><td>Total</td><td class="der num">${stockTotal(a)}</td></tr></tbody></table>
+          </section>
+          <section class="tarjeta" aria-labelledby="t-cod">
+            <div class="tarjeta-cab grande" style="border-bottom:0;padding-bottom:6px"><h2 id="t-cod">Códigos de proveedor</h2></div>
+            ${codigos}
+          </section>
+        </div>
+      </div>
+      <div class="pie-ficha"><span>${rastro}</span>
+        ${a.activo ? `<button type="button" class="btn btn-peligro-borde" id="btn-baja" data-accion="baja">${I('tacho')}<span>Dar de baja</span></button>` : ''}</div>`,
+    montar() { hashPrevio = location.hash; }
+  };
+}
+
+function modalBaja(a) {
+  const ctl = abrirModal({
+    titulo: 'Dar de baja el artículo', subtitulo: `${a.codigo} · ${esc(a.nombre)}`, ancho: 560,
+    cuerpo: `<div class="aviso aviso-alerta">${I('alerta')}<p>El artículo quedará inactivo. Podrás consultarlo con «Incluir inactivos» y reactivarlo desde su ficha.</p></div>
+      <form id="form-baja" novalidate class="campo">
+        <label for="baja-motivo">Motivo de la baja <span class="req">*</span></label>
+        <textarea class="entrada" id="baja-motivo" maxlength="200" ${desc('baja-motivo')}></textarea>${err('baja-motivo')}
+        <p class="ayuda">Indicá por qué se da de baja · <span class="contador" id="baja-cont">0</span>/200 caracteres.</p>
+      </form>`,
+    pie: `<button type="button" class="btn btn-secundario" data-cerrar>Cancelar</button><button type="submit" form="form-baja" class="btn btn-peligro">${I('tacho')}<span>Dar de baja</span></button>`
+  });
+  const ta = $('#baja-motivo', ctl.raiz);
+  ta.addEventListener('input', () => { $('#baja-cont', ctl.raiz).textContent = ta.value.length; });
+  $('#form-baja', ctl.raiz).addEventListener('submit', e => {
+    e.preventDefault();
+    const motivo = ta.value.trim().replace(/\s+/g, ' ');
+    const errores = {};
+    if (!motivo) errores['baja-motivo'] = 'Escribí el motivo de la baja.';
+    else if (motivo.length < 4) errores['baja-motivo'] = 'El motivo es muy corto: describilo en al menos 4 caracteres.';
+    if (!mostrarErrores(ctl.raiz, errores)) return;
+    conCarga($('.modal-pie .btn-peligro', ctl.raiz), 'Dando de baja…', 700, () => {
+      a.activo = false; a.motivoBaja = motivo; a.fechaBaja = hoyISO(); a.fechaReactivacion = null;
+      guardar(); ctl.cerrar(true);
+      aviso(`${a.codigo} quedó inactivo.`);
+      refrescar('h1');
+    });
+  });
+}
+
+function modalRetirar(a, codigo) {
+  const k = a.codigos.find(x => x.codigo === codigo); if (!k) return;
+  const pr = prov(k.proveedorId);
+  const ctl = abrirModal({
+    titulo: 'Retirar código de proveedor', subtitulo: `${a.codigo} · ${esc(a.nombre)}`, ancho: 560, foco: '[data-cerrar].btn',
+    cuerpo: `<div style="display:flex;align-items:center;gap:14px"><span class="chip-cod">${esc(k.codigo)}</span><span style="font-size:14.5px">${esc(pr ? pr.razon : '')}</span></div>
+      <div class="aviso aviso-alerta">${I('alerta')}<p>Este código dejará de estar vinculado al artículo. Los demás códigos se conservarán.</p></div>
+      <p class="ayuda" style="font-size:12px">Acción disponible solo para administradores.</p>`,
+    pie: `<button type="button" class="btn btn-secundario" data-cerrar>Cancelar</button><button type="button" class="btn btn-peligro" data-ok>${I('tacho')}<span>Retirar código</span></button>`
+  });
+  $('[data-ok]', ctl.raiz).addEventListener('click', e => {
+    if (!esAdmin()) { aviso('Solo un administrador puede retirar códigos.', { tipo: 'error' }); return; }
+    conCarga(e.currentTarget, 'Retirando…', 550, () => {
+      a.codigos = a.codigos.filter(x => x.codigo !== codigo);
+      guardar(); ctl.cerrar(true);
+      aviso(`Código ${codigo} retirado de ${a.codigo}.`);
+      refrescar('#t-cod');
+    });
+  });
+}
+
+/* =========================================================
+   Filas de códigos de proveedor (alta y edición)
+   ========================================================= */
+const filas = {};
+function filaCodigoHTML(pref, i, f) {
+  const idP = `${pref}-prov-${i}`, idC = `${pref}-cod-${i}`;
+  return `<div class="fila-cod" data-fila-cod="${i}">
+    <div class="campo"><label for="${idP}">ID de proveedor</label><input class="entrada" id="${idP}" data-cp="prov" data-i="${i}" inputmode="numeric" value="${esc(f.prov)}" autocomplete="off" ${desc(idP)}>
+      ${err(idP)}<p class="ayuda" id="${idP}-ayuda">${ayudaProv(f.prov)}</p></div>
+    <div class="campo"><label for="${idC}">Código del proveedor</label><input class="entrada" id="${idC}" data-cp="cod" data-i="${i}" value="${esc(f.cod)}" autocomplete="off" spellcheck="false" maxlength="30" ${desc(idC)}>${err(idC)}</div>
+    <button type="button" class="enlace quitar" style="margin-top:29px" data-accion="quitar-fila" data-pref="${pref}" data-i="${i}">Quitar<span class="sr"> fila ${i + 1}</span></button>
+  </div>`;
+}
+function ayudaProv(v) {
+  v = String(v || '').trim();
+  if (!v) return 'Identificador del proveedor';
+  if (!/^\d+$/.test(v)) return 'El ID es un número';
+  const p = prov(+v);
+  if (!p) return 'No existe un proveedor con ese ID';
+  return `${esc(p.razon)}${p.activo ? '' : ' · inactivo'}`;
+}
+function filasHTML(pref) {
+  const lista = filas[pref];
+  return lista.length ? lista.map((f, i) => filaCodigoHTML(pref, i, f)).join('') : `<p class="ayuda" style="font-size:12.5px">No hay códigos nuevos para agregar.</p>`;
+}
+function leerFilas(pref, raiz = document) {
+  filas[pref] = $$(`[data-fila-cod]`, $(`#${pref}-filas`, raiz)).map(div => ({ prov: $('[data-cp="prov"]', div).value, cod: $('[data-cp="cod"]', div).value }));
+  return filas[pref];
+}
+function redibujarFilas(pref, raiz = document, enfocar) {
+  $(`#${pref}-filas`, raiz).innerHTML = filasHTML(pref);
+  if (enfocar) { const el = $(enfocar, raiz); el && el.focus(); }
+}
+function validarFilas(pref, articulo, raiz = document) {
+  const lista = leerFilas(pref, raiz), errores = {}, nuevos = [], vistos = new Set(), codVistos = new Set();
+  lista.forEach((f, i) => {
+    const pid = f.prov.trim(), cod = f.cod.trim().toUpperCase();
+    if (!pid && !cod) return;
+    const idP = `${pref}-prov-${i}`, idC = `${pref}-cod-${i}`;
+    if (!pid) errores[idP] = 'Ingresá el ID del proveedor.';
+    else if (!/^\d+$/.test(pid)) errores[idP] = 'El ID de proveedor es un número.';
+    else {
+      const p = prov(+pid);
+      const vig = articulo && articulo.codigos.find(c => c.proveedorId === +pid);
+      if (!p) errores[idP] = 'No existe un proveedor con ese ID.';
+      else if (!p.activo) errores[idP] = 'El proveedor está inactivo.';
+      else if (vig) errores[idP] = `El artículo ya tiene un código vigente de este proveedor (${vig.codigo}). Retiralo desde la ficha para reemplazarlo.`;
+      else if (vistos.has(+pid)) errores[idP] = 'Va un solo código por proveedor.';
+      vistos.add(+pid);
+    }
+    if (!cod) errores[idC] = 'Ingresá el código.';
+    else if (!/^[A-Z0-9][A-Z0-9.\-/]{0,29}$/.test(cod)) errores[idC] = 'Usá letras, números, guion, punto o barra.';
+    else {
+      const duenio = db.articulos.find(a => a.codigos.some(c => c.codigo === cod));
+      if (duenio && (!articulo || duenio.id !== articulo.id)) errores[idC] = `Ese código ya está asignado a ${duenio.codigo}.`;
+      else if (duenio) errores[idC] = 'Ese código ya está vinculado a este artículo.';
+      else if (codVistos.has(cod)) errores[idC] = 'Código repetido en el formulario.';
+      codVistos.add(cod);
+    }
+    nuevos.push({ proveedorId: +pid, codigo: cod });
+  });
+  return { errores, nuevos };
+}
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.getAttribute && t.getAttribute('aria-invalid') === 'true') { t.removeAttribute('aria-invalid'); const p = document.getElementById(t.id + '-err'); if (p) { p.hidden = true; p.textContent = ''; } }
+  if (t.matches('[data-cp="prov"]')) { const a = document.getElementById(t.id + '-ayuda'); if (a) a.innerHTML = ayudaProv(t.value); }
+});
+
+function validarDatos(pref, nombre, ubic) {
+  const errores = {};
+  if (!nombre) errores[`${pref}-nombre`] = 'El nombre es obligatorio.';
+  else if (nombre.length < 3) errores[`${pref}-nombre`] = 'Escribí un nombre de al menos 3 caracteres.';
+  else if (nombre.length > 120) errores[`${pref}-nombre`] = 'El nombre admite hasta 120 caracteres.';
+  if (ubic.length > 60) errores[`${pref}-ubic`] = 'La ubicación admite hasta 60 caracteres.';
+  return errores;
+}
+
+/* =========================================================
+   Modal: nuevo artículo
+   ========================================================= */
+function modalNuevo() {
+  filas.na = [{ prov: '', cod: '' }];
+  const sucio = () => $('#na-nombre').value.trim() || $('#na-ubic').value.trim() || leerFilas('na').some(f => f.prov.trim() || f.cod.trim());
+  const ctl = abrirModal({
+    titulo: 'Nuevo artículo', subtitulo: 'Completá los datos del repuesto. Los campos con * son obligatorios.', ancho: 760,
+    cuerpo: `<form id="form-na" novalidate style="display:flex;flex-direction:column;gap:18px">
+      <div class="campo"><label for="na-nombre">Nombre <span class="req">*</span></label><input class="entrada" id="na-nombre" maxlength="120" autocomplete="off" placeholder="Ej.: Filtro de aceite para motor 1.6" ${desc('na-nombre')}>${err('na-nombre')}</div>
+      <div class="grilla-2">
+        <div class="campo"><label for="na-ubic">Ubicación en depósito</label><input class="entrada" id="na-ubic" maxlength="60" autocomplete="off" placeholder="Ej.: A-03 · Estante 2" ${desc('na-ubic')}>${err('na-ubic')}<p class="ayuda">Opcional · Hasta 60 caracteres</p></div>
+        <div class="campo"><label for="na-cod">Código interno</label><input class="entrada" id="na-cod" value="Se asigna al guardar" readonly><p class="ayuda">El sistema genera el código del artículo.</p></div>
+      </div>
+      <hr class="separador" style="margin:6px 0">
+      <div><h3 class="titulo-sec" style="font-size:16px">Códigos de proveedor</h3><p class="ayuda" style="margin-top:8px">Opcional · Un código vigente por proveedor y artículo.</p></div>
+      <div id="na-filas">${filasHTML('na')}</div>
+      <div><button type="button" class="btn btn-secundario" data-accion="agregar-fila" data-pref="na">${I('mas')}<span>Agregar código</span></button></div>
+    </form>`,
+    pie: `<button type="button" class="btn btn-secundario" data-cerrar>Cancelar</button><button type="submit" form="form-na" class="btn btn-primario">${I('check')}<span>Guardar artículo</span></button>`,
+    antesDeCerrar(c) {
+      if (!sucio()) return true;
+      confirmar({ titulo: 'Descartar el artículo nuevo', mensaje: 'Los datos que cargaste no se van a guardar.', textoOk: 'Descartar', peligro: true, onOk: () => c.cerrar(true) });
+      return false;
+    }
+  });
+  $('#form-na', ctl.raiz).addEventListener('submit', e => {
+    e.preventDefault();
+    const nombre = $('#na-nombre').value.trim().replace(/\s+/g, ' '), ubic = $('#na-ubic').value.trim();
+    const errores = validarDatos('na', nombre, ubic);
+    const v = validarFilas('na', null, ctl.raiz);
+    Object.assign(errores, v.errores);
+    if (!mostrarErrores(ctl.raiz, errores)) return;
+    conCarga($('.modal-pie .btn-primario', ctl.raiz), 'Guardando…', 700, () => {
+      const max = Math.max(...db.articulos.map(a => +a.codigo.slice(3)));
+      const id = Math.max(...db.articulos.map(a => a.id)) + 1;
+      const nuevoA = { id, codigo: `LC-${max + 1}`, nombre, ubicacion: ubic || null, costo: null, activo: true, motivoBaja: null, fechaBaja: null, fechaReactivacion: null, stock: { 1: 0, 2: 0 }, codigos: v.nuevos };
+      db.articulos.push(nuevoA); guardar();
+      ctl.cerrar(true);
+      aviso(`Artículo ${nuevoA.codigo} creado. Su costo queda «Sin costo» hasta la primera compra.`);
+      ir(`ficha-${id}`);
+    });
+  });
+}
+
+/* =========================================================
+   Vista: editar artículo
+   ========================================================= */
+function vistaEditar({ id }) {
+  const a = art(id);
+  if (!a) return vistaNoEncontrado();
+  if (!a.activo) {
+    setTimeout(() => { aviso('Reactivá el artículo para modificar sus datos.', { tipo: 'error' }); location.replace('#ficha-' + a.id); }, 0);
+    return { html: '' };
+  }
+  const admin = esAdmin();
+  filas.ed = [{ prov: '', cod: '' }];
+  let inicial = '';
+  const foto = () => JSON.stringify([$('#ed-nombre').value, $('#ed-ubic').value, $('#ed-cod').value, leerFilas('ed').filter(f => f.prov.trim() || f.cod.trim())]);
+  return {
+    titulo: `Editar ${a.codigo}`,
+    html: `<nav class="migas" aria-label="Ubicación">${I('caja')}<a href="#articulos">Artículos</a>${I('chevDer')}<a href="#ficha-${a.id}">${a.codigo}</a>${I('chevDer')}<span>Editar</span></nav>
+      <div class="cabecera"><div><h1 tabindex="-1">Editar artículo</h1><p class="bajada">${a.codigo} · ${esc(a.nombre)}</p></div>
+        <a class="btn btn-secundario" href="#ficha-${a.id}">${I('flechaIzq')}<span>Volver a la ficha</span></a></div>
+      <form class="tarjeta edicion" id="form-ed" novalidate>
+        <div class="tarjeta-cuerpo" style="display:flex;flex-direction:column;gap:18px">
+          <div class="campo"><label for="ed-nombre">Nombre <span class="req">*</span></label><input class="entrada" id="ed-nombre" maxlength="120" value="${esc(a.nombre)}" autocomplete="off" ${desc('ed-nombre')}>${err('ed-nombre')}</div>
+          <div class="grilla-2">
+            <div class="campo"><label for="ed-ubic">Ubicación en depósito</label><input class="entrada" id="ed-ubic" maxlength="60" value="${esc(a.ubicacion || '')}" autocomplete="off" ${desc('ed-ubic')}>${err('ed-ubic')}<p class="ayuda">Opcional · Hasta 60 caracteres</p></div>
+            <div class="campo"><label for="ed-cod">Código interno</label><input class="entrada mono" style="font-size:13px" id="ed-cod" value="${a.codigo}" ${admin ? '' : 'readonly'} autocomplete="off" ${desc('ed-cod')}>${err('ed-cod')}<p class="ayuda">Solo un administrador puede cambiarlo. Formato LC-0000.</p></div>
+          </div>
+          <hr class="separador" style="margin:6px 0">
+          <div><h2 class="titulo-sec" style="font-size:16px">Agregar códigos de proveedor</h2><p class="ayuda" style="margin-top:8px">Los códigos existentes se conservan. Para retirarlos, usá la acción «Retirar» en la ficha.</p>
+            <div class="vigentes">Vigentes: ${a.codigos.length ? a.codigos.map(k => `<span class="chip-cod">${esc(k.codigo)}</span>`).join('') : 'ninguno'}</div></div>
+          <div id="ed-filas">${filasHTML('ed')}</div>
+          <div><button type="button" class="btn btn-secundario" data-accion="agregar-fila" data-pref="ed">${I('mas')}<span>Agregar código</span></button></div>
+          <hr class="separador" style="margin:6px 0">
+          <div class="aviso aviso-info">${I('info')}<p>${admin ? 'Tu perfil de administrador permite cambiar el código interno.' : 'Tu perfil de operador puede modificar nombre, ubicación y agregar códigos. El código interno lo cambia un administrador.'}</p></div>
+        </div>
+        <div class="tarjeta-pie"><a class="btn btn-secundario" href="#ficha-${a.id}">Cancelar</a><button type="submit" class="btn btn-primario" id="btn-guardar-ed">${I('check')}<span>Guardar cambios</span></button></div>
+      </form>`,
+    montar() {
+      inicial = foto();
+      guardia = () => $('#form-ed') && foto() !== inicial;
+      $('#form-ed').addEventListener('submit', e => {
+        e.preventDefault();
+        const nombre = $('#ed-nombre').value.trim().replace(/\s+/g, ' '), ubic = $('#ed-ubic').value.trim();
+        const cod = $('#ed-cod').value.trim().toUpperCase();
+        const errores = validarDatos('ed', nombre, ubic);
+        if (cod !== a.codigo) {
+          if (!admin) errores['ed-cod'] = 'Solo un administrador puede cambiar el código interno.';
+          else if (!/^LC-\d{4}$/.test(cod)) errores['ed-cod'] = 'Usá el formato LC-0000.';
+          else if (db.articulos.some(x => x.codigo === cod)) errores['ed-cod'] = `El código ${cod} ya pertenece a otro artículo.`;
+        }
+        const v = validarFilas('ed', a);
+        Object.assign(errores, v.errores);
+        if (!mostrarErrores($('#form-ed'), errores)) { aviso('Revisá los campos marcados.', { tipo: 'error' }); return; }
+        if (foto() === inicial) { aviso('No hay cambios para guardar.'); return; }
+        conCarga($('#btn-guardar-ed'), 'Guardando…', 700, () => {
+          a.nombre = nombre; a.ubicacion = ubic || null; a.codigo = cod; a.codigos = a.codigos.concat(v.nuevos);
+          guardar(); guardia = null;
+          aviso('Cambios guardados.');
+          ir(`ficha-${a.id}`);
+        });
+      });
+    }
+  };
+}
+
+/* =========================================================
+   Vista: factura de compra
+   ========================================================= */
+function nuevoBorrador() {
+  return { proveedorId: null, qProv: '', resProv: null, numero: '', emision: hoyISO(), vencimiento: '', perc: { iva: '0,00', iibb: '0,00', municipal: '0,00', ganancias: '0,00' }, lineas: [], qArt: '', resArt: null, sig: 1 };
+}
+function borrador() { if (!db.borrador) db.borrador = nuevoBorrador(); return db.borrador; }
+
+function vistaCompra() {
+  const b = borrador();
+  const p = b.proveedorId ? prov(b.proveedorId) : null;
+  let bloqueProv;
+  if (p) {
+    bloqueProv = `<div class="prov-elegido"><span class="avatar">${I('factura')}</span><div><div style="font-size:15px">${esc(p.razon)}</div><div style="font-size:12.5px;color:var(--texto-2);margin-top:3px">Proveedor · ${p.codigo} · CUIT ${p.cuit}</div></div>
+      <button type="button" class="enlace" id="btn-cambiar-prov" data-accion="cambiar-prov">Cambiar<span class="sr"> proveedor</span></button></div>`;
+  } else {
+    let res = '';
+    if (b.resProv) {
+      const lista = b.resProv.map(prov).filter(Boolean);
+      res = lista.length ? `<div class="prov-lista">${lista.map(x => `<div class="prov-item"><div><div class="nom">${esc(x.razon)}</div><div class="det">Código: ${x.codigo} · CUIT ${x.cuit}</div></div>
+          <button type="button" class="btn btn-secundario btn-chico" data-accion="elegir-prov" data-id="${x.id}">${I('mas')}<span>Seleccionar</span><span class="sr"> ${esc(x.razon)}</span></button></div>`).join('')}</div>`
+        : `<div class="prov-lista"><div class="prov-item" style="color:var(--texto-2)">No hay proveedores activos que coincidan con «${esc(b.qProv)}». Probá con otra parte de la razón social o el CUIT.</div></div>`;
+    }
+    bloqueProv = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><h2 class="titulo-sec">Proveedor</h2><span class="ayuda">Solo proveedores activos</span></div>
+      <form class="campo" id="form-prov" role="search" novalidate style="margin-top:16px">
+        <label for="q-prov">Razón social o CUIT</label>
+        <div class="fila-buscar"><div class="con-icono">${I('buscar')}<input class="entrada" id="q-prov" value="${esc(b.qProv)}" autocomplete="off" placeholder="Ej.: demo o 30-71234567-8" ${desc('q-prov')}></div>
+          <button type="submit" class="btn btn-secundario" id="btn-buscar-prov">${I('buscar')}<span>Buscar proveedor</span></button></div>
+        ${err('q-prov')}
+      </form>${res}`;
+  }
+
+  const lineas = b.lineas;
+  const tabla = lineas.length ? `<div class="tabla-caja"><table class="tabla tabla-lineas">
+      <thead><tr><th>Artículo</th><th>Destino <span class="req">*</span></th><th class="der">Cantidad <span class="req">*</span></th><th class="der">Precio unitario <span class="req">*</span></th><th class="der">Desc. %</th><th><span class="sr">Quitar</span></th></tr></thead>
+      <tbody>${lineas.map(l => {
+        const a = art(l.articuloId); const u = l.uid;
+        const imp = parseAR(l.precio) * (+l.cantidad || 0) * (1 - (parseAR(l.desc) || 0) / 100);
+        return `<tr>
+          <td class="celda-art"><span class="mono">${a ? a.codigo : '—'}</span>${a ? esc(a.nombre) : 'Artículo eliminado'}</td>
+          <td><select class="entrada w-dest" id="l${u}-suc" data-l="${u}" data-lc="sucursalId" aria-label="Destino de ${a ? esc(a.codigo) : ''}" ${desc(`l${u}-suc`)}>
+            <option value="">Elegí…</option>${SUCURSALES.map(s => `<option value="${s.id}" ${+l.sucursalId === s.id ? 'selected' : ''}>${s.nombre}</option>`).join('')}</select>${err(`l${u}-suc`)}</td>
+          <td class="der"><input class="entrada entrada-num w-cant" id="l${u}-cant" data-l="${u}" data-lc="cantidad" inputmode="numeric" value="${esc(l.cantidad)}" aria-label="Cantidad" ${desc(`l${u}-cant`)}>${err(`l${u}-cant`)}</td>
+          <td class="der"><input class="entrada entrada-num w-prec" id="l${u}-prec" data-l="${u}" data-lc="precio" inputmode="decimal" value="${esc(l.precio)}" aria-label="Precio unitario" ${desc(`l${u}-prec`)}>${err(`l${u}-prec`)}
+            <p class="importe-linea" id="l${u}-imp">${isFinite(imp) && imp > 0 ? 'Importe ' + pesos(redondear(imp)) : ''}</p></td>
+          <td class="der"><input class="entrada entrada-num w-desc" id="l${u}-desc" data-l="${u}" data-lc="desc" inputmode="decimal" value="${esc(l.desc)}" aria-label="Descuento en porcentaje" ${desc(`l${u}-desc`)}>${err(`l${u}-desc`)}</td>
+          <td><button type="button" class="enlace" style="margin-top:9px;white-space:nowrap" data-accion="quitar-linea" data-uid="${u}">${I('cruz')}<span>Quitar</span><span class="sr"> ${a ? a.codigo : ''}</span></button></td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`
+    : `<div class="vacio" style="padding:36px 20px 28px">${I('caja')}<p>Todavía no hay líneas.<br>Buscá un artículo para agregarlo a la factura.</p></div>`;
+
+  let resArt = '';
+  if (b.resArt) {
+    const lista = b.resArt.map(art).filter(Boolean);
+    resArt = `<div class="res-art">${lista.length ? `<ul>${lista.map(a => `<li><span><span class="mono">${a.codigo}</span> ${esc(a.nombre)}</span>
+        <button type="button" class="btn btn-secundario btn-chico" data-accion="agregar-linea" data-id="${a.id}">${I('mas')}<span>Agregar</span><span class="sr"> ${a.codigo}</span></button></li>`).join('')}</ul>`
+      : `<p style="padding:14px;color:var(--texto-2)">Sin artículos activos para «${esc(b.qArt)}».</p>`}</div>`;
+  }
+
+  const listo = !!p && lineas.length > 0;
+  return {
+    titulo: 'Factura de compra',
+    html: `<div class="migas">${I('factura')}<span>Factura de compra</span></div>
+      <div class="cabecera"><div><h1 tabindex="-1">Factura de compra</h1><p class="bajada">Cargá el comprobante y asigná una sucursal de destino a cada artículo.</p></div>
+        ${(p || lineas.length || b.numero) ? `<button type="button" class="btn btn-secundario" data-accion="descartar-borrador">${I('tacho')}<span>Descartar borrador</span></button>` : ''}</div>
+      <div id="vista-compra">
+      <section class="tarjeta"><div class="tarjeta-cuerpo">
+        ${bloqueProv}
+        <hr class="separador">
+        <div class="grilla-3">
+          <div class="campo"><label for="f-numero">Número <span class="req">*</span></label><input class="entrada" id="f-numero" data-b="numero" value="${esc(b.numero)}" placeholder="A-0003-00018427" autocomplete="off" ${desc('f-numero')}>${err('f-numero')}</div>
+          <div class="campo"><label for="f-emision">Fecha de emisión <span class="req">*</span></label><input class="entrada" type="date" id="f-emision" data-b="emision" value="${b.emision}" max="${hoyISO()}" ${desc('f-emision')}>${err('f-emision')}</div>
+          <div class="campo"><label for="f-venc">Fecha de vencimiento</label><input class="entrada" type="date" id="f-venc" data-b="vencimiento" value="${b.vencimiento}" ${desc('f-venc')}>${err('f-venc')}<p class="ayuda">Opcional</p></div>
+        </div>
+        <hr class="separador">
+        <h2 class="titulo-sec" style="margin-bottom:14px">Percepciones del comprobante <small>· Importes en pesos</small></h2>
+        <div class="grilla-4">
+          ${[['iva', 'IVA'], ['iibb', 'Ingresos Brutos'], ['municipal', 'Municipal'], ['ganancias', 'Ganancias']].map(([k, t]) => `<div class="campo"><label for="f-perc-${k}">${t}</label><input class="entrada" id="f-perc-${k}" data-b="perc.${k}" inputmode="decimal" value="${esc(b.perc[k])}" autocomplete="off" ${desc('f-perc-' + k)}>${err('f-perc-' + k)}</div>`).join('')}
+        </div>
+      </div></section>
+      <section class="tarjeta" aria-labelledby="t-lineas">
+        <div class="tarjeta-cab" ${lineas.length ? '' : 'style="border-bottom:0;padding-top:22px"'}><h2 id="t-lineas" style="font-size:${lineas.length ? 16 : 19}px">Artículos comprados</h2>${lineas.length ? `<span class="meta">${lineas.length} ${lineas.length === 1 ? 'línea' : 'líneas'} · Importes en pesos</span>` : ''}</div>
+        ${tabla}
+        <div class="agregar-art" ${lineas.length ? '' : 'style="border-top:0;padding-top:0"'}>
+          <form class="campo" id="form-art" role="search" novalidate>
+            ${lineas.length ? '<label for="q-art">Agregar artículo</label>' : '<label for="q-art" class="sr">Agregar artículo</label>'}
+            <div class="fila-buscar"><div class="con-icono">${I('buscar')}<input class="entrada" id="q-art" value="${esc(b.qArt)}" placeholder="Código o nombre del artículo" autocomplete="off"></div>
+              <button type="submit" class="btn btn-secundario" id="btn-buscar-art">${I('buscar')}<span>Buscar artículo</span></button></div>
+          </form>
+          ${resArt}
+        </div>
+      </section>
+      <div class="pie-accion"><span>${listo ? 'Al registrar se suma el stock en el destino de cada línea y se actualiza el costo de los artículos.' : 'Completá el proveedor y al menos una línea para registrar.'}</span>
+        <button type="button" class="btn btn-primario" id="btn-registrar" data-accion="registrar" ${listo ? '' : 'disabled'}>${I('check')}<span>Registrar factura</span></button></div>
+      </div>`,
+    montar() {
+      const fp = $('#form-prov');
+      fp && fp.addEventListener('submit', e => {
+        e.preventDefault();
+        const q = $('#q-prov').value.trim(); b.qProv = q;
+        if (q.length < 2) { mostrarErrores(fp, { 'q-prov': 'Escribí al menos 2 caracteres.' }); return; }
+        const nq = norm(q), dig = q.replace(/\D/g, '');
+        b.resProv = db.proveedores.filter(x => x.activo && (norm(x.razon).includes(nq) || norm(x.codigo).includes(nq) || (dig.length >= 3 && x.cuit.replace(/\D/g, '').includes(dig)))).map(x => x.id);
+        guardar(); refrescar('#q-prov');
+      });
+      $('#form-art').addEventListener('submit', e => {
+        e.preventDefault();
+        const q = $('#q-art').value.trim(); b.qArt = q;
+        b.resArt = q ? buscarArticulos(q, false).slice(0, 8).map(a => a.id) : null;
+        guardar(); refrescar('#q-art');
+      });
+    },
+    focoPropio: false
+  };
+}
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (!db || !db.borrador) return;
+  const b = db.borrador;
+  if (t.dataset.b) {
+    const [k, s] = t.dataset.b.split('.');
+    if (s) b[k][s] = t.value; else b[k] = t.value;
+    guardarPronto();
+  } else if (t.dataset.l) {
+    const l = b.lineas.find(x => String(x.uid) === t.dataset.l);
+    if (l) {
+      l[t.dataset.lc] = t.value; guardarPronto();
+      const imp = parseAR(l.precio) * (+l.cantidad || 0) * (1 - (parseAR(l.desc) || 0) / 100);
+      const el = document.getElementById(`l${l.uid}-imp`);
+      if (el) el.textContent = isFinite(imp) && imp > 0 ? 'Importe ' + pesos(redondear(imp)) : '';
+    }
+  }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (db && db.borrador && t.dataset.l && t.tagName === 'SELECT') {
+    const l = db.borrador.lineas.find(x => String(x.uid) === t.dataset.l);
+    if (l) { l.sucursalId = t.value; guardarPronto(); }
+    t.removeAttribute('aria-invalid'); const p = document.getElementById(t.id + '-err'); if (p) { p.hidden = true; p.textContent = ''; }
+  }
+});
+document.addEventListener('focusout', e => {
+  const t = e.target;
+  if (t.matches && (t.matches('[data-b^="perc."]') || t.matches('[data-lc="precio"]'))) {
+    const n = parseAR(t.value);
+    if (t.value.trim() && isFinite(n) && n >= 0) { t.value = num2(n); t.dispatchEvent(new Event('input', { bubbles: true })); }
+  }
+});
+
+function registrarFactura(btn) {
+  const b = borrador(), errores = {};
+  const numero = b.numero.trim().toUpperCase();
+  if (!numero) errores['f-numero'] = 'Ingresá el número del comprobante.';
+  else if (!/^[A-CM]-\d{4}-\d{8}$/.test(numero)) errores['f-numero'] = 'Usá el formato A-0003-00018427.';
+  else if (db.facturas.some(f => f.proveedorId === b.proveedorId && f.numero === numero)) errores['f-numero'] = 'Esa factura ya está registrada para este proveedor.';
+  if (!b.emision) errores['f-emision'] = 'Indicá la fecha de emisión.';
+  else if (b.emision > hoyISO()) errores['f-emision'] = 'La emisión no puede ser posterior a hoy.';
+  if (b.vencimiento && b.emision && b.vencimiento < b.emision) errores['f-venc'] = 'El vencimiento no puede ser anterior a la emisión.';
+  const perc = {};
+  for (const k of ['iva', 'iibb', 'municipal', 'ganancias']) {
+    const n = parseAR(b.perc[k]);
+    if (!isFinite(n) || n < 0) errores['f-perc-' + k] = 'Ingresá un importe válido, por ejemplo 1.200,00.';
+    else perc[k] = redondear(n);
+  }
+  const lineas = [];
+  b.lineas.forEach(l => {
+    const u = l.uid, cant = String(l.cantidad).trim(), precio = parseAR(l.precio), d = parseAR(l.desc);
+    if (!l.sucursalId) errores[`l${u}-suc`] = 'Elegí el destino.';
+    if (!/^\d+$/.test(cant) || +cant < 1) errores[`l${u}-cant`] = 'Cantidad entera mayor a 0.';
+    else if (+cant > 99999) errores[`l${u}-cant`] = 'Revisá la cantidad.';
+    if (!String(l.precio).trim()) errores[`l${u}-prec`] = 'Ingresá el precio.';
+    else if (!isFinite(precio) || precio <= 0) errores[`l${u}-prec`] = 'Precio mayor a 0.';
+    if (!isFinite(d) || d < 0 || d >= 100) errores[`l${u}-desc`] = 'Entre 0 y 99,99.';
+    lineas.push({ articuloId: l.articuloId, sucursalId: +l.sucursalId, cantidad: +cant, precio, desc: d });
+  });
+  if (!b.proveedorId || !lineas.length) return;
+  if (!mostrarErrores($('#vista-compra'), errores)) { aviso('Revisá los campos marcados.', { tipo: 'error' }); return; }
+  conCarga(btn, 'Registrando…', 850, () => {
+    const resultado = [];
+    lineas.forEach(l => {
+      const a = art(l.articuloId); if (!a) return;
+      a.stock[l.sucursalId] = (a.stock[l.sucursalId] || 0) + l.cantidad;
+      a.costo = redondear(l.precio * (1 - l.desc / 100));
+    });
+    lineas.forEach(l => { const a = art(l.articuloId); if (a) resultado.push({ articuloId: a.id, codigo: a.codigo, nombre: a.nombre, costo: a.costo, sucursalId: l.sucursalId, stockDestino: a.stock[l.sucursalId], cantidad: l.cantidad }); });
+    const id = (db.facturas.reduce((m, f) => Math.max(m, f.id), 0)) + 1;
+    db.facturas.push({ id, numero, proveedorId: b.proveedorId, emision: b.emision, vencimiento: b.vencimiento || null, percepciones: perc, lineas, resultado, registrada: new Date().toISOString(), usuario: db.sesion.usuario });
+    db.borrador = null; guardar();
+    aviso(`Factura ${numero} registrada.`);
+    ir(`compra-registrada-${id}`);
+  });
+}
+
+function vistaRegistrada({ id }) {
+  const f = db.facturas.find(x => x.id === id);
+  if (!f) return vistaNoEncontrado();
+  const p = prov(f.proveedorId);
+  return {
+    titulo: `Factura ${f.numero}`,
+    html: `<nav class="migas" aria-label="Ubicación">${I('factura')}<a href="#compra">Factura de compra</a>${I('chevDer')}<span>Registro completado</span></nav>
+      <div class="ok-circulo">${I('check')}</div>
+      <h1 tabindex="-1">Factura registrada</h1>
+      <p class="bajada" style="margin-bottom:24px">${f.numero} · ${esc(p ? p.razon : '')} · La compra se guardó correctamente.</p>
+      <div class="aviso aviso-ok" style="margin-bottom:22px">${I('check')}<p>Estos son el costo vigente y el stock en cada destino después de registrar la compra.</p></div>
+      <section class="tarjeta">
+        <div class="tarjeta-cab"><h2 style="font-size:15.5px">Resultado por artículo</h2><span class="meta">${f.resultado.length} ${f.resultado.length === 1 ? 'artículo' : 'artículos'}</span></div>
+        <div class="tabla-caja"><table class="tabla"><thead><tr><th>Artículo</th><th class="der">Costo vigente</th><th style="padding-left:40px">Destino</th><th class="der">Stock en el destino</th></tr></thead>
+        <tbody>${f.resultado.map(r => `<tr><td><span class="mono" style="display:block;margin-bottom:6px">${r.codigo}</span><a class="enlace" style="color:var(--tinta)" href="#ficha-${r.articuloId}">${esc(r.nombre)}</a></td>
+          <td class="der num">${pesos(r.costo)}</td><td style="padding-left:40px">${sucNombre(r.sucursalId)} <span class="tenue" style="font-size:12px">(+${r.cantidad})</span></td><td class="der num">${r.stockDestino}</td></tr>`).join('')}</tbody></table></div>
+      </section>
+      <div class="pie-accion"><span>Cantidades totales disponibles en cada destino.</span>
+        <button type="button" class="btn btn-primario" data-accion="otra-factura">${I('mas')}<span>Cargar otra factura</span></button></div>`
+  };
+}
+
+/* =========================================================
+   Vista: interacción y mapa de pantallas
+   ========================================================= */
+function vistaInteraccion() {
+  return {
+    titulo: 'Interacción',
+    html: `<div class="muestra">
+      <div class="migas"><span>La Central Repuestos · Interacción</span></div>
+      <h1 tabindex="-1">Acciones claras, respuesta inmediata</h1>
+      <p class="bajada" style="margin-bottom:24px">Pasá el mouse por el botón rojo y probá la navegación con Tab. El clic simula una operación local.</p>
+      <section class="tarjeta"><div class="tarjeta-cuerpo">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding-left:22px"><h2 style="font-size:18px">Botones de acción</h2><span class="ayuda">Sin conexión con el sistema</span></div>
+        <div class="muestra-botones">
+          <button type="button" class="btn btn-primario" id="demo-guardar" data-accion="demo-guardar"><span>Guardar cambios</span></button>
+          <button type="button" class="btn btn-secundario" data-accion="demo-cancelar">Cancelar</button>
+          <button type="button" class="btn btn-peligro-borde" data-accion="demo-baja">${I('tacho')}<span>Dar de baja</span></button>
+          <button type="button" class="btn btn-primario" disabled>Guardar artículo</button>
+        </div>
+        <p id="demo-msg" style="margin-top:16px;color:var(--texto-2);min-height:21px" aria-live="polite"></p>
+        <hr class="separador" style="margin:22px 0">
+        <label class="casilla"><input type="checkbox" id="demo-reducir" ${db.ui.reducir ? 'checked' : ''}> Simular movimiento reducido</label>
+      </div></section>
+      <div class="muestra-cols">
+        <div><h2>Mouse y teclado</h2><p>Rojo oscuro que baja desde el borde superior en 300 ms. Al salir vuelve hacia arriba. El texto permanece blanco. Tab muestra un contorno de foco de 3 px; Enter y Espacio activan el botón.</p></div>
+        <div><h2>Operación y accesibilidad</h2><p>Al presionar, el fondo se oscurece sin mover el botón. Durante la espera mantiene su ancho, anuncia «Guardando…» y bloquea clics repetidos. La preferencia de movimiento reducido elimina las transiciones y la rotación.</p></div>
+      </div>
+      <a class="btn btn-secundario" href="#pantallas" style="margin-top:36px">${I('flechaDer')}<span>Ver todas las pantallas</span></a>
+    </div>`,
+    montar() {
+      $('#demo-reducir').addEventListener('change', e => { db.ui.reducir = e.target.checked; guardar(); document.documentElement.classList.toggle('reducir-mov', db.ui.reducir); });
+    }
+  };
+}
+const PANTALLAS = [
+  ['acceso', 'Acceso', 'Ingreso con usuario y contraseña'],
+  ['articulos', 'Artículos', 'Búsqueda, filtro, orden y paginación'],
+  ['ficha', 'Ficha de artículo', 'Precios por modalidad, stock y códigos'],
+  ['alta', 'Nuevo artículo', 'Alta con códigos de proveedor'],
+  ['editar', 'Editar artículo', 'Modificación con permisos por rol'],
+  ['baja', 'Dar de baja', 'Baja con motivo obligatorio'],
+  ['inactivo', 'Artículo inactivo', 'Ficha de un artículo dado de baja'],
+  ['retirar', 'Retirar código', 'Solo administradores'],
+  ['compra', 'Factura de compra', 'Proveedor, datos y percepciones'],
+  ['lineas', 'Líneas de compra', 'Destino por línea, cantidades y precios'],
+  ['registrada', 'Factura registrada', 'Costo y stock resultantes'],
+  ['sin-resultados', 'Sin resultados', 'Estado vacío de la búsqueda'],
+  ['interaccion', 'Botones', 'Relleno, foco, carga y deshabilitado']
+];
+function vistaPantallas() {
+  return {
+    titulo: 'Pantallas',
+    html: `<div class="migas"><span>La Central Repuestos · Propuesta visual</span></div>
+      <div class="cabecera"><div><h1 tabindex="-1">Pantallas del prototipo</h1><p class="bajada">Atajos para revisar cada pantalla de la propuesta con los datos de muestra.</p></div></div>
+      <div class="pantallas">${PANTALLAS.map(([k, t, d], i) => `<button type="button" class="pantalla" data-accion="ir-pantalla" data-p="${k}"><span class="n">${String(i + 1).padStart(2, '0')}</span><strong>${t}</strong><span>${d}</span></button>`).join('')}</div>`
+  };
+}
+function irPantalla(k) {
+  const lc = db.articulos.find(a => a.codigo === 'LC-1042') || db.articulos.find(a => a.activo);
+  const inact = db.articulos.find(a => !a.activo);
+  const conCod = db.articulos.find(a => a.activo && a.codigos.length);
+  switch (k) {
+    case 'acceso': salir(); break;
+    case 'articulos': db.ui.q = 'filtro'; db.ui.inactivos = false; db.ui.pagina = 1; guardar(); ir('articulos'); break;
+    case 'sin-resultados': db.ui.q = 'filtro zx999'; db.ui.pagina = 1; guardar(); ir('articulos'); break;
+    case 'alta': ir('articulos'); setTimeout(modalNuevo, 60); break;
+    case 'ficha': lc && ir('ficha-' + lc.id); break;
+    case 'editar': lc && ir((lc.activo ? 'editar-' : 'ficha-') + lc.id); break;
+    case 'baja': if (lc && lc.activo) { ir('ficha-' + lc.id); setTimeout(() => modalBaja(lc), 60); } else aviso('LC-1042 ya está inactivo: reactivalo desde su ficha para probar la baja.', { tipo: 'error' }); break;
+    case 'inactivo': inact ? ir('ficha-' + inact.id) : aviso('No hay artículos inactivos.', { tipo: 'error' }); break;
+    case 'retirar':
+      if (!esAdmin()) { aviso('Ingresá como administrador para retirar códigos.', { tipo: 'error' }); break; }
+      if (conCod) { ir('ficha-' + conCod.id); setTimeout(() => modalRetirar(conCod, conCod.codigos[0].codigo), 60); } break;
+    case 'compra': ir('compra'); break;
+    case 'lineas': {
+      const b = borrador();
+      if (!b.proveedorId) b.proveedorId = 27;
+      if (!b.numero) b.numero = 'A-0003-00018427';
+      if (!b.lineas.length) {
+        const a1 = db.articulos.find(a => a.codigo === 'LC-1042' && a.activo), a2 = db.articulos.find(a => a.codigo === 'LC-1078' && a.activo);
+        if (a1) b.lineas.push({ uid: b.sig++, articuloId: a1.id, sucursalId: '1', cantidad: '6', precio: '5.500,00', desc: '0' });
+        if (a2) b.lineas.push({ uid: b.sig++, articuloId: a2.id, sucursalId: '2', cantidad: '4', precio: '7.800,00', desc: '5' });
+      }
+      b.qArt = 'filtro combustible'; b.resArt = buscarArticulos('filtro combustible', false).slice(0, 3).map(a => a.id);
+      guardar(); ir('compra'); break;
+    }
+    case 'registrada': { const f = db.facturas[db.facturas.length - 1]; f ? ir('compra-registrada-' + f.id) : aviso('Todavía no registraste facturas. Probá «Líneas de compra» y registrala.', { tipo: 'error', ms: 5000 }); break; }
+    case 'interaccion': ir('interaccion'); break;
+  }
+}
+
+const VISTAS = { articulos: vistaArticulos, ficha: vistaFicha, editar: vistaEditar, compra: vistaCompra, registrada: vistaRegistrada, interaccion: vistaInteraccion, pantallas: vistaPantallas, noEncontrado: vistaNoEncontrado };
+
+/* =========================================================
+   Acciones (delegación)
+   ========================================================= */
+function salir() {
+  const hacer = () => { guardia = null; db.sesion = null; guardar(); aviso('Cerraste la sesión.'); if (location.hash === '#acceso') render(); else location.hash = 'acceso'; };
+  if (guardia && guardia()) confirmar({ titulo: 'Descartar cambios', mensaje: 'Hay cambios sin guardar. Si cerrás la sesión, se pierden.', textoOk: 'Descartar y salir', peligro: true, onOk: hacer });
+  else hacer();
+}
+const ACCIONES = {
+  'salir': () => salir(),
+  'restablecer': () => confirmar({
+    titulo: 'Restablecer datos de demostración', mensaje: 'Se pierden los artículos, cambios y facturas que cargaste. Tu sesión sigue abierta.',
+    textoOk: 'Restablecer', peligro: true, icono: 'reactivar', ms: 500,
+    onOk: () => { const s = db.sesion, red = db.ui.reducir; db = semilla(); db.sesion = s; db.ui.reducir = red; guardar(); aviso('Datos de demostración restablecidos.'); guardia = null; ir('articulos'); }
+  }),
+  'ordenar': el => {
+    const c = el.dataset.campo, o = db.ui.orden;
+    db.ui.orden = { campo: c, dir: o.campo === c && o.dir === 'asc' ? 'desc' : 'asc' };
+    db.ui.pagina = 1; guardar(); refrescar();
+  },
+  'pagina': el => {
+    db.ui.pagina = +el.dataset.p; guardar(); refrescar();
+    const btn = document.getElementById(el.id);
+    if (!btn || btn.disabled) { const otro = $(el.id === 'pag-sig' ? '#pag-ant' : '#pag-sig'); otro && otro.focus({ preventScroll: true }); }
+    const t = $('.tabla-art'); t && t.scrollIntoView({ block: 'start' });
+  },
+  'volver-buscar': () => { db.ui.q = ''; db.ui.pagina = 1; guardar(); refrescar('#q'); },
+  'nuevo-articulo': () => modalNuevo(),
+  'baja': () => { const a = art(ruta().id); a && modalBaja(a); },
+  'retirar-codigo': el => { const a = art(ruta().id); a && modalRetirar(a, el.dataset.cod); },
+  'reactivar': el => {
+    const a = art(ruta().id); if (!a) return;
+    conCarga(el, 'Reactivando…', 600, () => { a.activo = true; a.fechaReactivacion = hoyISO(); guardar(); aviso(`${a.codigo} está activo otra vez.`); refrescar('h1'); });
+  },
+  'agregar-fila': el => {
+    const pref = el.dataset.pref, raiz = el.closest('.modal-raiz') || document;
+    leerFilas(pref, raiz);
+    if (filas[pref].length >= 8) { aviso('Podés agregar hasta 8 códigos por vez.', { tipo: 'error' }); return; }
+    filas[pref].push({ prov: '', cod: '' });
+    redibujarFilas(pref, raiz, `#${pref}-prov-${filas[pref].length - 1}`);
+  },
+  'quitar-fila': el => {
+    const pref = el.dataset.pref, raiz = el.closest('.modal-raiz') || document;
+    leerFilas(pref, raiz);
+    filas[pref].splice(+el.dataset.i, 1);
+    redibujarFilas(pref, raiz);
+    const btn = $(`[data-accion="agregar-fila"][data-pref="${pref}"]`, raiz); btn && btn.focus();
+  },
+  'elegir-prov': el => { const b = borrador(); b.proveedorId = +el.dataset.id; b.resProv = null; guardar(); refrescar('#btn-cambiar-prov'); aviso(`Proveedor seleccionado: ${prov(b.proveedorId).razon}.`); },
+  'cambiar-prov': () => { const b = borrador(); b.proveedorId = null; guardar(); refrescar('#q-prov'); },
+  'agregar-linea': el => {
+    const b = borrador(), a = art(+el.dataset.id); if (!a) return;
+    const uid = b.sig++;
+    b.lineas.push({ uid, articuloId: a.id, sucursalId: '', cantidad: '1', precio: a.costo != null ? num2(a.costo) : '', desc: '0' });
+    guardar(); refrescar(`#l${uid}-suc`);
+    aviso(`${a.codigo} agregado. Elegí el destino de la línea.`);
+  },
+  'quitar-linea': el => {
+    const b = borrador(), i = b.lineas.findIndex(l => String(l.uid) === el.dataset.uid); if (i < 0) return;
+    const [l] = b.lineas.splice(i, 1); const a = art(l.articuloId);
+    guardar(); refrescar('#q-art');
+    aviso(`Línea ${a ? a.codigo : ''} quitada.`, { accion: 'Deshacer', alAccion: () => { b.lineas.splice(i, 0, l); guardar(); if (ruta().nombre === 'compra') refrescar(`#l${l.uid}-suc`); }, ms: 6000 });
+  },
+  'descartar-borrador': () => confirmar({
+    titulo: 'Descartar el borrador', mensaje: 'Se borran el proveedor, los datos del comprobante y las líneas cargadas.', textoOk: 'Descartar', peligro: true, icono: 'tacho',
+    onOk: () => { db.borrador = null; guardar(); aviso('Borrador descartado.'); refrescar('h1'); }
+  }),
+  'registrar': el => registrarFactura(el),
+  'otra-factura': () => { db.borrador = null; guardar(); ir('compra'); },
+  'demo-guardar': el => {
+    const msg = $('#demo-msg');
+    msg.textContent = '';
+    conCarga(el, 'Guardando…', 1100, () => {
+      el.innerHTML = '<span>Cambios guardados</span>'; msg.textContent = 'Los cambios de muestra se guardaron correctamente.';
+      setTimeout(() => { if (el.isConnected && !el.classList.contains('cargando')) el.innerHTML = '<span>Guardar cambios</span>'; }, 2600);
+    });
+  },
+  'demo-cancelar': () => { $('#demo-msg').textContent = 'Operación cancelada. No se guardó nada.'; const b = $('#demo-guardar'); if (!b.classList.contains('cargando')) b.innerHTML = '<span>Guardar cambios</span>'; },
+  'demo-baja': () => confirmar({ titulo: 'Dar de baja (muestra)', mensaje: 'Esta confirmación es de prueba: no modifica ningún artículo.', textoOk: 'Dar de baja', peligro: true, icono: 'tacho', ms: 600, onOk: () => { $('#demo-msg').textContent = 'Baja de muestra confirmada.'; } }),
+  'ir-pantalla': el => irPantalla(el.dataset.p)
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-accion]');
+  if (el && !el.disabled && ACCIONES[el.dataset.accion]) { e.preventDefault(); ACCIONES[el.dataset.accion](el); return; }
+  const fila = e.target.closest('tr[data-fila]');
+  if (fila && !e.target.closest('a,button,input')) ir('ficha-' + fila.dataset.fila);
+});
+
+/* =========================================================
+   Arranque
+   ========================================================= */
+cargar();
+fondoHex();
+if (!db.sesion && location.hash && !/^#(acceso)?$/.test(location.hash)) db.ui.destino = location.hash.slice(1);
+document.documentElement.classList.toggle('reducir-mov', !!db.ui.reducir);
+render();
+})();
+</script>
+
+</body>
+</html>

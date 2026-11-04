@@ -1,0 +1,37 @@
+1024 acceso [ 1024, 1024 ]
+1024 acceso con error [ 1024, 1024 ]
+1024 articulos [ 1024, 1024 ]
+1024 factura-compra [ 1024, 1024 ]
+768 acceso [ 768, 768 ]
+768 acceso con error [ 768, 768 ]
+768 articulos [ 768, 768 ]
+768 factura-compra [ 768, 768 ]
+480 acceso [ 480, 480 ]
+480 acceso con error [ 480, 480 ]
+480 articulos [ 480, 480 ]
+480 factura-compra [ 465, 465 ]
+
+# F5 en el navegador real, a 1024
+después de F5: [ '/factura-compra', true, false ]
+guardado: lacentral.sesion | localStorage: 0 claves
+
+# Recorrido con teclado por el marco
+Tab en el marco: a Artículos → a Factura de compra → button Salir
+aria-current: Artículos=null, Factura de compra=page
+Enter sobre button Salir
+  después: [ '/factura-compra', false, true, 0 ] foco: input Usuario
+history.back() después de Salir: [ '/articulos', false, true ]
+
+# Recorrido con teclado por el acceso
+Tab en el acceso: input Contraseña → button IngresarIngresando… → body → input Usuario
+Enter con contraseña mala → aviso: alert · Usuario o contraseña incorrectos. · foco: input Contraseña
+Escape: aviso sigue: true · foco: input Contraseña
+Enter sobre Cerrar aviso: aviso sigue: false · foco: body
+
+# CA-002 · sesión vencida en el navegador
+después del 401: [ '/articulos', false, true, 'Tu sesión venció. Volvé a entrar.' ]
+
+# Movimiento reducido
+capa de Ingresar: 0s · aviso: none
+sin reducir: capa: 0.3s · aviso: subir
+fondo del acceso: url("http://localhost:4300/fondo-hex.jpg")
