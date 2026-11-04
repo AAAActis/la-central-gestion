@@ -556,12 +556,24 @@ Ninguna compuerta se cerró en el Sprint 4. La normalización a 3FN (N-3, N-5, N
 se aplicó el 04/11, ya en el Sprint 5, a `lacentral_test` y `lacentral`. N-6 quedó afuera a
 propósito, porque espera una decisión de negocio. El re-scaffold todavía no se corrió.
 
-### Pendiente de verificar
+### El test 436
 
-- **PR #137:** no aparece en ningún commit de develop ni de las ramas remotas. No hay `gh` en la
-  máquina, así que no se pudo consultar su estado.
-- **Issues de la 043 y de la 044:** según este archivo, pendientes de creación. No se pudo
-  verificar contra GitHub por la misma razón.
+La línea de base del sprint era 435. El 436 es
+`PostgreSqlPoolTests.PoolDeUnaConexion_FallaAntesDeConectarseExplicandoPorQue`
+(`backend/LaCentral.Tests/Infraestructura/PostgreSqlPoolTests.cs`, un solo `[Fact]`), que entró
+con el commit `da89ebe` (28/10, «rojo · el fixture acepta Maximum Pool Size = 1») en
+`fix/d27-entorno-de-pruebas` y llegó a develop con #133 el 29/10. Es la guarda del falso verde
+con P = 1, descrita en D-27b. Toda rama que salió de develop antes del 29/10 —la 044, por
+ejemplo— cuenta 435.
+
+### Issues y números de GitHub, verificados con `gh` el 04/11
+
+- **Los Issues de la 041, la 043 y la 044 existen**, contra lo que decía este archivo: #42
+  (041, milestone Sprint 6), #44 (043, milestone Sprint 4) y #45 (044, milestone Sprint 7). Lo
+  que falta es corregir el milestone de #42 y de #45, no crearlos.
+- **#137 no es un PR:** es el Issue «Deuda27», abierto.
+- **#132** (prototipo y las 13 referencias visuales) entró a develop el 04/11, ya en el
+  Sprint 5.
 
 ---
 
