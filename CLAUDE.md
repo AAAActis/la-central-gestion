@@ -121,3 +121,45 @@ REGLA: ESTADO.md se actualiza ANTES del push de cada fase, nunca después, y va 
 mismo push: la tabla de fases, los PRs y merges, las decisiones con fecha, la deuda y
 "PRÓXIMA SESIÓN". Ya quedó desactualizado tres veces; una sesión que lo lee mal rehace
 trabajo hecho.
+
+## Bitácora de tarea · obligatoria
+
+Todo trabajo se registra en `docs/sprint<NN>/BITACORA.md` **mientras pasa**, no al final.
+Es lo único que permite retomar una sesión cortada sin perder contexto.
+
+**Al recibir una instrucción, antes de la primera acción**, agregá un bloque nuevo al final
+del archivo:
+
+```
+## <fecha y hora> · <título corto de la tarea>
+
+**Instrucción recibida (verbatim):**
+> <la instrucción tal como llegó, sin resumir ni reordenar>
+
+**Plan:** <los pasos, numerados>
+
+**Estado:** en curso
+```
+
+**Después de cada paso terminado**, una línea bajo ese bloque: qué cambió y con qué
+evidencia — commit, número de PR, conteo de tests. Nunca "listo" sin el dato que lo
+respalda.
+
+**Antes de parar, de preguntar algo o de quedarte bloqueado**, escribí la línea
+`**BLOQUEADO EN:** <qué falta y de quién depende>` y recién entonces respondé.
+
+**Al terminar la tarea**, cambiá `**Estado:** en curso` por `**Estado:** terminada` y
+agregá qué quedó abierto.
+
+### Reglas
+
+- **Se agrega, nunca se reescribe.** La bitácora es rastro, no resumen. Un bloque viejo no
+  se corrige: si algo cambió, va en un bloque nuevo.
+- **Al arrancar o al retomar una sesión, lo PRIMERO que hacés es leer el último bloque con
+  `**Estado:** en curso`.** Si hay uno, seguís desde ahí: no vuelvas a empezar ni rehagas
+  lo que ya figura hecho.
+- **La instrucción va verbatim** porque es lo que se pierde primero cuando se corta la
+  sesión, y es lo único que no se puede reconstruir del repositorio.
+- No reemplaza al `ESTADO.md`. El `ESTADO.md` es el estado del **sprint** y se actualiza
+  antes de cada push; la bitácora es el estado de la **tarea en curso** y se actualiza
+  mientras la tarea pasa.
