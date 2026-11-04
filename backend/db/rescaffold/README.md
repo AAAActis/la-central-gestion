@@ -11,6 +11,11 @@ de EF se regenera desde la base. **Prohibido `dotnet ef migrations`.**
 | `01_Ajustes_Sprint3.sql` | D8 (percepciones), D9 (sucursal por línea), D10 (historial de baja 1:N). |
 | `02_Modalidades_Precios.sql` | D1: crea `articulo_precio_modalidad`; elimina `articulo_margen` y `articulo.precio_venta_estimado`. |
 | `03_Limpieza_Columnas_Fantasma.sql` | Elimina `articulo.codigo`, `descripcion` y `cantidad`, que solo existían en `lacentral_test` (deriva, no esquema). |
+| `04_Modalidades_Base_Calculo.sql` | Base de cálculo de las modalidades de precio. |
+| `05_rol_tests.sql` | Rol con el que corre la suite (no es esquema de `public`). |
+| — | **06 reservado para C2** (`proveedor_articulo`). |
+| `07_Normalizacion_3FN_y_Reportes.sql` | Normalización a 3FN (N-3, N-5, N-7, N-9, N-11; N-6 salió) y columnas de reportes. Llegó como 05. |
+| `08_Ubicacion_Deposito_60.sql` | `stock.ubicacion_deposito` de 30 a 60. |
 
 Cada script corre en una transacción y no es idempotente. Se aplica a mano: primero
 en `lacentral_test`, se verifica, después en `lacentral`.
