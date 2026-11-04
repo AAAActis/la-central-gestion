@@ -27,7 +27,7 @@ Cierre del Sprint 4 y arrastre: `docs/sprint04/ESTADO.md` (PR #139).
 | Fase | Qué | Rama | PR | Estado |
 |---|---|---|---|---|
 | a · C3 | `lacentral_demo` creada (owner `lacentral_santi`), con Parte A + 01 a 04, y **sembrada** con `backend/db/demo/sembrar_demo.cs` contra la API de `develop` | `feature/c3-lacentral-demo` | ver abajo | **Hecha 04/11.** Esquema igual al de `develop` (huella comparada). 2 usuarios, 5 proveedores, 30 artículos, 90 códigos, 15 facturas, 180 líneas, 15 fechas. Login de `operador.demo` y búsqueda verificados por HTTP |
-| b · re-scaffold | 07 versionado, re-scaffold, arreglos del modelo, ubicación por sucursal (backend y ficha) | `feature/normalizacion-3fn-rescaffold` | ver abajo | **Hecha 04/11.** `verificador-tdd` ronda 1 NO APTO, arreglado; ronda 2 y `auditor-persistencia` pendientes |
+| b · re-scaffold | 07 versionado, re-scaffold, arreglos del modelo, ubicación por sucursal (backend y ficha) | `feature/normalizacion-3fn-rescaffold` | ver abajo | **Hecha 04/11.** `verificador-tdd`: ronda 1 NO APTO (arreglado), **ronda 2 APTO**. `auditor-persistencia`: **APTO**. Las dos sobre `0d41569` |
 | c · tests | Los 7 del esquema y la corrida completa | idem | idem | **Hecha.** Ver «Tests» |
 | d · 07 en demo | Aplicar 07 y 08 a `lacentral_demo` | — | — | **Postergada (S5-06):** lunes 09/11 o con el #141 mergeado y verificado; nunca jueves ni viernes |
 
@@ -110,8 +110,13 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
 - Los 7 del esquema nacieron en verde: el 07 ya estaba aplicado. No se mutaron (exigiría
   cambiar el esquema de la base de pruebas).
 - **Frontend: 95/95** (88 + 7, primer spec de la pantalla de artículos). Solo Chromium.
-- `verificador-tdd`: ronda 1 NO APTO (arriba); ronda 2 pendiente. `auditor-persistencia`:
-  pendiente, después del verificador.
+- **`verificador-tdd` ronda 2: APTO** sobre `0d41569`. M18 y F2 mueren por aserción; 10
+  mutaciones re-muestreadas, ninguna sobrevive; 457/457 y 95/95 reproducidos; los rojos
+  declarados coinciden con los que reprodujo.
+- **`auditor-persistencia`: APTO** sobre `0d41569`. Catálogo de `lacentral_test` leído en solo
+  lectura (CHECK de baja intactos después del `DROP COLUMN` de N-11, `stock_pkey` respalda el
+  `ON CONFLICT`, clave de tres columnas del detalle, 08 aplicado); sin Ids sembrados; todo
+  relee con contexto nuevo; 46/46 filtrados contra PostgreSQL; 3 mutaciones detectadas.
 
 ---
 
@@ -138,6 +143,16 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
   reindexación desde `develop`** (D-S5-05): comparar el conteo real de líneas de uno de esos
   archivos con lo que el grafo dice que leyó. No antes. Ese grafo de la 044 no se grabó: queda
   el `graph.json` anterior (decisión del 04/11).
+- **D-S5-07 · restricciones del 07 sin test que las haga fallar** (`auditor-persistencia`):
+  `articulo_codigo_barras_formato`, `factura_venta_medio_cobro_dominio`,
+  `factura_venta_autorizacion_distinta`, `provincia_nombre_*` y el NOT NULL de `medio_cobro`.
+  Hoy ningún código de producción escribe esas columnas: no hay camino real. Cuando aparezca el
+  caso de uso que las escriba, test con SQLSTATE y nombre de restricción.
+- **D-S5-08 · no se unifica la lectura de quién dio de baja:** el usuario lee la baja ABIERTA
+  (reactivado → null) y el cliente la ÚLTIMA (rastro, D10). Es deliberado y lo fijan los tests.
+- **D-S5-09 · sin test de concurrencia del upsert de ubicación** (la condición `activo` va
+  dentro de la sentencia, pero no hay prueba con dos sesiones), ni test de API que afirme que
+  OPERADOR recibe 204 en `PUT .../ubicaciones/{sucursalId}` (el rol es de toda la clase).
 - Sigue de antes: D-27a, D-27c, el campo en el `ProblemDetails`, el largo del motivo (200/255),
   `RestablecerContrasenaUseCase.cs:43`.
 
