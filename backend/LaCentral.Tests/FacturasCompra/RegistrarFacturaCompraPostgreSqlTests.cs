@@ -111,10 +111,11 @@ public class RegistrarFacturaCompraPostgreSqlTests
 
     // ---- CA1, CA4 y D9 ----
 
-    // D9 + 07: la clave del detalle es (factura, artículo, sucursal). El mismo artículo a
-    // las dos sucursales en una factura es una compra normal y tiene que entrar.
+    // N-7, el defecto de negocio que arregla la clave (factura, artículo, sucursal) del 07: se
+    // compran 20 bujías del mismo código, 10 para cada sucursal. Antes la segunda línea no
+    // entraba. Caso de uso real contra PostgreSQL; se relee con un contexto nuevo.
     [PostgreSqlFact]
-    public async Task MismoArticuloEnDosSucursales_DosLineasYElStockEnCadaUna()
+    public async Task VeinteDelMismoArticulo_DiezParaCadaSucursal_EntraYElStockQuedaRepartido()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
         var e = await SembrarAsync(fixture);
@@ -125,18 +126,19 @@ public class RegistrarFacturaCompraPostgreSqlTests
             {
                 Lineas = new[]
                 {
-                    new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal1, 5m, 200m, 0m),
-                    new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal2, 2m, 200m, 0m)
+                    new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal1, 10m, 200m, 0m),
+                    new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal2, 10m, 200m, 0m)
                 }
             });
 
         Assert.True(resultado.IsSuccess, resultado.Error);
         await using var relectura = fixture.CrearContexto();
-        Assert.Equal(new[] { (e.Sucursal1, 5m), (e.Sucursal2, 2m) },
+        Assert.Equal(new[] { (e.Sucursal1, 10m), (e.Sucursal2, 10m) },
             (await relectura.FacturaCompraDetalle.AsNoTracking().Where(d => d.FacturaCompraId == resultado.Value.Id)
                 .OrderBy(d => d.SucursalId).ToListAsync()).Select(d => (d.SucursalId, d.Cantidad)));
         var stock = await StockAsync(relectura);
-        Assert.Equal((8m, 2m), (stock[(e.Comprado1, e.Sucursal1)], stock[(e.Comprado1, e.Sucursal2)]));
+        // Antes de la compra: 3 en la sucursal 1 y 0 en la 2 (SembrarAsync).
+        Assert.Equal((13m, 10m), (stock[(e.Comprado1, e.Sucursal1)], stock[(e.Comprado1, e.Sucursal2)]));
     }
 
     [PostgreSqlFact]
