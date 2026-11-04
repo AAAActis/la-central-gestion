@@ -115,6 +115,22 @@ describe('Articulos · ubicación por sucursal', () => {
     servidor.expectOne('/api/articulos/7').flush(FICHA);
   }));
 
+  it('si la API rechaza la ubicación, muestra su mensaje y no recarga la ficha', fakeAsync(() => {
+    abrirFicha();
+    const fila = filaDe('Fragueiro');
+    escribir(fila.querySelector('input')!, 'Estante 9');
+    estable();
+
+    fila.querySelector<HTMLButtonElement>('button')!.click();
+    servidor.expectOne('/api/articulos/7/ubicaciones/1').flush(
+      { status: 400, detail: 'El artículo está dado de baja: reactivalo antes de modificarlo.' },
+      { status: 400, statusText: 'Bad Request' });
+    estable();
+
+    expect(raiz().querySelector('p.error')?.textContent).toContain('dado de baja');
+    servidor.expectNone('/api/articulos/7');
+  }));
+
   it('un artículo dado de baja muestra la ubicación sin poder editarla', fakeAsync(() => {
     abrirFicha({ ...FICHA, activo: false, motivoBaja: 'Discontinuado' });
 
