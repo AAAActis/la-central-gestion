@@ -34,11 +34,11 @@ public class BajaYCodigosArticuloUseCaseTests
             .ReturnsAsync(true);
     }
 
-    private void Articulo(bool activo) =>
+    private void Articulo(bool activo, params StockSucursalConsultaDto[] existencias) =>
         _consulta.Setup(c => c.ObtenerDetallePorIdAsync(Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ArticuloDetalleConsultaDto(Id, "LC-000042", "Bujía", activo, null, null,
                 new[] { new CodigoProveedorConsultaDto(ProveedorNorte, "Distribuidora Norte", "bpr-6es", "BPR-6ES") },
-                Array.Empty<StockSucursalConsultaDto>(), Array.Empty<PrecioModalidadConsultaDto>()));
+                existencias, Array.Empty<PrecioModalidadConsultaDto>()));
 
     private void Rol(bool administrador) => _contexto.SetupGet(c => c.EsAdministrador).Returns(administrador);
 
@@ -226,6 +226,56 @@ public class BajaYCodigosArticuloUseCaseTests
 
         _unidad.Verify(u => u.EjecutarAsync(It.IsAny<Func<CancellationToken, Task<Result>>>(), It.IsAny<CancellationToken>()), Times.Once);
         NoSeDioDeBaja();
+    }
+
+    // ---- 014 · CA-004: el código interno reescrito tiene que coincidir ----
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("LC-000043")]
+    [InlineData("BPR-6ES")] // un código de proveedor del mismo artículo no confirma
+    public async Task Baja_ConfirmacionQueNoCoincide_InvalidoYNoEscribe(string confirmacion)
+    {
+        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("Discontinuado", confirmacion));
+
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+        Assert.Equal("El código interno reescrito no coincide con el del artículo.", resultado.Error);
+        NoSeDioDeBaja();
+    }
+
+    // Igual que el formulario (HU-UI-06): sin espacios en los bordes ni distinguir mayúsculas.
+    [Fact]
+    public async Task Baja_ConfirmacionConOtrasMayusculasYEspacios_SeEjecuta()
+    {
+        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("Discontinuado", "  lc-000042 "));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+    }
+
+    // ---- 014 · CA-002: con existencia en alguna sucursal no se da de baja ----
+
+    [Fact]
+    public async Task Baja_ConExistenciaEnAlgunaSucursal_ConflictoInformandoCantidadYSucursalYNoEscribe()
+    {
+        Articulo(activo: true, new StockSucursalConsultaDto(1, "Fragueiro", 5m), new StockSucursalConsultaDto(2, "San Vicente", 2.5m),
+            new StockSucursalConsultaDto(3, "Depósito", 0m));
+
+        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("Discontinuado", "LC-000042"));
+
+        Assert.Equal(TipoError.Conflicto, resultado.Tipo);
+        Assert.Equal("No se puede dar de baja: el artículo todavía tiene existencia (Fragueiro: 5; San Vicente: 2,5).", resultado.Error);
+        NoSeDioDeBaja();
+    }
+
+    // CA-001: existencia cero. Una existencia negativa es un error de stock, no algo que quede.
+    [Fact]
+    public async Task Baja_ConExistenciaCeroONegativa_SeEjecuta()
+    {
+        Articulo(activo: true, new StockSucursalConsultaDto(1, "Fragueiro", 0m), new StockSucursalConsultaDto(2, "San Vicente", -1m));
+
+        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("Discontinuado", "LC-000042"));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
     }
 
     // ---- Reactivación (D10) ----
