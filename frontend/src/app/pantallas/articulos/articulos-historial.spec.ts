@@ -101,4 +101,20 @@ describe('Articulos · historial de compras (016)', () => {
     expect(tabla().textContent).not.toContain('Repuestos Sur');
     pendiente.flush([]);
   });
+
+  // verificador-tdd, ronda 2: el caso inverso. Sin limpiar el error, la ficha B mostraba el de A.
+  it('el error del historial de un artículo no queda en la ficha del siguiente', () => {
+    fixture.componentInstance.verFicha({ id: 7 } as ArticuloResultado);
+    servidor.expectOne('/api/articulos/7').flush(FICHA);
+    servidor.expectOne('/api/articulos/7/historial-compras').flush(
+      { status: 500, detail: 'No se pudo leer el historial.' }, { status: 500, statusText: 'Server Error' });
+
+    fixture.componentInstance.verFicha({ id: 8 } as ArticuloResultado);
+    servidor.expectOne('/api/articulos/8').flush({ ...FICHA, id: 8, codigoInterno: 'LC-000008' });
+    servidor.expectOne('/api/articulos/8/historial-compras').flush(HISTORIAL);
+    fixture.detectChanges();
+
+    expect(tabla().textContent).not.toContain('No se pudo leer el historial.');
+    expect(tabla().querySelectorAll('tbody tr').length).toBe(2);
+  });
 });
