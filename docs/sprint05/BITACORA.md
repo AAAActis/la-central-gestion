@@ -403,3 +403,69 @@ vale esta.)
 - **Quedé en:** paso 1 hecho (#144, APTO). Paso 2, el PR de backend con la paginación de clientes y proveedores, no empezado. Lo sigue la 045, desde develop.
 - **Qué sigue, en orden:** (1) la respuesta de Santi al 404; (2) el PR de paginación, que suma el `Id` a `ClienteResumenDto`; (3) la 045 con consulta, alta y modificación, y la baja si la 044 ya entró; (4) `GUION-DEMO.md` el 05/11, antes de que Sergio vea la demo.
 **BLOQUEADO EN:** (1) el 404 de «sin resultados» de clientes y proveedores: ¿pasa a 200 con página vacía al paginar? Toca el CA-003 de dos HU cerradas y lo decide Santi. (2) Las dos consultas de condición fiscal contra `lacentral`: las corre Santi en la netbook. (3) El resto de sus respuestas sobre condición fiscal y condición de pago, que llegaron cortadas. (4) Los merges de Javi, en este orden: #141, después #139, #140, #142, #143, #144 y #145.
+
+## 05/11/2026 12:35 · correcciones de Javi al #142, merge de develop, después paginación y 045
+**Instrucción recibida (verbatim):**
+> Javi revisó el #142 y pidió tres correcciones. Tiene razón en las tres. Antes de eso, dos
+> cosas de contexto: se mergearon #139, #140, #141, #143, #144 y #145, así que develop cambió
+> bastante. Empezá por ahí.
+>
+> 0 · PRIMERO
+> Leé docs/sprint05/BITACORA.md, el último bloque con Estado: en curso. Después
+> git fetch --all --prune y git merge origin/develop en la rama en la que estabas. Si lo que
+> entró invalida algo de tu plan, aplicá la §3 de CLAUDE.md y decímelo antes de seguir.
+>
+> 1 · LA CONTRADICCIÓN DE CLAUDE.md · es un error mío, no tuyo
+> CLAUDE.md dice dos cosas distintas sobre cuándo correr la suite completa: la "Política de
+> pruebas" lista cuatro momentos y el primero es "antes de abrir un PR"; la §4 de las reglas
+> de método dice "antes de abrir su PR: no la suite completa" y habla de tres momentos.
+>
+> Queda la de CUATRO momentos, que es la de la Política de pruebas. Borrá de la §4 el párrafo
+> que dice que la suite completa no se corre antes del PR y la lista de los tres momentos, y
+> dejá en su lugar una remisión: "cuándo se corre la suite completa lo define la Política de
+> pruebas de este mismo archivo; acá no se repite". Una sola fuente.
+>
+> El motivo, que conviene que quede escrito: el número que va en el cuerpo del PR tiene que
+> salir de una corrida completa sobre el último commit de ese PR. Lo exige el punto 10 de la
+> Definición de Terminado, y un número de una corrida filtrada no lo cumple.
+>
+> Lo que NO cambia: durante el desarrollo de la HU se corre filtrado. Ahí está el volumen de
+> corridas, y ahí se mantiene todo el ahorro.
+>
+> 2 · EL VERIFICADOR NO ACEPTA UN NÚMERO SIN VERIFICARLO
+> En .claude/agents/verificador-tdd.md, la cláusula que agregamos ayer dice que no repita la
+> suite si se la informan. Así como está, deja de ser una verificación independiente.
+> Reemplazala por esto:
+>
+>   Si el que te invoca te informa que la suite ya se corrió, no la repitas SOLO si te pasa
+>   las tres cosas: el hash del commit, la línea literal del resumen de la corrida, y el
+>   conteo. Verificá que ese hash sea el HEAD que estás verificando. Si el hash no coincide,
+>   si falta alguno de los tres datos, o si la línea del resumen no es la salida real del
+>   corredor, corré la suite vos y decí en el reporte por qué no aceptaste el número informado.
+>
+> 3 · EL TOPE DE MUTACIONES
+> 8 queda corto para un PR como el #141. En el mismo archivo, reemplazá el tope fijo por este:
+>
+>   Tope: 8 mutaciones como mínimo, y hasta 20 cuando el diff supere las 200 líneas de
+>   producción. Priorizá por riesgo: guardas y validaciones, el valor devuelto ante un fallo,
+>   la condición de un if de negocio, el alcance de una transacción y los roles de
+>   autorización. El reporte tiene que LISTAR qué líneas de riesgo quedaron sin mutar y por
+>   qué, con archivo y línea. Un reporte que no las lista oculta su propio alcance.
+>
+> Eso va como un commit en la rama del #142, con el cuerpo del PR actualizado explicando las
+> tres correcciones y que la primera era una contradicción entre dos secciones.
+>
+> 4 · Y DESPUÉS
+> Seguís con lo de ayer: la paginación de clientes y proveedores en su PR, y después la 045.
+> Acordate de que la 044 ya está mergeada, así que la 045 puede llevar la baja con la
+> confirmación en el mismo PR y el CA-001 queda completo, que era el escenario preferible.
+**Plan:**
+1. Worktree `../lc-142` en `docs/sprint05-bitacora` (el principal tiene cambios sin commitear); `git merge origin/develop`; ver si invalida el plan (§3).
+2. `CLAUDE.md` §4: borrar el párrafo y la lista de tres momentos, remisión a la Política de pruebas con el motivo (DoD punto 10).
+3. `verificador-tdd.md`: cláusula de la suite informada (hash + línea + conteo) y tope de mutaciones 8–20 con lista de líneas sin mutar.
+4. Un commit, push, cuerpo del #142 actualizado.
+5. Paginación de clientes y proveedores en su PR (sigue bloqueado el 404 de «sin resultados»).
+6. 045 desde develop, con la baja y la confirmación en el mismo PR.
+**Estado:** en curso
+- 12:40 · Paso 1: worktree `../lc-142`; `git merge origin/develop` (`9b81c07`), sin conflictos. Entraron #139–#141 y #143–#145 (frontend, tests, `docs/sprint04|05/ESTADO.md`, `COMO-PROBARLO.md`, `probar-demo.sh`). No tocan `CLAUDE.md` ni `.claude/agents/`: no se solapan con este paso (§3, punto 3).
+- 12:45 · Pasos 2 y 3: `CLAUDE.md` §4 sin el párrafo «antes de abrir su PR: no la suite completa» ni la lista de tres momentos; en su lugar la remisión a la Política de pruebas con el motivo (DoD punto 10). §5 alineada: al verificador se le pasan hash, línea literal del resumen y conteo. `verificador-tdd.md`: cláusula de la suite informada y tope 8–20 con lista de líneas sin mutar (texto de Santi tal cual). Queda abierto: el techo de 25 corridas filtradas del verificador puede no alcanzar para 20 mutaciones más el rojo de cada commit; no se tocó, lo decide el equipo.

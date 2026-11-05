@@ -302,15 +302,10 @@ sprint.
 **Durante la HU:** solo las pruebas de esa HU y de lo que depende de lo que tocó. Filtradas,
 con `--no-build`. Segundos, no minutos.
 
-**Al cerrar la HU, antes de abrir su PR:** las de la HU más una corrida de integración del
-camino propio de la HU contra PostgreSQL. **No la suite completa.**
-
-**La suite completa se corre en tres momentos, y en ninguno más:**
-
-1. Al cerrar el sprint, antes de declarar el entregable.
-2. Después de un merge a `develop`, porque es el estado que hereda el equipo.
-3. Cuando el cambio tocó el esquema de la base o un contrato compartido (un DTO, una
-   interfaz de repositorio, un componente de `compartido/`).
+**Cuándo se corre la suite completa lo define la Política de pruebas de este mismo archivo;
+acá no se repite.** Una sola fuente. El motivo: el número que va en el cuerpo del PR tiene que
+salir de una corrida completa sobre el último commit de ese PR, como exige el punto 10 de la
+Definición de Terminado, y el número de una corrida filtrada no lo cumple.
 
 **Si la suite completa falla, no la vuelvas a correr entera para ver si se arregló.**
 Filtrado sobre lo que falló hasta que esté verde, y la completa **una sola vez** al final.
@@ -331,7 +326,8 @@ que se les da. **Lo que hace que salgan caros es cómo se los invoca.**
 - **Al invocarlos, acotales el alcance explícitamente** a los commits de la HU. Los dos
   respetan el alcance que se les pasa; si no se les pasa ninguno, revisan todo.
 - **Decile al `verificador-tdd` si ya corriste la suite completa sobre ese mismo HEAD**, con
-  el número. El `auditor-persistencia` ya tiene la regla de no repetirla en ese caso; el
+  tres datos: el hash del commit, la línea literal del resumen de la corrida y el conteo. Si
+  falta alguno, la corre él. El `auditor-persistencia` ya tiene la regla de no repetirla en ese caso; el
   verificador la va a tener (ver §6). Entre los dos, la suite se corre **una vez**, no tres.
 - **`auditor-persistencia` solo se invoca si el diff toca `backend/` o el esquema.** Si la HU
   es de frontend, no se invoca y en el PR se declara "no aplica".
