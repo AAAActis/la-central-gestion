@@ -32,8 +32,8 @@ reportes de las compuertas, y el reporte final.
 
 1. **Arrancá desde la raíz del repo.** Si `pwd` termina en `backend/`, pará: no
    cargaron ni los subagentes ni las reglas.
-2. Leé `docs/sprint03/ESTADO.md`, en especial la sección **"PRÓXIMA SESIÓN"**, y la fase
-   que corresponde en `docs/sprint03/PLAN_SPRINT3.md`.
+2. Leé `docs/sprint04/ESTADO.md`, en especial la sección **"PRÓXIMA SESIÓN"**, y la fase
+   que corresponde en `docs/sprint04/REPLAN-SPRINT4-v2.md`.
 3. Confirmá que `verificador-tdd` y `auditor-persistencia` cargan como `subagent_type`
    real. Si da `Agent type not found`, **PARÁ**.
 4. Corré `dotnet build --no-incremental` y `dotnet test` desde `backend/`. El total tiene
@@ -151,7 +151,7 @@ es una decisión, y la toma el equipo.
 
 ## 5 · El cuerpo del PR
 
-En `docs/sprint03/pr-<lo-que-sea>.md`, commiteado. Obligatorio:
+En `docs/sprint04/pr-<lo-que-sea>.md`, commiteado. Obligatorio:
 
 - **Qué hace** y **qué NO hace**.
 - **Cómo se verificó:** conteo de tests, cuántos contra PostgreSQL real, los dos

@@ -21,6 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- maxParallelThreads es un término de la cuenta de conexiones: ver README.md. -->
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\LaCentral.UseCases\LaCentral.UseCases.csproj" />
     <ProjectReference Include="..\LaCentral.Api\LaCentral.Api.csproj" />
   </ItemGroup>
