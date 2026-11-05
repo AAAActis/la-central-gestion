@@ -175,3 +175,54 @@
 - Reindexar el grafo desde `develop` con el #141 y la 044 mergeados (D-S5-05), y ahí verificar los siete documentos a una línea del final (D-S5-06).
 - Deuda nueva: D-S5-07 a D-S5-09.
 - Pendientes del 04/11: `git merge develop` en la 044 (`formulario.ts`) y el aviso flotante (foco y Escape).
+
+## 04/11/2026 21:32 · conteo del #141, orden de merge, política de tests en CLAUDE.md, Trait y README de tests
+
+**Instrucción recibida (verbatim):**
+> Antes del merge, dos cosas:
+>
+> 1 · Conciliá el conteo. A la tarde reportaste la suite completa en 456/456 sobre a4179f4,
+> y el verificador reporta 457/457 backend y 95/95 frontend sobre 0d41569. Averiguá de dónde
+> salió el test de más (y el de frontend), y dejá en el cuerpo del #141 y en el ESTADO el
+> número del ÚLTIMO commit, no el de la corrida del mediodía. Un PR con dos conteos
+> distintos es un PR que nadie puede auditar.
+>
+> 2 · Decile a Javi en qué orden mergear, y escribilo en el cuerpo de los PR:
+>    a. #141 primero. Es el que desbloquea develop: hasta que entre, cualquier rama nueva
+>       que toque backend hereda los 148 tests de PostgreSQL en rojo.
+>    b. Después #139, #140 y #142, rebaseando cada uno sobre develop a medida que entren.
+>       Ojo con #139 y #141: los dos tocan frontend, así que puede haber conflicto en
+>       styles.css.
+>    c. Con los cuatro adentro, UNA corrida completa sobre develop y el número en el ESTADO.
+>       Ese es el estado que hereda todo el mundo.
+>
+> Y lo que quedó sin hacer de lo que te pedí: el ENSAYO DE LA DEMO y el
+> docs/sprint05/GUION-DEMO.md. Es pasado mañana y es lo único que todavía no está probado de
+> punta a punta por el frontend contra lacentral_demo. En cuanto Javi mergee, eso va primero,
+> antes del merge de develop en la 044 y antes del aviso flotante.
+> Agregá la política de tests a CLAUDE.md: está en docs/sprint05/REGLA-TESTS.md, copiá el
+> bloque de nivel 2 tal cual y borrá el archivo después, como hicimos con la bitácora. Hasta
+> ahora la tenías como instrucción de sesión y eso se pierde en la próxima.
+>
+> Dos cosas de implementación que van con eso:
+>
+> 1 · Confirmame si el [Trait("Base","PostgreSQL")] está puesto en las clases que usan
+> PostgreSqlPruebas. Si no está, ponelo: es lo que habilita el `--filter "Base!=PostgreSQL"`
+> y es la diferencia entre correr 287 unitarias en segundos o 457 en dos minutos y medio.
+>
+> 2 · Dejá en LaCentral.Tests/README.md los dos comandos del bucle rápido y de la completa,
+> con la cuenta hilos × pool ≤ CONNECTION LIMIT del rol que pide D-27b. Que el próximo no
+> tenga que deducirlo.
+
+**Plan:**
+1. Conciliar el conteo: de dónde salen el +1 de backend y el +1 de frontend.
+2. `[Trait("Base","PostgreSQL")]` en las clases que usan `PostgreSqlPruebas` (rama del #141).
+3. `LaCentral.Tests/README.md`: los dos comandos y la cuenta hilos × pool ≤ CONNECTION LIMIT.
+4. Una corrida completa (backend y frontend) sobre el último commit del #141; ese número va
+   al ESTADO y al cuerpo del #141.
+5. Política de tests en `CLAUDE.md` (bloque de nivel 2 tal cual) en esta rama (#142);
+   borrar `REGLA-TESTS.md`.
+6. Orden de merge en el cuerpo de #139, #140, #141 y #142, y en el ESTADO.
+7. Ensayo de la demo y `GUION-DEMO.md`: después del merge de Javi (no antes).
+
+**Estado:** en curso
