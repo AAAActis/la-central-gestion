@@ -264,10 +264,9 @@ vale esta.)
 5. Entregable del Sprint 5 y el orden posterior al merge en `docs/sprint05/ESTADO.md` (rama del #141).
 6. Revisar contradicciones de lo nuevo con lo ya escrito (cuerpos de PR, política de pruebas).
 
-**Estado:** en curso
+**Estado:** terminada
 - 22:30 · Paso 1: `git fetch`; `origin/develop` no trae nada que no tengan las ramas del #141 y el #142 (0 commits).
 - 22:34 · Pasos 2 a 4: secciones 1 a 5 en `CLAUDE.md` (copia comprobada con `diff`), los cuatro agregados de la §6 en los dos agentes (12 + 3 líneas, nada borrado), `REGLAS-METODO-SPRINT.md` borrado (no estaba versionado). `aa68f7d`, pusheado; cuerpo del #142 actualizado.
 - 22:40 · Paso 5: entregable del Sprint 5 en el ESTADO del #141, con la forma de la §1, lo que queda fuera (Sprint 6) y las dos condiciones de cierre, pendientes. PRÓXIMA SESIÓN: COMO-PROBARLO.md y ensayo, después 042 y 045, una HU por PR. `5656743`, pusheado.
 - 22:42 · Paso 6: contradicciones. (a) La regla 3 prohíbe rebasear ramas pusheadas y el orden de merge decía «rebaseando»: corregido a `git merge origin/develop` en el ESTADO y en el cuerpo de los cuatro PR. (b) La política de pruebas pide la completa antes de abrir un PR; la regla 4 dice que al cerrar una HU no. No se tocó (las dos son texto tal cual): decide Santi. (c) La demo del 06/11 no muestra la ubicación por sucursal (S5-06): anotado en el entregable.
-**Estado:** terminada
 **Quedó abierto:** la contradicción (b); `GUION-DEMO.md` (pedido antes) frente a `COMO-PROBARLO.md` (pedido ahora): ¿uno o dos archivos?; el ensayo, que espera los merges de Javi (bloque de las 21:32).
