@@ -70,7 +70,6 @@ const TEXTO_RAZON: Record<RazonAusencia, string> = {
         <h2>Nuevo artículo</h2>
         <form (ngSubmit)="crear()">
           <label>Nombre <input name="nombre" [(ngModel)]="nuevo.nombre" maxlength="200" required /></label>
-          <label>Ubicación en depósito <input name="ubicacion" [(ngModel)]="nuevo.ubicacionDeposito" maxlength="60" /></label>
           <fieldset>
             <legend>Códigos de proveedor</legend>
             @for (c of nuevo.codigosProveedor; track $index; let i = $index) {
@@ -133,17 +132,29 @@ const TEXTO_RAZON: Record<RazonAusencia, string> = {
         <table>
           <tbody>
             @for (e of f.existencias; track e.sucursalId) {
-              <tr><td>{{ e.sucursal }}</td><td [class.error]="e.cantidad < 0">{{ e.cantidad | number: '1.0-3' }}</td></tr>
+              <tr>
+                <td>{{ e.sucursal }}</td>
+                <td [class.error]="e.cantidad < 0">{{ e.cantidad | number: '1.0-3' }}</td>
+                <td>
+                  @if (f.activo) {
+                    <input [name]="'ubicacion' + e.sucursalId" [(ngModel)]="ubicaciones[e.sucursalId]" maxlength="60"
+                      placeholder="Ubicación en depósito" [attr.aria-label]="'Ubicación en ' + e.sucursal" />
+                    <button type="button" class="secundario chico" (click)="guardarUbicacion(f, e.sucursalId)">Guardar</button>
+                  } @else {
+                    {{ e.ubicacionDeposito ?? '' }}
+                  }
+                </td>
+              </tr>
             }
-            <tr><th>Total</th><th [class.error]="f.totalExistencias < 0">{{ f.totalExistencias | number: '1.0-3' }}</th></tr>
+            <tr><th>Total</th><th [class.error]="f.totalExistencias < 0">{{ f.totalExistencias | number: '1.0-3' }}</th><th></th></tr>
           </tbody>
         </table>
+        @if (errorUbicacion()) { <p class="error">{{ errorUbicacion() }}</p> }
 
         @if (f.activo) {
           <h3>Modificar</h3>
           <form (ngSubmit)="modificar(f)">
             <label>Nombre <input name="mNombre" [(ngModel)]="edicion.nombre" maxlength="200" required /></label>
-            <label>Ubicación en depósito <input name="mUbicacion" [(ngModel)]="edicion.ubicacionDeposito" maxlength="60" /></label>
             <label>Código interno
               <input name="mCodigoInterno" [(ngModel)]="edicion.codigoInterno" maxlength="40" [disabled]="!esAdministrador()" />
               @if (!esAdministrador()) { <span class="tenue">solo un administrador lo cambia</span> }
@@ -223,6 +234,8 @@ export class Articulos {
       next: f => {
         this.ficha.set(f);
         this.edicion = Articulos.edicionDe(f);
+        this.ubicaciones = Object.fromEntries(f.existencias.map(e => [e.sucursalId, e.ubicacionDeposito ?? '']));
+        this.errorUbicacion.set(null);
         this.motivoBaja = '';
         this.errorModificacion.set(null);
         this.errorCodigos.set(null);
@@ -261,7 +274,6 @@ export class Articulos {
     this.errorAlta.set(null);
     const alta: AltaArticulo = {
       nombre: this.nuevo.nombre,
-      ubicacionDeposito: this.nuevo.ubicacionDeposito?.trim() || null,
       codigosProveedor: this.nuevo.codigosProveedor
         .filter(c => c.codigo.trim() !== '')
         .map(c => ({ proveedorId: Number(c.proveedorId), codigo: c.codigo })),
@@ -276,7 +288,7 @@ export class Articulos {
   }
 
   private static altaVacia(): AltaArticulo {
-    return { nombre: '', ubicacionDeposito: '', codigosProveedor: [] };
+    return { nombre: '', codigosProveedor: [] };
   }
 
   // ---- HU-ART-03 ----
@@ -285,21 +297,31 @@ export class Articulos {
   /** Solo para mostrar u ocultar controles: los permisos los decide la API con la sesión. */
   readonly esAdministrador = computed(() => this.sesion.sesion()?.rol === 'ADMINISTRADOR');
 
-  edicion: ModificacionArticulo = { nombre: '', ubicacionDeposito: null, codigoInterno: null, codigosProveedor: [] };
+  edicion: ModificacionArticulo = { nombre: '', codigoInterno: null, codigosProveedor: [] };
+  /** N-9 · lo que se escribe en la ubicación de cada sucursal, por Id de sucursal. */
+  ubicaciones: Record<number, string> = {};
+  readonly errorUbicacion = signal<string | null>(null);
   motivoBaja = '';
   readonly errorModificacion = signal<string | null>(null);
   readonly errorCodigos = signal<string | null>(null);
   readonly errorEstado = signal<string | null>(null);
 
   private static edicionDe(f: FichaArticulo): ModificacionArticulo {
-    return { nombre: f.nombre, ubicacionDeposito: f.ubicacionDeposito ?? '', codigoInterno: f.codigoInterno, codigosProveedor: [] };
+    return { nombre: f.nombre, codigoInterno: f.codigoInterno, codigosProveedor: [] };
+  }
+
+  guardarUbicacion(f: FichaArticulo, sucursalId: number) {
+    this.errorUbicacion.set(null);
+    this.api.asignarUbicacion(f.id, sucursalId, this.ubicaciones[sucursalId]?.trim() || null).subscribe({
+      next: () => this.cargarFicha(f.id),
+      error: e => this.errorUbicacion.set(mensajeDeError(e)),
+    });
   }
 
   modificar(f: FichaArticulo) {
     this.errorModificacion.set(null);
     const cambios: ModificacionArticulo = {
       nombre: this.edicion.nombre,
-      ubicacionDeposito: this.edicion.ubicacionDeposito?.trim() || null,
       // Un operador no lo puede cambiar: se manda null y la API conserva el actual.
       codigoInterno: this.esAdministrador() ? this.edicion.codigoInterno : null,
       codigosProveedor: this.edicion.codigosProveedor

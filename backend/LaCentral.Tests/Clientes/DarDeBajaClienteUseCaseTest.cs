@@ -38,7 +38,7 @@ public class DarDeBajaClienteUseCaseTests
     public async Task EjecutarAsync_CuandoClienteYaEstaInactivo_RetornaInvalido()
     {
         // Arrange
-        var cliente = new Cliente { UsuarioAltaId = 1, Activo = false };
+        var cliente = new Cliente { Activo = false };
         _repositorioMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
@@ -54,7 +54,7 @@ public class DarDeBajaClienteUseCaseTests
     public async Task EjecutarAsync_CuandoConfirmacionEsMala_RetornaInvalido()
     {
         // Arrange
-        var cliente = new Cliente { UsuarioAltaId = 1, Activo = true, Cuit = "20123456789" };
+        var cliente = new Cliente { Activo = true, Cuit = "20123456789" };
         _repositorioMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
@@ -70,7 +70,7 @@ public class DarDeBajaClienteUseCaseTests
     public async Task EjecutarAsync_CuandoNoTieneCuitYConfirmacionFallaPorCodigo_RetornaInvalido()
     {
         // Arrange
-        var cliente = new Cliente { UsuarioAltaId = 1, Activo = true, Cuit = null, Codigo = "MULTISOFT-1" };
+        var cliente = new Cliente { Activo = true, Cuit = null, Codigo = "MULTISOFT-1" };
         _repositorioMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
@@ -86,7 +86,7 @@ public class DarDeBajaClienteUseCaseTests
     public async Task EjecutarAsync_CuandoDatosSonValidos_ActualizaYRetornaExito()
     {
         // Arrange
-        var cliente = new Cliente { UsuarioAltaId = 1, Activo = true, Cuit = "20123456789" };
+        var cliente = new Cliente { Activo = true, Cuit = "20123456789" };
         _repositorioMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
         _repositorioMock.Setup(r => r.ActualizarAsync(cliente, It.IsAny<CancellationToken>())).ReturnsAsync(true);
@@ -107,7 +107,7 @@ public class DarDeBajaClienteUseCaseTests
     [Fact]
     public async Task EjecutarAsync_CuandoLaFilaDesaparecioAntesDeActualizar_RetornaNoEncontrado()
     {
-        var cliente = new Cliente { UsuarioAltaId = 1, Activo = true, Cuit = "20123456789" };
+        var cliente = new Cliente { Activo = true, Cuit = "20123456789" };
         _repositorioMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
         _repositorioMock.Setup(r => r.ActualizarAsync(cliente, It.IsAny<CancellationToken>())).ReturnsAsync(false);

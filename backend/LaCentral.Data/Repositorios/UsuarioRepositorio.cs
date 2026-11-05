@@ -55,7 +55,7 @@ public class UsuarioRepositorio : IUsuarioRepositorio
             Activo = usuarioBd.Activo,
             MotivoBaja = usuarioBd.MotivoBaja,
             FechaBaja = usuarioBd.FechaBaja,
-            UsuarioBajaId = usuarioBd.UsuarioBajaId
+            UsuarioBajaId = await UsuarioBajaAbiertaAsync(usuarioBd.Id, cancellationToken)
         };
     }
 
@@ -76,7 +76,7 @@ public class UsuarioRepositorio : IUsuarioRepositorio
             Activo = usuarioBd.Activo,
             MotivoBaja = usuarioBd.MotivoBaja,
             FechaBaja = usuarioBd.FechaBaja,
-            UsuarioBajaId = usuarioBd.UsuarioBajaId
+            UsuarioBajaId = await UsuarioBajaAbiertaAsync(usuarioBd.Id, cancellationToken)
         };
     }
 
@@ -97,12 +97,18 @@ public class UsuarioRepositorio : IUsuarioRepositorio
         usuarioBd.Activo = usuario.Activo;
         usuarioBd.MotivoBaja = usuario.MotivoBaja;
         usuarioBd.FechaBaja = usuario.FechaBaja;
-        usuarioBd.UsuarioBajaId = usuario.UsuarioBajaId;
+        // N-11: quién dio de baja lo guarda solo usuario_historial_baja.
 
         await _context.SaveChangesAsync(cancellationToken);
         
         return true;
     }
+
+    // N-11: quién dio de baja sale de la baja abierta del historial; reactivado, no hay.
+    private Task<int?> UsuarioBajaAbiertaAsync(int usuarioId, CancellationToken ct) =>
+        _context.UsuarioHistorialBaja
+            .Where(h => h.UsuarioId == usuarioId && h.FechaReactivacion == null)
+            .Select(h => h.UsuarioBajaId).SingleOrDefaultAsync(ct);
 
     private const short RolAdministrador = 2;
 

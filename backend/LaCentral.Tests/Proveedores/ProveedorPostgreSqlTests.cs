@@ -10,6 +10,7 @@ namespace LaCentral.Tests.Proveedores;
 
 /// <summary>Caso de uso + repositorio real; toda afirmación relee con un contexto nuevo.</summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class ProveedorPostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;

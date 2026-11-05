@@ -26,10 +26,6 @@ public partial class Usuario
 
     public DateTime FechaAlta { get; set; }
 
-    public int? UsuarioAltaId { get; set; }
-
-    public int? UsuarioBajaId { get; set; }
-
     public virtual ICollection<ArticuloHistorialBaja> ArticuloHistorialBajaUsuarioBaja { get; set; } = new List<ArticuloHistorialBaja>();
 
     public virtual ICollection<ArticuloHistorialBaja> ArticuloHistorialBajaUsuarioReactivacion { get; set; } = new List<ArticuloHistorialBaja>();
@@ -40,21 +36,17 @@ public partial class Usuario
 
     public virtual ICollection<ClienteHistorialBaja> ClienteHistorialBajaUsuarioReactivacion { get; set; } = new List<ClienteHistorialBaja>();
 
-    public virtual ICollection<Cliente> ClienteUsuarioAlta { get; set; } = new List<Cliente>();
-
-    public virtual ICollection<Cliente> ClienteUsuarioBaja { get; set; } = new List<Cliente>();
-
     public virtual ICollection<FacturaCompra> FacturaCompraUsuario { get; set; } = new List<FacturaCompra>();
 
     public virtual ICollection<FacturaCompra> FacturaCompraUsuarioAnulacion { get; set; } = new List<FacturaCompra>();
+
+    public virtual ICollection<FacturaCompra> FacturaCompraUsuarioAutorizacion { get; set; } = new List<FacturaCompra>();
 
     public virtual ICollection<FacturaVenta> FacturaVentaUsuario { get; set; } = new List<FacturaVenta>();
 
     public virtual ICollection<FacturaVenta> FacturaVentaUsuarioAnulacion { get; set; } = new List<FacturaVenta>();
 
-    public virtual ICollection<Usuario> InverseUsuarioAlta { get; set; } = new List<Usuario>();
-
-    public virtual ICollection<Usuario> InverseUsuarioBaja { get; set; } = new List<Usuario>();
+    public virtual ICollection<FacturaVenta> FacturaVentaUsuarioAutorizacion { get; set; } = new List<FacturaVenta>();
 
     public virtual ICollection<ProveedorHistorialBaja> ProveedorHistorialBajaUsuarioBaja { get; set; } = new List<ProveedorHistorialBaja>();
 
@@ -65,10 +57,6 @@ public partial class Usuario
     public virtual Sucursal Sucursal { get; set; } = null!;
 
     public virtual ICollection<Transferencia> Transferencia { get; set; } = new List<Transferencia>();
-
-    public virtual Usuario? UsuarioAlta { get; set; }
-
-    public virtual Usuario? UsuarioBaja { get; set; }
 
     public virtual UsuarioHistorialBaja? UsuarioHistorialBajaUsuario { get; set; }
 

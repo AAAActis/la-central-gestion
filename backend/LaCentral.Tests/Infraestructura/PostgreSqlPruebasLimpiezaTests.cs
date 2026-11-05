@@ -11,6 +11,7 @@ namespace LaCentral.Tests.Infraestructura;
 /// después de liberarlo. Las dos cosas juntas agotaban las ranuras de lacentral_tests
 /// y la suite caía por 53300.
 /// </summary>
+[Trait("Base", "PostgreSQL")]
 public class PostgreSqlPruebasLimpiezaTests
 {
     private readonly ITestOutputHelper _salida;

@@ -24,7 +24,7 @@ public class ModificarArticuloUseCaseTests
     public ModificarArticuloUseCaseTests()
     {
         Articulo(activo: true, ("BPR-6ES", 10));
-        _articulos.Setup(r => r.ActualizarDatosAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string?>(),
+        _articulos.Setup(r => r.ActualizarDatosAsync(It.IsAny<int>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _articulos.Setup(r => r.AgregarCodigosAsync(It.IsAny<int>(), It.IsAny<IReadOnlyList<CodigoAlternativo>>(),
@@ -64,20 +64,20 @@ public class ModificarArticuloUseCaseTests
         new(_articulos.Object, _consulta.Object, _proveedores.Object, _unidad.Object, _contexto.Object);
 
     private static ModificarArticuloRequest Request(string? codigoInterno = null, params (int ProveedorId, string Codigo)[] codigos) =>
-        new(" Bujía NGK ", " Estante 5 ", codigoInterno,
+        new(" Bujía NGK ", codigoInterno,
             codigos.Select(c => new CodigoProveedorRequest(c.ProveedorId, c.Codigo)).ToArray());
 
     private void NoSeEscribioNada()
     {
-        _articulos.Verify(r => r.ActualizarDatosAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string?>(),
+        _articulos.Verify(r => r.ActualizarDatosAsync(It.IsAny<int>(), It.IsAny<string>(),
             It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _articulos.Verify(r => r.AgregarCodigosAsync(It.IsAny<int>(), It.IsAny<IReadOnlyList<CodigoAlternativo>>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // codigoInterno null = el UPDATE no toca la columna (no se pisa un cambio de otra sesión).
-    private void SeActualizo(string nombre, string? ubicacion, string? codigoInterno) =>
-        _articulos.Verify(r => r.ActualizarDatosAsync(Id, nombre, ubicacion, It.Is<string>(c => c == codigoInterno), It.IsAny<CancellationToken>()),
+    private void SeActualizo(string nombre, string? codigoInterno) =>
+        _articulos.Verify(r => r.ActualizarDatosAsync(Id, nombre, It.Is<string>(c => c == codigoInterno), It.IsAny<CancellationToken>()),
             Times.Once);
 
     // ---- Existencia y CA5 ----
@@ -109,7 +109,7 @@ public class ModificarArticuloUseCaseTests
     [Fact]
     public async Task DadoDeBajaAlEscribir_InvalidoYNoAgregaCodigos()
     {
-        _articulos.Setup(r => r.ActualizarDatosAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string?>(),
+        _articulos.Setup(r => r.ActualizarDatosAsync(It.IsAny<int>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
@@ -135,15 +135,6 @@ public class ModificarArticuloUseCaseTests
     }
 
     [Fact]
-    public async Task UbicacionDeMasDe60_Invalido()
-    {
-        var resultado = await Caso().EjecutarAsync(Id, Request() with { UbicacionDeposito = new string('u', 61) });
-
-        Assert.Equal(TipoError.Invalido, resultado.Tipo);
-        NoSeEscribioNada();
-    }
-
-    [Fact]
     public async Task CodigoDeProveedorVacio_Invalido()
     {
         var resultado = await Caso().EjecutarAsync(Id, Request(null, (20, "   ")));
@@ -160,18 +151,9 @@ public class ModificarArticuloUseCaseTests
         var resultado = await Caso().EjecutarAsync(Id, Request());
 
         Assert.True(resultado.IsSuccess, resultado.Error);
-        SeActualizo("Bujía NGK", "Estante 5", null);
+        SeActualizo("Bujía NGK", null);
         _articulos.Verify(r => r.AgregarCodigosAsync(It.IsAny<int>(), It.IsAny<IReadOnlyList<CodigoAlternativo>>(),
             It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task UbicacionEnBlanco_SeGuardaComoNull()
-    {
-        var resultado = await Caso().EjecutarAsync(Id, Request() with { UbicacionDeposito = "   " });
-
-        Assert.True(resultado.IsSuccess, resultado.Error);
-        SeActualizo("Bujía NGK", null, null);
     }
 
     [Fact]
@@ -224,7 +206,7 @@ public class ModificarArticuloUseCaseTests
         var resultado = await Caso().EjecutarAsync(Id, Request(null, (10, "BPR-6ES")));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
-        SeActualizo("Bujía NGK", "Estante 5", null);
+        SeActualizo("Bujía NGK", null);
     }
 
     // CA3: el código ya pertenece a otro artículo → se rechaza informando cuál.
@@ -313,7 +295,7 @@ public class ModificarArticuloUseCaseTests
         var resultado = await Caso().EjecutarAsync(Id, Request(" lc-000042 "));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
-        SeActualizo("Bujía NGK", "Estante 5", null);
+        SeActualizo("Bujía NGK", null);
     }
 
     [Fact]
@@ -324,7 +306,7 @@ public class ModificarArticuloUseCaseTests
         var resultado = await Caso().EjecutarAsync(Id, Request(" bujia-ngk-01 "));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
-        SeActualizo("Bujía NGK", "Estante 5", "BUJIA-NGK-01");
+        SeActualizo("Bujía NGK", "BUJIA-NGK-01");
     }
 
     [Theory]
@@ -350,7 +332,7 @@ public class ModificarArticuloUseCaseTests
         var resultado = await Caso().EjecutarAsync(Id, Request(cuarenta));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
-        SeActualizo("Bujía NGK", "Estante 5", cuarenta);
+        SeActualizo("Bujía NGK", cuarenta);
     }
 
     // LC-nnnnnn lo genera el sistema desde la identidad: uno puesto a mano chocaría con el
@@ -402,7 +384,7 @@ public class ModificarArticuloUseCaseTests
         var resultado = await Caso().EjecutarAsync(Id, Request("X-77", (20, "NGK-1")));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
-        SeActualizo("Bujía NGK", "Estante 5", "X-77");
+        SeActualizo("Bujía NGK", "X-77");
         Assert.NotNull(_agregados);
         Assert.Equal(new[] { ("NGK-1", 20) }, _agregados.Select(c => (c.Codigo, c.ProveedorId)));
     }

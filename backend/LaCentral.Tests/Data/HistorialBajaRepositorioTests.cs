@@ -23,6 +23,7 @@ namespace LaCentral.Tests.Data;
 /// contexto nuevo.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class HistorialBajaRepositorioTests
 {
     private static readonly EntidadConHistorialBaja[] Entidades = Enum.GetValues<EntidadConHistorialBaja>();
@@ -142,7 +143,8 @@ public class HistorialBajaRepositorioTests
         var cliente = await lectura.Cliente.AsNoTracking().SingleAsync(x => x.Id == clienteId);
         Assert.True(cliente.Activo);
         Assert.Equal("Mudanza", cliente.MotivoBaja);
-        Assert.Equal(quienDaDeBaja, cliente.UsuarioBajaId);
+        // N-11: el dato ya no está en la fila; el repositorio lo lee del historial.
+        Assert.Equal(quienDaDeBaja, (await new ClienteRepositorio(lectura).ObtenerDetallePorIdAsync(clienteId))!.UsuarioBajaId);
 
         var historialCliente = Assert.Single(await new HistorialBajaRepositorio(lectura).ObtenerAsync(EntidadConHistorialBaja.Cliente, clienteId));
         Assert.Equal(cliente.FechaBaja, historialCliente.FechaBaja);
@@ -156,6 +158,35 @@ public class HistorialBajaRepositorioTests
             Assert.Equal(quienDaDeBaja, h.UsuarioBajaId);
             Assert.Equal(quienReactiva, h.UsuarioReactivacionId);
         }
+    }
+
+    // N-11: con dos bajas en el historial, el detalle del cliente dice quién dio la ÚLTIMA,
+    // también después de reactivarlo (es su rastro, como motivo y fecha, D10).
+    [PostgreSqlFact]
+    public async Task Cliente_DosBajas_ElDetalleDiceQuienDioLaUltima()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var primera = await fixture.CrearUsuarioAsync("primera.baja");
+        var segunda = await fixture.CrearUsuarioAsync("segunda.baja");
+        var quienReactiva = await fixture.CrearUsuarioAsync("reactiva");
+        var clienteId = await SembrarAsync(fixture, EntidadConHistorialBaja.Cliente);
+
+        await using (var c = fixture.CrearContexto())
+            Assert.True((await CasosDeBajaPostgreSql.DarDeBajaCliente(c, primera).EjecutarAsync(clienteId, $"CLI-{clienteId}", "Mudanza")).IsSuccess);
+        await using (var c = fixture.CrearContexto())
+            Assert.True((await CasosDeBajaPostgreSql.ReactivarCliente(c, quienReactiva).EjecutarAsync(clienteId)).IsSuccess);
+        await using (var c = fixture.CrearContexto())
+            Assert.True((await CasosDeBajaPostgreSql.DarDeBajaCliente(c, segunda).EjecutarAsync(clienteId, $"CLI-{clienteId}", "Cierre")).IsSuccess);
+
+        await using (var lectura = fixture.CrearContexto())
+            Assert.Equal(segunda, (await new ClienteRepositorio(lectura).ObtenerDetallePorIdAsync(clienteId))!.UsuarioBajaId);
+
+        await using (var c = fixture.CrearContexto())
+            Assert.True((await CasosDeBajaPostgreSql.ReactivarCliente(c, quienReactiva).EjecutarAsync(clienteId)).IsSuccess);
+
+        await using var relectura = fixture.CrearContexto();
+        Assert.Equal(2, await ContarFilasAsync(relectura, EntidadConHistorialBaja.Cliente, clienteId));
+        Assert.Equal(segunda, (await new ClienteRepositorio(relectura).ObtenerDetallePorIdAsync(clienteId))!.UsuarioBajaId);
     }
 
     // ---------- Atomicidad: la baja y su historial, juntos o ninguno ----------
@@ -183,7 +214,6 @@ public class HistorialBajaRepositorioTests
         Assert.True(cliente.Activo);
         Assert.Null(cliente.MotivoBaja);
         Assert.Null(cliente.FechaBaja);
-        Assert.Null(cliente.UsuarioBajaId);
         Assert.Equal("Huérfana", (await lectura.ClienteHistorialBaja.AsNoTracking().SingleAsync(h => h.ClienteId == clienteId)).Motivo);
     }
 
@@ -261,7 +291,6 @@ public class HistorialBajaRepositorioTests
         Assert.True(usuario.Activo);
         Assert.Null(usuario.MotivoBaja);
         Assert.Null(usuario.FechaBaja);
-        Assert.Null(usuario.UsuarioBajaId);
         Assert.Equal("Huérfana", (await lectura.UsuarioHistorialBaja.AsNoTracking().SingleAsync(h => h.UsuarioId == usuarioId)).Motivo);
     }
 
@@ -285,8 +314,8 @@ public class HistorialBajaRepositorioTests
         var cliente = await lectura.Cliente.AsNoTracking().SingleAsync(c => c.Id == clienteId);
         Assert.False(cliente.Activo);
         Assert.Equal("Mudanza", cliente.MotivoBaja);
-        Assert.Equal(usuarioId, cliente.UsuarioBajaId);
-        Assert.Null((await lectura.ClienteHistorialBaja.AsNoTracking().SingleAsync(h => h.ClienteId == clienteId)).FechaReactivacion);
+        var baja = await lectura.ClienteHistorialBaja.AsNoTracking().SingleAsync(h => h.ClienteId == clienteId);
+        Assert.Equal((usuarioId, (DateTime?)null), (baja.UsuarioBajaId!.Value, baja.FechaReactivacion));
     }
 
     [PostgreSqlFact]
@@ -311,8 +340,8 @@ public class HistorialBajaRepositorioTests
         Assert.False(usuario.Activo);
         Assert.Equal("Licencia", usuario.MotivoBaja);
         Assert.NotNull(usuario.FechaBaja);
-        Assert.Equal(quienDaDeBaja, usuario.UsuarioBajaId);
-        Assert.Null((await lectura.UsuarioHistorialBaja.AsNoTracking().SingleAsync(h => h.UsuarioId == usuarioId)).FechaReactivacion);
+        var baja = await lectura.UsuarioHistorialBaja.AsNoTracking().SingleAsync(h => h.UsuarioId == usuarioId);
+        Assert.Equal((quienDaDeBaja, (DateTime?)null), (baja.UsuarioBajaId!.Value, baja.FechaReactivacion));
     }
 
     // ---------- Hallazgo 3: reactivación anterior a la baja (CHECK *_hist_fechas_coherentes) ----------

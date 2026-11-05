@@ -32,7 +32,7 @@ public class ObtenerArticuloDetalleUseCase
         return Result<FichaArticuloDto>.Success(new FichaArticuloDto(
             detalle.Id, detalle.CodigoInterno, detalle.Nombre, detalle.Activo, detalle.CostoVigente,
             detalle.UltimoProveedorId, detalle.Codigos, detalle.Existencias, precios,
-            detalle.UbicacionDeposito, detalle.MotivoBaja));
+            detalle.MotivoBaja));
     }
 
     private static PrecioModalidadFichaDto Ficha(Modalidad modalidad, PrecioModalidadConsultaDto? fila)

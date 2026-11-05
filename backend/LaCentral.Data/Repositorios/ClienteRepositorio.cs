@@ -127,6 +127,13 @@ public class ClienteRepositorio : IClienteRepositorio
 
         if (clienteBd == null) return null;
 
+        // N-11: quién dio de baja sale de la ÚLTIMA baja del historial. Reactivado, el cliente
+        // la conserva como rastro, igual que motivo y fecha (D10).
+        var usuarioBajaId = await _context.ClienteHistorialBaja
+            .Where(h => h.ClienteId == clienteBd.Id)
+            .OrderByDescending(h => h.FechaBaja).ThenByDescending(h => h.Id)
+            .Select(h => h.UsuarioBajaId).FirstOrDefaultAsync(cancellationToken);
+
         return new LaCentral.UseCases.Entidades.Cliente
         {
             Id = clienteBd.Id,
@@ -138,7 +145,7 @@ public class ClienteRepositorio : IClienteRepositorio
             Activo = clienteBd.Activo,
             MotivoBaja = clienteBd.MotivoBaja,
             FechaBaja = clienteBd.FechaBaja,
-            UsuarioBajaId = clienteBd.UsuarioBajaId,
+            UsuarioBajaId = usuarioBajaId,
 
             // Mapeamos leyendo desde ClienteTelefonos y ClienteDireccions
             Telefonos = clienteBd.ClienteTelefono.Select(t => t.Numero).ToList(), 
@@ -181,9 +188,7 @@ public class ClienteRepositorio : IClienteRepositorio
     clienteBd.Activo = cliente.Activo;
     clienteBd.MotivoBaja = cliente.MotivoBaja;
     clienteBd.FechaBaja = cliente.FechaBaja;
-    clienteBd.UsuarioBajaId = cliente.UsuarioBajaId;
-
-    // El historial D10 lo escribe IHistorialBajaRepositorio, desde el caso de uso.
+    // N-11: quién dio de baja lo guarda solo el historial D10, que lo escribe IHistorialBajaRepositorio, desde el caso de uso.
 
     // Sincronización inteligente de Teléfonos
     var telsABorrar = clienteBd.ClienteTelefono.Where(t => !cliente.Telefonos.Contains(t.Numero)).ToList();
