@@ -1,5 +1,7 @@
 # ESTADO · Sprint 5
 
+**Entregable:** al cerrar este sprint, una persona puede entrar al sistema con cualquiera de los dos roles y buscar artículos, ver en su ficha la existencia y la ubicación por sucursal y el historial de compras, darlos de alta, de baja con confirmación y reactivarlos, gestionar clientes y proveedores, y registrar una factura de compra, con montos y cantidades en formato argentino, sobre `lacentral_demo`.
+
 > Única fuente de verdad del estado del sprint. Se actualiza **antes** de cada push, en el
 > mismo PR que el código que describe.
 
@@ -11,12 +13,10 @@ Cierre del Sprint 4 y arrastre: `docs/sprint04/ESTADO.md` (PR #139).
 
 ## Entregable del Sprint 5
 
-**Al cerrar este sprint, una persona puede entrar al sistema con cualquiera de los dos roles y
-consultar, dar de alta, dar de baja y reactivar artículos (con la ficha mostrando existencia y
-ubicación por sucursal), gestionar clientes y proveedores, y registrar una factura de compra,
-sobre `lacentral_demo`.**
+Es la línea del principio de este archivo (forma de la §1 de `CLAUDE.md`).
 
-- **Fuera del Sprint 5:** el comparador y la factura por PDF. Son el Sprint 6.
+- **Fuera del Sprint 5:** el comparador (Sprint 6 y 7, ver `docs/sprint06/ESTADO.md`) y la
+  factura por PDF (sin sprint).
 - **El sprint no se cierra por fecha** (13/11 es una estimación) sino cuando se cumplen las dos:
   1. El entregable se recorrió a mano en el navegador contra `lacentral_demo`, y quedó anotado
      acá qué se probó y con qué datos (punto 10 de la Definición de Terminado). **Pendiente.**
@@ -25,6 +25,27 @@ sobre `lacentral_demo`.**
 - **La demo del 06/11 corre sobre `develop` con el #141**, con el 07 y el 08 aplicados a
   `lacentral_demo` el 05/11 (S5-06 levantada, ver Decisiones). Guion: `GUION-DEMO.md`. **No
   muestra el historial de compras**: no hay pantalla ni endpoint que lo lea (HU-ART-06 pendiente).
+
+
+## Tablero · Sprint 5 (milestone «Sprint 5», cierra el 13/11/2026)
+
+El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el mismo push.
+Capacidad: ~18 SP, con tres personas (Santi y Lauti comparten la sesión y se turnan; Javi tiene
+la suya).
+
+| Issue | HU | SP | Asignado | Estado | Nota |
+|---|---|---|---|---|---|
+| #43 | 042 · HU-UI-04 · listado reutilizable | 5 | Javi | **Cerrado** (#145, 05/11) | Arrastre del Sprint 4 construido en el 5 |
+| #148 | Formato es-AR de montos y cantidades | 1 | Javi | Abierto | Lo vio el ensayo de la demo |
+| #147 | Paginación de clientes y proveedores | 2 | Santi | Abierto | 200 con página vacía; CA-003 v1.1 de HU-CLI-02 y de la HU de proveedores |
+| #46 | 045 · HU-UI-07 · clientes y proveedores | 3 | Javi | Abierto | Lleva la baja con la confirmación de la 044 |
+| #23 | 016 · HU-ART-06 · historial de compras | 5 | Santi | Abierto | CA-003 y CA-004 **PARCIAL**: dependen de la anulación (028, #9, backlog) |
+| #21 | 014 · HU-ART-04 · baja lógica de artículo | 3 | Javi | Abierto | CA-001 hecho en HU-ART-03 (#122); faltan del CA-002 al CA-005 |
+
+Abiertos: 14 SP. Orden de trabajo de esta sesión: #148, #147, #46, #23 y #21.
+
+**Fuera del sprint y sin milestone (backlog), decisión del 05/11/2026:** #9 (028), #27 (020),
+#33 (026), #53 (051), #54 (052), #26, #28, #29, #31 y #41. **Deuda, sin milestone:** #137.
 
 ---
 
@@ -37,7 +58,8 @@ sobre `lacentral_demo`.**
 | S5-03 | **La ubicación sale del alta y de la modificación del artículo.** Se carga desde la ficha, **por sucursal**, igual que se ve la cantidad. | El estante se asigna cuando la mercadería llega; en el alta no hay existencia en ninguna sucursal. Copiarla a todas afirmaría que la pieza está en el mismo estante en las dos: la redundancia que N-9 eliminó. |
 | S5-04 | **Numeración de scripts:** la normalización llegó como `05_…` y queda **07**. El 05 es `05_rol_tests.sql`; el **06 sigue reservado para C2**. | Primer número libre. |
 | S5-06 | ~~**El 07 y el 08 NO se aplican a `lacentral_demo` antes de la demo.** Van el lunes 09/11, o antes si el #141 está mergeado y verificado — **nunca jueves ni viernes**.~~ **Levantada el 05/11/2026 (Santi)**: el 07 y el 08 se aplicaron ese jueves. | Su motivo era que la demo no dependiera de que el #141 entrara a tiempo; el #141 entró y la regla perdió su motivo. Sin el 07, `develop` daba 500 en la ficha contra la demo (`codigo_barras` no existe). |
-| S5-07 | **Hasta que Sergio pruebe el sistema no se construye nada nuevo** (05/11/2026, Santi): ni la paginación de clientes y proveedores ni la 045. | La demo es lo único con fecha. |
+| S5-07 | ~~**Hasta que Sergio pruebe el sistema no se construye nada nuevo** (05/11/2026, Santi): ni la paginación de clientes y proveedores ni la 045.~~ **Levantada el mismo 05/11** (Santi): con la demo andando, se arrancan las cinco HU del tablero. | La demo era lo único con fecha, y quedó lista. |
+| S5-08 | **Tablero rehecho por entregable** (05/11/2026, Santi): al Sprint 5 entra lo que suma al entregable; el comparador va al 6 y al 7, sin dejarlo a medias; lo que depende de una compuerta abierta no entra; la deuda no lleva milestone. Sprint 6: 055, 053, 054 y 050 (opción a). Sprint 7: 030 y 032. La CMP-02 queda afuera (etapa 2, D16). | El tablero no se había actualizado desde el replan del 27/10. |
 | S5-05 | **La comparación de esquemas `lacentral_test` ↔ `lacentral` la hace Santi** con el superusuario: el rol de desarrollo no tiene `CONNECT` sobre `lacentral` y no se le va a dar. 04/11: md5 de columnas idéntico. | Seguridad de los datos reales. |
 
 ---
@@ -207,9 +229,9 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
 
 ## PRÓXIMA SESIÓN
 
-**05/11 · HU paradas (S5-07).** Demo del 06/11 con `GUION-DEMO.md`. Después de que Sergio la
-pruebe: la paginación de clientes y proveedores (200 con página vacía, CA-003 v1.1 en las dos
-proformas) y la 045 con la baja y su confirmación en el mismo PR.
+**05/11 · las cinco HU del Sprint 5, en este orden, una rama y un PR cada una:** #148 (es-AR),
+#147 (paginación), #46 (045, con la baja y su confirmación), #23 (016) y #21 (014). El estado de
+cada una está en la tabla «Tablero». Demo del 06/11 con `GUION-DEMO.md`.
 
 0. **Lo primero después del merge de Javi: `docs/sprint05/COMO-PROBARLO.md` y el ensayo de la
    demo** de punta a punta por el frontend contra `lacentral_demo`. Ni Santi ni el dueño
