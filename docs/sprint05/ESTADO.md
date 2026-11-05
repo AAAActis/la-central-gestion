@@ -9,6 +9,25 @@ Cierre del Sprint 4 y arrastre: `docs/sprint04/ESTADO.md` (PR #139).
 
 ---
 
+## Entregable del Sprint 5
+
+**Al cerrar este sprint, una persona puede entrar al sistema con cualquiera de los dos roles y
+consultar, dar de alta, dar de baja y reactivar artículos (con la ficha mostrando existencia y
+ubicación por sucursal), gestionar clientes y proveedores, y registrar una factura de compra,
+sobre `lacentral_demo`.**
+
+- **Fuera del Sprint 5:** el comparador y la factura por PDF. Son el Sprint 6.
+- **El sprint no se cierra por fecha** (13/11 es una estimación) sino cuando se cumplen las dos:
+  1. El entregable se recorrió a mano en el navegador contra `lacentral_demo`, y quedó anotado
+     acá qué se probó y con qué datos (punto 10 de la Definición de Terminado). **Pendiente.**
+  2. El dueño lo usó, o está agendado que lo use, y lo que dijo quedó anotado acá. **Pendiente:
+     ni Santi ni el dueño probaron nunca el sistema.**
+- **La demo del 06/11 no muestra todo el entregable.** La ubicación por sucursal es código del
+  #141, que necesita el 07 en `lacentral_demo`, y por S5-06 el 07 no se aplica antes de la demo.
+  El 06/11 la ficha es la de `develop`.
+
+---
+
 ## Decisiones (04/11/2026)
 
 | # | Decisión | Motivo |
@@ -177,7 +196,8 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
 
 1. **#141 primero.** Desbloquea `develop`: hasta que entre, toda rama nueva que toque backend
    hereda los 148 tests de PostgreSQL en rojo.
-2. **Después #139, #140 y #142**, rebaseando cada uno sobre `develop` a medida que entren.
+2. **Después #139, #140 y #142**, con `git merge origin/develop` en cada uno a medida que entren
+   (no rebase: las cuatro ramas ya están pusheadas, regla 3 de `CLAUDE.md`).
    **#139 y #141 tocan los dos `frontend/`:** puede haber conflicto en `styles.css`.
 3. **Con los cuatro adentro, UNA corrida completa sobre `develop`** (backend y frontend), y el
    número acá. Ese es el estado que hereda todo el mundo.
@@ -186,12 +206,13 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
 
 ## PRÓXIMA SESIÓN
 
-0. **Lo primero después del merge de Javi: el ensayo de la demo y `docs/sprint05/GUION-DEMO.md`.**
-   Es lo único que no está probado de punta a punta por el frontend contra `lacentral_demo`, y la
-   demo es el 06/11. Va antes que el merge de `develop` en la 044 y antes que el aviso flotante.
+0. **Lo primero después del merge de Javi: `docs/sprint05/COMO-PROBARLO.md` y el ensayo de la
+   demo** de punta a punta por el frontend contra `lacentral_demo`. Ni Santi ni el dueño
+   probaron nunca el sistema. Es la base de la condición 1 del entregable.
 1. **Fase d (S5-06):** el lunes 09/11 (o con el #141 mergeado y verificado, nunca jueves ni
    viernes), 07 y después 08 a `lacentral_demo`. Desde ahí la demo corre solo con el código del
    #141: `develop` lee `articulo.ubicacion_deposito`, que el 07 borra.
-2. Pendientes del 04/11, en este orden: `git merge develop` en la 044 (resolver
+2. **La 042 y después la 045, una HU por PR** (regla 2 de `CLAUDE.md`).
+3. Pendientes del 04/11, en este orden: `git merge develop` en la 044 (resolver
    `formulario.ts` sin perder `password` ni `autocompletar`); aviso flotante con foco devuelto y
    Escape.
