@@ -754,3 +754,7 @@ vale esta.)
   - [ ] C. `Formulario` con `opciones` (select con vacío): spec.
   - [ ] D. `api.ts` de clientes y proveedores; pantallas `pantallas/clientes` y `pantallas/proveedores` con `Listado`, `Formulario` y `ConfirmacionMotivo`; `modulos.ts`; specs por CA.
   - [ ] E. Suites completas; a mano contra la demo con el #150 mergeado solo en local, sin push; PR que se mergea después del #150.
+- 18:40 · 045:
+  - [x] A: rojo `3838edd` (MethodNotAllowed), verde `875c472` (`GET /api/proveedores/{id}`, `ObtenerProveedorDetalleUseCase`, `ProveedorDetalleDto`).
+  - [x] B: rojo `4c4fd93` (HTTP + PostgreSQL BadRequest; Moq «Faltan campos obligatorios…»), verde en el commit siguiente. Clientes, en filtrado: 51/51.
+  - **Sigue:** C (`Formulario` con `opciones`). **Archivos a medias:** ninguno.
