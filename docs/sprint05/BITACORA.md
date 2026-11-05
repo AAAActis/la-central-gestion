@@ -571,3 +571,29 @@ vale esta.)
 **BLOQUEADO EN:** abrir el PR de `docs/sprint05-guion-demo` (falla GitHub; se reintenta). Por instrucción de Santi, se para acá: la paginación no se arranca.
 - 14:05 · Al tercer intento se abrió el PR: **#146**.
 **BLOQUEADO EN:** nada técnico. Por instrucción de Santi se para acá (S5-07): la paginación y la 045 esperan a que Sergio pruebe el sistema. Falta que Javi revise el #142 y el #146.
+
+## 05/11/2026 14:20 · orden del tablero: issues contra los ESTADO, propuesta de triage
+**Instrucción recibida (verbatim):**
+> Antes de seguir con las HU, 20 minutos de orden en el tablero. El milestone de Sprint 4
+> tiene 16 items nunca arrancados y el de Sprint 5 tiene 3 que no son los que estamos
+> haciendo: el tablero nunca se actualizó después del replan del 27/10.
+>
+> 1 · Listá con gh todos los issues con su milestone y su estado, y cruzalo contra lo que
+> dicen docs/sprint04/ESTADO.md y docs/sprint05/ESTADO.md. Hacé una tabla de las
+> discrepancias.
+>
+> 2 · Proponeme un triage: qué issue va a qué milestone, cuáles salen de milestone y pasan a
+> backlog sin fecha, y cuáles se cierran porque ya están hechos. Con el motivo de cada uno en
+> una línea.
+>
+> 3 · PARÁ ahí. No muevas nada hasta que te lo apruebe.
+>
+> Criterios: el Sprint 4 queda cerrado con lo que entregó, no se reabre. El Sprint 5 contiene
+> solo lo que estamos haciendo ahora: paginación, 045 y el formato es-AR. Lo que nunca
+> arrancó y no está comprometido va a backlog sin milestone, no a un sprint futuro inventado.
+> La deuda no lleva milestone de sprint.
+**Plan:**
+1. `gh issue list` con milestone y estado; cruce contra `docs/sprint04/ESTADO.md` y `docs/sprint05/ESTADO.md`; tabla de discrepancias.
+2. Propuesta de triage con motivo por issue.
+3. Parar sin mover nada.
+**Estado:** en curso
