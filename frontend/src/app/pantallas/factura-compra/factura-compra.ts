@@ -149,7 +149,10 @@ export class FacturaCompra {
   buscarProveedor() {
     this.errorProveedor.set(null);
     this.api.proveedores(this.textoProveedor).subscribe({
-      next: p => this.proveedores.set(p),
+      next: p => {
+        this.proveedores.set(p);
+        if (p.length === 0) this.errorProveedor.set(`No hay proveedores activos para «${this.textoProveedor}».`);
+      },
       error: e => {
         this.proveedores.set([]);
         this.errorProveedor.set(mensajeDeError(e));
