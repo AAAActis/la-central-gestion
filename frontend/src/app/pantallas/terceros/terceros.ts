@@ -14,6 +14,8 @@ interface ConfigTerceros {
   camposModificacion: CampoFormulario[];
   /** El nombre del motivo en el cuerpo de la baja: cada endpoint lo llama distinto. */
   campoMotivo: 'motivo' | 'motivoBaja';
+  /** Lo que se reescribe para confirmar la baja (044): lo que compara el caso de uso de la API. */
+  claveBaja: (f: FichaTercero) => string;
 }
 
 /** Los valores que admite el CHECK cliente_condicion_fiscal_valida. Sin elegir es válido (se guarda NULL). */
@@ -43,7 +45,9 @@ const CLIENTES: ConfigTerceros = (() => {
     { nombre: 'condicionPago', etiqueta: 'Condición de pago', obligatorio: true, maximo: 60, ayuda: 'Por ejemplo: Contado, Cuenta corriente 30 días.' },
     ...CONTACTO,
   ];
-  return { base: 'clientes', singular: 'cliente', plural: 'clientes', camposAlta: campos, camposModificacion: campos, campoMotivo: 'motivo' };
+  return { base: 'clientes', singular: 'cliente', plural: 'clientes', camposAlta: campos, camposModificacion: campos, campoMotivo: 'motivo',
+    // DarDeBajaClienteUseCase: el CUIT si lo tiene; si no, el código.
+    claveBaja: f => f.cuit || f.codigo };
 })();
 
 const URL: CampoFormulario = { nombre: 'urlReferencia', etiqueta: 'URL de referencia', maximo: 300 };
@@ -53,6 +57,8 @@ const PROVEEDORES: ConfigTerceros = {
   // PUT /api/proveedores/{id} no cambia el código y exige el CUIT.
   camposModificacion: [RAZON_SOCIAL, { ...CUIT, obligatorio: true }, URL, ...CONTACTO],
   campoMotivo: 'motivoBaja',
+  // DarDeBajaProveedorUseCase acepta el código o el CUIT: el código lo tienen todos.
+  claveBaja: f => f.codigo,
 };
 
 const SIN_ERRORES: ErroresServidor = { porCampo: {}, general: null };
@@ -149,7 +155,7 @@ function cuerpo(campos: CampoFormulario[], valores: ValoresFormulario): Record<s
       </section>
 
       <app-confirmacion-motivo [titulo]="'Dar de baja ' + f.codigo" [(abierto)]="bajaAbierta" [maximoMotivo]="255"
-        [clave]="f.codigo" textoConfirmar="Dar de baja" [enviando]="enviando()" [errorGeneral]="errorBaja()"
+        [clave]="config().claveBaja(f)" textoConfirmar="Dar de baja" [enviando]="enviando()" [errorGeneral]="errorBaja()"
         (confirmar)="darDeBaja($event)" />
     }
   `,
@@ -226,7 +232,7 @@ export class Terceros {
   }
 
   darDeBaja(motivo: string) {
-    const baja = { confirmacion: this.ficha()!.codigo, [this.config().campoMotivo]: motivo };
+    const baja = { confirmacion: this.config().claveBaja(this.ficha()!), [this.config().campoMotivo]: motivo };
     this.enviando.set(true);
     this.api.darDeBajaTercero(this.config().base, this.id, baja).subscribe({
       next: () => {
