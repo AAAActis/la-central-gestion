@@ -101,6 +101,7 @@ public class ConsultarProveedoresUseCaseTests
     [InlineData(0, 20)]
     [InlineData(1, 0)]
     [InlineData(1, 101)]
+    [InlineData(int.MaxValue, 100)] // (página − 1) × tamaño no entra en un int: Skip desbordaría
     public async Task Ejecutar_PaginaOTamanoInvalido_DevuelveInvalidoSinConsultarRepositorio(int pagina, int tamanoPagina)
     {
         var resultado = await _consultarUseCase.EjecutarAsync("filtro", false, pagina, tamanoPagina);
