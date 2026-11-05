@@ -724,3 +724,15 @@ vale esta.)
 - 16:25 · **HU (a) #148 es-AR terminada:** rama `feature/148-formato-es-ar`; rojo `8dedf23`, verde `dae1aa2`; frontend completo **123/123** sobre `dae1aa2`; `ng build` limpio; a mano contra la demo: `$ 80.204,04` en `LC-000021`. **PR #149.** Falta el `verificador-tdd` (el auditor no aplica).
 - **Decisión de método:** los verificadores se invocan cuando estén las cinco HU, de a uno, porque la R1 los hace abortar si existe `../lc-142`, que es donde se escribe esta bitácora. Los cambios del tablero en el ESTADO van al #146, que todavía no entró a `develop`.
 - **HU / paso:** (b) #147 paginación, paso 1: leer el contrato actual de `GET /api/clientes` y `/api/proveedores`. **Falta:** rojo en Moq y contra PostgreSQL de la envoltura paginada (200 con página vacía) e `Id` en `ClienteResumenDto` → producción → CA-003 v1.1 en las proformas de HU-CLI-02 y de la HU de proveedores → suite completa → PR con la sección «cambia el comportamiento de dos endpoints de HU ya cerradas». **Archivos:** ninguno a medias.
+- 16:55 · **HU (b) #147, rama `feature/147-paginacion-clientes-proveedores` (local, sin push):**
+  - Hecho:
+    - estructura `449fa6a` (la firma paginada de `BuscarAsync`, `PaginaDto<T>`, el `Id` en `ClienteResumenDto` y `api.proveedores()` leyendo `.items`);
+    - infraestructura `db0bcd4`: el esquema aislado no veía `similarity()` de pg_trgm (`42883`), así que la búsqueda difusa nunca se había probado contra PostgreSQL; `search_path = esquema, public`; 164/164 de PostgreSQL;
+    - rojo `73787b6`: HTTP + PostgreSQL esperaba OK y dio NotFound; Moq del CA-003 v1.1 y de la página inválida.
+  - **Falta, en orden:**
+    1. verde: validar la página (≥ 1) y el tamaño (1..100), sacar el 404, `Skip`/`Take` + `Count` y `ThenBy(Id)` en los dos repositorios;
+    2. el frontend de la factura de compra: si la página llega vacía, mostrar el mensaje (antes lo traía el 404), con un spec en rojo primero;
+    3. CA-003 v1.1 en las proformas de HU-CLI-02 y HU-PRO-02;
+    4. suite completa backend + frontend;
+    5. push y PR con la sección «cambia el comportamiento de dos endpoints de HU ya cerradas».
+  - **Archivos a medias:** ninguno, porque todo está commiteado.
