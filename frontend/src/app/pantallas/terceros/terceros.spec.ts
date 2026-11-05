@@ -49,7 +49,13 @@ function preparar<T>(componente: Type<T>) {
     h.fixture.detectChanges();
   };
   h.boton = (texto, dentro = h.raiz()) => {
-    const boton = Array.from(dentro.querySelectorAll('button')).find(b => b.textContent?.trim() === texto);
+    // El nombre accesible: aria-label, o el texto visible (un botón en carga esconde el otro texto con .oculta).
+    const visible = (b: HTMLButtonElement) => {
+      const copia = b.cloneNode(true) as HTMLElement;
+      copia.querySelectorAll('.oculta').forEach(o => o.remove());
+      return copia.textContent?.trim();
+    };
+    const boton = Array.from(dentro.querySelectorAll('button')).find(b => (b.getAttribute('aria-label') ?? visible(b)) === texto);
     expect(boton).withContext(`botón «${texto}»`).toBeTruthy();
     return boton ?? document.createElement('button');
   };
