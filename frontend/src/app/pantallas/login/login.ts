@@ -33,11 +33,11 @@ const CAMPOS: CampoFormulario[] = [
     h1 { margin: 0 0 var(--esp-20); }
     .acceso-marca {
       display: grid; place-items: center; padding: var(--esp-24);
-      background: var(--grafito); border-left: var(--grosor-foco) solid var(--rojo);
+      background: var(--grafito); border-left: var(--filete-marca) solid var(--rojo);
     }
     @media (max-width: 760px) {
       .acceso-tarjeta { grid-template-columns: 1fr; }
-      .acceso-marca { border-left: 0; border-top: var(--grosor-foco) solid var(--rojo); }
+      .acceso-marca { border-left: 0; border-top: var(--filete-marca) solid var(--rojo); }
     }
   `,
   host: { class: 'fondo-hex' },
