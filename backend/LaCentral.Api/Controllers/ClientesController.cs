@@ -72,7 +72,6 @@ public class ClientesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Consultar(
         [FromQuery] string texto, [FromQuery] bool incluirInactivos, CancellationToken cancellationToken,
         [FromQuery] int pagina = 1, [FromQuery] int tamanoPagina = 20)
