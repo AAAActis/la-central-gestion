@@ -773,3 +773,9 @@ vale esta.)
 - **HU / paso:** (d) #23 / 016 (historial de compras en la ficha), paso 1: leer la proforma y lo que ya existe de facturas de compra.
   - CA-003 y CA-004 van PARCIAL, porque dependen de la anulación (028, #9).
   - **Falta:** todo. **Archivos a medias:** ninguno.
+- 21:15 · **HU (d) #23 / 016 terminada: PR #152.**
+  - Backend: rojo `ef0a3cc`, verde `82e9021`. Frontend: rojo `bd0967a`, verde `2d2bddb`. CA-003 y CA-004 quedan PARCIAL (028).
+  - Suites: backend 461/461, frontend 126/126. A mano, la ficha de LC-000021 muestra 8 compras.
+  - Un `pgrep -f` mató el shell en medio del push: se rehízo y la memoria quedó corregida.
+- **HU / paso:** (e) #21 / 014, la baja de artículo, CA-002 a CA-005; paso 1: leer la proforma y `DarDeBajaArticuloUseCase`.
+  - **Falta:** todo. **Archivos a medias:** ninguno.
