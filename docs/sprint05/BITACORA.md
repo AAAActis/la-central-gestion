@@ -736,3 +736,11 @@ vale esta.)
     4. suite completa backend + frontend;
     5. push y PR con la sección «cambia el comportamiento de dos endpoints de HU ya cerradas».
   - **Archivos a medias:** ninguno, porque todo está commiteado.
+- 17:45 · **HU (b) #147 terminada:**
+  - Verde backend `1c4b86a`. Rojo y verde del frontend: `8e932b5` y `c9b1eeb` (mensaje de «sin proveedores» en la factura de compra). CA-003 v1.1 en las dos proformas: `e6a9344`.
+  - Backend completo **468/468** sobre `e6a9344`; 0 advertencias. Frontend **123/123**.
+  - A mano contra la demo: 200 con la envoltura vacía, 400 con página 0, y por el navegador el mensaje de «sin proveedores» y la búsqueda real.
+  - **PR #150**. Faltan `verificador-tdd` y `auditor-persistencia`.
+- **HU / paso:** (c) #46, la 045 (pantallas de clientes y proveedores, con la baja y la confirmación de la 044), paso 1: leer la proforma 045 y la API de clientes y proveedores (alta, detalle, modificación, baja, reactivación).
+  - **Ojo:** la 045 necesita la paginación del #150, que no está en `develop`. Opciones: esperar el merge, o mergear `origin/feature/147-…` en la rama de la 045. Lo segundo es encadenar, y está prohibido. Se arranca desde `develop` con lo que no depende de la paginación.
+  - **Falta:** todo. **Archivos a medias:** ninguno.
