@@ -324,3 +324,4 @@ vale esta.)
 **Estado:** en curso
 - 22:36 · Paso 1: aclaración en `CLAUDE.md`, regla de la bitácora: la única línea que se reescribe es el `**Estado:**`.
 - 22:38 · Corrección del paso 1: `00e58c9` salió sin el cambio en `CLAUDE.md` (la edición falló y no lo vi antes del commit). La aclaración entra en el commit siguiente.
+- 22:50 · Paso 2: `COMO-PROBARLO.md` + `scripts/probar-demo.sh` en `docs/como-probarlo` (`c4cd149`), **PR #143** contra develop. Verificado: las dos cosas arriba; login de admin.demo y operador.demo (200, rol y sucursal) y búsqueda por el proxy; la guarda corta con `lacentral_test` y sin variable; señal al grupo libera los puertos. Riesgo anotado: entre el merge del #141 y el 07 en la demo, develop no coincide con su esquema.
