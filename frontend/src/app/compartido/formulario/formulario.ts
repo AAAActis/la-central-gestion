@@ -16,7 +16,7 @@ export interface CampoFormulario {
   ayuda?: string;
   /** Una lista que se agrega y se quita (teléfonos, direcciones, códigos). */
   multivaluado?: boolean;
-  /** Largo máximo: lo fija el endpoint, no el formulario. */
+  /** Largo máximo: lo fija el endpoint, no el formulario. Va como atributo maxlength: al tipear no se puede pasar. */
   maximo?: number;
   /** El valor tiene que coincidir con este, sin espacios en los bordes ni distinguir mayúsculas. */
   coincideCon?: string;
@@ -133,7 +133,6 @@ export class Formulario {
         controles[c.nombre] = new FormArray(items.map(v => this.nuevoItem(c, v)), validadores);
       } else {
         if (c.patron) validadores.push(Validators.pattern(c.patron));
-        if (c.maximo) validadores.push(Validators.maxLength(c.maximo));
         const clave = c.coincideCon;
         if (clave) validadores.push(control => normalizar(control.value) === normalizar(clave) ? null : { coincide: true });
         const inicial = valores[c.nombre];
@@ -163,7 +162,6 @@ export class Formulario {
     const mostrar = control.touched || items.some(i => i.touched);
     if (mostrar && control.hasError('obligatorio')) return OBLIGATORIO;
     if (mostrar && items.some(i => i.hasError('pattern'))) return c.mensajeFormato ?? FORMATO;
-    if (mostrar && control.hasError('maxlength')) return `Hasta ${c.maximo} caracteres.`;
     if (mostrar && control.hasError('coincide')) return `No coincide con ${c.coincideCon}.`;
     return this.erroresPorCampo()[c.nombre] ?? null;
   }
