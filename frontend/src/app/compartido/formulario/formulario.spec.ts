@@ -229,3 +229,59 @@ describe('Formulario · contraseña y autocompletado (extensión de HU-UI-03)', 
     expect(control('Nota').hasAttribute('autocomplete')).toBeFalse();
   });
 });
+
+const CONDICIONES = [{ valor: 'MONOTRIBUTO', etiqueta: 'Monotributo' }, { valor: 'EXENTO', etiqueta: 'Exento' }];
+
+@Component({
+  imports: [Formulario],
+  template: `<app-formulario [campos]="campos" [valores]="valores()" (enviar)="enviados.push($event)" />`,
+})
+class AnfitrionSeleccion {
+  readonly campos: CampoFormulario[] = [
+    { nombre: 'condicion', etiqueta: 'Condición fiscal', opciones: CONDICIONES, ayuda: 'Sin elegir: no está informada.' },
+  ];
+  readonly valores = signal<ValoresFormulario>({});
+  readonly enviados: ValoresFormulario[] = [];
+}
+
+/** 045 · un campo con valores cerrados se elige de una lista; sin elegir es un estado válido. */
+describe('Formulario · campo de selección (045)', () => {
+  let fixture: ComponentFixture<AnfitrionSeleccion>;
+  const raiz = () => fixture.nativeElement as HTMLElement;
+  const seleccion = () => {
+    const label = Array.from(raiz().querySelectorAll('label')).find(l => l.textContent?.trim() === 'Condición fiscal');
+    return label?.control as HTMLSelectElement | null;
+  };
+  const guardar = () => {
+    raiz().querySelector<HTMLButtonElement>('button[type=submit]')!.click();
+    fixture.detectChanges();
+  };
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(AnfitrionSeleccion);
+    fixture.detectChanges();
+  });
+
+  it('se muestra como una lista asociada a su etiqueta, con una opción vacía primero', () => {
+    const s = seleccion();
+    expect(s?.tagName).toBe('SELECT');
+    expect(Array.from(s?.options ?? []).map(o => o.value)).toEqual(['', 'MONOTRIBUTO', 'EXENTO']);
+    expect(Array.from(s?.options ?? []).map(o => o.textContent?.trim())).toEqual(['Sin informar', 'Monotributo', 'Exento']);
+  });
+
+  it('sin elegir, envía el valor vacío: no se obliga a elegir', () => {
+    guardar();
+    expect(fixture.componentInstance.enviados).toEqual([{ condicion: '' }]);
+  });
+
+  it('envía el valor elegido y carga el que recibe para modificar', () => {
+    fixture.componentInstance.valores.set({ condicion: 'EXENTO' });
+    fixture.detectChanges();
+    expect(seleccion()?.value).toBe('EXENTO');
+
+    seleccion()!.value = 'MONOTRIBUTO';
+    seleccion()!.dispatchEvent(new Event('change'));
+    guardar();
+    expect(fixture.componentInstance.enviados).toEqual([{ condicion: 'MONOTRIBUTO' }]);
+  });
+});
