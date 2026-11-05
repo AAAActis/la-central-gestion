@@ -51,9 +51,11 @@ describe('Listado (HU-UI-04)', () => {
     fixture.detectChanges();
   }
 
-  beforeEach(() => {
+  // ngModel registra sus controles en una microtarea: antes, lo escrito se pierde.
+  beforeEach(async () => {
     fixture = TestBed.createComponent(Anfitrion);
     fixture.autoDetectChanges();
+    await fixture.whenStable();
   });
 
   it('al entrar hay una sola cosa que hacer: el campo de búsqueda, enfocado, sin tabla ni consulta', async () => {
