@@ -216,12 +216,15 @@ table.lineas input.corto { width: 100px; }
 /* Listado reutilizable (compartido/listado.ts, HU-UI-04): referencias 02 y 12. */
 .listado-busqueda { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--esp-12) var(--esp-16); }
 .listado-busqueda > label.check { min-height: var(--alto-boton); }
+.listado-ayuda { margin: var(--esp-8) 0 0; }
 .listado-campo { flex: 1 1 320px; display: flex; flex-direction: column; gap: var(--esp-8); }
 .listado-campo > label { margin: 0; }
 .campo-busqueda { position: relative; display: flex; }
 .campo-busqueda > svg { position: absolute; left: var(--esp-12); top: 50%; translate: 0 -50%; width: 18px; height: 18px; color: var(--texto-2); pointer-events: none; }
 .campo-busqueda > input { flex: 1; min-height: var(--alto-boton); padding-left: calc(var(--esp-12) + 18px + var(--esp-10)); }
 .listado .tabla-caja table { margin-top: 0; }
+.listado .tarjeta-cabecera { border-top: 1px solid var(--linea); }
+.listado td.mono { white-space: nowrap; }
 /* La fila no es un botón: la acción va en su celda, que también se alcanza con el teclado. */
 .listado tbody tr { cursor: default; }
 .listado-estado { width: 1%; white-space: nowrap; text-align: right; }

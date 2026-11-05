@@ -28,19 +28,21 @@ export type Consulta<T> = (texto: string, incluirInactivos: boolean, pagina: num
   imports: [FormsModule, NgTemplateOutlet, BotonCarga],
   template: `
     <section class="tarjeta listado">
-      <form class="tarjeta-cuerpo listado-busqueda" (ngSubmit)="buscar()">
-        <div class="listado-campo">
-          <label for="listado-texto">{{ etiqueta() }}</label>
-          <div class="campo-busqueda">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-              stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            <input #campo id="listado-texto" type="search" name="texto" [(ngModel)]="texto" autocomplete="off" />
+      <form class="tarjeta-cuerpo" (ngSubmit)="buscar()">
+        <div class="listado-busqueda">
+          <div class="listado-campo">
+            <label for="listado-texto">{{ etiqueta() }}</label>
+            <div class="campo-busqueda">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+              <input #campo id="listado-texto" type="search" name="texto" [(ngModel)]="texto" autocomplete="off" />
+            </div>
           </div>
-          @if (ayuda()) { <span class="ayuda">{{ ayuda() }}</span> }
+          <label class="check"><input type="checkbox" name="inactivos" [(ngModel)]="incluirInactivos" /> Incluir inactivos</label>
+          <button type="submit" class="primario" [cargando]="cargando()" textoCarga="Buscando…">Buscar</button>
+          <ng-content />
         </div>
-        <label class="check"><input type="checkbox" name="inactivos" [(ngModel)]="incluirInactivos" /> Incluir inactivos</label>
-        <button type="submit" class="primario" [cargando]="cargando()" textoCarga="Buscando…">Buscar</button>
-        <ng-content />
+        @if (ayuda()) { <p class="ayuda listado-ayuda">{{ ayuda() }}</p> }
       </form>
 
       @if (error()) {
