@@ -120,6 +120,14 @@ public class BusquedaPaginadaApiPostgreSqlTests : IClassFixture<WebApplicationFa
         Assert.Equal(1, cuerpoVacio.GetProperty("pagina").GetInt32());
         Assert.Equal(20, cuerpoVacio.GetProperty("tamanoPagina").GetInt32());
 
+        // El 400 del contrato, por HTTP: página 0 y tamaño fuera de rango.
+        foreach (var consulta in new[] { "pagina=0", "tamanoPagina=0", "tamanoPagina=101" })
+        {
+            var invalida = await http.GetAsync($"{ruta}?texto=zzqqxxnada&{consulta}");
+            Assert.Equal(HttpStatusCode.BadRequest, invalida.StatusCode);
+            Assert.Contains("La página o su tamaño no son válidos.", await invalida.Content.ReadAsStringAsync());
+        }
+
         var t = Uri.EscapeDataString(texto);
         var uno = await http.GetFromJsonAsync<JsonElement>($"{ruta}?texto={t}&pagina=1&tamanoPagina=2");
         var dos = await http.GetFromJsonAsync<JsonElement>($"{ruta}?texto={t}&pagina=2&tamanoPagina=2");
