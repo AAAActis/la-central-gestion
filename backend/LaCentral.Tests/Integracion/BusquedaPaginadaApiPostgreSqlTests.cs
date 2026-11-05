@@ -72,6 +72,44 @@ public class BusquedaPaginadaApiPostgreSqlTests : IClassFixture<WebApplicationFa
         await AfirmarPaginacion(http, "/api/proveedores", "Repuestos Paginados");
     }
 
+    // B1 del verificador (05/11/2026): con razones sociales distintas nunca hay empate de similitud,
+    // y el desempate por Id no se podía ver. Acá empatan las tres, y el orden físico de la tabla
+    // no es el de los Ids: un UPDATE deja la versión nueva de la fila al final (MVCC). Sin
+    // ThenBy(Id), las páginas salen en el orden físico.
+    [PostgreSqlFact]
+    public Task Clientes_ConSimilitudEmpatada_LasPaginasSeOrdenanPorId() => AfirmarDesempatePorId("cliente", "/api/clientes");
+
+    [PostgreSqlFact]
+    public Task Proveedores_ConSimilitudEmpatada_LasPaginasSeOrdenanPorId() => AfirmarDesempatePorId("proveedor", "/api/proveedores");
+
+    private async Task AfirmarDesempatePorId(string tabla, string ruta)
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        int[] ids;
+        await using (var contexto = fixture.CrearContexto())
+        {
+            // La tabla es una de dos constantes de este archivo, no una entrada.
+            string insertar = "INSERT INTO " + tabla + " (codigo, razon_social) VALUES ({0}, 'Repuestos Empatados')",
+                porId = "SELECT id AS \"Value\" FROM " + tabla + " ORDER BY id",
+                actualizar = "UPDATE " + tabla + " SET codigo = 'EMP-1b' WHERE id = {0}",
+                fisicoSql = "SELECT id AS \"Value\" FROM " + tabla;
+            foreach (var codigo in new[] { "EMP-1", "EMP-2", "EMP-3" })
+                await contexto.Database.ExecuteSqlRawAsync(insertar, codigo);
+            ids = await contexto.Database.SqlQueryRaw<int>(porId).ToArrayAsync();
+            await contexto.Database.ExecuteSqlRawAsync(actualizar, ids[0]);
+            var fisico = await contexto.Database.SqlQueryRaw<int>(fisicoSql).ToArrayAsync();
+            Assert.NotEqual(ids, fisico); // precondición: el orden físico ya no es el de los Ids
+        }
+        using var http = Cliente(fixture);
+
+        var paginas = new List<int>();
+        foreach (var pagina in new[] { 1, 2 })
+            paginas.AddRange((await http.GetFromJsonAsync<JsonElement>($"{ruta}?texto=Repuestos%20Empatados&pagina={pagina}&tamanoPagina=2"))
+                .GetProperty("items").EnumerateArray().Select(i => i.GetProperty("id").GetInt32()));
+
+        Assert.Equal(ids, paginas);
+    }
+
     private static async Task AfirmarPaginacion(HttpClient http, string ruta, string texto)
     {
         var vacia = await http.GetAsync($"{ruta}?texto=zzqqxxnada");
