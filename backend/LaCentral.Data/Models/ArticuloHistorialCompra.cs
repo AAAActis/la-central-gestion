@@ -23,5 +23,7 @@ public partial class ArticuloHistorialCompra
 
     public virtual FacturaCompra FacturaCompra { get; set; } = null!;
 
+    public virtual FacturaCompra FacturaCompraNavigation { get; set; } = null!;
+
     public virtual Proveedor Proveedor { get; set; } = null!;
 }

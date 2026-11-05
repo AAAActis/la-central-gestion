@@ -16,6 +16,7 @@ namespace LaCentral.Tests.Data;
 /// Todo se relee con un contexto nuevo.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class UsuarioRepositorioPostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;
@@ -32,7 +33,8 @@ public class UsuarioRepositorioPostgreSqlTests
             Assert.True((await CasosDeBajaPostgreSql.DarDeBajaUsuario(c, quienDaDeBaja).EjecutarAsync(usuarioId, "Licencia")).IsSuccess);
 
         await using (var lectura = fixture.CrearContexto())
-            Assert.Equal(quienDaDeBaja, (await lectura.Usuario.AsNoTracking().SingleAsync(u => u.Id == usuarioId)).UsuarioBajaId);
+            Assert.Equal(quienDaDeBaja, (await lectura.UsuarioHistorialBaja.AsNoTracking()
+                .SingleAsync(h => h.UsuarioId == usuarioId && h.FechaReactivacion == null)).UsuarioBajaId);
         await using (var lectura = fixture.CrearContexto())
             Assert.Equal(quienDaDeBaja, (await new UsuarioRepositorio(lectura).ObtenerPorIdAsync(usuarioId))!.UsuarioBajaId);
         await using (var lectura = fixture.CrearContexto())
@@ -60,7 +62,7 @@ public class UsuarioRepositorioPostgreSqlTests
         Assert.Equal("hash-nuevo", fila.HashContrasena);
         Assert.False(fila.Activo);
         Assert.Equal("Licencia", fila.MotivoBaja);
-        Assert.Equal(quienDaDeBaja, fila.UsuarioBajaId);
+        Assert.Equal(quienDaDeBaja, (await new UsuarioRepositorio(lectura).ObtenerPorIdAsync(usuarioId))!.UsuarioBajaId);
     }
 
     // Caracterización: la reactivación de usuario limpia la fila (decisión 2.2) y el
@@ -83,7 +85,7 @@ public class UsuarioRepositorioPostgreSqlTests
         Assert.True(fila.Activo);
         Assert.Null(fila.MotivoBaja);
         Assert.Null(fila.FechaBaja);
-        Assert.Null(fila.UsuarioBajaId);
+        Assert.Null((await new UsuarioRepositorio(lectura).ObtenerPorIdAsync(usuarioId))!.UsuarioBajaId);
         var historial = Assert.Single(await new HistorialBajaRepositorio(lectura).ObtenerAsync(EntidadConHistorialBaja.Usuario, usuarioId));
         Assert.Equal(quienDaDeBaja, historial.UsuarioBajaId);
         Assert.Equal(quienReactiva, historial.UsuarioReactivacionId);

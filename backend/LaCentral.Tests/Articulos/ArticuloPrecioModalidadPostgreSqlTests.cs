@@ -17,6 +17,7 @@ namespace LaCentral.Tests.Articulos;
 /// los seis FALLA: nunca se convierte en una modalidad válida ni en un default.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class ArticuloPrecioModalidadPostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;

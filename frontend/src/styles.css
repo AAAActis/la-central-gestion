@@ -83,6 +83,10 @@
   --alto-boton: 40px;
   --alto-boton-chico: 32px;
   --grosor-foco: 3px;
+  /* Filete rojo: encabezado y panel de marca. El 1 px de diferencia sale del CSS del prototipo
+     (.barra 3px, .acceso-marca 4px); espera confirmación de Javi, puede ser accidental. */
+  --filete: 3px;
+  --filete-marca: 4px;
 
   /* §9 · Animación */
   --ease: cubic-bezier(.4, 0, .2, 1);

@@ -220,12 +220,25 @@ public class RegistrarFacturaCompraUseCaseTests
     }
 
     [Fact]
-    public async Task ArticuloRepetidoEnDosLineas_Invalido()
+    public async Task MismoArticuloYSucursalEnDosLineas_Invalido()
     {
-        var resultado = await Caso().EjecutarAsync(Request(new[] { Linea(100, 1), Linea(100, 2) }));
+        // La clave del detalle es (factura, artículo, sucursal): dos líneas así chocarían en la base.
+        var resultado = await Caso().EjecutarAsync(Request(new[] { Linea(100, 1), Linea(100, 1) }));
 
         AssertFallo(resultado, TipoError.Invalido);
         NoSeEscribioNada();
+    }
+
+    [Fact]
+    public async Task MismoArticuloEnDosSucursales_Registra()
+    {
+        // D9: el destino es por línea. Con la clave de tres columnas (07), el mismo artículo
+        // puede ir a Fragueiro y a San Vicente en la misma factura.
+        var resultado = await Caso().EjecutarAsync(Request(new[] { Linea(100, 1), Linea(100, 2) }));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.NotNull(_registrada);
+        Assert.Equal(new[] { (100, 1), (100, 2) }, _registrada.Lineas.Select(l => (l.ArticuloId, (int)l.SucursalId)));
     }
 
     [Fact]

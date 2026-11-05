@@ -17,6 +17,7 @@ namespace LaCentral.Tests.Articulos;
 /// Todo se relee con un contexto nuevo.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class CrearArticuloPostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;
@@ -73,7 +74,7 @@ public class CrearArticuloPostgreSqlTests
 
         Result<CrearArticuloResponse> resultado;
         await using (var contexto = fixture.CrearContexto())
-            resultado = await Caso(contexto).EjecutarAsync(new(" Bujía NGK BPR6ES ", " Estante 4 ",
+            resultado = await Caso(contexto).EjecutarAsync(new(" Bujía NGK BPR6ES ",
                 new CodigoProveedorRequest[] { new(norte, " bpr-6es "), new(sur, "ngk 4321") }));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
@@ -88,7 +89,6 @@ public class CrearArticuloPostgreSqlTests
         Assert.Equal($"LC-{id:D6}", articulo.CodigoInterno);
         await SinCodigosProvisionalesAsync(fixture);
         Assert.Equal("Bujía NGK BPR6ES", articulo.Nombre);
-        Assert.Equal("Estante 4", articulo.UbicacionDeposito);
         Assert.True(articulo.Activo);
         Assert.Null(articulo.PrecioCosto);
         Assert.Null(articulo.UltimoProveedorId);
@@ -144,8 +144,10 @@ public class CrearArticuloPostgreSqlTests
             => _real.ObtenerSucursalesAsync(ct);
 
         // HU-ART-03: el alta no las usa; delegan en el real.
-        public Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string? codigoInterno,
-            CancellationToken ct = default) => _real.ActualizarDatosAsync(id, nombre, ubicacionDeposito, codigoInterno, ct);
+        public Task<bool> ActualizarDatosAsync(int id, string nombre, string? codigoInterno,
+            CancellationToken ct = default) => _real.ActualizarDatosAsync(id, nombre, codigoInterno, ct);
+        public Task<bool> AsignarUbicacionAsync(int id, short sucursalId, string? ubicacionDeposito, CancellationToken ct = default)
+            => _real.AsignarUbicacionAsync(id, sucursalId, ubicacionDeposito, ct);
         public Task AgregarCodigosAsync(int id, IReadOnlyList<LaCentral.UseCases.Entidades.CodigoAlternativo> codigos,
             CancellationToken ct = default) => _real.AgregarCodigosAsync(id, codigos, ct);
         public Task<bool> RetirarCodigoAsync(int id, int proveedorId, CancellationToken ct = default)
@@ -166,7 +168,7 @@ public class CrearArticuloPostgreSqlTests
         {
             falla = new RepositorioQueFallaAlAsignarCodigo(contexto, lanzar: true);
             await Assert.ThrowsAsync<InvalidOperationException>(() => Caso(contexto, falla)
-                .EjecutarAsync(new("Artículo atómico", null, new CodigoProveedorRequest[] { new(norte, "ATOM-1") })));
+                .EjecutarAsync(new("Artículo atómico", new CodigoProveedorRequest[] { new(norte, "ATOM-1") })));
         }
 
         Assert.True(falla.HabiaFilasAntesDeFallar);
@@ -187,7 +189,7 @@ public class CrearArticuloPostgreSqlTests
         {
             falla = new RepositorioQueFallaAlAsignarCodigo(contexto, lanzar: false);
             resultado = await Caso(contexto, falla)
-                .EjecutarAsync(new("Artículo atómico", null, new CodigoProveedorRequest[] { new(norte, "ATOM-2") }));
+                .EjecutarAsync(new("Artículo atómico", new CodigoProveedorRequest[] { new(norte, "ATOM-2") }));
         }
 
         Assert.False(resultado.IsSuccess);
@@ -203,7 +205,7 @@ public class CrearArticuloPostgreSqlTests
 
         await using (var contexto = fixture.CrearContexto())
         {
-            var resultado = await Caso(contexto).EjecutarAsync(new("Artículo D2", null,
+            var resultado = await Caso(contexto).EjecutarAsync(new("Artículo D2",
                 new CodigoProveedorRequest[] { new(norte, "D2-A"), new(norte, "D2-B") }));
             Assert.Equal(TipoError.Conflicto, resultado.Tipo);
             Assert.Contains("Proveedor PRV-N", resultado.Error);
@@ -229,14 +231,14 @@ public class CrearArticuloPostgreSqlTests
         await using (var contexto = fixture.CrearContexto())
         {
             // Código alternativo de otro artículo, con otro proveedor y otra grafía.
-            var porAlternativo = await Caso(contexto).EjecutarAsync(new("Nuevo 1", null,
+            var porAlternativo = await Caso(contexto).EjecutarAsync(new("Nuevo 1",
                 new CodigoProveedorRequest[] { new(sur, " gn-01 ") }));
             Assert.Equal(TipoError.Conflicto, porAlternativo.Tipo);
             Assert.Contains("MD14753", porAlternativo.Error);
             Assert.Contains("Mouse Genius", porAlternativo.Error);
 
             // Código interno de otro artículo usado como código de proveedor.
-            var porInterno = await Caso(contexto).EjecutarAsync(new("Nuevo 2", null,
+            var porInterno = await Caso(contexto).EjecutarAsync(new("Nuevo 2",
                 new CodigoProveedorRequest[] { new(sur, "md14753") }));
             Assert.Equal(TipoError.Conflicto, porInterno.Tipo);
             Assert.Contains("Mouse Genius", porInterno.Error);
@@ -254,7 +256,7 @@ public class CrearArticuloPostgreSqlTests
 
         await using (var contexto = fixture.CrearContexto())
         {
-            var resultado = await Caso(contexto).EjecutarAsync(new("Artículo con inactivo", null,
+            var resultado = await Caso(contexto).EjecutarAsync(new("Artículo con inactivo",
                 new CodigoProveedorRequest[] { new(inactivo, "INA-1") }));
             Assert.Equal(TipoError.Invalido, resultado.Tipo);
             Assert.Contains("Proveedor PRV-X", resultado.Error);
@@ -296,8 +298,8 @@ public class CrearArticuloPostgreSqlTests
         await using var sanVicente = fixture.CrearContexto();
 
         var resultados = await Task.WhenAll(
-            Caso(fragueiro).EjecutarAsync(new("Alta desde Fragueiro", null, Array.Empty<CodigoProveedorRequest>())),
-            Caso(sanVicente).EjecutarAsync(new("Alta desde San Vicente", null, Array.Empty<CodigoProveedorRequest>())));
+            Caso(fragueiro).EjecutarAsync(new("Alta desde Fragueiro", Array.Empty<CodigoProveedorRequest>())),
+            Caso(sanVicente).EjecutarAsync(new("Alta desde San Vicente", Array.Empty<CodigoProveedorRequest>())));
 
         Assert.All(resultados, r => Assert.True(r.IsSuccess, r.Error));
         Assert.NotEqual(resultados[0].Value.CodigoInterno, resultados[1].Value.CodigoInterno);

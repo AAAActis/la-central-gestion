@@ -17,7 +17,6 @@ public class Cliente
     public List<string> Telefonos { get; set; } = new();
     public List<string> Direcciones { get; set; } = new();
 
-    public int? UsuarioAltaId { get; set; }
     public int? UsuarioBajaId { get; set; }
 
     // HU-CLI-02: refleja el estado del cliente para poder filtrar/mostrar en la búsqueda

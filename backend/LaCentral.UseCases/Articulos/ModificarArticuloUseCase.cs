@@ -45,7 +45,7 @@ public class ModificarArticuloUseCase
             return Result.Failure(TipoError.Invalido, MensajeDadoDeBaja);
 
         var codigos = request.CodigosProveedor ?? Array.Empty<CodigoProveedorRequest>();
-        var validacion = ArticuloValidaciones.ValidarDatos(request.Nombre, request.UbicacionDeposito);
+        var validacion = ArticuloValidaciones.ValidarDatos(request.Nombre);
         if (validacion.IsSuccess)
             validacion = ArticuloValidaciones.ValidarCodigos(codigos);
         if (!validacion.IsSuccess)
@@ -110,12 +110,11 @@ public class ModificarArticuloUseCase
         }
 
         var nombre = request.Nombre.Trim();
-        var ubicacion = string.IsNullOrWhiteSpace(request.UbicacionDeposito) ? null : request.UbicacionDeposito.Trim();
 
         return await _unidadDeTrabajo.EjecutarAsync(async token =>
         {
             // La condición "activo" va en la escritura: otra sesión pudo darlo de baja.
-            if (!await _articulos.ActualizarDatosAsync(id, nombre, ubicacion, codigoInterno, token))
+            if (!await _articulos.ActualizarDatosAsync(id, nombre, codigoInterno, token))
                 return Result.Failure(TipoError.Invalido, MensajeDadoDeBaja);
             if (nuevos.Count > 0)
                 await _articulos.AgregarCodigosAsync(id, nuevos, token);

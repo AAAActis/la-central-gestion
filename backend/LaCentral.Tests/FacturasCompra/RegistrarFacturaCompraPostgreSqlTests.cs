@@ -29,6 +29,7 @@ namespace LaCentral.Tests.FacturasCompra;
 /// de la transacción de IUnidadDeTrabajo: sin ella quedan en rojo.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class RegistrarFacturaCompraPostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;
@@ -110,6 +111,36 @@ public class RegistrarFacturaCompraPostgreSqlTests
         });
 
     // ---- CA1, CA4 y D9 ----
+
+    // N-7, el defecto de negocio que arregla la clave (factura, artículo, sucursal) del 07: se
+    // compran 20 bujías del mismo código, 10 para cada sucursal. Antes la segunda línea no
+    // entraba. Caso de uso real contra PostgreSQL; se relee con un contexto nuevo.
+    [PostgreSqlFact]
+    public async Task VeinteDelMismoArticulo_DiezParaCadaSucursal_EntraYElStockQuedaRepartido()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+
+        Result<RegistrarFacturaCompraResponse> resultado;
+        await using (var contexto = fixture.CrearContexto())
+            resultado = await Caso(contexto, e).EjecutarAsync(Compra(e) with
+            {
+                Lineas = new[]
+                {
+                    new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal1, 10m, 200m, 0m),
+                    new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal2, 10m, 200m, 0m)
+                }
+            });
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        await using var relectura = fixture.CrearContexto();
+        Assert.Equal(new[] { (e.Sucursal1, 10m), (e.Sucursal2, 10m) },
+            (await relectura.FacturaCompraDetalle.AsNoTracking().Where(d => d.FacturaCompraId == resultado.Value.Id)
+                .OrderBy(d => d.SucursalId).ToListAsync()).Select(d => (d.SucursalId, d.Cantidad)));
+        var stock = await StockAsync(relectura);
+        // Antes de la compra: 3 en la sucursal 1 y 0 en la 2 (SembrarAsync).
+        Assert.Equal((13m, 10m), (stock[(e.Comprado1, e.Sucursal1)], stock[(e.Comprado1, e.Sucursal2)]));
+    }
 
     [PostgreSqlFact]
     public async Task Registrar_EscribeFacturaStockCostoUltimoProveedorEHistorial_SoloDeLosComprados()

@@ -21,6 +21,7 @@ namespace LaCentral.Tests.Integracion;
 /// repositorio y PostgreSQL en un esquema aislado. El usuario sale del token.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private const string JwtKey = "ClaveSecretaDePruebaMuyLargaParaQueNoFalle123!";

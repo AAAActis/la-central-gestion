@@ -154,9 +154,11 @@ public class RegistrarFacturaCompraUseCase
             if (!EntraEnColumna(linea.DescuentoPorcentaje, Descuento))
                 return Result.Failure(TipoError.Invalido, $"El descuento del artículo {linea.ArticuloId} admite hasta 2 decimales.");
         }
-        // Una línea por artículo: es la clave primaria del detalle.
-        if (request.Lineas.GroupBy(l => l.ArticuloId).FirstOrDefault(g => g.Count() > 1) is { } repetido)
-            return Result.Failure(TipoError.Invalido, $"El artículo {repetido.Key} aparece en más de una línea.");
+        // Una línea por artículo y sucursal: es la clave primaria del detalle (07). El mismo
+        // artículo puede ir a dos sucursales en la misma factura (D9).
+        if (request.Lineas.GroupBy(l => (l.ArticuloId, l.SucursalId)).FirstOrDefault(g => g.Count() > 1) is { } repetido)
+            return Result.Failure(TipoError.Invalido,
+                $"El artículo {repetido.Key.ArticuloId} aparece en más de una línea con destino a la sucursal {repetido.Key.SucursalId}.");
 
         return Result.Success();
     }

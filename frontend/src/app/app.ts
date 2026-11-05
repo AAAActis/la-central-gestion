@@ -13,7 +13,7 @@ import { SesionActual } from './nucleo/sesion';
   styles: `
     :host { display: flex; flex-direction: column; min-height: 100vh; }
     main { flex: 1 0 auto; width: 100%; box-sizing: border-box; }
-    header { border-bottom: var(--grosor-foco) solid var(--rojo); }
+    header { border-bottom: var(--filete) solid var(--rojo); }
     .encabezado-izquierda { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0 var(--esp-24); min-width: 0; }
     app-marca { align-self: center; padding: var(--esp-8) 0; }
     .usuario { display: flex; align-items: center; gap: var(--esp-12); margin-left: auto; }

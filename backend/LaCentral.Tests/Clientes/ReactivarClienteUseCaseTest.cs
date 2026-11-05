@@ -38,7 +38,7 @@ public class ReactivarClienteUseCaseTests
     public async Task EjecutarAsync_CuandoClienteYaEstaActivo_RetornaInvalido()
     {
         // Arrange
-        var cliente = new Cliente { UsuarioAltaId = 1, Activo = true };
+        var cliente = new Cliente { Activo = true };
         _repositorioMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
@@ -54,7 +54,7 @@ public class ReactivarClienteUseCaseTests
     public async Task EjecutarAsync_CuandoEsInactivo_LoActivaYRetornaExito()
     {
         // Arrange
-        var cliente = new Cliente { UsuarioAltaId = 1, Activo = false, MotivoBaja = "Temporal", FechaBaja = DateTime.UtcNow };
+        var cliente = new Cliente { Activo = false, MotivoBaja = "Temporal", FechaBaja = DateTime.UtcNow };
         _repositorioMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
         _repositorioMock.Setup(r => r.ActualizarAsync(cliente, It.IsAny<CancellationToken>())).ReturnsAsync(true);
@@ -73,7 +73,7 @@ public class ReactivarClienteUseCaseTests
     [Fact]
     public async Task EjecutarAsync_CuandoLaFilaDesaparecioAntesDeActualizar_RetornaNoEncontrado()
     {
-        var cliente = new Cliente { UsuarioAltaId = 1, Activo = false, MotivoBaja = "Temporal", FechaBaja = DateTime.UtcNow };
+        var cliente = new Cliente { Activo = false, MotivoBaja = "Temporal", FechaBaja = DateTime.UtcNow };
         _repositorioMock.Setup(r => r.ObtenerDetallePorIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
         _repositorioMock.Setup(r => r.ActualizarAsync(cliente, It.IsAny<CancellationToken>())).ReturnsAsync(false);
