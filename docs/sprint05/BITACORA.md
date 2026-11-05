@@ -471,3 +471,54 @@ vale esta.)
 - 12:45 · Pasos 2 y 3: `CLAUDE.md` §4 sin el párrafo «antes de abrir su PR: no la suite completa» ni la lista de tres momentos; en su lugar la remisión a la Política de pruebas con el motivo (DoD punto 10). §5 alineada: al verificador se le pasan hash, línea literal del resumen y conteo. `verificador-tdd.md`: cláusula de la suite informada y tope 8–20 con lista de líneas sin mutar (texto de Santi tal cual). Queda abierto: el techo de 25 corridas filtradas del verificador puede no alcanzar para 20 mutaciones más el rojo de cada commit; no se tocó, lo decide el equipo.
 - 12:50 · Paso 4: commit `62fe531`, push, cuerpo del #142 actualizado con las tres correcciones (la primera, una contradicción entre la Política de pruebas y la §4) y el merge de develop.
 **BLOQUEADO EN:** paso 5, la paginación de clientes y proveedores: sigue sin respuesta qué hace el 404 de «sin resultados» (200 con página vacía o se queda; toca el CA-003 de dos HU cerradas). Lo decide Santi. También a confirmar con Santi: el `GUION-DEMO.md` y el ensayo de la demo, que el ESTADO de develop pone primero después de los merges y que la instrucción de hoy no menciona.
+- 12:55 · **Respuestas de Santi (verbatim):**
+> 404: Opción 1: 200 con página vacía, igual que artículos.
+>
+> Motivo: el 404 ahí está mal usado. Una búsqueda sin coincidencias es una consulta exitosa
+> que no encontró nada; el 404 afirma que el recurso no existe, y la colección existe. Con
+> paginación es más evidente: la página 5 de un resultado de 3 páginas está vacía
+> legítimamente. Y si el frontend trata el 404 como "sin resultados", un 404 real —ruta mal
+> escrita, endpoint movido— deja de ser detectable.
+>
+> Tres condiciones:
+>
+> 1 · La respuesta vacía lleva la misma envoltura de paginación que la llena: total 0, página,
+> tamaño. El componente de la 042 tiene que poder dibujar su estado vacío sin casos especiales
+> por endpoint. Si los tres endpoints no responden igual, el componente necesita una excepción
+> por cada uno y eso termina en un bug.
+>
+> 2 · El CA-003 de HU-CLI-02 y el de la HU de proveedores se reescriben como v1.1 en su
+> proforma, con el motivo y la fecha en el control de cambios. No se sobreescribe la v1.0. Es
+> el punto 8 de la Definición de Terminado: un CA que no aplica como está escrito se reescribe
+> en la misma fase, declarado.
+>
+> 3 · El PR lo dice en su cuerpo, en una sección aparte: "cambia el comportamiento de dos
+> endpoints de HU ya cerradas, y por qué". Que Javi lo vea sin tener que descubrirlo en el
+> diff.
+>
+> Demo: Opción 1. La demo es mañana y es lo único con fecha. Tenés razón en marcarlo: mi
+> instrucción de hoy lo omitió.
+>
+> Y ahora hay algo que ayer no estaba: #141, #144 y #145 están mergeados, así que develop
+> tiene el re-scaffold, la ubicación por sucursal, la confirmación con motivo y el componente
+> de listado. El ensayo tiene que ser sobre develop con todo eso adentro, no sobre lo de ayer.
+>
+> 1 · Recorrelo vos de punta a punta contra lacentral_demo, por el navegador: entrar con
+> operador.demo, buscar un artículo, abrir su ficha con existencia y ubicación por sucursal, y
+> ver el historial de compras con precios de proveedores distintos en fechas distintas. Si algo
+> no se puede mostrar o se ve roto, decímelo AHORA, no mañana.
+>
+> 2 · docs/sprint05/GUION-DEMO.md: qué se muestra, en qué orden, con qué usuario y con qué
+> artículo concreto de los 30 sembrados — el código exacto, no "un artículo cualquiera". Que
+> no haya que buscar uno que sirva mientras el dueño mira.
+>
+> 3 · Una sección de qué NO se muestra y por qué: el comparador y los reportes no existen
+> todavía, y las diferencias visuales de la Fase 2 están pendientes de que Javi las priorice.
+> Es mejor decirlo antes que que lo pregunte él.
+>
+> 4 · Confirmá que la clave de ~/.config/lacentral/clave-demo.txt funciona entrando por el
+> frontend, no solo por HTTP. Si mañana no entramos, no hay demo.
+>
+> Después de eso, la paginación en su PR y la 045.
+
+**Plan corregido:** 5. Ensayo de la demo sobre develop contra `lacentral_demo`, por el navegador, con `operador.demo` (y la clave del archivo, por el frontend). 6. `GUION-DEMO.md` con código exacto de artículo y la sección de qué no se muestra. 7. Paginación (200 + envoltura, CA-003 v1.1 en las dos proformas, sección aparte en el PR). 8. 045 con la baja.
