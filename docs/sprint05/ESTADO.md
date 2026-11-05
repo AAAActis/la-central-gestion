@@ -22,9 +22,9 @@ sobre `lacentral_demo`.**
      acá qué se probó y con qué datos (punto 10 de la Definición de Terminado). **Pendiente.**
   2. El dueño lo usó, o está agendado que lo use, y lo que dijo quedó anotado acá. **Pendiente:
      ni Santi ni el dueño probaron nunca el sistema.**
-- **La demo del 06/11 no muestra todo el entregable.** La ubicación por sucursal es código del
-  #141, que necesita el 07 en `lacentral_demo`, y por S5-06 el 07 no se aplica antes de la demo.
-  El 06/11 la ficha es la de `develop`.
+- **La demo del 06/11 corre sobre `develop` con el #141**, con el 07 y el 08 aplicados a
+  `lacentral_demo` el 05/11 (S5-06 levantada, ver Decisiones). Guion: `GUION-DEMO.md`. **No
+  muestra el historial de compras**: no hay pantalla ni endpoint que lo lea (HU-ART-06 pendiente).
 
 ---
 
@@ -36,7 +36,8 @@ sobre `lacentral_demo`.**
 | S5-02 | **`stock.ubicacion_deposito` pasa de `VARCHAR(30)` a `VARCHAR(60)`** en las dos bases (Santi, con el superusuario). Versionado en `08_Ubicacion_Deposito_60.sql`. La validación de la API no cambia. | El 30 del 07 fue un número sin fundamento; la validación ya estaba en 60 y la columna de origen, `articulo.ubicacion_deposito`, era de 60. |
 | S5-03 | **La ubicación sale del alta y de la modificación del artículo.** Se carga desde la ficha, **por sucursal**, igual que se ve la cantidad. | El estante se asigna cuando la mercadería llega; en el alta no hay existencia en ninguna sucursal. Copiarla a todas afirmaría que la pieza está en el mismo estante en las dos: la redundancia que N-9 eliminó. |
 | S5-04 | **Numeración de scripts:** la normalización llegó como `05_…` y queda **07**. El 05 es `05_rol_tests.sql`; el **06 sigue reservado para C2**. | Primer número libre. |
-| S5-06 | **El 07 y el 08 NO se aplican a `lacentral_demo` antes de la demo.** Van el lunes 09/11, o antes si el #141 está mergeado y verificado — **nunca jueves ni viernes**. | La demo no puede depender de que el #141 entre a tiempo. |
+| S5-06 | ~~**El 07 y el 08 NO se aplican a `lacentral_demo` antes de la demo.** Van el lunes 09/11, o antes si el #141 está mergeado y verificado — **nunca jueves ni viernes**.~~ **Levantada el 05/11/2026 (Santi)**: el 07 y el 08 se aplicaron ese jueves. | Su motivo era que la demo no dependiera de que el #141 entrara a tiempo; el #141 entró y la regla perdió su motivo. Sin el 07, `develop` daba 500 en la ficha contra la demo (`codigo_barras` no existe). |
+| S5-07 | **Hasta que Sergio pruebe el sistema no se construye nada nuevo** (05/11/2026, Santi): ni la paginación de clientes y proveedores ni la 045. | La demo es lo único con fecha. |
 | S5-05 | **La comparación de esquemas `lacentral_test` ↔ `lacentral` la hace Santi** con el superusuario: el rol de desarrollo no tiene `CONNECT` sobre `lacentral` y no se le va a dar. 04/11: md5 de columnas idéntico. | Seguridad de los datos reales. |
 
 ---
@@ -48,7 +49,7 @@ sobre `lacentral_demo`.**
 | a · C3 | `lacentral_demo` creada (owner `lacentral_santi`), con Parte A + 01 a 04, y **sembrada** con `backend/db/demo/sembrar_demo.cs` contra la API de `develop` | `feature/c3-lacentral-demo` | ver abajo | **Hecha 04/11.** Esquema igual al de `develop` (huella comparada). 2 usuarios, 5 proveedores, 30 artículos, 90 códigos, 15 facturas, 180 líneas, 15 fechas. Login de `operador.demo` y búsqueda verificados por HTTP |
 | b · re-scaffold | 07 versionado, re-scaffold, arreglos del modelo, ubicación por sucursal (backend y ficha) | `feature/normalizacion-3fn-rescaffold` | ver abajo | **Hecha 04/11.** `verificador-tdd`: ronda 1 NO APTO (arreglado), **ronda 2 APTO**. `auditor-persistencia`: **APTO**. Las dos sobre `0d41569` |
 | c · tests | Los 7 del esquema y la corrida completa | idem | idem | **Hecha.** Ver «Tests» |
-| d · 07 en demo | Aplicar 07 y 08 a `lacentral_demo` | — | — | **Postergada (S5-06):** lunes 09/11 o con el #141 mergeado y verificado; nunca jueves ni viernes |
+| d · 07 en demo | Aplicar 07 y 08 a `lacentral_demo` | — | — | **Hecha 05/11** (S5-06 levantada). 07: compuerta OK, cierre «TODO OK», PK de `factura_compra_detalle` de tres columnas, 24 provincias. 08: «VARCHAR(60). TODO OK» |
 
 **C3 (compuerta del Sprint 4): cerrada el 04/11/2026.** La demo del viernes corre sobre
 `lacentral_demo` con el esquema de `develop`. **No se toca hasta después de la demo.** La clave
@@ -61,7 +62,7 @@ máquina de Santi; no está en el repo.
 |---|---|
 | `lacentral_test` | **Aplicado** a mano por Santi, 04/11 |
 | `lacentral` | **Aplicado** a mano por Santi, 04/11 |
-| `lacentral_demo` | **Pendiente**, después del 07 (S5-06) |
+| `lacentral_demo` | **Aplicado** 05/11, después del 07 |
 
 Es idempotente: si la columna ya es de 60 no hace el `ALTER`. Probado en `lacentral_test` en
 una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
@@ -205,6 +206,10 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
 ---
 
 ## PRÓXIMA SESIÓN
+
+**05/11 · HU paradas (S5-07).** Demo del 06/11 con `GUION-DEMO.md`. Después de que Sergio la
+pruebe: la paginación de clientes y proveedores (200 con página vacía, CA-003 v1.1 en las dos
+proformas) y la 045 con la baja y su confirmación en el mismo PR.
 
 0. **Lo primero después del merge de Javi: `docs/sprint05/COMO-PROBARLO.md` y el ensayo de la
    demo** de punta a punta por el frontend contra `lacentral_demo`. Ni Santi ni el dueño
