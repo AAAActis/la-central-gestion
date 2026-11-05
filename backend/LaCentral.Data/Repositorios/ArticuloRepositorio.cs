@@ -134,7 +134,8 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
             .ExecuteDeleteAsync(ct) > 0;
 
     public async Task<bool> DarDeBajaAsync(int id, string motivo, DateTime fechaBaja, CancellationToken ct = default)
-        => await _context.Articulo.Where(a => a.Id == id && a.Activo)
+        // 014 · CA-002: la existencia se mira en el mismo UPDATE, no en una lectura previa.
+        => await _context.Articulo.Where(a => a.Id == id && a.Activo && !a.Stock.Any(s => s.Cantidad > 0))
             .ExecuteUpdateAsync(s => s
                 .SetProperty(a => a.Activo, false)
                 .SetProperty(a => a.MotivoBaja, motivo)
