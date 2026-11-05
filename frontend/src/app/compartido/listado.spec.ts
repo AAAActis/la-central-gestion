@@ -100,6 +100,9 @@ describe('Listado (HU-UI-04)', () => {
 
   it('CA-002 · «Volver a buscar» devuelve el foco al campo', () => {
     buscar('zx999');
+    // Un clic real con el mouse deja el foco en el botón: el click() programático no lo mueve.
+    boton('Volver a buscar')?.focus();
+    expect(document.activeElement).not.toBe(campo());
     boton('Volver a buscar')?.click();
     expect(document.activeElement).toBe(campo());
   });
@@ -164,6 +167,14 @@ describe('Listado (HU-UI-04)', () => {
 
     const alerta = raiz().querySelector('[role="alert"]');
     expect(alerta?.textContent).toContain('El texto es demasiado largo.');
+    expect(raiz().querySelector('table')).toBeNull();
+    // Después del error se puede volver a buscar: el botón no queda trabado en carga.
+    expect(boton('Buscar')?.disabled).toBeFalse();
+    expect(boton('Buscar')?.getAttribute('aria-busy')).toBeNull();
+
+    // Y mientras carga la búsqueda siguiente no reaparece la tabla de antes del error.
+    anfitrion().respuesta = () => new Subject<Pagina<Item>>();
+    buscar('cosa');
     expect(raiz().querySelector('table')).toBeNull();
   });
 
