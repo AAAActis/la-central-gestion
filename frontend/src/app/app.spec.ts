@@ -85,8 +85,8 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       entrarComo('OPERADOR');
       await ir(fixture, '/articulos');
       const enlaces = enlacesDelMenu(fixture);
-      expect(enlaces.map(a => a.textContent?.trim())).toEqual(['Artículos', 'Factura de compra']);
-      expect(enlaces.map(a => a.getAttribute('href'))).toEqual(['/articulos', '/factura-compra']);
+      expect(enlaces.map(a => a.textContent?.trim())).toEqual(['Artículos', 'Clientes', 'Proveedores', 'Factura de compra']);
+      expect(enlaces.map(a => a.getAttribute('href'))).toEqual(['/articulos', '/clientes', '/proveedores', '/factura-compra']);
     });
 
     it('CA1 · marca el módulo en el que está el usuario', async () => {
@@ -263,14 +263,14 @@ describe('appConfig · el cableado real de la aplicación', () => {
   // La sesión se guarda en sessionStorage (HU-UI-03): sin limpiarlo, un test hereda la del anterior.
   beforeEach(() => sessionStorage.clear());
 
-  it('con los providers de producción, el menú del operador lleva a Artículos y a Factura de compra', async () => {
+  it('con los providers de producción, el menú del operador lleva a Artículos, Clientes, Proveedores y Factura de compra', async () => {
     TestBed.configureTestingModule({ imports: [App], providers: [...appConfig.providers, provideHttpClientTesting()] });
     const fixture = TestBed.createComponent(App);
     fixture.autoDetectChanges();
     entrarComo('OPERADOR');
     await ir(fixture, '/factura-compra');
 
-    expect(enlacesDelMenu(fixture).map(a => a.getAttribute('href'))).toEqual(['/articulos', '/factura-compra']);
+    expect(enlacesDelMenu(fixture).map(a => a.getAttribute('href'))).toEqual(['/articulos', '/clientes', '/proveedores', '/factura-compra']);
     expect(pantalla(fixture, 'app-factura-compra')).not.toBeNull();
   });
 });
