@@ -155,6 +155,10 @@ agregá qué quedó abierto.
 
 - **Se agrega, nunca se reescribe.** La bitácora es rastro, no resumen. Un bloque viejo no
   se corrige: si algo cambió, va en un bloque nuevo.
+- **La única línea de un bloque que se reescribe es su propio `**Estado:**`**, de "en curso"
+  a "terminada". Todo lo demás del bloque es de solo agregar: si algo cambió, va en una línea
+  nueva o en un bloque nuevo. Si el Estado se duplica en vez de reemplazarse, la próxima
+  sesión lee el bloque como abierto y rehace trabajo.
 - **Al arrancar o al retomar una sesión, lo PRIMERO que hacés es leer el último bloque con
   `**Estado:** en curso`.** Si hay uno, seguís desde ahí: no vuelvas a empezar ni rehagas
   lo que ya figura hecho.
