@@ -24,17 +24,15 @@ public class ConsultarClientesUseCase
                 TipoError.Invalido, "Ingresá una razón social o un CUIT/CUIL para buscar.");
         }
 
-        var (lista, total) = await _clienteRepositorio.BuscarAsync(texto.Trim(), incluirInactivos, pagina, tamanoPagina, ct);
-        var clientes = lista;
-
-        // CA: sin resultados hay que avisarlo explícitamente, no devolver una lista vacía sin más.
-        if (clientes.Count == 0)
+        if (pagina < 1 || tamanoPagina is < 1 or > 100 || (long)(pagina - 1) * tamanoPagina > int.MaxValue)
         {
-            return Result<PaginaDto<ClienteResumenDto>>.Failure(
-                TipoError.NoEncontrado, "No se encontraron clientes que coincidan con la búsqueda.");
+            return Result<PaginaDto<ClienteResumenDto>>.Failure(TipoError.Invalido, "La página o su tamaño no son válidos.");
         }
 
-        var respuesta = clientes
+        // CA-003 v1.1 (#147): sin coincidencias es una página vacía, no un 404.
+        var (lista, total) = await _clienteRepositorio.BuscarAsync(texto.Trim(), incluirInactivos, pagina, tamanoPagina, ct);
+
+        var respuesta = lista
             .Select(c => new ClienteResumenDto(
                 c.Id, c.Codigo, c.RazonSocial, c.Cuit, c.CondicionFiscal, c.CondicionPago, c.Activo))
             .ToList();

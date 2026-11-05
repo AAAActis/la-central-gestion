@@ -89,7 +89,7 @@ public class ClienteRepositorio : IClienteRepositorio
         {
             // Coincidencia exacta: igual criterio que ExisteCuitAsync, sin normalizar
             // el valor guardado en la base.
-            query = query.Where(c => c.CuitCuil == texto);
+            query = query.Where(c => c.CuitCuil == texto).OrderBy(c => c.Id);
         }
         else
         {
@@ -97,11 +97,13 @@ public class ClienteRepositorio : IClienteRepositorio
             // ix_cliente_razon_social_trgm ya existente en la base.
             query = query
                 .Where(c => EF.Functions.TrigramsSimilarity(c.RazonSocial, texto) > UmbralSimilitudRazonSocial)
-                .OrderByDescending(c => EF.Functions.TrigramsSimilarity(c.RazonSocial, texto));
+                .OrderByDescending(c => EF.Functions.TrigramsSimilarity(c.RazonSocial, texto))
+                .ThenBy(c => c.Id);
         }
 
-        var clientesBd = await query.ToListAsync(cancellationToken);
-        var total = clientesBd.Count;
+        var total = await query.CountAsync(cancellationToken);
+        // El orden tiene desempate por Id: sin él, dos páginas pueden repetir o saltear filas.
+        var clientesBd = await query.Skip((pagina - 1) * tamanoPagina).Take(tamanoPagina).ToListAsync(cancellationToken);
 
         // Mapeo inverso: Entidad de EF Core -> Entidad de dominio pura.
         return (clientesBd
