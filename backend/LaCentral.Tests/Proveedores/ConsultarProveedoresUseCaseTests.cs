@@ -104,6 +104,12 @@ public class ConsultarProveedoresUseCaseTests
     [InlineData(int.MaxValue, 100)] // (página − 1) × tamaño no entra en un int: Skip desbordaría
     public async Task Ejecutar_PaginaOTamanoInvalido_DevuelveInvalidoSinConsultarRepositorio(int pagina, int tamanoPagina)
     {
+        // B3 del verificador-tdd (05/11/2026): sin este Setup, el mock devuelve (null, 0). Sin la guarda,
+        // el caso de uso reventaba con NullReferenceException antes de llegar a las aserciones. Con una
+        // página vacía, el test falla por lo que afirma: que no se consulte.
+        _mockRepo.Setup(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(((IReadOnlyList<Proveedor>)new List<Proveedor>(), 0));
+
         var resultado = await _consultarUseCase.EjecutarAsync("filtro", false, pagina, tamanoPagina);
 
         Assert.Equal(TipoError.Invalido, resultado.Tipo);
