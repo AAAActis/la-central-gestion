@@ -22,6 +22,7 @@ namespace LaCentral.Tests.Integracion;
 /// aislado del fixture. Nada mockeado.
 /// </summary>
 [Trait("Api", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private const string JwtKey = "ClaveSecretaDePruebaMuyLargaParaQueNoFalle123!";

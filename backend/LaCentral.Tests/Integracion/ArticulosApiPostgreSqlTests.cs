@@ -21,6 +21,7 @@ namespace LaCentral.Tests.Integracion;
 /// Result → HTTP) contra PostgreSQL real, en el esquema aislado del fixture. Nada mockeado.
 /// </summary>
 [Trait("Api", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class ArticulosApiPostgreSqlTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private const string JwtKey = "ClaveSecretaDePruebaMuyLargaParaQueNoFalle123!";

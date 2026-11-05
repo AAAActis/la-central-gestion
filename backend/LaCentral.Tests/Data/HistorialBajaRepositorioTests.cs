@@ -23,6 +23,7 @@ namespace LaCentral.Tests.Data;
 /// contexto nuevo.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class HistorialBajaRepositorioTests
 {
     private static readonly EntidadConHistorialBaja[] Entidades = Enum.GetValues<EntidadConHistorialBaja>();

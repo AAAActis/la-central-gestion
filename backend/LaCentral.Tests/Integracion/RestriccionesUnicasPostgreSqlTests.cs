@@ -12,6 +12,7 @@ namespace LaCentral.Tests.Integracion;
 /// Si uno no existe en el esquema real, esa violación sale como 500 y nadie se entera.
 /// </summary>
 [Trait("Api", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class RestriccionesUnicasPostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;

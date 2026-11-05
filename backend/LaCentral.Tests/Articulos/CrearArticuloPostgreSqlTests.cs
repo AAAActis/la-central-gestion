@@ -17,6 +17,7 @@ namespace LaCentral.Tests.Articulos;
 /// Todo se relee con un contexto nuevo.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class CrearArticuloPostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;

@@ -13,6 +13,7 @@ namespace LaCentral.Tests.Integracion;
 /// con un contexto nuevo.
 /// </summary>
 [Trait("Esquema", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class EsquemaNormalizacionPostgreSqlTests
 {
     private const string ViolacionFk = "23503";

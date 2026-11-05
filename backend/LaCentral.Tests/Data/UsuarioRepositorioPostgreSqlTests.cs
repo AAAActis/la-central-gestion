@@ -16,6 +16,7 @@ namespace LaCentral.Tests.Data;
 /// Todo se relee con un contexto nuevo.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class UsuarioRepositorioPostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;

@@ -29,6 +29,7 @@ namespace LaCentral.Tests.FacturasCompra;
 /// de la transacción de IUnidadDeTrabajo: sin ella quedan en rojo.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class RegistrarFacturaCompraPostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;
