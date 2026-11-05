@@ -47,6 +47,12 @@ más de 70 tests van contra PostgreSQL real por una red externa. Eso define el m
 commit. Un `dotnet test` por cada commit de una rama de treinta commits es una hora de
 reloj y es la razón por la que esta herramienta se colgó.
 
+Si el que te invoca te informa que la suite ya se corrió sobre ese mismo HEAD en esta
+pasada, no la repitas: usá ese número y decilo.
+
+Corré la suite de frontend **solo si el diff toca `frontend/`**, y la de backend solo si
+toca `backend/`. Si el diff es de un solo lado, la otra no se corre y se dice en el reporte.
+
 **El rojo de cada commit se comprueba con el test puntual, no con la suite.** Usá
 `dotnet test --filter "FullyQualifiedName~<NombreDelTest>"`. Lo mismo para cada
 mutación: corré solo el test que tiene que ponerse en rojo.
@@ -86,6 +92,12 @@ cobertura y es bloqueante.
 Elegí las mutaciones donde más duele: guardas y validaciones, el valor que se devuelve
 ante un fallo, los `null` por defecto, la condición de un `if` de negocio, el alcance de
 una transacción, y los roles de autorización.
+
+Las mutaciones se aplican **solo a líneas que el diff agrega o modifica**, nunca a código
+que el diff no tocó. **Tope: 8 mutaciones por invocación.** Elegilas donde más duele —
+guardas, el valor devuelto ante un fallo, la condición de un `if` de negocio, el alcance de
+una transacción, los roles de autorización — y si quedaron líneas de riesgo sin mutar por
+el tope, decilo en el reporte.
 
 **4 · La suite, una vez, al final.** `dotnet build --no-incremental` y `dotnet test`
 sobre HEAD. Reportá total, pasados, fallados, omitidos, warnings, y cuántos corren

@@ -225,3 +225,115 @@ El primero es el que se usa cuando el cambio no toca persistencia.
 Una prueba no ejecutada **no** es una prueba aprobada. Filtrar decide *cuándo* se corre
 cada cosa, nunca *si* se corre: todo lo que el cambio afecta se prueba antes del PR, y el
 conteo que queda escrito es el de una corrida real, no una estimación.
+
+## 1 · El sprint se cierra por entregable, no por fecha
+
+Un sprint termina cuando **su entregable se puede usar**, no cuando se cumple una fecha ni
+cuando los tests están en verde.
+
+El entregable de cada sprint se escribe al abrirlo, en `docs/sprint<NN>/ESTADO.md`, con esta
+forma: *"al cerrar este sprint, una persona puede entrar al sistema y <hacer tal cosa>,
+sobre `lacentral_demo`"*. Si eso no se puede escribir en una línea, el sprint no está
+definido.
+
+**El sprint no se cierra hasta que:**
+
+1. El entregable se recorrió a mano en el navegador contra `lacentral_demo`, y quedó
+   registrado qué se probó y con qué datos. Es el punto 10 de la Definición de Terminado.
+2. El dueño lo usó, o está agendado que lo use, y lo que dijo quedó anotado en el `ESTADO`.
+
+Las fechas del Product Backlog y del Plan de Acción son **estimaciones**, y así se rotulan.
+No cierran ni abren un sprint.
+
+---
+
+## 2 · Un PR por historia de usuario
+
+Cada HU va en su propia rama y su propio PR. No se agrupan dos HU en un PR, y no se parte
+una HU en tres PR salvo que una dependencia obligue.
+
+El cuerpo del PR lleva: los CA uno por uno con su estado, la corrida de pruebas que los
+respalda, qué quedó sin verificar y por qué, y los cambios en código ajeno si hubo.
+
+---
+
+## 3 · Cuando un `pull` trae cambios en medio de una tarea
+
+Trabajan tres personas con tres asistentes sobre el mismo repositorio. Que algo cambie bajo
+tus pies no es la excepción: es lo normal.
+
+**Antes de la primera acción de cada tarea, y de nuevo cada vez que vas a abrir un PR:**
+
+```bash
+git fetch --all --prune
+git log --oneline HEAD..origin/develop
+```
+
+**Si `origin/develop` trae commits que no tenés**, no sigas de largo. Hacé esto, en orden:
+
+1. Mirá qué archivos tocaron esos commits: `git diff --name-only HEAD...origin/develop`.
+2. Cruzalo contra lo que vos estás tocando en esta tarea.
+3. **Si no se solapan:** `git merge origin/develop`, una línea en la bitácora diciendo qué
+   entró, y seguís.
+4. **Si se solapan:** antes de resolver nada, escribí en la bitácora qué cambió, qué de tu
+   plan queda inválido, y qué vas a hacer distinto. Después mergeá y ajustá. El plan
+   corregido va a la bitácora, no en tu cabeza.
+5. **Si lo que entró invalida una decisión de negocio de tu tarea** —no el código, la
+   decisión—, **PARÁ y preguntá.** Ejemplo: entró un cambio de esquema que contradice el
+   contrato que estabas implementando.
+
+**Nunca rebasees una rama ya pusheada.** Va `git merge origin/develop`. Rebasear reescribe
+historia publicada y rompe la copia de los demás.
+
+Al retomar una sesión cortada, el `fetch` y la comparación son el **segundo** paso, después
+de leer el último bloque de la bitácora con `Estado: en curso`.
+
+---
+
+## 4 · Cuándo se corre qué prueba
+
+Esta sección complementa la política de pruebas y la aclara para el caso de varias HU en un
+sprint.
+
+**Durante la HU:** solo las pruebas de esa HU y de lo que depende de lo que tocó. Filtradas,
+con `--no-build`. Segundos, no minutos.
+
+**Al cerrar la HU, antes de abrir su PR:** las de la HU más una corrida de integración del
+camino propio de la HU contra PostgreSQL. **No la suite completa.**
+
+**La suite completa se corre en tres momentos, y en ninguno más:**
+
+1. Al cerrar el sprint, antes de declarar el entregable.
+2. Después de un merge a `develop`, porque es el estado que hereda el equipo.
+3. Cuando el cambio tocó el esquema de la base o un contrato compartido (un DTO, una
+   interfaz de repositorio, un componente de `compartido/`).
+
+**Si la suite completa falla, no la vuelvas a correr entera para ver si se arregló.**
+Filtrado sobre lo que falló hasta que esté verde, y la completa **una sola vez** al final.
+Una corrida en rojo mete una traza por fallo en el contexto.
+
+---
+
+## 5 · Cómo se invocan los dos verificadores
+
+> Esta sección sí va en `CLAUDE.md`: es responsabilidad de quien los invoca, no de ellos.
+
+Los dos subagentes ya están bien presupuestados: los dos corren la suite completa una sola
+vez al final, los dos tienen techo de corridas filtradas y los dos acotan su alcance al diff
+que se les da. **Lo que hace que salgan caros es cómo se los invoca.**
+
+- **Una invocación por PR, al cerrar la HU.** Nunca durante el desarrollo, y nunca dos veces
+  por el mismo HEAD.
+- **Al invocarlos, acotales el alcance explícitamente** a los commits de la HU. Los dos
+  respetan el alcance que se les pasa; si no se les pasa ninguno, revisan todo.
+- **Decile al `verificador-tdd` si ya corriste la suite completa sobre ese mismo HEAD**, con
+  el número. El `auditor-persistencia` ya tiene la regla de no repetirla en ese caso; el
+  verificador la va a tener (ver §6). Entre los dos, la suite se corre **una vez**, no tres.
+- **`auditor-persistencia` solo se invoca si el diff toca `backend/` o el esquema.** Si la HU
+  es de frontend, no se invoca y en el PR se declara "no aplica".
+- **Saca los worktrees ANTES de invocarlos.** La regla R1 de los dos los hace abortar si
+  existe cualquier worktree que no sea el principal, y un aborto es una invocación tirada a
+  la basura. `git worktree list`, sacá los tuyos con `git worktree remove` (sin `--force`, así
+  git te avisa si alguno está sucio), y `git worktree prune`.
+- **Si el PR se actualiza con commits que solo tocan documentación, no se relanzan.** Se
+  declara en el cuerpo del PR qué commits quedaron fuera de la verificación y por qué.
