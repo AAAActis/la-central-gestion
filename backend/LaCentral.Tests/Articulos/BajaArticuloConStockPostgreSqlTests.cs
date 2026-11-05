@@ -78,11 +78,18 @@ public class BajaArticuloConStockPostgreSqlTests
     }
 
     [PostgreSqlFact]
-    public async Task Baja_SinExistencia_EscribeLaFilaYElHistorial()
+    public Task Baja_SinExistencia_EscribeLaFilaYElHistorial() => BajaQueSeEscribeAsync(0m);
+
+    // verificador-tdd, 05/11/2026: «Cantidad != 0» en el UPDATE sobrevivía. Una existencia negativa
+    // no bloquea (CA-002 habla de lo que queda): la baja se escribe en la base, no solo en el caso de uso.
+    [PostgreSqlFact]
+    public Task Baja_ConExistenciaNegativa_EscribeLaFilaYElHistorial() => BajaQueSeEscribeAsync(-1.5m);
+
+    private async Task BajaQueSeEscribeAsync(decimal stock)
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
         var usuario = await fixture.CrearUsuarioAsync();
-        var (id, codigo, _) = await CrearArticuloAsync(fixture, stock: 0m);
+        var (id, codigo, _) = await CrearArticuloAsync(fixture, stock);
 
         await using (var contexto = fixture.CrearContexto())
             Assert.True((await Baja(contexto, usuario).EjecutarAsync(id, new DarDeBajaArticuloRequest("Discontinuado", codigo))).IsSuccess);
