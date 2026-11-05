@@ -31,6 +31,19 @@ public class CrearClienteUseCaseTests
         new List<string> { "Av. Colón 123" }
     );
 
+    // 045 · la condición fiscal vacía es válida (decisión de Santi, 05/11/2026); se guarda vacía.
+    [Fact]
+    public async Task Ejecutar_CondicionFiscalVacia_DaDeAltaSinCondicion()
+    {
+        var caso = CrearCasoDeUso();
+        var request = CrearRequestValido() with { CondicionFiscal = "" };
+
+        var resultado = await caso.EjecutarAsync(request);
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        _repoMock.Verify(r => r.AgregarAsync(It.Is<Cliente>(c => c.CondicionFiscal == ""), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     [Fact]
     public async Task Ejecutar_CamposObligatoriosVacios_DevuelveFalloInvalido()
     {
