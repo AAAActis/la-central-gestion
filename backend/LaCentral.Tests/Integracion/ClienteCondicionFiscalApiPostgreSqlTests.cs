@@ -37,7 +37,14 @@ public class ClienteCondicionFiscalApiPostgreSqlTests : IClassFixture<WebApplica
         => (_factory, _salida) = (factory, salida);
 
     [PostgreSqlFact]
-    public async Task AltaYModificacion_ConCondicionFiscalVacia_GuardanNull()
+    public Task AltaYModificacion_ConCondicionFiscalVacia_GuardanNull() => AfirmarGuardaNull("");
+
+    // Verificador-tdd, 05/11/2026: el frontend manda null, no "". Sin esto sobrevivía `?? "MONOTRIBUTO"`
+    // en ClientesController (alta) y en ModificarClienteUseCase.
+    [PostgreSqlFact]
+    public Task AltaYModificacion_ConCondicionFiscalNull_GuardanNull() => AfirmarGuardaNull(null);
+
+    private async Task AfirmarGuardaNull(string? vacia)
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
         using var http = Cliente(fixture, "OPERADOR", await fixture.CrearUsuarioAsync());
@@ -45,7 +52,7 @@ public class ClienteCondicionFiscalApiPostgreSqlTests : IClassFixture<WebApplica
         var alta = await http.PostAsJsonAsync("/api/clientes", new
         {
             codigo = "CLI-045", razonSocial = "Cliente sin condición", cuit = (string?)null,
-            condicionFiscal = "", condicionPago = "Contado", telefonos = new[] { "351 000-0000" }, direcciones = Array.Empty<string>(),
+            condicionFiscal = vacia, condicionPago = "Contado", telefonos = new[] { "351 000-0000" }, direcciones = Array.Empty<string>(),
         });
         Assert.Equal(HttpStatusCode.OK, alta.StatusCode);
         int id;
@@ -57,7 +64,7 @@ public class ClienteCondicionFiscalApiPostgreSqlTests : IClassFixture<WebApplica
         }
 
         // Se informa y después se vuelve a dejar vacía: la modificación también la guarda vacía.
-        foreach (var (condicion, esperado) in new[] { ("MONOTRIBUTO", "MONOTRIBUTO"), ("", (string?)null) })
+        foreach (var (condicion, esperado) in new[] { ((string?)"MONOTRIBUTO", (string?)"MONOTRIBUTO"), (vacia, null) })
         {
             var modificacion = await http.PutAsJsonAsync($"/api/clientes/{id}", new
             {

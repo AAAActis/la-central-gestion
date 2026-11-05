@@ -63,6 +63,43 @@ public class ProveedorDetalleApiPostgreSqlTests : IClassFixture<WebApplicationFa
             ficha.GetProperty("direcciones").EnumerateArray().Select(d => d.GetString()).Order());
     }
 
+    // Verificador-tdd, 05/11/2026: sin esto sobrevivía devolver siempre Activo = true y MotivoBaja = null.
+    // La pantalla elige entre Modificar y Reactivar por `activo` y muestra el motivo.
+    [PostgreSqlFact]
+    public async Task Detalle_DeUnProveedorDadoDeBaja_TraeActivoFalsoYElMotivo()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using (var contexto = fixture.CrearContexto())
+            Assert.True((await new CrearProveedorUseCase(new ProveedorRepositorio(contexto)).EjecutarAsync(
+                new CrearProveedorRequest("PRV-BAJ", "Proveedor que cerró", null, null, null, null))).IsSuccess);
+        int id;
+        await using (var contexto = fixture.CrearContexto())
+            id = (await contexto.Proveedor.AsNoTracking().SingleAsync(p => p.Codigo == "PRV-BAJ")).Id;
+        using var http = Cliente(fixture, "OPERADOR", await fixture.CrearUsuarioAsync());
+
+        var activo = await http.GetFromJsonAsync<JsonElement>($"/api/proveedores/{id}");
+        Assert.True(activo.GetProperty("activo").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, activo.GetProperty("motivoBaja").ValueKind);
+
+        var baja = await http.PostAsJsonAsync($"/api/proveedores/{id}/baja", new { confirmacion = "PRV-BAJ", motivoBaja = "Dejó de operar" });
+        Assert.True(baja.IsSuccessStatusCode, await baja.Content.ReadAsStringAsync());
+
+        var dadoDeBaja = await http.GetFromJsonAsync<JsonElement>($"/api/proveedores/{id}");
+        Assert.False(dadoDeBaja.GetProperty("activo").GetBoolean());
+        Assert.Equal("Dejó de operar", dadoDeBaja.GetProperty("motivoBaja").GetString());
+    }
+
+    // No bloqueante del verificador: el endpoint nuevo exige sesión (hereda el [Authorize] de la clase).
+    [PostgreSqlFact]
+    public async Task Detalle_SinSesion_Es401()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        using var http = Cliente(fixture, "OPERADOR", 1);
+        http.DefaultRequestHeaders.Authorization = null;
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await http.GetAsync("/api/proveedores/1")).StatusCode);
+    }
+
     [PostgreSqlFact]
     public async Task Detalle_DeUnIdInexistente_Es404ConMensaje()
     {
@@ -80,7 +117,7 @@ public class ProveedorDetalleApiPostgreSqlTests : IClassFixture<WebApplicationFa
         ["Jwt:Key"] = JwtKey, ["Jwt:Issuer"] = JwtIssuer, ["Jwt:Audience"] = JwtAudience
     };
 
-    private HttpClient Cliente(PostgreSqlPruebas fixture, string rol)
+    private HttpClient Cliente(PostgreSqlPruebas fixture, string rol, int usuarioId = 1)
     {
         var cliente = fixture.Liberar(_factory.WithWebHostBuilder(builder =>
         {
@@ -94,7 +131,7 @@ public class ProveedorDetalleApiPostgreSqlTests : IClassFixture<WebApplicationFa
         })).CreateClient();
 
         var token = new GeneradorToken(new ConfigurationBuilder().AddInMemoryCollection(ConfiguracionJwt).Build())
-            .GenerarToken(1, "test.proveedores", rol, 1);
+            .GenerarToken(usuarioId, "test.proveedores", rol, 1);
         cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return cliente;
     }
