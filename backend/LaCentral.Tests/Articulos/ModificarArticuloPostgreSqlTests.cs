@@ -259,7 +259,7 @@ public class ModificarArticuloPostgreSqlTests
         var usuario = await fixture.CrearUsuarioAsync();
         var id = await CrearArticuloAsync(fixture, "Bujía");
         await using (var contexto = fixture.CrearContexto())
-            Assert.True((await Baja(contexto, usuario).EjecutarAsync(id, new("Discontinuado"))).IsSuccess);
+            Assert.True((await Baja(contexto, usuario).EjecutarAsync(id, new("Discontinuado", $"LC-{id:D6}"))).IsSuccess);
 
         Result resultado;
         await using (var contexto = fixture.CrearContexto())
@@ -425,7 +425,7 @@ public class ModificarArticuloPostgreSqlTests
         var otro = await CrearArticuloAsync(fixture, "Filtro de aire");
 
         await using (var contexto = fixture.CrearContexto())
-            Assert.True((await Baja(contexto, quienBaja).EjecutarAsync(id, new(" Discontinuado "))).IsSuccess);
+            Assert.True((await Baja(contexto, quienBaja).EjecutarAsync(id, new(" Discontinuado ", $"LC-{id:D6}"))).IsSuccess);
 
         var dadoDeBaja = await LeerAsync(fixture, id);
         Assert.False(dadoDeBaja.Activo);
@@ -473,7 +473,7 @@ public class ModificarArticuloPostgreSqlTests
         await using (var contexto = fixture.CrearContexto())
         {
             var excepcion = await Assert.ThrowsAsync<DbUpdateException>(() =>
-                Baja(contexto, usuario).EjecutarAsync(id, new("Discontinuado")));
+                Baja(contexto, usuario).EjecutarAsync(id, new("Discontinuado", $"LC-{id:D6}")));
             Assert.Contains("ux_articulo_hist_abierta", excepcion.InnerException?.Message);
         }
 
@@ -521,7 +521,7 @@ public class ModificarArticuloPostgreSqlTests
         var usuario = await fixture.CrearUsuarioAsync();
         var id = await CrearArticuloAsync(fixture, "Bujía");
         await using (var contexto = fixture.CrearContexto())
-            Assert.True((await Baja(contexto, usuario).EjecutarAsync(id, new("Discontinuado"))).IsSuccess);
+            Assert.True((await Baja(contexto, usuario).EjecutarAsync(id, new("Discontinuado", $"LC-{id:D6}"))).IsSuccess);
 
         await using var relectura = fixture.CrearContexto();
         var detalle = await new ArticuloRepositorio(relectura).ObtenerDetallePorIdAsync(id);

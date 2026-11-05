@@ -150,10 +150,10 @@ public class ArticulosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DarDeBaja(
-        int id, DarDeBajaRequest request,
+        int id, BajaArticuloRequest request,
         [FromServices] DarDeBajaArticuloUseCase useCase, CancellationToken cancellationToken)
     {
-        var resultado = await useCase.EjecutarAsync(id, new DtosNucleo.DarDeBajaArticuloRequest(request.Motivo), cancellationToken);
+        var resultado = await useCase.EjecutarAsync(id, new DtosNucleo.DarDeBajaArticuloRequest(request.Motivo, request.Confirmacion ?? string.Empty), cancellationToken);
         return this.AResultadoHttp(resultado);
     }
 

@@ -147,7 +147,7 @@ public class BajaYCodigosArticuloUseCaseTests
     [InlineData("   ")]
     public async Task Baja_SinMotivo_Invalido(string motivo)
     {
-        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest(motivo));
+        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest(motivo, "LC-000042"));
 
         Assert.Equal(TipoError.Invalido, resultado.Tipo);
         NoSeDioDeBaja();
@@ -156,7 +156,7 @@ public class BajaYCodigosArticuloUseCaseTests
     [Fact]
     public async Task Baja_Inexistente_NoEncontrado()
     {
-        var resultado = await Baja().EjecutarAsync(999, new DarDeBajaArticuloRequest("Discontinuado"));
+        var resultado = await Baja().EjecutarAsync(999, new DarDeBajaArticuloRequest("Discontinuado", "LC-000042"));
 
         Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
         NoSeDioDeBaja();
@@ -167,7 +167,7 @@ public class BajaYCodigosArticuloUseCaseTests
     {
         Articulo(activo: false);
 
-        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("Discontinuado"));
+        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("Discontinuado", "LC-000042"));
 
         Assert.Equal(TipoError.Invalido, resultado.Tipo);
         NoSeDioDeBaja();
@@ -178,7 +178,7 @@ public class BajaYCodigosArticuloUseCaseTests
     {
         _contexto = DoblesBaja.Contexto(usuarioId: 0);
 
-        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("Discontinuado"));
+        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("Discontinuado", "LC-000042"));
 
         Assert.Equal(TipoError.NoAutorizado, resultado.Tipo);
         NoSeDioDeBaja();
@@ -194,7 +194,7 @@ public class BajaYCodigosArticuloUseCaseTests
             .Callback((int _, string _, DateTime f, CancellationToken _) => fechaFila = f)
             .ReturnsAsync(true);
 
-        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("  Discontinuado  "));
+        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("  Discontinuado  ", "LC-000042"));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
         Assert.NotNull(fechaFila);
@@ -210,7 +210,7 @@ public class BajaYCodigosArticuloUseCaseTests
         _articulos.Setup(r => r.DarDeBajaAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
-        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("Discontinuado"));
+        var resultado = await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("Discontinuado", "LC-000042"));
 
         Assert.Equal(TipoError.Invalido, resultado.Tipo);
         _historial.Verify(h => h.AbrirAsync(It.IsAny<EntidadConHistorialBaja>(), It.IsAny<int>(), It.IsAny<string>(),
@@ -222,7 +222,7 @@ public class BajaYCodigosArticuloUseCaseTests
     {
         _unidad = DoblesBaja.UnidadQueNoEjecuta();
 
-        await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("Discontinuado"));
+        await Baja().EjecutarAsync(Id, new DarDeBajaArticuloRequest("Discontinuado", "LC-000042"));
 
         _unidad.Verify(u => u.EjecutarAsync(It.IsAny<Func<CancellationToken, Task<Result>>>(), It.IsAny<CancellationToken>()), Times.Once);
         NoSeDioDeBaja();
