@@ -661,3 +661,53 @@ vale esta.)
 **Estado:** en curso
 - 15:30 · Paso 1: SP de las proformas (016 = 5, 014 = 3, 045 = 3, 051 = 2, 052 = 5, 030 = 5, 032 = 3, 050 = 8, 026 = 3, 028 = 8, 020 = 8; 053 = 8, 054 = 8 y 055 = 5 salen del ESTADO del Sprint 4, porque no tienen proforma). Logins: Santi = `AAAActis`, Javi = `Jotelsooon`; el #128 está asignado a Lauti. Capacidad: 3,4 SP/día del Sprint 3 con tres personas, o sea ~1,1 SP por persona y día; con dos personas y ~5,5 días hábiles hasta el 13/11, ~12,5 SP. Sprint 6 con dos personas y 10 días: ~23 SP. El comparador etapa 1 completo suma 37 SP: no entra en un sprint. La 016 tiene el CA-003 y el CA-004 atados a la anulación (028). Propuesta entregada a Santi.
 **BLOQUEADO EN:** la aprobación de la propuesta de reparto y tres preguntas: cómo partir el comparador (37 SP contra ~23); si «los scrapes» incluyen la CMP-02 (consulta en vivo, 13 SP, etapa 2 según D16); y los CA-003 y CA-004 de la 016. Depende de Santi.
+
+## 05/11/2026 15:45 · tablero y ESTADO aplicados, después las cinco HU del Sprint 5
+**Instrucción recibida (verbatim):**
+> Aprobado. Las tres decisiones:
+>
+> 1 · Comparador: opción (a). Sprint 6 con 055, 053, 054 y 050. La 030 y la 032 al Sprint 7.
+> Tenés razón en el motivo: vincular ya le sirve al dueño aunque todavía no compare.
+>
+> 2 · La CMP-02 queda afuera. D16 ya la declaró etapa 2 y con un proveedor como prueba de
+> concepto. Cuando llegue, va con eso.
+>
+> 3 · La 016 va con CA-003 y CA-004 declarados PARCIAL, con el motivo: dependen de la
+> anulación (028), que está en backlog. Es el punto 8 de la DoD bien usado.
+>
+> Y la capacidad corregida: son TRES personas, no dos. Lauti trabaja con esta misma sesión,
+> turnándose con Santi; Javi tiene la suya. Sprint 5 ~18 SP, así que los 14 entran y la #21 no
+> hace falta recortarla.
+>
+> Aplicá todo en GitHub: los movimientos, los dos issues nuevos, las fechas de los milestones
+> (Sprint 5 cierra el 13/11) y sacá a Lauti de la asignación del #128. Dejá los dos ESTADO
+> diciendo exactamente lo mismo que el tablero.
+>
+> UNA COSA MÁS, sobre la bitácora, y es la que permite que me olvide de esto un rato:
+>
+> Hay dos Claude en el proyecto. Este —el mío y el de Lauti, que compartimos sesión y nos
+> turnamos— y el de Javi, que es otro. Cada uno lleva SU bitácora:
+>
+> · docs/sprint<NN>/BITACORA.md — la nuestra, la de esta sesión.
+> · docs/sprint<NN>/BITACORA-JAVI.md — la de Javi.
+>
+> La regla es la de CLAUDE.md y no cambia, pero el punto es este: si Santi deja una HU al 65 %
+> y después sigue Lauti, la bitácora tiene que alcanzar para que retomes sin preguntar nada.
+> Así que en cada bloque, además de lo que ya pide la regla, dejá escrito:
+>
+> · en qué HU estás y por qué paso vas,
+> · qué falta para terminarla, en pasos concretos,
+> · qué archivos tocaste y cuáles quedaron a medias.
+>
+> Lo escribís MIENTRAS trabajás, no al final. Si la sesión se corta a mitad de una HU, el
+> próximo que abra —sea Santi o Lauti— tiene que poder seguir leyendo solo ese bloque.
+>
+> Ahora arrancá y no pares entre HU: formato es-AR, paginación, 045, 016 y 014. Avisame cuando
+> las cinco tengan su PR y las compuertas en APTO.
+**Plan:**
+1. GitHub: movimientos, issues nuevos (es-AR y paginación), fechas de los milestones, #128 sin Lauti.
+2. ESTADO del Sprint 5 y del Sprint 6 iguales al tablero (en la rama del #146, que ya toca el ESTADO del Sprint 5).
+3. Las HU, cada una en su rama desde `develop`, con su PR, `verificador-tdd` y, si toca backend, `auditor-persistencia`: (a) es-AR, (b) paginación, (c) 045, (d) 016, (e) 014.
+**Cada bloque lleva, mientras se trabaja:** HU y paso · qué falta, en pasos · archivos tocados y cuáles quedaron a medias.
+**Estado:** en curso
+- **HU / paso:** ninguna todavía; paso 1 (GitHub).
