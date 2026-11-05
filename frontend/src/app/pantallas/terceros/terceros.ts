@@ -89,7 +89,7 @@ function cuerpo(campos: CampoFormulario[], valores: ValoresFormulario): Record<s
   `,
   template: `
     <app-listado [consultar]="consultar" [columnas]="['Código', 'Razón social', 'CUIT', '']"
-      [etiqueta]="'Buscar ' + config().plural" [nombrePlural]="config().plural" ayuda="Código, razón social o CUIT.">
+      [etiqueta]="'Buscar ' + config().plural" [nombrePlural]="config().plural" ayuda="Razón social (aproximada) o CUIT exacto.">
       <button type="button" (click)="abrirAlta()">Nuevo {{ config().singular }}</button>
       <ng-template #fila let-t>
         <td class="mono">{{ t.codigo }}</td>
