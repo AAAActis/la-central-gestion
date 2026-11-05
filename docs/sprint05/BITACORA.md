@@ -758,3 +758,9 @@ vale esta.)
   - [x] A: rojo `3838edd` (MethodNotAllowed), verde `875c472` (`GET /api/proveedores/{id}`, `ObtenerProveedorDetalleUseCase`, `ProveedorDetalleDto`).
   - [x] B: rojo `4c4fd93` (HTTP + PostgreSQL BadRequest; Moq «Faltan campos obligatorios…»), verde en el commit siguiente. Clientes, en filtrado: 51/51.
   - **Sigue:** C (`Formulario` con `opciones`). **Archivos a medias:** ninguno.
+- 20:40 · 045:
+  - [x] C: estructura `CampoFormulario.opciones`, rojo, y verde `d056aad` (select con «Sin informar» primero).
+  - [ ] D, en curso. Estructura de `api.ts` (`terceros`, `fichaTercero`, …) y `pantallas/terceros/terceros.ts` vacío. Rojo `terceros.spec.ts`: 9 casos.
+  - **Sigue:** el verde de las pantallas (un componente configurable para las dos), el registro en `modulos.ts` y el paso D2.
+  - **D2:** provincia por dirección (D-S5-02: JOIN y combo). Las direcciones hoy son solo `Calle` (string) en todo el contrato; la provincia pide pasarlas a objeto `{ calle, provinciaId, provincia }`, más `GET /api/provincias`. Van en commits separados, después de las pantallas.
+  - **Archivos a medias:** `frontend/src/app/pantallas/terceros/terceros.ts`, que está vacío a propósito.
