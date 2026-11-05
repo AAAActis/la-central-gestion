@@ -16,6 +16,10 @@ export interface CampoFormulario {
   ayuda?: string;
   /** Una lista que se agrega y se quita (teléfonos, direcciones, códigos). */
   multivaluado?: boolean;
+  /** Largo máximo: lo fija el endpoint, no el formulario. Va como atributo maxlength: al tipear no se puede pasar. */
+  maximo?: number;
+  /** El valor tiene que coincidir con este, sin espacios en los bordes ni distinguir mayúsculas. */
+  coincideCon?: string;
   /** El atributo autocomplete: sin username y current-password, los gestores de contraseñas no completan el acceso. */
   autocompletar?: string;
 }
@@ -26,6 +30,7 @@ type Lista = FormArray<FormControl<string | null>>;
 
 const OBLIGATORIO = 'Este campo es obligatorio.';
 const FORMATO = 'El formato no es válido.';
+const normalizar = (v: unknown) => String(v ?? '').trim().toUpperCase();
 let siguienteId = 0;
 
 /** Obligatorio sin aceptar solo espacios; en una lista, al menos un valor. */
@@ -57,7 +62,7 @@ function obligatorio(control: AbstractControl): ValidationErrors | null {
     .campo-item > input { flex: 1; min-width: 0; }
     .campo-agregar { align-self: flex-start; }
     .formulario-avisos > p { margin: 0 0 var(--esp-16); }
-    .formulario-pie { display: flex; justify-content: flex-end; }
+    .formulario-pie { display: flex; justify-content: flex-end; gap: var(--esp-12); }
   `,
   template: `
     <form [formGroup]="grupo()" (ngSubmit)="intentarEnviar()" novalidate>
@@ -87,7 +92,7 @@ function obligatorio(control: AbstractControl): ValidationErrors | null {
         } @else {
           <div class="campo">
             <label [for]="id(c)">{{ c.etiqueta }}</label>
-            <input [id]="id(c)" [type]="c.tipo ?? 'text'" [formControlName]="c.nombre"
+            <input [id]="id(c)" [type]="c.tipo ?? 'text'" [formControlName]="c.nombre" [attr.maxlength]="c.maximo ?? null"
                    [attr.autocomplete]="c.autocompletar ?? null" [attr.aria-required]="c.obligatorio ? 'true' : null"
                    [attr.aria-invalid]="error(c) ? 'true' : null" [attr.aria-describedby]="descriptores(c)" />
             @if (c.ayuda) { <p class="ayuda" [id]="id(c) + '-ayuda'">{{ c.ayuda }}</p> }
@@ -97,7 +102,8 @@ function obligatorio(control: AbstractControl): ValidationErrors | null {
       }
 
       <div class="formulario-pie">
-        <button type="submit" class="primario" [cargando]="enviando()" [textoCarga]="textoEnviando()">{{ textoEnviar() }}</button>
+        <ng-content select="[acciones]" />
+        <button type="submit" [class]="varianteEnviar()" [cargando]="enviando()" [textoCarga]="textoEnviando()">{{ textoEnviar() }}</button>
       </div>
     </form>
   `,
@@ -108,6 +114,7 @@ export class Formulario {
   readonly enviando = input(false);
   readonly textoEnviar = input('Guardar');
   readonly textoEnviando = input('Guardando…');
+  readonly varianteEnviar = input<'primario' | 'peligro'>('primario');
   readonly erroresPorCampo = input<Record<string, string>>({});
   readonly errorGeneral = input<string | null>(null);
   readonly confirmacion = input<string | null>(null);
@@ -126,6 +133,8 @@ export class Formulario {
         controles[c.nombre] = new FormArray(items.map(v => this.nuevoItem(c, v)), validadores);
       } else {
         if (c.patron) validadores.push(Validators.pattern(c.patron));
+        const clave = c.coincideCon;
+        if (clave) validadores.push(control => normalizar(control.value) === normalizar(clave) ? null : { coincide: true });
         const inicial = valores[c.nombre];
         controles[c.nombre] = new FormControl(inicial === null || inicial === undefined ? '' : String(inicial), validadores);
       }
@@ -153,6 +162,7 @@ export class Formulario {
     const mostrar = control.touched || items.some(i => i.touched);
     if (mostrar && control.hasError('obligatorio')) return OBLIGATORIO;
     if (mostrar && items.some(i => i.hasError('pattern'))) return c.mensajeFormato ?? FORMATO;
+    if (mostrar && control.hasError('coincide')) return `No coincide con ${c.coincideCon}.`;
     return this.erroresPorCampo()[c.nombre] ?? null;
   }
 

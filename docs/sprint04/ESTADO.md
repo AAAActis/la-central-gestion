@@ -626,6 +626,38 @@ teclado, así que el usuario de teclado queda con un cartel del que solo sale co
 - **Riesgo aceptado mientras tanto:** una pestaña abierta en un puesto sin vigilar sigue operando
   hasta que el token vence (12 h, `GeneradorToken.cs`). El manual pide salir al dejar el puesto.
 
+## HU-UI-06 · 044 · confirmación con motivo (28/10/2026)
+
+Rama `feature/hu-ui-06-confirmacion-con-motivo`, que sale de la de la 043. Adelantada del
+Sprint 6 al 4 por el replan del 27/10.
+
+- **Issue de la 044: pendiente de creación**, como el de la 043. Va con el milestone Sprint 4.
+- **Proforma v1.1, pendiente de decisión del equipo.** La clave reescrita se exigiría solo en
+  operaciones irreversibles (anular un comprobante), no en la baja lógica, que se puede
+  reactivar. El componente acepta la clave como opcional y el motivo es obligatorio siempre.
+  La pantalla decide si pasa clave.
+- La clave se compara sin espacios en los bordes y sin distinguir mayúsculas, como las
+  búsquedas (`upper(btrim(...))`).
+- §7: `peligro` sólido solo en el punto sin retorno; el botón de la pantalla que abre el
+  diálogo es `peligro-borde`.
+- Componente `compartido/confirmacion-motivo.ts`, compuesto del modal y del formulario.
+  Frontend 59/59 (48 previos + 11 nuevos). **Sin push.** Ninguna pantalla lo usa todavía.
+- CA-001: verificado el motivo obligatorio; la clave queda capaz, pendiente de la v1.1.
+- CA-002: verificado; botón activo y error junto al campo, como en la 043.
+- CA-003: verificado, con Escape y con Cancelar.
+- **05/11/2026 · merge de `develop` (`922e2b8`) y PR.** Conflicto solo en `formulario.ts`
+  (interfaz del campo e `<input>`): se conservan `password` y `autocompletar` (#138) y `maximo`
+  y `coincideCon` (044). Frontend **99/99** (88 de develop + 11), `ng build` limpio. Sigue sin
+  pantalla que lo use: la prueba a mano contra `lacentral_demo` (DoD 10) llega con la 045.
+
+**Deuda · el largo del motivo no se decidió (28/10/2026).** En el esquema, todos los motivos
+son `TEXT`, sin límite (`motivo_baja`, `motivo_anulacion`, `*_historial_baja.motivo`). Los
+límites salen de los DTO y no coinciden:
+- `DarDeBajaRequest` (baja genérica: artículos): **200**;
+- `BajaClienteRequest` y `BajaProveedorRequest`: **255**.
+
+Nadie decidió si son dos límites a propósito o uno solo mal replicado. Mientras tanto, el
+componente recibe el máximo de cada endpoint y lo muestra.
 ## CIERRE DEL SPRINT 4 · 30/10/2026 (escrito el 04/11/2026)
 
 El sprint cerró por calendario el viernes 30/10 (el replan v2 corrió el cierre del 31, que es
