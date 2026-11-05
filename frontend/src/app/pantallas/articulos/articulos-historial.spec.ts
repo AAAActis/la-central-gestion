@@ -76,4 +76,29 @@ describe('Articulos · historial de compras (016)', () => {
 
     expect(tabla().textContent).toContain('Sin compras registradas.');
   });
+
+  // verificador-tdd, 05/11/2026: el camino de error y el cambio de ficha no los afirmaba ningún caso.
+  it('si el historial no se puede leer, lo dice en vez de mostrar «Sin compras registradas.»', () => {
+    fixture.componentInstance.verFicha({ id: 7 } as ArticuloResultado);
+    servidor.expectOne('/api/articulos/7').flush(FICHA);
+    servidor.expectOne('/api/articulos/7/historial-compras').flush(
+      { status: 500, detail: 'No se pudo leer el historial.' }, { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    const seccion = tabla();
+    expect(seccion.textContent).toContain('No se pudo leer el historial.');
+    expect(seccion.textContent).not.toContain('Sin compras registradas.');
+  });
+
+  it('al abrir otra ficha no queda el historial del artículo anterior', () => {
+    abrirFicha(HISTORIAL);
+
+    fixture.componentInstance.verFicha({ id: 8 } as ArticuloResultado);
+    servidor.expectOne('/api/articulos/8').flush({ ...FICHA, id: 8, codigoInterno: 'LC-000008' });
+    const pendiente = servidor.expectOne('/api/articulos/8/historial-compras'); // todavía sin respuesta
+    fixture.detectChanges();
+
+    expect(tabla().textContent).not.toContain('Repuestos Sur');
+    pendiente.flush([]);
+  });
 });
