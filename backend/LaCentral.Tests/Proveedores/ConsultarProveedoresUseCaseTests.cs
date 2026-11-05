@@ -82,19 +82,31 @@ public class ConsultarProveedoresUseCaseTests
 
     // CA-003: sin coincidencias, avisa explícitamente en vez de devolver una lista vacía
     [Fact]
-    public async Task Ejecutar_SinCoincidencias_DevuelveNoEncontradoConMensajeExplicito()
+    public async Task Ejecutar_SinCoincidencias_DevuelvePaginaVaciaConLaMismaEnvoltura()
     {
-        // Arrange
-        _mockRepo.Setup(r => r.BuscarAsync("ASDXYZ", false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        // CA-003 v1.1 (#147, 05/11/2026): una búsqueda sin coincidencias es una consulta exitosa.
+        _mockRepo.Setup(r => r.BuscarAsync("ASDXYZ", false, 1, 20, It.IsAny<CancellationToken>()))
                  .ReturnsAsync(((IReadOnlyList<Proveedor>)new List<Proveedor>(), 0));
 
-        // Act
         var resultado = await _consultarUseCase.EjecutarAsync("ASDXYZ", incluirInactivos: false);
 
-        // Assert
-        Assert.True(resultado.IsFailure);
-        Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
-        Assert.Equal("No se encontraron proveedores que coincidan con la búsqueda.", resultado.Error);
+        Assert.True(resultado.IsSuccess);
+        Assert.Empty(resultado.Value.Items);
+        Assert.Equal(0, resultado.Value.Total);
+        Assert.Equal(1, resultado.Value.Pagina);
+        Assert.Equal(20, resultado.Value.TamanoPagina);
+    }
+
+    [Theory]
+    [InlineData(0, 20)]
+    [InlineData(1, 0)]
+    [InlineData(1, 101)]
+    public async Task Ejecutar_PaginaOTamanoInvalido_DevuelveInvalidoSinConsultarRepositorio(int pagina, int tamanoPagina)
+    {
+        var resultado = await _consultarUseCase.EjecutarAsync("filtro", false, pagina, tamanoPagina);
+
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+        _mockRepo.Verify(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // CA-004: el filtro de activos/inactivos se delega en el repositorio, no se resuelve en memoria
