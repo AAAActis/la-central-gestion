@@ -659,3 +659,5 @@ vale esta.)
 3. Después de la aprobación: GitHub; ESTADO del Sprint 5 y del Sprint 6 iguales al tablero; entregable en una línea.
 4. Las HU del Sprint 5, una tras otra.
 **Estado:** en curso
+- 15:30 · Paso 1: SP de las proformas (016 = 5, 014 = 3, 045 = 3, 051 = 2, 052 = 5, 030 = 5, 032 = 3, 050 = 8, 026 = 3, 028 = 8, 020 = 8; 053 = 8, 054 = 8 y 055 = 5 salen del ESTADO del Sprint 4, porque no tienen proforma). Logins: Santi = `AAAActis`, Javi = `Jotelsooon`; el #128 está asignado a Lauti. Capacidad: 3,4 SP/día del Sprint 3 con tres personas, o sea ~1,1 SP por persona y día; con dos personas y ~5,5 días hábiles hasta el 13/11, ~12,5 SP. Sprint 6 con dos personas y 10 días: ~23 SP. El comparador etapa 1 completo suma 37 SP: no entra en un sprint. La 016 tiene el CA-003 y el CA-004 atados a la anulación (028). Propuesta entregada a Santi.
+**BLOQUEADO EN:** la aprobación de la propuesta de reparto y tres preguntas: cómo partir el comparador (37 SP contra ~23); si «los scrapes» incluyen la CMP-02 (consulta en vivo, 13 SP, etapa 2 según D16); y los CA-003 y CA-004 de la 016. Depende de Santi.
