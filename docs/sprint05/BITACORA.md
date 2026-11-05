@@ -614,4 +614,6 @@ vale esta.)
 2. Cerrar #40, #24, #44, #42, #45 y #43, cada uno con un comentario que diga el PR y la fecha; #43 pasa a Sprint 5.
 3. #46 de Sprint 7 a Sprint 5.
 4. Verificar con `gh`; tabla de los 10 de Sprint 4 y los 3 de Sprint 5, sin moverlos.
-**Estado:** en curso
+**Estado:** terminada
+- 15:00 · Pasos 1 a 4: cerrados con comentario «Cerrado por el PR #N, mergeado en `develop` el <fecha>», verificados con `gh issue view`: #40 (#130, 20/10), #24 (#131, 20/10), #44 (#134, 29/10), #42 (#138, 04/11), #45 (#144, 05/11) y #43 (#145, 05/11). Las fechas son locales (UTC−3): el #130 figura en GitHub como 21/10 01:26 UTC. #43 → Sprint 5. #46 (045) de Sprint 7 a Sprint 5, abierto. Tabla de los 10 de Sprint 4 y los 3 de Sprint 5 entregada a Santi, sin moverlos.
+**Estado:** terminada. Abierto: Santi decide los 10 de Sprint 4 y los 3 de Sprint 5; siguen sin tratar los duplicados #1 y #48, el #15, el #137 y los milestones.
