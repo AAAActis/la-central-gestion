@@ -134,8 +134,9 @@ export class ApiLaCentral {
     return this.http.delete<void>(`/api/articulos/${id}/codigos/${proveedorId}`);
   }
 
-  darDeBaja(id: number, motivo: string): Observable<void> {
-    return this.http.post<void>(`/api/articulos/${id}/baja`, { motivo });
+  /** 014 · `confirmacion` es el código interno reescrito (CA-004): lo compara la API. */
+  darDeBaja(id: number, motivo: string, confirmacion: string): Observable<void> {
+    return this.http.post<void>(`/api/articulos/${id}/baja`, { motivo, confirmacion });
   }
 
   reactivar(id: number): Observable<void> {
