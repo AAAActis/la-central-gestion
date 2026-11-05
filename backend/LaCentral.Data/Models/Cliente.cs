@@ -40,10 +40,6 @@ public partial class Cliente
 
     public DateTime FechaAlta { get; set; }
 
-    public int? UsuarioAltaId { get; set; }
-
-    public int? UsuarioBajaId { get; set; }
-
     public virtual ICollection<ClienteDireccion> ClienteDireccion { get; set; } = new List<ClienteDireccion>();
 
     public virtual ClienteHistorialBaja? ClienteHistorialBaja { get; set; }
@@ -51,8 +47,4 @@ public partial class Cliente
     public virtual ICollection<ClienteTelefono> ClienteTelefono { get; set; } = new List<ClienteTelefono>();
 
     public virtual ICollection<FacturaVenta> FacturaVenta { get; set; } = new List<FacturaVenta>();
-
-    public virtual Usuario? UsuarioAlta { get; set; }
-
-    public virtual Usuario? UsuarioBaja { get; set; }
 }

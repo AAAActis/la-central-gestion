@@ -62,7 +62,6 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
         {
             CodigoInterno = "TMP-" + Guid.NewGuid().ToString("N"),
             Nombre = articulo.Nombre,
-            UbicacionDeposito = articulo.UbicacionDeposito,
             PrecioCosto = articulo.CostoVigente,
             Activo = articulo.Activo,
             MotivoBaja = articulo.MotivoBaja,
@@ -98,20 +97,27 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
     // escribir, no lo que era al leer (otra sesión pudo darla de baja entre medio).
     // Sin código interno nuevo, la columna no entra en el SET: escribir el valor leído pisaría
     // el que otra sesión pudo cambiar entre la lectura y la escritura.
-    public async Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string? codigoInterno,
+    public async Task<bool> ActualizarDatosAsync(int id, string nombre, string? codigoInterno,
         CancellationToken ct = default)
     {
         var articulo = _context.Articulo.Where(a => a.Id == id && a.Activo);
         var filas = codigoInterno is null
             ? await articulo.ExecuteUpdateAsync(s => s
-                .SetProperty(a => a.Nombre, nombre)
-                .SetProperty(a => a.UbicacionDeposito, ubicacionDeposito), ct)
+                .SetProperty(a => a.Nombre, nombre), ct)
             : await articulo.ExecuteUpdateAsync(s => s
                 .SetProperty(a => a.Nombre, nombre)
-                .SetProperty(a => a.UbicacionDeposito, ubicacionDeposito)
                 .SetProperty(a => a.CodigoInterno, codigoInterno), ct);
         return filas == 1;
     }
+
+    // Un solo INSERT ... SELECT: la condición "activo" y el alta de la fila de stock (en cero,
+    // si no existía) van en la misma sentencia. Con fila, solo cambia la ubicación.
+    public async Task<bool> AsignarUbicacionAsync(int id, short sucursalId, string? ubicacionDeposito, CancellationToken ct = default)
+        => await _context.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO stock (articulo_id, sucursal_id, cantidad, ubicacion_deposito)
+            SELECT a.id, {sucursalId}, 0, {ubicacionDeposito} FROM articulo a WHERE a.id = {id} AND a.activo
+            ON CONFLICT (articulo_id, sucursal_id) DO UPDATE SET ubicacion_deposito = EXCLUDED.ubicacion_deposito
+            """, ct) == 1;
 
     // Solo inserta: los códigos que el artículo ya tiene no se tocan. Una carrera con otro
     // artículo la cierran codigo_unico_global y un_codigo_por_proveedor (23505 → 409).
@@ -240,7 +246,8 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
                     c.Codigo, NormalizacionArticulo.Codigo(c.Codigo))).ToArray(),
             // HU-STK-01 CA-002: toda sucursal aparece; sin fila en stock (sin movimientos) es cero, no vacío.
             sucursales.Select(s => new StockSucursalConsultaDto(s.Id, s.Nombre,
-                articulo.Stock.SingleOrDefault(e => e.SucursalId == s.Id)?.Cantidad ?? 0m)).ToArray(),
+                articulo.Stock.SingleOrDefault(e => e.SucursalId == s.Id)?.Cantidad ?? 0m,
+                articulo.Stock.SingleOrDefault(e => e.SucursalId == s.Id)?.UbicacionDeposito)).ToArray(),
             // D1: precios estampados en articulo_precio_modalidad, sin recalcular.
             // Sin filas, lista vacía: la razón de cada ausencia la arma ObtenerArticuloDetalleUseCase.
             PreciosPorModalidad: articulo.ArticuloPrecioModalidad
@@ -248,7 +255,6 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
                         ModalidadPersistida.LeerBase(p.Base), p.Porcentaje, p.Precio,
                         p.CalculoManual, p.FechaCalculo, p.UsuarioId))
                     .OrderBy(p => p.Modalidad).ToArray(),
-            UbicacionDeposito: articulo.UbicacionDeposito,
             MotivoBaja: articulo.MotivoBaja);
     }
 

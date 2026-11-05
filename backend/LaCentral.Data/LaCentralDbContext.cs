@@ -49,6 +49,8 @@ public partial class LaCentralDbContext : DbContext
 
     public virtual DbSet<ProveedorTelefono> ProveedorTelefono { get; set; }
 
+    public virtual DbSet<Provincia> Provincia { get; set; }
+
     public virtual DbSet<Rol> Rol { get; set; }
 
     public virtual DbSet<Stock> Stock { get; set; }
@@ -73,6 +75,10 @@ public partial class LaCentralDbContext : DbContext
 
             entity.ToTable("articulo");
 
+            entity.HasIndex(e => e.CodigoBarras, "articulo_codigo_barras_unico")
+                .IsUnique()
+                .HasFilter("(codigo_barras IS NOT NULL)");
+
             entity.HasIndex(e => e.CodigoInterno, "articulo_codigo_interno_key").IsUnique();
 
             entity.HasIndex(e => e.Nombre, "ix_articulo_nombre").UseCollation(new[] { "es-AR-x-icu" });
@@ -88,6 +94,10 @@ public partial class LaCentralDbContext : DbContext
             entity.Property(e => e.Activo)
                 .HasDefaultValue(true)
                 .HasColumnName("activo");
+            entity.Property(e => e.CodigoBarras)
+                .HasMaxLength(20)
+                .HasComment("EAN/UPC del fabricante. Identificador común de equivalencia entre proveedores: dos proveedores que venden la misma pieza traen el mismo código de barras, así que la equivalencia se deduce sin declararla. No reemplaza a articulo_codigo_alternativo (hay repuestos sin EAN, y marcas distintas tienen EAN distinto). VARCHAR y no numérico: los ceros a la izquierda cuentan. Pedido de la Dirección, 02/11/2026. Alimenta el reporte R-10.")
+                .HasColumnName("codigo_barras");
             entity.Property(e => e.CodigoInterno)
                 .HasMaxLength(40)
                 .HasColumnName("codigo_interno");
@@ -104,10 +114,6 @@ public partial class LaCentralDbContext : DbContext
                 .HasPrecision(14, 2)
                 .HasComment("DENORMALIZACIÓN DELIBERADA: valor derivado del último registro válido de articulo_historial_compra. Se mantiene acá para no recalcularlo en cada consulta del comparador.")
                 .HasColumnName("precio_costo");
-            entity.Property(e => e.UbicacionDeposito)
-                .HasMaxLength(60)
-                .HasComment("Posición física de referencia en el depósito, en texto libre. Dato informativo: el sistema no gestiona el depósito.")
-                .HasColumnName("ubicacion_deposito");
             entity.Property(e => e.UltimoProveedorId).HasColumnName("ultimo_proveedor_id");
 
             entity.HasOne(d => d.UltimoProveedor).WithMany(p => p.Articulo)
@@ -210,7 +216,7 @@ public partial class LaCentralDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("articulo_historial_compra_articulo_id_fkey");
 
-            entity.HasOne(d => d.FacturaCompra).WithMany(p => p.ArticuloHistorialCompra)
+            entity.HasOne(d => d.FacturaCompra).WithMany(p => p.ArticuloHistorialCompraFacturaCompra)
                 .HasForeignKey(d => d.FacturaCompraId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_historial_factura");
@@ -219,6 +225,12 @@ public partial class LaCentralDbContext : DbContext
                 .HasForeignKey(d => d.ProveedorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("articulo_historial_compra_proveedor_id_fkey");
+
+            entity.HasOne(d => d.FacturaCompraNavigation).WithMany(p => p.ArticuloHistorialCompraFacturaCompraNavigation)
+                .HasPrincipalKey(p => new { p.Id, p.ProveedorId })
+                .HasForeignKey(d => new { d.FacturaCompraId, d.ProveedorId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("articulo_historial_compra_factura_proveedor_fkey");
         });
 
         modelBuilder.Entity<ArticuloPrecioModalidad>(entity =>
@@ -317,16 +329,6 @@ public partial class LaCentralDbContext : DbContext
             entity.Property(e => e.TieneCuentaCorriente)
                 .HasComment("Dato informativo. El sistema NO lleva saldo ni deuda: Cuentas a Cobrar está fuera del alcance, en coherencia con la exclusión de Cuentas a Pagar.")
                 .HasColumnName("tiene_cuenta_corriente");
-            entity.Property(e => e.UsuarioAltaId).HasColumnName("usuario_alta_id");
-            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
-
-            entity.HasOne(d => d.UsuarioAlta).WithMany(p => p.ClienteUsuarioAlta)
-                .HasForeignKey(d => d.UsuarioAltaId)
-                .HasConstraintName("cliente_usuario_alta_id_fkey");
-
-            entity.HasOne(d => d.UsuarioBaja).WithMany(p => p.ClienteUsuarioBaja)
-                .HasForeignKey(d => d.UsuarioBajaId)
-                .HasConstraintName("cliente_usuario_baja_id_fkey");
         });
 
         modelBuilder.Entity<ClienteDireccion>(entity =>
@@ -334,6 +336,8 @@ public partial class LaCentralDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("cliente_direccion_pkey");
 
             entity.ToTable("cliente_direccion");
+
+            entity.HasIndex(e => e.ProvinciaId, "cliente_direccion_provincia_id_idx");
 
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()
@@ -355,16 +359,20 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("descripcion");
             entity.Property(e => e.Localidad)
                 .HasMaxLength(80)
+                .HasComment("Texto libre, y es una decisión. El nombre de localidad NO determina la provincia: hay homónimos entre provincias (6 casos medidos en el origen), así que no hay dependencia transitiva que eliminar. Normalizarla exigiría el par (nombre, provincia) como clave, que es dato que el origen no trae.")
                 .UseCollation("es-AR-x-icu")
                 .HasColumnName("localidad");
-            entity.Property(e => e.Provincia)
-                .HasMaxLength(60)
-                .UseCollation("es-AR-x-icu")
-                .HasColumnName("provincia");
+            entity.Property(e => e.ProvinciaId)
+                .HasComment("Reemplaza la columna de texto libre `provincia`. NULL significa provincia no registrada, que es lo que el origen expresaba con el centinela de código 0. Hallazgo N-5.")
+                .HasColumnName("provincia_id");
 
             entity.HasOne(d => d.Cliente).WithMany(p => p.ClienteDireccion)
                 .HasForeignKey(d => d.ClienteId)
                 .HasConstraintName("cliente_direccion_cliente_id_fkey");
+
+            entity.HasOne(d => d.Provincia).WithMany(p => p.ClienteDireccion)
+                .HasForeignKey(d => d.ProvinciaId)
+                .HasConstraintName("cliente_direccion_provincia_id_fkey");
         });
 
         modelBuilder.Entity<ClienteHistorialBaja>(entity =>
@@ -432,6 +440,8 @@ public partial class LaCentralDbContext : DbContext
 
             entity.ToTable("factura_compra", tb => tb.HasComment("Factura de compra de un proveedor. Importes en pesos argentinos: la empresa no opera en moneda extranjera (decisión D7, 07/10/2026). El sistema anterior admite moneda y cotización por comprobante y por línea (APS-005); acá queda excluido del alcance de forma deliberada. El destino de stock se carga por línea, no por comprobante (D9)."));
 
+            entity.HasIndex(e => new { e.Id, e.ProveedorId }, "factura_compra_id_proveedor_unico").IsUnique();
+
             entity.HasIndex(e => new { e.ProveedorId, e.Numero }, "ux_factura_compra_numero_activa")
                 .IsUnique()
                 .HasFilter("((estado)::text = 'ACTIVA'::text)");
@@ -439,6 +449,10 @@ public partial class LaCentralDbContext : DbContext
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("id");
+            entity.Property(e => e.ConComprobanteFiscal)
+                .HasDefaultValue(true)
+                .HasComment("Indica si la operación se respaldó con comprobante fiscal. TRUE por defecto.")
+                .HasColumnName("con_comprobante_fiscal");
             entity.Property(e => e.Estado)
                 .HasMaxLength(10)
                 .HasDefaultValueSql("'ACTIVA'::character varying")
@@ -479,6 +493,9 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("percepcion_municipal");
             entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
             entity.Property(e => e.UsuarioAnulacionId).HasColumnName("usuario_anulacion_id");
+            entity.Property(e => e.UsuarioAutorizacionId)
+                .HasComment("Quién AUTORIZÓ la anulación. Mismo criterio que en factura_venta: la condición de rol ADMINISTRADOR se valida en el caso de uso, no acá. Alimenta R-08.")
+                .HasColumnName("usuario_autorizacion_id");
             entity.Property(e => e.UsuarioId).HasColumnName("usuario_id");
 
             entity.HasOne(d => d.Proveedor).WithMany(p => p.FacturaCompra)
@@ -490,6 +507,10 @@ public partial class LaCentralDbContext : DbContext
                 .HasForeignKey(d => d.UsuarioAnulacionId)
                 .HasConstraintName("factura_compra_usuario_anulacion_id_fkey");
 
+            entity.HasOne(d => d.UsuarioAutorizacion).WithMany(p => p.FacturaCompraUsuarioAutorizacion)
+                .HasForeignKey(d => d.UsuarioAutorizacionId)
+                .HasConstraintName("factura_compra_usuario_autorizacion_id_fkey");
+
             entity.HasOne(d => d.Usuario).WithMany(p => p.FacturaCompraUsuario)
                 .HasForeignKey(d => d.UsuarioId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -498,7 +519,7 @@ public partial class LaCentralDbContext : DbContext
 
         modelBuilder.Entity<FacturaCompraDetalle>(entity =>
         {
-            entity.HasKey(e => new { e.FacturaCompraId, e.ArticuloId }).HasName("factura_compra_detalle_pkey");
+            entity.HasKey(e => new { e.FacturaCompraId, e.ArticuloId, e.SucursalId }).HasName("factura_compra_detalle_pkey");
 
             entity.ToTable("factura_compra_detalle");
 
@@ -506,6 +527,9 @@ public partial class LaCentralDbContext : DbContext
 
             entity.Property(e => e.FacturaCompraId).HasColumnName("factura_compra_id");
             entity.Property(e => e.ArticuloId).HasColumnName("articulo_id");
+            entity.Property(e => e.SucursalId)
+                .HasComment("Destino de la mercadería de ESTA línea. Una factura puede repartirse entre Fragueiro y San Vicente, y el sistema anterior lo carga por línea (APS-005, columna «Dep.»). El stock se incrementa contra esta sucursal, no contra una del comprobante.")
+                .HasColumnName("sucursal_id");
             entity.Property(e => e.Cantidad)
                 .HasPrecision(12, 3)
                 .HasColumnName("cantidad");
@@ -515,9 +539,6 @@ public partial class LaCentralDbContext : DbContext
             entity.Property(e => e.PrecioUnitario)
                 .HasPrecision(14, 2)
                 .HasColumnName("precio_unitario");
-            entity.Property(e => e.SucursalId)
-                .HasComment("Destino de la mercadería de ESTA línea. Una factura puede repartirse entre Fragueiro y San Vicente, y el sistema anterior lo carga por línea (APS-005, columna «Dep.»). El stock se incrementa contra esta sucursal, no contra una del comprobante.")
-                .HasColumnName("sucursal_id");
 
             entity.HasOne(d => d.Articulo).WithMany(p => p.FacturaCompraDetalle)
                 .HasForeignKey(d => d.ArticuloId)
@@ -548,6 +569,10 @@ public partial class LaCentralDbContext : DbContext
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("id");
             entity.Property(e => e.ClienteId).HasColumnName("cliente_id");
+            entity.Property(e => e.ConComprobanteFiscal)
+                .HasDefaultValue(true)
+                .HasComment("Indica si la operación se respaldó con comprobante fiscal. TRUE por defecto: es lo que el esquema afirmaba implícitamente al no tener la columna.")
+                .HasColumnName("con_comprobante_fiscal");
             entity.Property(e => e.Estado)
                 .HasMaxLength(10)
                 .HasDefaultValueSql("'ACTIVA'::character varying")
@@ -557,6 +582,10 @@ public partial class LaCentralDbContext : DbContext
             entity.Property(e => e.FechaRegistro)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("fecha_registro");
+            entity.Property(e => e.MedioCobro)
+                .HasMaxLength(30)
+                .HasComment("Cómo se cobró ESTA venta. Distinto de cliente.condicion_pago, que es la condición acordada con el cliente: uno de cuenta corriente puede pagar una venta en efectivo, y ninguno de los dos datos se deduce del otro. Pedido de la Dirección, 02/11/2026. Alimenta el reporte R-14.")
+                .HasColumnName("medio_cobro");
             entity.Property(e => e.MotivoAnulacion).HasColumnName("motivo_anulacion");
             entity.Property(e => e.Movil)
                 .HasMaxLength(40)
@@ -569,6 +598,9 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("orden_compra");
             entity.Property(e => e.SucursalId).HasColumnName("sucursal_id");
             entity.Property(e => e.UsuarioAnulacionId).HasColumnName("usuario_anulacion_id");
+            entity.Property(e => e.UsuarioAutorizacionId)
+                .HasComment("Quién AUTORIZÓ la anulación, que tiene que ser una persona distinta de quien la pidió (doble certificación exigida por la Dirección, 02/11/2026). Que además tenga rol ADMINISTRADOR lo valida el caso de uso: depende de otra tabla y un CHECK no puede mirarla. Alimenta R-08 y modifica el RF-010.")
+                .HasColumnName("usuario_autorizacion_id");
             entity.Property(e => e.UsuarioId).HasColumnName("usuario_id");
 
             entity.HasOne(d => d.Cliente).WithMany(p => p.FacturaVenta)
@@ -584,6 +616,10 @@ public partial class LaCentralDbContext : DbContext
             entity.HasOne(d => d.UsuarioAnulacion).WithMany(p => p.FacturaVentaUsuarioAnulacion)
                 .HasForeignKey(d => d.UsuarioAnulacionId)
                 .HasConstraintName("factura_venta_usuario_anulacion_id_fkey");
+
+            entity.HasOne(d => d.UsuarioAutorizacion).WithMany(p => p.FacturaVentaUsuarioAutorizacion)
+                .HasForeignKey(d => d.UsuarioAutorizacionId)
+                .HasConstraintName("factura_venta_usuario_autorizacion_id_fkey");
 
             entity.HasOne(d => d.Usuario).WithMany(p => p.FacturaVentaUsuario)
                 .HasForeignKey(d => d.UsuarioId)
@@ -728,6 +764,8 @@ public partial class LaCentralDbContext : DbContext
 
             entity.ToTable("proveedor_direccion");
 
+            entity.HasIndex(e => e.ProvinciaId, "proveedor_direccion_provincia_id_idx");
+
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("id");
@@ -750,14 +788,17 @@ public partial class LaCentralDbContext : DbContext
                 .UseCollation("es-AR-x-icu")
                 .HasColumnName("localidad");
             entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
-            entity.Property(e => e.Provincia)
-                .HasMaxLength(60)
-                .UseCollation("es-AR-x-icu")
-                .HasColumnName("provincia");
+            entity.Property(e => e.ProvinciaId)
+                .HasComment("Reemplaza la columna de texto libre `provincia`. NULL significa provincia no registrada. Hallazgo N-5.")
+                .HasColumnName("provincia_id");
 
             entity.HasOne(d => d.Proveedor).WithMany(p => p.ProveedorDireccion)
                 .HasForeignKey(d => d.ProveedorId)
                 .HasConstraintName("proveedor_direccion_proveedor_id_fkey");
+
+            entity.HasOne(d => d.Provincia).WithMany(p => p.ProveedorDireccion)
+                .HasForeignKey(d => d.ProvinciaId)
+                .HasConstraintName("proveedor_direccion_provincia_id_fkey");
         });
 
         modelBuilder.Entity<ProveedorHistorialBaja>(entity =>
@@ -819,6 +860,22 @@ public partial class LaCentralDbContext : DbContext
                 .HasConstraintName("proveedor_telefono_proveedor_id_fkey");
         });
 
+        modelBuilder.Entity<Provincia>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("provincia_pkey");
+
+            entity.ToTable("provincia", tb => tb.HasComment("Provincias argentinas en uso. Elimina la dependencia transitiva de las dos tablas de dirección, donde el nombre viajaba como texto libre por fila. Hallazgo N-5. El centinela «< Prov.NO Registrada» del sistema anterior no se carga: su equivalente acá es la clave ajena en NULL."));
+
+            entity.HasIndex(e => e.Nombre, "provincia_nombre_unico").IsUnique();
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(60)
+                .HasColumnName("nombre");
+        });
+
         modelBuilder.Entity<Rol>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("rol_pkey");
@@ -846,6 +903,14 @@ public partial class LaCentralDbContext : DbContext
             entity.Property(e => e.Cantidad)
                 .HasPrecision(12, 3)
                 .HasColumnName("cantidad");
+            entity.Property(e => e.Minimo)
+                .HasPrecision(12, 3)
+                .HasComment("Punto de reposición de ese artículo en ESA sucursal. 0 = sin piso definido, y por eso no genera alerta: un piso inventado produciría alertas falsas para todo el catálogo. Va en stock y no en articulo porque el mínimo es por sucursal. Pedido de la Dirección, 02/11/2026. Alimenta el reporte R-11.")
+                .HasColumnName("minimo");
+            entity.Property(e => e.UbicacionDeposito)
+                .HasMaxLength(60)
+                .HasComment("Posición física del artículo en el depósito de ESA sucursal. Estaba en `articulo`, donde un solo campo tenía que servir para todos los locales. Migró con el valor replicado desde articulo: en el origen el dato era único para todas las sucursales, así que la réplica conserva la información que había. Hallazgo N-9.")
+                .HasColumnName("ubicacion_deposito");
 
             entity.HasOne(d => d.Articulo).WithMany(p => p.Stock)
                 .HasForeignKey(d => d.ArticuloId)
@@ -960,8 +1025,6 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("nombre_usuario");
             entity.Property(e => e.RolId).HasColumnName("rol_id");
             entity.Property(e => e.SucursalId).HasColumnName("sucursal_id");
-            entity.Property(e => e.UsuarioAltaId).HasColumnName("usuario_alta_id");
-            entity.Property(e => e.UsuarioBajaId).HasColumnName("usuario_baja_id");
 
             entity.HasOne(d => d.Rol).WithMany(p => p.Usuario)
                 .HasForeignKey(d => d.RolId)
@@ -972,14 +1035,6 @@ public partial class LaCentralDbContext : DbContext
                 .HasForeignKey(d => d.SucursalId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("usuario_sucursal_id_fkey");
-
-            entity.HasOne(d => d.UsuarioAlta).WithMany(p => p.InverseUsuarioAlta)
-                .HasForeignKey(d => d.UsuarioAltaId)
-                .HasConstraintName("usuario_usuario_alta_id_fkey");
-
-            entity.HasOne(d => d.UsuarioBaja).WithMany(p => p.InverseUsuarioBaja)
-                .HasForeignKey(d => d.UsuarioBajaId)
-                .HasConstraintName("usuario_usuario_baja_id_fkey");
         });
 
         modelBuilder.Entity<UsuarioHistorialBaja>(entity =>

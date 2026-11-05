@@ -8,6 +8,6 @@ public sealed record CodigoProveedorRequest(int ProveedorId, string Codigo);
 /// Costo y precios tampoco: nacen en null hasta la primera factura de compra.
 /// </summary>
 public sealed record CrearArticuloRequest(
-    string Nombre, string? UbicacionDeposito, IReadOnlyList<CodigoProveedorRequest> CodigosProveedor);
+    string Nombre, IReadOnlyList<CodigoProveedorRequest> CodigosProveedor);
 
 public sealed record CrearArticuloResponse(int Id, string CodigoInterno);

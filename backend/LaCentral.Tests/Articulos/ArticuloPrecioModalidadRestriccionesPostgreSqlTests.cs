@@ -12,6 +12,7 @@ namespace LaCentral.Tests.Articulos;
 /// que no quedó nada. articulo_precio_modalidad_valida está en ArticuloPrecioModalidadPostgreSqlTests.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class ArticuloPrecioModalidadRestriccionesPostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;

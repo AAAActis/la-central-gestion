@@ -6,7 +6,7 @@ namespace LaCentral.UseCases.Articulos;
 /// <summary>Validaciones del artículo, compartidas por el alta y la modificación.</summary>
 public static class ArticuloValidaciones
 {
-    // Límites de articulo.nombre, articulo.ubicacion_deposito y articulo_codigo_alternativo.codigo.
+    // Límites de articulo.nombre, stock.ubicacion_deposito y articulo_codigo_alternativo.codigo.
     public const int LargoNombre = 200;
     public const int LargoUbicacion = 60;
     public const int LargoCodigo = 60;
@@ -29,11 +29,16 @@ public static class ArticuloValidaciones
         return Result.Success();
     }
 
-    public static Result ValidarDatos(string nombre, string? ubicacionDeposito)
+    public static Result ValidarDatos(string nombre)
     {
         if (string.IsNullOrWhiteSpace(nombre) || nombre.Trim().Length > LargoNombre)
             return Result.Failure(TipoError.Invalido, $"El nombre es obligatorio y no puede superar los {LargoNombre} caracteres.");
 
+        return Result.Success();
+    }
+
+    public static Result ValidarUbicacion(string? ubicacionDeposito)
+    {
         if (ubicacionDeposito is not null && ubicacionDeposito.Trim().Length > LargoUbicacion)
             return Result.Failure(TipoError.Invalido, $"La ubicación en depósito no puede superar los {LargoUbicacion} caracteres.");
 

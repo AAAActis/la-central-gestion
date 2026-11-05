@@ -13,8 +13,6 @@ public record CrearArticuloRequest
     [MaxLength(200, ErrorMessage = "El nombre no puede superar los 200 caracteres.")]
     public string Nombre { get; init; } = string.Empty;
 
-    [MaxLength(60, ErrorMessage = "La ubicación en depósito no puede superar los 60 caracteres.")]
-    public string? UbicacionDeposito { get; init; }
 
     public List<CodigoProveedorRequest>? CodigosProveedor { get; init; }
 }

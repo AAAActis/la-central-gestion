@@ -36,7 +36,7 @@ public class CrearArticuloUseCase
     public async Task<Result<CrearArticuloResponse>> EjecutarAsync(CrearArticuloRequest request, CancellationToken ct = default)
     {
         var codigos = request.CodigosProveedor ?? Array.Empty<CodigoProveedorRequest>();
-        var validacion = ArticuloValidaciones.ValidarDatos(request.Nombre, request.UbicacionDeposito);
+        var validacion = ArticuloValidaciones.ValidarDatos(request.Nombre);
         if (validacion.IsSuccess)
             validacion = ArticuloValidaciones.ValidarCodigos(codigos);
         if (!validacion.IsSuccess)
@@ -69,7 +69,6 @@ public class CrearArticuloUseCase
         var articulo = new Articulo
         {
             Nombre = request.Nombre.Trim(),
-            UbicacionDeposito = string.IsNullOrWhiteSpace(request.UbicacionDeposito) ? null : request.UbicacionDeposito.Trim(),
             Activo = true,
             CostoVigente = null,
             // La misma normalización con la que se busca.

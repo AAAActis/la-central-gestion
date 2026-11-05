@@ -41,7 +41,8 @@ public sealed record PaginaArticulosDto(
 public sealed record CodigoProveedorConsultaDto(
     int ProveedorId, string RazonSocial, string CodigoOriginal, string ClaveNormalizada);
 
-public sealed record StockSucursalConsultaDto(short SucursalId, string Sucursal, decimal Cantidad);
+/// <summary>N-9: la ubicación es de ESA sucursal, como la cantidad. null = sin estante asignado.</summary>
+public sealed record StockSucursalConsultaDto(short SucursalId, string Sucursal, decimal Cantidad, string? UbicacionDeposito = null);
 
 /// <summary>Fila de articulo_precio_modalidad tal como está guardada (H3: todo por valor).</summary>
 public sealed record PrecioModalidadConsultaDto(
@@ -53,7 +54,7 @@ public sealed record ArticuloDetalleConsultaDto(
     int? UltimoProveedorId, IReadOnlyList<CodigoProveedorConsultaDto> Codigos,
     IReadOnlyList<StockSucursalConsultaDto> Existencias,
     IReadOnlyList<PrecioModalidadConsultaDto> PreciosPorModalidad,
-    string? UbicacionDeposito = null, string? MotivoBaja = null);
+    string? MotivoBaja = null);
 
 /// <summary>
 /// Por qué una modalidad no tiene precio. Viaja con el dato: un precio ausente sin razón
@@ -78,7 +79,7 @@ public sealed record FichaArticuloDto(
     int? UltimoProveedorId, IReadOnlyList<CodigoProveedorConsultaDto> Codigos,
     IReadOnlyList<StockSucursalConsultaDto> Existencias,
     IReadOnlyList<PrecioModalidadFichaDto> Precios,
-    string? UbicacionDeposito = null, string? MotivoBaja = null)
+    string? MotivoBaja = null)
 {
     /// <summary>HU-STK-01 CA-001: la suma de todas las sucursales.</summary>
     public decimal TotalExistencias => Existencias.Sum(e => e.Cantidad);
