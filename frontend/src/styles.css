@@ -217,6 +217,33 @@ table.sin-seleccion tbody tr:hover { background: transparent; }
 table.sin-seleccion tbody tr:nth-child(even):hover { background: var(--superficie-2); }
 table.lineas input.corto { width: 100px; }
 
+/* Listado reutilizable (compartido/listado.ts, HU-UI-04): referencias 02 y 12. */
+.listado-busqueda { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--esp-12) var(--esp-16); }
+.listado-busqueda > label.check { min-height: var(--alto-boton); }
+.listado-ayuda { margin: var(--esp-8) 0 0; }
+.listado-campo { flex: 1 1 320px; display: flex; flex-direction: column; gap: var(--esp-8); }
+.listado-campo > label { margin: 0; }
+.campo-busqueda { position: relative; display: flex; }
+.campo-busqueda > svg { position: absolute; left: var(--esp-12); top: 50%; translate: 0 -50%; width: 18px; height: 18px; color: var(--texto-2); pointer-events: none; }
+.campo-busqueda > input { flex: 1; min-height: var(--alto-boton); padding-left: calc(var(--esp-12) + 18px + var(--esp-10)); }
+.listado .tabla-caja table { margin-top: 0; }
+.listado .tarjeta-cabecera { border-top: 1px solid var(--linea); }
+.listado td.mono { white-space: nowrap; }
+/* La fila no es un botón: la acción va en su celda, que también se alcanza con el teclado. */
+.listado tbody tr { cursor: default; }
+.listado-estado { width: 1%; white-space: nowrap; text-align: right; }
+.listado-pie { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--esp-12); }
+.listado-paginas { display: flex; align-items: center; gap: var(--esp-10); }
+
+/* Estado vacío §8: ícono, una frase que diga qué pasó y la acción. Nunca una tabla vacía. */
+.estado-vacio { display: flex; flex-direction: column; align-items: center; gap: var(--esp-10); padding: var(--esp-24) var(--esp-24) calc(2 * var(--esp-24)); border-top: 1px solid var(--linea); text-align: center; }
+.estado-vacio > svg { width: 24px; height: 24px; margin-top: var(--esp-24); }
+.estado-vacio > h2 { margin: 0; color: var(--tinta); }
+.estado-vacio > p { margin: 0; }
+
+/* Texto solo para lectores de pantalla. */
+.oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
 /* Fondo hexagonal §5: acceso y modales. Sin la imagen, queda el color de respaldo. */
 .fondo-hex { background: var(--fondo-hex-respaldo) url('/fondo-hex.jpg') center / cover no-repeat; color: var(--blanco); }
 
