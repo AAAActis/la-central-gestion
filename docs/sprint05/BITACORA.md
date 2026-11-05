@@ -231,3 +231,5 @@
 - 21:48 · Paso 3: README de tests con los dos comandos y T × (1 + P) + m ≤ L (`4f4e17e`). La cuenta ya estaba desde D-27b; se agregaron los comandos y el ejemplo con los números de hoy.
 - 21:52 · Paso 4: una corrida completa sobre `4f4e17e`: **458/458**, 0 omitidos, 2 min 46 s. Frontend no se volvió a correr: `frontend/` idéntico a `79606e8` (árbol `4fa0404`), 95/95. ESTADO (`7c132c9`, pusheado) y cuerpo del #141 con ese número y la tabla de conciliación.
 - 21:55 · Paso 5: política de pruebas en `CLAUDE.md`, bloque de nivel 2 tal cual (verificado con `diff`); `REGLA-TESTS.md` borrado (no estaba versionado).
+- 21:58 · Paso 6: orden de merge en el cuerpo de #139, #140, #141 y #142 (verificado: los cuatro tienen la sección) y en el ESTADO del #141 (`7c132c9`).
+**BLOQUEADO EN:** paso 7, el ensayo de la demo y `docs/sprint05/GUION-DEMO.md`. Depende de que Javi mergee los cuatro PR en el orden escrito; después es lo primero, antes del merge de `develop` en la 044 y del aviso flotante. También abierto: las compuertas del #141 son sobre `0d41569`; `5cb63b1`, `59c0327` y `4f4e17e` (solo tests y README) no pasaron por `verificador-tdd` ni `auditor-persistencia`.
