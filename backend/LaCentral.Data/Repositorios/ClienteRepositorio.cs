@@ -71,8 +71,8 @@ public class ClienteRepositorio : IClienteRepositorio
     // traer resultados que no tienen nada que ver con lo buscado.
     private const double UmbralSimilitudRazonSocial = 0.2;
 
-    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Cliente>> BuscarAsync(
-        string texto, bool incluirInactivos, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<LaCentral.UseCases.Entidades.Cliente> Items, int Total)> BuscarAsync(
+        string texto, bool incluirInactivos, int pagina, int tamanoPagina, CancellationToken cancellationToken = default)
     {
         var query = _context.Cliente.AsQueryable();
 
@@ -101,9 +101,10 @@ public class ClienteRepositorio : IClienteRepositorio
         }
 
         var clientesBd = await query.ToListAsync(cancellationToken);
+        var total = clientesBd.Count;
 
         // Mapeo inverso: Entidad de EF Core -> Entidad de dominio pura.
-        return clientesBd
+        return (clientesBd
             .Select(c => new LaCentral.UseCases.Entidades.Cliente
             {
                 Id = c.Id,
@@ -114,7 +115,7 @@ public class ClienteRepositorio : IClienteRepositorio
                 CondicionPago = c.CondicionPago ?? string.Empty,
                 Activo = c.Activo
             })
-            .ToList(); 
+            .ToList(), total);
     }
 
     public async Task<LaCentral.UseCases.Entidades.Cliente?> ObtenerDetallePorIdAsync(int id, CancellationToken cancellationToken = default)

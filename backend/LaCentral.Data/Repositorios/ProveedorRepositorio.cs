@@ -49,8 +49,8 @@ public class ProveedorRepositorio : IProveedorRepositorio
     // --- MÉTODO FALTANTE QUE ROMPÍA LA INTERFAZ ---
     private const double UmbralSimilitudRazonSocial = 0.2;
 
-    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarAsync(
-        string texto, bool incluirInactivos, CancellationToken ct = default)
+    public async Task<(IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor> Items, int Total)> BuscarAsync(
+        string texto, bool incluirInactivos, int pagina, int tamanoPagina, CancellationToken ct = default)
     {
         var query = _context.Proveedor.AsQueryable();
 
@@ -74,7 +74,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
 
         var bd = await query.ToListAsync(ct);
 
-        return bd.Select(p => new LaCentral.UseCases.Entidades.Proveedor
+        return (bd.Select(p => new LaCentral.UseCases.Entidades.Proveedor
         {
             Id = p.Id,
             Codigo = p.Codigo,
@@ -82,7 +82,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
             Cuit = p.Cuit,
             UrlReferencia = p.UrlReferencia,
             Activo = p.Activo
-        }).ToList();
+        }).ToList(), bd.Count);
     }
     // ----------------------------------------------
 

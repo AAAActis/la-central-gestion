@@ -30,15 +30,15 @@ public class ConsultarClienteUseCaseTests
             new Cliente { Codigo = "002", RazonSocial = "REPUESTOS CORDOBA" }
         };
         
-        _mockRepo.Setup(r => r.BuscarAsync("REPUESTOS CORDOBA", true, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(clientesSimulados);
+        _mockRepo.Setup(r => r.BuscarAsync("REPUESTOS CORDOBA", true, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync((clientesSimulados, clientesSimulados.Count));
 
         // Act
         var resultado = await _consultarUseCase.EjecutarAsync("REPUESTOS CORDOBA", incluirInactivos: true);
 
         // Assert
         Assert.True(resultado.IsSuccess);
-        Assert.Equal(2, resultado.Value.Count);
+        Assert.Equal(2, resultado.Value.Items.Count);
     }
 
     // CA-002
@@ -52,16 +52,16 @@ public class ConsultarClienteUseCaseTests
             new Cliente { Codigo = "010", RazonSocial = "TALLER SAN VICENTE", Cuit = cuitBuscado }
         };
 
-        _mockRepo.Setup(r => r.BuscarAsync(cuitBuscado, false, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(clientesSimulados);
+        _mockRepo.Setup(r => r.BuscarAsync(cuitBuscado, false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync((clientesSimulados, clientesSimulados.Count));
 
         // Act
         var resultado = await _consultarUseCase.EjecutarAsync(cuitBuscado, incluirInactivos: false);
 
         // Assert
         Assert.True(resultado.IsSuccess);
-        Assert.Single(resultado.Value);
-        Assert.Equal(cuitBuscado, resultado.Value.First().Cuit);
+        Assert.Single(resultado.Value.Items);
+        Assert.Equal(cuitBuscado, resultado.Value.Items.First().Cuit);
     }
 
     // CA-003
@@ -69,8 +69,8 @@ public class ConsultarClienteUseCaseTests
     public async Task Ejecutar_SinCoincidencias_DevuelveFalloConMensajeExplicito()
     {
         // Arrange
-        _mockRepo.Setup(r => r.BuscarAsync("ASDXYZ", false, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(new List<Cliente>()); // Lista vacía
+        _mockRepo.Setup(r => r.BuscarAsync("ASDXYZ", false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(((IReadOnlyList<Cliente>)new List<Cliente>(), 0)); // Lista vacía
 
         // Act
         var resultado = await _consultarUseCase.EjecutarAsync("ASDXYZ", incluirInactivos: false);
@@ -85,8 +85,8 @@ public class ConsultarClienteUseCaseTests
     public async Task Ejecutar_SinIncluirInactivos_LlamaAlRepositorioConBanderaEnFalse()
     {
         // Arrange
-        _mockRepo.Setup(r => r.BuscarAsync(It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(new List<Cliente>()); 
+        _mockRepo.Setup(r => r.BuscarAsync(It.IsAny<string>(), false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(((IReadOnlyList<Cliente>)new List<Cliente>(), 0)); 
 
         // Act
         await _consultarUseCase.EjecutarAsync("filtro", incluirInactivos: false);
@@ -94,7 +94,7 @@ public class ConsultarClienteUseCaseTests
         // Assert
         // Verificamos que el UseCase le pasó correctamente el false al puerto, 
         // delegando la responsabilidad de filtrar a la base de datos.
-        _mockRepo.Verify(r => r.BuscarAsync("filtro", false, It.IsAny<CancellationToken>()), Times.Once);
+        _mockRepo.Verify(r => r.BuscarAsync("filtro", false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // CA-005 (Usando el UseCase de Detalle de Santi)

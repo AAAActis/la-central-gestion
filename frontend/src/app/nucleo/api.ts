@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { Sesion } from './sesion';
 
 export interface CodigoProveedorResumen {
@@ -142,10 +142,10 @@ export class ApiLaCentral {
     return this.http.post<void>(`/api/articulos/${id}/reactivacion`, null);
   }
 
-  /** Solo activos: a un proveedor inactivo no se le registran compras. 404 si no hay ninguno. */
+  /** Solo activos: a un proveedor inactivo no se le registran compras. La primera página (#147). */
   proveedores(texto: string): Observable<ProveedorResumen[]> {
     const params = new HttpParams().set('texto', texto).set('incluirInactivos', false);
-    return this.http.get<ProveedorResumen[]>('/api/proveedores', { params });
+    return this.http.get<{ items: ProveedorResumen[] }>('/api/proveedores', { params }).pipe(map(p => p.items));
   }
 
   registrarFacturaCompra(factura: FacturaCompraNueva): Observable<{ id: number }> {

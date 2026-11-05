@@ -29,15 +29,15 @@ public class ConsultarProveedoresUseCaseTests
             new Proveedor { Id = 2, Codigo = "PROV002", RazonSocial = "REPUESTOS CORDOBA", Activo = true }
         };
 
-        _mockRepo.Setup(r => r.BuscarAsync("REPUESTOS CORDOBA", true, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(proveedoresSimulados);
+        _mockRepo.Setup(r => r.BuscarAsync("REPUESTOS CORDOBA", true, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync((proveedoresSimulados, proveedoresSimulados.Count));
 
         // Act
         var resultado = await _consultarUseCase.EjecutarAsync("REPUESTOS CORDOBA", incluirInactivos: true);
 
         // Assert
         Assert.True(resultado.IsSuccess);
-        Assert.Equal(2, resultado.Value.Count);
+        Assert.Equal(2, resultado.Value.Items.Count);
     }
 
     // CA-002: búsqueda por CUIT exacto devuelve a lo sumo uno, y propaga el Codigo
@@ -51,18 +51,18 @@ public class ConsultarProveedoresUseCaseTests
             new Proveedor { Id = 10, Codigo = "PROV010", RazonSocial = "REPUESTOS DEL SUR", Cuit = cuitBuscado, Activo = true }
         };
 
-        _mockRepo.Setup(r => r.BuscarAsync(cuitBuscado, false, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(proveedoresSimulados);
+        _mockRepo.Setup(r => r.BuscarAsync(cuitBuscado, false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync((proveedoresSimulados, proveedoresSimulados.Count));
 
         // Act
         var resultado = await _consultarUseCase.EjecutarAsync(cuitBuscado, incluirInactivos: false);
 
         // Assert
         Assert.True(resultado.IsSuccess);
-        Assert.Single(resultado.Value);
-        Assert.Equal(cuitBuscado, resultado.Value.First().Cuit);
+        Assert.Single(resultado.Value.Items);
+        Assert.Equal(cuitBuscado, resultado.Value.Items.First().Cuit);
         // Codigo es la clave de negocio: el frontend la necesita en los resultados de búsqueda.
-        Assert.Equal("PROV010", resultado.Value.First().Codigo);
+        Assert.Equal("PROV010", resultado.Value.Items.First().Codigo);
     }
 
     // CA-003: sin texto de búsqueda, rechaza antes de tocar el repositorio
@@ -76,7 +76,7 @@ public class ConsultarProveedoresUseCaseTests
         Assert.True(resultado.IsFailure);
         Assert.Equal(TipoError.Invalido, resultado.Tipo);
         _mockRepo.Verify(
-            r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+            r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -85,8 +85,8 @@ public class ConsultarProveedoresUseCaseTests
     public async Task Ejecutar_SinCoincidencias_DevuelveNoEncontradoConMensajeExplicito()
     {
         // Arrange
-        _mockRepo.Setup(r => r.BuscarAsync("ASDXYZ", false, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(new List<Proveedor>());
+        _mockRepo.Setup(r => r.BuscarAsync("ASDXYZ", false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(((IReadOnlyList<Proveedor>)new List<Proveedor>(), 0));
 
         // Act
         var resultado = await _consultarUseCase.EjecutarAsync("ASDXYZ", incluirInactivos: false);
@@ -102,13 +102,13 @@ public class ConsultarProveedoresUseCaseTests
     public async Task Ejecutar_SinIncluirInactivos_LlamaAlRepositorioConBanderaEnFalse()
     {
         // Arrange
-        _mockRepo.Setup(r => r.BuscarAsync(It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(new List<Proveedor>());
+        _mockRepo.Setup(r => r.BuscarAsync(It.IsAny<string>(), false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(((IReadOnlyList<Proveedor>)new List<Proveedor>(), 0));
 
         // Act
         await _consultarUseCase.EjecutarAsync("filtro", incluirInactivos: false);
 
         // Assert
-        _mockRepo.Verify(r => r.BuscarAsync("filtro", false, It.IsAny<CancellationToken>()), Times.Once);
+        _mockRepo.Verify(r => r.BuscarAsync("filtro", false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

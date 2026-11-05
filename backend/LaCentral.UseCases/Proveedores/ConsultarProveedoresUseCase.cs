@@ -14,22 +14,23 @@ public class ConsultarProveedoresUseCase
         _proveedorRepositorio = proveedorRepositorio;
     }
 
-    public async Task<Result<IReadOnlyList<ProveedorResumenDto>>> EjecutarAsync(
-        string texto, bool incluirInactivos, CancellationToken ct = default)
+    public async Task<Result<PaginaDto<ProveedorResumenDto>>> EjecutarAsync(
+        string texto, bool incluirInactivos, int pagina = 1, int tamanoPagina = 20, CancellationToken ct = default)
     {
         // CA-003: hace falta un criterio de búsqueda, no se lista todo el padrón.
         if (string.IsNullOrWhiteSpace(texto))
         {
-            return Result<IReadOnlyList<ProveedorResumenDto>>.Failure(
+            return Result<PaginaDto<ProveedorResumenDto>>.Failure(
                 TipoError.Invalido, "Ingresá una razón social o un CUIT para buscar.");
         }
 
-        var proveedores = await _proveedorRepositorio.BuscarAsync(texto.Trim(), incluirInactivos, ct);
+        var (lista, total) = await _proveedorRepositorio.BuscarAsync(texto.Trim(), incluirInactivos, pagina, tamanoPagina, ct);
+        var proveedores = lista;
 
         // CA-003: sin resultados hay que avisarlo explícitamente, no devolver una lista vacía sin más.
         if (proveedores.Count == 0)
         {
-            return Result<IReadOnlyList<ProveedorResumenDto>>.Failure(
+            return Result<PaginaDto<ProveedorResumenDto>>.Failure(
                 TipoError.NoEncontrado, "No se encontraron proveedores que coincidan con la búsqueda.");
         }
 
@@ -37,6 +38,6 @@ public class ConsultarProveedoresUseCase
             .Select(p => new ProveedorResumenDto(p.Id, p.Codigo, p.RazonSocial, p.Cuit, p.UrlReferencia, p.Activo))
             .ToList();
 
-        return Result<IReadOnlyList<ProveedorResumenDto>>.Success(respuesta);
+        return Result<PaginaDto<ProveedorResumenDto>>.Success(new PaginaDto<ProveedorResumenDto>(respuesta, total, pagina, tamanoPagina));
     }
 }
