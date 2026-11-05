@@ -711,3 +711,12 @@ vale esta.)
 **Cada bloque lleva, mientras se trabaja:** HU y paso · qué falta, en pasos · archivos tocados y cuáles quedaron a medias.
 **Estado:** en curso
 - **HU / paso:** ninguna todavía; paso 1 (GitHub).
+- 15:55 · Paso 1 hecho y verificado con `gh`:
+  - Milestones: Sprint 4 → 30/10, Sprint 5 → 13/11, Sprint 6 → 27/11, Sprint 7 → 11/12. Las fechas del 6 y el 7 son inferidas: sprints de dos semanas a partir del 13/11, igual que el 5.
+  - Issues nuevos: #147 paginación (Santi) y #148 es-AR (Javi).
+  - Sprint 5: #148, #147, #46 (Javi), #23 (Santi), #21 (Javi); además #43, cerrado.
+  - Sprint 6: #128 (Javi; sale Lauti), #126 y #127 (Santi), #52 (Javi).
+  - Sprint 7: #16 (Javi) y #19 (Santi); sale Lauti del #19.
+  - Sin milestone: #26, #28, #29, #31, #41, #53, #54, #9, #27, #33 y #137.
+  - Sin tocar: #1 y #48 (duplicados), #15 (Sprint 3), las HU viejas que quedaron en Sprint 7 y 8, y la fecha del Sprint 8 (13/12).
+- **HU / paso:** ninguna todavía; paso 2 (ESTADO del Sprint 5 y del Sprint 6, en la rama `docs/sprint05-guion-demo`, #146). **Falta:** escribirlos, push y actualizar el cuerpo del #146. **Archivos:** ninguno a medias.
