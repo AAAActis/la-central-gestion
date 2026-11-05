@@ -179,6 +179,45 @@ describe('Clientes (045)', () => {
     });
   }
 
+  // verificador-tdd, 05/11/2026: los errores de baja, reactivación y ficha no los afirmaba ningún caso.
+  it('si la API rechaza la baja, muestra su mensaje en el diálogo y no recarga la ficha', () => {
+    abrirFicha({ ...FICHA, cuit: null });
+    h.boton('Dar de baja').click();
+    h.fixture.detectChanges();
+    h.escribir(h.control('Motivo', h.dialogo()), 'Cerró el local');
+    h.escribir(h.control('Para confirmar, escribí CLI-001', h.dialogo()), 'CLI-001');
+
+    h.boton('Dar de baja', h.dialogo()).click();
+    h.servidor.expectOne('/api/clientes/4/baja').flush(
+      { status: 400, detail: 'El valor reescrito no coincide con el código o CUIT del cliente.' }, { status: 400, statusText: 'Bad Request' });
+    h.fixture.detectChanges();
+
+    expect(h.dialogo().querySelector('[role="alert"]')?.textContent).toContain('El valor reescrito no coincide');
+    h.servidor.expectNone('/api/clientes/4');
+  });
+
+  it('si la API rechaza la reactivación, muestra su mensaje', () => {
+    abrirFicha({ ...FICHA, activo: false });
+    h.boton('Reactivar').click();
+    h.servidor.expectOne('/api/clientes/4/reactivacion').flush(
+      { status: 400, detail: 'El cliente ya está activo.' }, { status: 400, statusText: 'Bad Request' });
+    h.fixture.detectChanges();
+
+    expect(h.raiz().querySelector('[role="alert"]')?.textContent).toContain('El cliente ya está activo.');
+  });
+
+  it('si la ficha no se puede abrir, muestra el mensaje de la API', () => {
+    h.buscar('taller');
+    h.servidor.expectOne(r => r.url === '/api/clientes').flush(pagina([FILA]));
+    h.fixture.detectChanges();
+    h.boton('Ver ficha').click();
+    h.servidor.expectOne('/api/clientes/4').flush(
+      { status: 404, detail: 'El cliente indicado no existe.' }, { status: 404, statusText: 'Not Found' });
+    h.fixture.detectChanges();
+
+    expect(h.raiz().querySelector('[role="alert"]')?.textContent).toContain('El cliente indicado no existe.');
+  });
+
   it('un cliente dado de baja no se modifica: se reactiva', () => {
     abrirFicha({ ...FICHA, activo: false });
     expect(Array.from(h.raiz().querySelectorAll('button')).some(b => b.textContent?.trim() === 'Modificar')).toBeFalse();

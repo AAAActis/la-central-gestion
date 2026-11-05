@@ -269,6 +269,13 @@ describe('Formulario · campo de selección (045)', () => {
     expect(Array.from(s?.options ?? []).map(o => o.textContent?.trim())).toEqual(['Sin informar', 'Monotributo', 'Exento']);
   });
 
+  // verificador-tdd, 05/11/2026: sin aria-describedby, la lista quedaba sin su ayuda para un lector de pantalla.
+  it('la lista queda vinculada a su ayuda con aria-describedby', () => {
+    const descriptores = (seleccion()?.getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean);
+    const textos = descriptores.map(id => raiz().querySelector('#' + CSS.escape(id))?.textContent?.trim());
+    expect(textos).toContain('Sin elegir: no está informada.');
+  });
+
   it('sin elegir, envía el valor vacío: no se obliga a elegir', () => {
     guardar();
     expect(fixture.componentInstance.enviados).toEqual([{ condicion: '' }]);
