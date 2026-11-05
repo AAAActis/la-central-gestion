@@ -233,3 +233,35 @@
 - 21:55 · Paso 5: política de pruebas en `CLAUDE.md`, bloque de nivel 2 tal cual (verificado con `diff`); `REGLA-TESTS.md` borrado (no estaba versionado).
 - 21:58 · Paso 6: orden de merge en el cuerpo de #139, #140, #141 y #142 (verificado: los cuatro tienen la sección) y en el ESTADO del #141 (`7c132c9`).
 **BLOQUEADO EN:** paso 7, el ensayo de la demo y `docs/sprint05/GUION-DEMO.md`. Depende de que Javi mergee los cuatro PR en el orden escrito; después es lo primero, antes del merge de `develop` en la 044 y del aviso flotante. También abierto: las compuertas del #141 son sobre `0d41569`; `5cb63b1`, `59c0327` y `4f4e17e` (solo tests y README) no pasaron por `verificador-tdd` ni `auditor-persistencia`.
+
+## 04/11/2026 22:28 · reglas de método en CLAUDE.md y en los agentes, entregable del Sprint 5
+
+**Instrucción recibida (verbatim):**
+> Cambio de método. Está en docs/sprint05/REGLAS-METODO-SPRINT.md:
+>
+> · Las secciones 1 a 5 van a CLAUDE.md tal cual.
+> · La sección 6 son CUATRO ediciones puntuales a .claude/agents/verificador-tdd.md y
+>   .claude/agents/auditor-persistencia.md. Son agregados, no reescrituras: el resto de esos
+>   archivos está bien y no se toca.
+> · Borrá REGLAS-METODO-SPRINT.md después, como con las otras reglas.
+>
+> Y definí el entregable del Sprint 5 en docs/sprint05/ESTADO.md con la forma de la sección 1:
+> acceso con los dos roles, artículos (ficha con existencia y ubicación por sucursal, alta,
+> baja, reactivación), clientes y proveedores, y factura de compra. Todo usable sobre
+> lacentral_demo. Sin comparador y sin factura por PDF: esos son el Sprint 6.
+>
+> Después de los merges de Javi, el orden es: COMO-PROBARLO.md y el ensayo de la demo primero
+> —ni yo ni el dueño probamos nunca el sistema—, y después la 042 y la 045, una HU por PR.
+
+(Una versión anterior de esta instrucción llegó a las 22:26 y se interrumpió antes de actuar;
+vale esta.)
+
+**Plan:**
+1. `git fetch` y comparar contra `origin/develop` (§3 nueva).
+2. Secciones 1 a 5 a `CLAUDE.md`, tal cual (rama del #142).
+3. Las cuatro ediciones de la §6 en los dos agentes, solo agregados (rama del #142).
+4. Borrar `REGLAS-METODO-SPRINT.md`.
+5. Entregable del Sprint 5 y el orden posterior al merge en `docs/sprint05/ESTADO.md` (rama del #141).
+6. Revisar contradicciones de lo nuevo con lo ya escrito (cuerpos de PR, política de pruebas).
+
+**Estado:** en curso
