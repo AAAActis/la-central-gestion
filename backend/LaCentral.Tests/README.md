@@ -143,10 +143,30 @@ No toca datos ni tablas de la plantilla.
   real con `[PostgreSqlFact]`. Toda afirmación relee la fila **con un contexto nuevo**.
 - Recorridos HTTP: `WebApplicationFactory`.
 
-## Verificar
+## Verificar · los dos comandos
+
+Desde `backend/`:
 
 ```bash
-dotnet test LaCentral.slnx
+dotnet test --filter "Base!=PostgreSQL"    # bucle rápido: 294 tests en ~1 s, cero conexiones
+dotnet test                                # completa: 458 tests, ~3 min
 ```
 
-Resultado esperado: `Con error: 0` y `Omitido: 0`.
+- **El bucle rápido** saltea las clases con `[Trait("Base", "PostgreSQL")]`. Toda clase con
+  `[PostgreSqlFact]` lo lleva, y `TraitBasePostgreSqlTests` falla si una no lo tiene. Es el
+  que se usa cuando el cambio no toca persistencia.
+- **La completa** abre conexiones y tiene que entrar en el límite del rol (ver
+  [Cuántas conexiones usa la suite](#cuántas-conexiones-usa-la-suite)):
+
+  ```
+  hilos × (1 + pool) + reserva ≤ CONNECTION LIMIT del rol
+  T     × (1 + P)    + m       ≤ L          hoy: 5 × (1 + 3) + 5 = 25 ≤ 25
+  ```
+
+  Si tu L es otro, `T = ⌊(L − m) / (1 + P)⌋` y lo pasás por línea de comandos:
+  `dotnet test -- xUnit.MaxParallelThreads=<T>`. **No subas P para tapar un `53300`**: el
+  techo se pone en los hilos.
+
+Cuándo se corre cada uno: la política de pruebas de `CLAUDE.md`.
+
+Resultado esperado en los dos: `Con error: 0` y `Omitido: 0`.
