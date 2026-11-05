@@ -74,10 +74,25 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
 
 ### Tests
 
-- **Backend: 457/457**, 0 omitidos, 0 warnings, 2 min 59 s, en una corrida completa sobre
-  `79606e8` (436 − 5 eliminados + 26 nuevos). Antes: 456/456 sobre `a4179f4` (y sobre
-  `44df50a`, en la corrida del `verificador-tdd`); una corrida anterior dio 455/456 por el
-  `medio_cobro` (arreglado en `7acfe72`).
+- **Backend: 458/458**, 0 omitidos, 0 warnings, 2 min 46 s, en una corrida completa sobre
+  **`4f4e17e`**, el último commit con código del PR (436 − 5 eliminados + 27 nuevos). Este es el
+  único número que vale; los anteriores quedan solo como rastro de dónde salió cada test.
+- **Conciliación del conteo (04/11):**
+
+  | Corrida | Backend | Frontend | Qué agregó el commit |
+  |---|---|---|---|
+  | mediodía, `a4179f4` (y `44df50a`, ronda 1 del verificador) | 456 | 94 | — |
+  | `79606e8` (ronda 2 del verificador sobre `0d41569`, solo docs encima) | 457 | 95 | `b5e0ca5`: `HistorialBajaRepositorioTests`, dos bajas (M18). `79606e8`: un spec de `articulos.spec.ts`, error de la API (F2) |
+  | **`4f4e17e`** | **458** | **95** | `5cb63b1`: `TraitBasePostgreSqlTests` (toda clase con `[PostgreSqlFact]` lleva el Trait) |
+
+  Frontend: `frontend/` es idéntico entre `79606e8` y `4f4e17e` (mismo hash de árbol,
+  `4fa0404`), así que no se volvió a correr (política de pruebas: solo si se tocó `frontend/`).
+- **Separación por tipo (`[Trait("Base", "PostgreSQL")]`, `59c0327`):** 294 unitarias en
+  0,7 s con `--filter "Base!=PostgreSQL"`, 164 contra PostgreSQL. Las 20 clases con
+  `[PostgreSqlFact]` lo llevan. Una de ellas, `ArticuloRepositorioTests`, tiene además un
+  `[Fact]` puro que queda del lado de PostgreSQL: se corre en la completa, no en el bucle
+  rápido. Los dos comandos y la cuenta de D-27b, en `backend/LaCentral.Tests/README.md`.
+  (El 287/148 de las instrucciones del 04/11 era sobre la línea de base de 435.)
 - **Eliminados (5), con su motivo:**
 
   | Test | Motivo |
@@ -88,7 +103,7 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
   | `ModificarArticuloUseCaseTests.UbicacionEnBlanco_SeGuardaComoNull` | Idem. Lo reemplaza `AsignarUbicacionArticuloUseCaseTests.UbicacionEnBlanco_LaBorra` (null y blancos) y `AsignarUbicacionPostgreSqlTests.Null_BorraLaUbicacion`. |
   | `ModificarArticuloApiPostgreSqlTests.Get_Ficha_TraeLaUbicacion` | La ficha ya no tiene ubicación del artículo, sino por sucursal. Lo reemplaza `Put_Ubicacion_204YLaFichaLaMuestraEnEsaSucursal`. |
 
-- Nuevos (25): 9 del caso de uso de ubicación (Moq), 5 de su persistencia (PostgreSQL, releídos
+- Nuevos (27 = los 25 de abajo + `b5e0ca5` + `TraitBasePostgreSqlTests`): 9 del caso de uso de ubicación (Moq), 5 de su persistencia (PostgreSQL, releídos
   con contexto nuevo), 2 HTTP, 2 de la compra con el mismo artículo en dos sucursales (Moq y el
   caso de negocio de las 20 bujías, contra PostgreSQL), y **los 7 del esquema 07** en `EsquemaNormalizacionPostgreSqlTests`: cada FALLA
   verifica el código SQL y el nombre de la restricción.
@@ -109,7 +124,7 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
   ubicación; F2 lo pone en rojo).
 - Los 7 del esquema nacieron en verde: el 07 ya estaba aplicado. No se mutaron (exigiría
   cambiar el esquema de la base de pruebas).
-- **Frontend: 95/95** (88 + 7, primer spec de la pantalla de artículos). Solo Chromium.
+- **Frontend: 95/95** (88 + 7, primer spec de la pantalla de artículos), sobre `79606e8`; árbol idéntico en `4f4e17e`. Solo Chromium.
 - **`verificador-tdd` ronda 2: APTO** sobre `0d41569`. M18 y F2 mueren por aserción; 10
   mutaciones re-muestreadas, ninguna sobrevive; 457/457 y 95/95 reproducidos; los rojos
   declarados coinciden con los que reprodujo.
@@ -158,12 +173,25 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
 
 ---
 
+## Orden de merge (04/11, para Javi)
+
+1. **#141 primero.** Desbloquea `develop`: hasta que entre, toda rama nueva que toque backend
+   hereda los 148 tests de PostgreSQL en rojo.
+2. **Después #139, #140 y #142**, rebaseando cada uno sobre `develop` a medida que entren.
+   **#139 y #141 tocan los dos `frontend/`:** puede haber conflicto en `styles.css`.
+3. **Con los cuatro adentro, UNA corrida completa sobre `develop`** (backend y frontend), y el
+   número acá. Ese es el estado que hereda todo el mundo.
+
+---
+
 ## PRÓXIMA SESIÓN
 
+0. **Lo primero después del merge de Javi: el ensayo de la demo y `docs/sprint05/GUION-DEMO.md`.**
+   Es lo único que no está probado de punta a punta por el frontend contra `lacentral_demo`, y la
+   demo es el 06/11. Va antes que el merge de `develop` en la 044 y antes que el aviso flotante.
 1. **Fase d (S5-06):** el lunes 09/11 (o con el #141 mergeado y verificado, nunca jueves ni
    viernes), 07 y después 08 a `lacentral_demo`. Desde ahí la demo corre solo con el código del
    #141: `develop` lee `articulo.ubicacion_deposito`, que el 07 borra.
-2. Veredicto de `verificador-tdd` y `auditor-persistencia` sobre la fase b.
-3. Pendientes del 04/11, en este orden: `git merge develop` en la 044 (resolver
+2. Pendientes del 04/11, en este orden: `git merge develop` en la 044 (resolver
    `formulario.ts` sin perder `password` ni `autocompletar`); aviso flotante con foco devuelto y
    Escape.
