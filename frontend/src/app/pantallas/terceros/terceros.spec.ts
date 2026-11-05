@@ -158,20 +158,26 @@ describe('Clientes (045)', () => {
     h.servidor.expectOne('/api/clientes/4').flush(FICHA);
   });
 
-  it('CA-001 · da de baja con motivo y reescribiendo el código (044), y recarga la ficha', () => {
-    abrirFicha();
-    h.boton('Dar de baja').click();
-    h.fixture.detectChanges();
-    h.escribir(h.control('Motivo', h.dialogo()), 'Cerró el local');
-    h.escribir(h.control('Para confirmar, escribí CLI-001', h.dialogo()), 'cli-001');
+  // DarDeBajaClienteUseCase compara con el CUIT si el cliente lo tiene, y si no con el código.
+  for (const [caso, ficha, clave] of [
+    ['con CUIT, reescribiendo el CUIT', FICHA, '30-12345678-9'],
+    ['sin CUIT, reescribiendo el código', { ...FICHA, cuit: null }, 'CLI-001'],
+  ] as const) {
+    it(`CA-001 · da de baja ${caso} (044), con motivo, y recarga la ficha`, () => {
+      abrirFicha(ficha);
+      h.boton('Dar de baja').click();
+      h.fixture.detectChanges();
+      h.escribir(h.control('Motivo', h.dialogo()), 'Cerró el local');
+      h.escribir(h.control(`Para confirmar, escribí ${clave}`, h.dialogo()), clave.toLowerCase());
 
-    h.boton('Dar de baja', h.dialogo()).click();
-    const baja = h.servidor.expectOne('/api/clientes/4/baja');
-    expect(baja.request.method).toBe('POST');
-    expect(baja.request.body).toEqual({ confirmacion: 'CLI-001', motivo: 'Cerró el local' });
-    baja.flush(null);
-    h.servidor.expectOne('/api/clientes/4').flush({ ...FICHA, activo: false });
-  });
+      h.boton('Dar de baja', h.dialogo()).click();
+      const baja = h.servidor.expectOne('/api/clientes/4/baja');
+      expect(baja.request.method).toBe('POST');
+      expect(baja.request.body).toEqual({ confirmacion: clave, motivo: 'Cerró el local' });
+      baja.flush(null);
+      h.servidor.expectOne('/api/clientes/4').flush({ ...ficha, activo: false });
+    });
+  }
 
   it('un cliente dado de baja no se modifica: se reactiva', () => {
     abrirFicha({ ...FICHA, activo: false });
