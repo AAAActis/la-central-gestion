@@ -524,3 +524,48 @@ vale esta.)
 **Plan corregido:** 5. Ensayo de la demo sobre develop contra `lacentral_demo`, por el navegador, con `operador.demo` (y la clave del archivo, por el frontend). 6. `GUION-DEMO.md` con código exacto de artículo y la sección de qué no se muestra. 7. Paginación (200 + envoltura, CA-003 v1.1 en las dos proformas, sección aparte en el PR). 8. 045 con la baja.
 - 13:10 · Paso 5, ensayo sobre develop (`9b81c07`, con #141, #144 y #145) contra `lacentral_demo`: `scripts/probar-demo.sh` levantó API y frontend. Por el proxy del frontend (`:4200/api`), `operador.demo` con la clave de `~/.config/lacentral/clave-demo.txt` → 200 (OPERADOR, sucursal 2); búsqueda «buj» → 200 con artículos de la demo (LC-000006, 4 proveedores). **La ficha del artículo da 500** en todos los probados (ids 6, 5 y 1): `42703: column a.codigo_barras does not exist`. El código de develop lleva el re-scaffold del 07 y la demo no tiene el 07; S5-06 prohíbe aplicarlo antes de la demo y nunca jueves ni viernes (hoy es jueves). Sin ficha no hay existencia, ni ubicación por sucursal, ni historial de compras. No se probó por el navegador: el endpoint ya falla.
 **BLOQUEADO EN:** la ficha del artículo no se puede mostrar desde develop contra `lacentral_demo` (falta el 07). Hay que elegir entre aplicar 07 y 08 a la demo hoy (contradice S5-06) o hacer la demo desde un commit anterior al #141 (sin ubicación por sucursal). Lo decide Santi o el equipo.
+
+## 05/11/2026 13:20 · se paran las HU: 07 y 08 a la demo, ficha, navegador, guion, clave de demo
+**Instrucción recibida (verbatim):**
+> PARAMOS LAS HU. Desde ahora y hasta que Sergio pruebe el sistema, no se construye nada
+> nuevo: ni la paginación ni la 045. Hoy solo se deja la demo andando.
+>
+> 1 · APLICÁ EL 07 Y EL 08 A lacentral_demo. La S5-06 decía "nunca jueves ni viernes", pero su
+> motivo escrito era no depender de que el #141 entrara a tiempo, y ya entró. La regla perdió
+> su motivo. Usá LACENTRAL_DEMO_PG, aplicá primero el 07 y después el 08, y pegame la salida
+> del cierre de cada uno. Si el 07 aborta en su compuerta, pará y decime el primer error: la
+> base queda intacta.
+>
+> Anotá en el ESTADO que S5-06 se levantó hoy, con ese motivo. Las decisiones no se cambian en
+> silencio.
+>
+> 2 · VOLVÉ A PROBAR LA FICHA. Los mismos tres artículos que dieron 500 (6, 5 y 1). Tiene que
+> responder 200 y traer existencia, ubicación por sucursal e historial de compras con precios
+> de proveedores distintos.
+>
+> 3 · RECORRELO POR EL NAVEGADOR, no solo por HTTP. Entrar, buscar, abrir la ficha, ver el
+> historial. Si algo se ve roto o vacío, decímelo ahora.
+>
+> 4 · docs/sprint05/GUION-DEMO.md: qué se muestra, en qué orden, con qué usuario y con qué
+> ARTÍCULO CONCRETO de los 30 sembrados — el código exacto. Más una sección de qué NO se
+> muestra y por qué: el comparador y los reportes no existen, y las diferencias visuales de la
+> Fase 2 esperan a Javi.
+>
+> 5 · Agregá al #143 una sección de cómo restablecer la clave de los usuarios de demo, con el
+> comando. Hoy la clave vive solo en mi máquina y Javi no puede probar nada. La clave NO va en
+> el repo, solo el comando para ponerla.
+>
+> 6 · Cuando los cinco estén, PARÁ y avisame. No arranques la paginación.
+**Plan:**
+1. 07 y después 08 a `lacentral_demo` con `LACENTRAL_DEMO_PG`; salida del cierre de cada uno; si la compuerta del 07 aborta, parar. S5-06 levantada en el ESTADO.
+2. Ficha de 6, 5 y 1 por HTTP: 200, existencia, ubicación por sucursal, historial.
+3. Recorrido por el navegador.
+4. `GUION-DEMO.md`.
+5. Sección de restablecer la clave de demo (#143 ya mergeado: ver dónde va).
+6. Parar y avisar.
+**Estado:** en curso
+- 13:30 · Paso 1: 07 y 08 aplicados a `lacentral_demo` (esquema `public`) con un ejecutor Npgsql de un solo uso (scratchpad, no versionado; no hay `psql` en esta máquina) que exige `Database=lacentral_demo` y para en el primer error. 07: compuerta OK, cierre «TODO OK», PK de `factura_compra_detalle` (factura_compra_id, articulo_id, sucursal_id), 24 provincias. 08: «stock.ubicacion_deposito en VARCHAR(60). TODO OK». El «WARNING: there is no transaction in progress» es el `ROLLBACK` inicial de los dos scripts, esperado.
+- 13:40 · Paso 2: ficha de 6, 5 y 1 por el proxy del frontend → **200** los tres, con existencias por sucursal (p. ej. 6: Fragueiro 0, San Vicente 51) y precios. **Ubicación: `null` en las 60 filas de `stock`** (en la demo nunca se cargó). **Historial de compras: no lo trae ningún endpoint ni pantalla** (HU-ART-06 pendiente). En la base sí está: `LC-000021` tiene 8 compras de 4 proveedores, del 06/08 al 26/10, de $64.385,30 a $83.318,76.
+- 13:50 · Paso 3: por el navegador, con Chromium headless y `puppeteer-core` (en el scratchpad; Claude in Chrome no está disponible en esta sesión). Entran los dos usuarios; la búsqueda y la ficha funcionan; se guardó `Estante A3` en `LC-000020` / San Vicente (204 y releído en la base). Se ven dos defectos visuales: `/fondo-hex.jpg` da **404**, así que el login queda con el color de respaldo, y los montos salen en **formato inglés** (`$ 80,204.04`).
+- 14:00 · Pasos 4 y 5, rama `docs/sprint05-guion-demo` (`22d6563`, pusheada): `GUION-DEMO.md` (9 pasos con `LC-000021` y `LC-000020`, ensayados de punta a punta por el navegador; el paso 7 quedó otra vez en `Estante A3`), y la sección de qué no se muestra. `COMO-PROBARLO.md` con «Restablecer la clave de los usuarios de demo» y `backend/db/demo/restablecer_clave_demo.cs`: probado con la misma clave, los dos siguen entrando; contra `lacentral_test` no arranca. ESTADO: S5-06 levantada con su motivo, S5-07 (HU paradas), fase d hecha. El #143 ya estaba mergeado, por eso la sección va en un PR nuevo y no en el #143. **El PR no se pudo abrir:** GitHub devolvió error de GraphQL dos veces (`E5BA:1E7A43:39DF01:5B8406:6AECA8C4`, `CC40:56F30:39482D:5AF584:6AECA8D0`) y la API REST no respondió. El cuerpo está listo en el scratchpad.
+**BLOQUEADO EN:** abrir el PR de `docs/sprint05-guion-demo` (falla GitHub; se reintenta). Por instrucción de Santi, se para acá: la paginación no se arranca.
