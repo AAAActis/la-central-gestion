@@ -332,3 +332,64 @@ vale esta.)
 - 23:35 · `verificador-tdd` ronda 1 sobre `a71f2c5`: **NO APTO**. Sobreviven S1 (sin `cargando.set(false)` en el error, el botón queda trabado en «Buscando…») y S2 (`volverABuscar()` vacío: el test no movía el foco). 16 mutaciones matadas; m04 y m17 equivalentes (no bloqueantes). El rojo de `0c5be6e` confirmado: 12 por aserción, 0 TypeError.
 - 23:45 · Arreglo, solo tests: `d50ffbb`. S1, S2 y m04 comprobadas en rojo una por una; HEAD 13/13; frontend 104/104. Ronda 2 lanzada sobre `d50ffbb`.
 **BLOQUEADO EN:** la 045 necesita tres decisiones de Santi: (1) la HU-UI-06 (044) es precondición y no está mergeada; (2) `GET /api/clientes` y `/api/proveedores` no paginan: agregar paginación en el backend (con su test contra PostgreSQL) o usar el listado sin paginar; (3) campos de selección: condición fiscal (cinco valores fijos por CHECK) y condición de pago (texto libre de 60). Qué pasa con lista vacía y con un valor guardado que ya no está en la lista.
+
+## 05/11/2026 00:05 · respuestas de Santi: 044 primero, paginación aparte, 045 parcial, campos de selección
+
+**Instrucción recibida (verbatim, respuestas a cuatro preguntas; dos llegaron truncadas):**
+> Paginación: «PR de backend aparte».
+>
+> Dependencia: Opción 2, con un paso previo.
+>
+> PRIMERO, y son 15 minutos: terminá la 044. El git merge develop resolviendo formulario.ts
+> sin perder 'password' ni autocompletar, la suite de frontend, y el PR abierto. Eso ya estaba
+> en la lista y es lo que la tiene detenida. Avisame cuando esté para que Javi la revise.
+>
+> DESPUÉS arrancá la 045 desde develop con consulta, alta y modificación. La baja queda afuera
+> por ahora y el CA-001 se declara PARCIAL con el motivo: depende de la 044, que está en PR y
+> sin mergear. Eso es exactamente lo que permite el punto 8 de la Definición de Terminado — un
+> CA que no se puede verificar va declarado con su motivo, no escondido.
+>
+> No encadenes la rama de la 045 a la de la 044. Ya tuvimos cuatro ramas encadenadas esta
+> semana y el costo fue una tarde de rebases.
+>
+> Y una cosa: si la 044 entra en develop ANTES de que termines la 045, hacé git merge develop
+> en la rama de la 045 y agregá la baja con su confirmación en el MISMO PR, antes de abrirlo.
+> En ese caso el CA-001 queda completo y la HU no se parte en dos. Es el escenario preferible,
+> así que apuntá a eso; partirla es el plan de respaldo si Javi tarda.
+>
+> Condición fiscal: Opción 4. Antes de implementar, verificá el supuesto:
+>
+> docker exec -i lacentral_db psql -U lacentral -d lacentral -tAc "SELECT conname, pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid='cliente'::regclass AND contype='c' AND pg_get_constraintdef(oid) ILIKE '%condicion_fiscal%';"
+> docker exec -i lacentral_db psql -U lacentral -d lacentral -c "SELECT coalesce(condicion_fiscal,'(NULL)') v, count(*) FROM cliente GROUP BY 1 ORDER BY 2 DESC;"
+>
+> La regla, que vale en los dos casos:
+>
+> 1 · EL VACÍO ES UN ESTADO VÁLIDO Y SE PUEDE GUARDAR VACÍO. El campo aparece sin
+> seleccionar, con un texto de ayuda que diga que no está informada, y se puede guardar así.
+> NO se obliga a elegir.
+>
+> El motivo es concreto: los clientes importados de Multisoft vienen con muchos campos sin
+> informar — en condicion_pago    [TRUNCADO AQUÍ]
+>
+> Condición de pago: Opción 1: texto libre, como está.
+>
+> Motivo, que ya está medido: los valores reales de condicion_pago en la base son 12 e incluyen
+> VOUCHER RAPITAXI, VALES TELETAXIS y ORDEN DE TRANSMITAXI en 384 clientes —instrumentos de las
+> flotas de taxis, que son parte grande de la clientela—, dos plazos distintos de cuenta
+> corriente y tres escrituras de contado. Por eso el hallazgo N-6 salió del script de
+> normalización: la lista cerrada es una decisión de negocio que espera a Sergio. Está
+> documentado en la §A.4 de ese script.
+>
+> Y DE PASO, algo que dijiste y que hay que mirar: decís que el campo es OBLIGATORIO. Pero
+> 923    [TRUNCADO AQUÍ]
+
+**Plan:**
+1. 044: `git merge origin/develop` en `feature/hu-ui-06-confirmacion-con-motivo`, resolviendo
+   `formulario.ts` sin perder `password` ni `autocompletar`; suite de frontend; PR. Avisar a Santi.
+2. PR de backend aparte: paginación de `GET /api/clientes` y `/api/proveedores` (con test contra PostgreSQL).
+3. 045 desde develop: consulta, alta y modificación; baja fuera, CA-001 PARCIAL con motivo.
+   Si la 044 entra antes, merge de develop y la baja en el mismo PR.
+4. Antes de la condición fiscal: verificar el supuesto con las dos consultas (solo lectura).
+5. Preguntar lo que quedó truncado de las dos respuestas.
+
+**Estado:** en curso
