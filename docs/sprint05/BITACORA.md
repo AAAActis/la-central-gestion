@@ -617,3 +617,45 @@ vale esta.)
 **Estado:** terminada
 - 15:00 · Pasos 1 a 4: cerrados con comentario «Cerrado por el PR #N, mergeado en `develop` el <fecha>», verificados con `gh issue view`: #40 (#130, 20/10), #24 (#131, 20/10), #44 (#134, 29/10), #42 (#138, 04/11), #45 (#144, 05/11) y #43 (#145, 05/11). Las fechas son locales (UTC−3): el #130 figura en GitHub como 21/10 01:26 UTC. #43 → Sprint 5. #46 (045) de Sprint 7 a Sprint 5, abierto. Tabla de los 10 de Sprint 4 y los 3 de Sprint 5 entregada a Santi, sin moverlos.
 - Abierto: Santi decide los 10 de Sprint 4 y los 3 de Sprint 5; siguen sin tratar los duplicados #1 y #48, el #15, el #137 y los milestones.
+
+## 05/11/2026 15:10 · reparto del tablero por entregable, Sprint 5 y Sprint 6, Santi y Javi
+**Instrucción recibida (verbatim):**
+> Acomodá el tablero y los ESTADO con criterio. Lo que quiero es un ENTREGABLE COMPLETO al
+> cerrar este sprint, probable por mí y por Sergio.
+>
+> Criterio para repartir los 10 de Sprint 4 que quedaron abiertos:
+>
+> · Entra al Sprint 5 lo que SUMA AL ENTREGABLE: una HU que, terminada, le agrega algo que el
+>   dueño puede usar y ver. Más lo que ya está comprometido: paginación, 045 y el formato
+>   es-AR.
+> · NO entra lo que no sirve solo. Ejemplo concreto: una HU del comparador sin la capa de
+>   vinculación ni los scrapes no le sirve a nadie, así que va al Sprint 6 completa, con sus
+>   compuertas. Media funcionalidad no es entregable.
+> · NO entra lo que depende de una compuerta sin cerrar (C1, C2, C5, C6). Si la compuerta no
+>   está cerrada, la HU no se puede empezar aunque esté en el milestone.
+> · La deuda no lleva milestone de sprint.
+>
+> Y armá el Sprint 6 con el mismo criterio: que lo que quede ahí forme un entregable coherente
+> entre sí, no una bolsa de sobrantes.
+>
+> Reparto: dos personas, Santi y Javi. Asigná cada issue a uno de los dos y balanceá por SP.
+> Lauti no está disponible.
+>
+> Cuando lo tengas, pasame la propuesta en una tabla: issue, HU, a qué sprint va, a quién se
+> asigna, y el motivo en una línea. PARÁ ahí, no muevas nada hasta que lo apruebe.
+>
+> Después de que lo apruebe:
+> 1 · Aplicás los cambios en GitHub.
+> 2 · Dejás docs/sprint05/ESTADO.md y docs/sprint06/ESTADO.md diciendo EXACTAMENTE lo mismo
+>     que el tablero. Cero discrepancias: el tablero y el ESTADO son la misma verdad contada
+>     dos veces, y hoy no lo son.
+> 3 · El ESTADO del Sprint 5 arranca con su entregable en una línea, con la forma de la §1 de
+>     CLAUDE.md: "al cerrar este sprint, una persona puede entrar y <hacer tal cosa> sobre
+>     lacentral_demo".
+> 4 · Seguís con las HU hasta terminarlas todas, sin pararte entre una y otra.
+**Plan:**
+1. SP, dependencias y compuertas de cada issue abierto (proformas y ESTADO del Sprint 4).
+2. Propuesta: Sprint 5, Sprint 6 y backlog, asignación a Santi o Javi balanceada por SP. PARAR.
+3. Después de la aprobación: GitHub; ESTADO del Sprint 5 y del Sprint 6 iguales al tablero; entregable en una línea.
+4. Las HU del Sprint 5, una tras otra.
+**Estado:** en curso
