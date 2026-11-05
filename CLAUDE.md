@@ -163,3 +163,65 @@ agregá qué quedó abierto.
 - No reemplaza al `ESTADO.md`. El `ESTADO.md` es el estado del **sprint** y se actualiza
   antes de cada push; la bitácora es el estado de la **tarea en curso** y se actualiza
   mientras la tarea pasa.
+
+## Política de pruebas · cuándo se corre qué
+
+La suite completa tarda más de dos minutos, pega contra un PostgreSQL que corre en una
+netbook compartida con otros siete contenedores, y cuando falla produce una traza por
+fallo. Correrla en cada iteración es caro en tiempo, en carga y en contexto.
+
+### En el bucle de trabajo · filtrado, siempre
+
+```bash
+dotnet test --filter "FullyQualifiedName~<NombreDeLaClase>" --no-build
+```
+
+El `~` es "contiene", así que sirve con el nombre de la clase o del namespace. `--no-build`
+ahorra la compilación cuando ya compilaste.
+
+**Qué entra en el filtro:** la clase que tocaste **y las que dependen de lo que tocaste** —
+el caso de uso, su repositorio y el endpoint que lo expone. No se adivina: se mira qué
+referencia lo que cambió (`graphify query` sirve para eso) y se filtra por el namespace que
+los cubre a todos.
+
+**Frontend:** `npx ng test --watch=false --browsers=ChromeHeadless`, y **solo si tocaste
+`frontend/`**. Si el cambio es de backend, no se corre.
+
+### La suite completa · solo en estos cuatro momentos
+
+1. Antes de abrir un PR, o antes de actualizarlo con el último commit.
+2. Después de un merge a `develop`, porque es el estado que hereda todo el mundo.
+3. Cuando cambió el esquema de la base o un contrato compartido (un DTO, una interfaz de
+   repositorio, un componente de `compartido/`).
+4. Cuando la corrida filtrada dio verde pero el cambio toca algo transversal y no estás
+   seguro de a quién más afecta.
+
+Fuera de esos cuatro, no se corre entera.
+
+### Dos reglas que ahorran la mayor parte del costo
+
+- **Nunca dos veces por el mismo cambio.** El número que vale es el del último commit del
+  PR: si corriste la suite y después commiteaste algo, la que cuenta es la de después, y la
+  anterior no se reporta.
+- **Si la suite completa falla, no la vuelvas a correr entera para ver si se arregló.**
+  Corré filtrado sobre lo que falló hasta que esté en verde, y la completa **una sola vez**
+  al final. Una corrida completa en rojo mete una traza por fallo en el contexto; dos
+  corridas completas en rojo lo llenan.
+
+### La separación por tipo de prueba
+
+Las clases que usan `PostgreSqlPruebas` llevan `[Trait("Base", "PostgreSQL")]`. Con eso hay
+dos comandos:
+
+```bash
+dotnet test --filter "Base!=PostgreSQL"    # unitarias puras: segundos, cero carga a la Arch
+dotnet test                                # completa, en los cuatro momentos de arriba
+```
+
+El primero es el que se usa cuando el cambio no toca persistencia.
+
+### Lo que no se negocia
+
+Una prueba no ejecutada **no** es una prueba aprobada. Filtrar decide *cuándo* se corre
+cada cosa, nunca *si* se corre: todo lo que el cambio afecta se prueba antes del PR, y el
+conteo que queda escrito es el de una corrida real, no una estimación.

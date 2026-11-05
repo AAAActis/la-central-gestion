@@ -226,3 +226,8 @@
 7. Ensayo de la demo y `GUION-DEMO.md`: después del merge de Javi (no antes).
 
 **Estado:** en curso
+- 21:40 · Paso 1: conteo conciliado. +1 backend = `b5e0ca5` (`HistorialBajaRepositorioTests`, dos bajas, M18); +1 frontend = `79606e8` (spec del error de la API en la ficha, F2). Mediodía 456/94 (`a4179f4`) → 457/95 (`79606e8`) → 458/95 (`4f4e17e`, por el test del Trait).
+- 21:45 · Paso 2: el Trait **no estaba** en ninguna clase (los traits existentes usan otras claves: `Proveedor`, `Api`, `Esquema`…). `5cb63b1` rojo (`TraitBasePostgreSqlTests`, Assert.Empty con las 20 clases) y `59c0327` verde: el Trait en las 20 clases con `[PostgreSqlFact]`. `--filter "Base!=PostgreSQL"`: 294/294 en 0,7 s; 164 contra PostgreSQL.
+- 21:48 · Paso 3: README de tests con los dos comandos y T × (1 + P) + m ≤ L (`4f4e17e`). La cuenta ya estaba desde D-27b; se agregaron los comandos y el ejemplo con los números de hoy.
+- 21:52 · Paso 4: una corrida completa sobre `4f4e17e`: **458/458**, 0 omitidos, 2 min 46 s. Frontend no se volvió a correr: `frontend/` idéntico a `79606e8` (árbol `4fa0404`), 95/95. ESTADO (`7c132c9`, pusheado) y cuerpo del #141 con ese número y la tabla de conciliación.
+- 21:55 · Paso 5: política de pruebas en `CLAUDE.md`, bloque de nivel 2 tal cual (verificado con `diff`); `REGLA-TESTS.md` borrado (no estaba versionado).
