@@ -779,3 +779,11 @@ vale esta.)
   - Un `pgrep -f` mató el shell en medio del push: se rehízo y la memoria quedó corregida.
 - **HU / paso:** (e) #21 / 014, la baja de artículo, CA-002 a CA-005; paso 1: leer la proforma y `DarDeBajaArticuloUseCase`.
   - **Falta:** todo. **Archivos a medias:** ninguno.
+- 21:30 · **HU (e) #21 / 014 terminada: PR #153.**
+  - Backend: estructura `56f1aeb`, rojo `fd9f371`, verde `78d221e`. Frontend: rojo `fe9e2b5`, verde `aa4db26`.
+  - Suites: backend 467/467, frontend 126/126. A mano: código equivocado no envía; con existencia, 409 con la sucursal; sin existencia, 204.
+  - **CA-003 BLOQUEADO por esquema:** no hay columna para la declaración de «error de stock». Lo decide el equipo; el PR propone `articulo_historial_baja.error_de_stock`.
+- **Las cinco HU tienen PR:** #149 (es-AR), #150 (#147), #151 (045, después del #150), #152 (016), #153 (014).
+- **HU / paso:** compuertas. Se saca este worktree (`../lc-142`) y se invoca de a uno, en orden: `verificador-tdd` sobre #149, #150, #151, #152 y #153, y `auditor-persistencia` sobre #150, #151, #152 y #153.
+  - **Falta:** las 9 invocaciones; ante un NO APTO, arreglar y volver a verificar, hasta 3 rondas. Después actualizar la tabla del ESTADO (rama del #146) y avisar a Santi.
+  - **Archivos a medias:** ninguno.
