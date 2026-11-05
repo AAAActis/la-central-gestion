@@ -270,3 +270,56 @@ vale esta.)
 - 22:40 · Paso 5: entregable del Sprint 5 en el ESTADO del #141, con la forma de la §1, lo que queda fuera (Sprint 6) y las dos condiciones de cierre, pendientes. PRÓXIMA SESIÓN: COMO-PROBARLO.md y ensayo, después 042 y 045, una HU por PR. `5656743`, pusheado.
 - 22:42 · Paso 6: contradicciones. (a) La regla 3 prohíbe rebasear ramas pusheadas y el orden de merge decía «rebaseando»: corregido a `git merge origin/develop` en el ESTADO y en el cuerpo de los cuatro PR. (b) La política de pruebas pide la completa antes de abrir un PR; la regla 4 dice que al cerrar una HU no. No se tocó (las dos son texto tal cual): decide Santi. (c) La demo del 06/11 no muestra la ubicación por sucursal (S5-06): anotado en el entregable.
 **Quedó abierto:** la contradicción (b); `GUION-DEMO.md` (pedido antes) frente a `COMO-PROBARLO.md` (pedido ahora): ¿uno o dos archivos?; el ensayo, que espera los merges de Javi (bloque de las 21:32).
+
+## 04/11/2026 22:33 · aclaración de la bitácora, COMO-PROBARLO.md, HU 042 y HU 045
+
+**Instrucción recibida (verbatim):**
+> Resolución de la contradicción que encontraste, y va a CLAUDE.md como aclaración de la
+> regla de la bitácora:
+>
+> La única línea de un bloque que se reescribe es su propio `**Estado:**`, de "en curso" a
+> "terminada". Todo lo demás del bloque es de solo agregar: si algo cambió, va en una línea
+> nueva o en un bloque nuevo. El motivo es el que vos mismo viste: si el Estado se duplica
+> en vez de reemplazarse, la próxima sesión lee el bloque como abierto y rehace trabajo.
+>
+> Y ahora las HU. Una por PR, y en este orden:
+>
+> 1 · PRIMERO, y son 15 minutos: docs/sprint05/COMO-PROBARLO.md con UN comando que levante la
+> API apuntada a lacentral_demo y el frontend, y los pasos para entrar. No es un desvío: el
+> punto 10 de la Definición de Terminado exige que cada HU se pruebe a mano en el navegador
+> contra lacentral_demo, así que sin esto ninguna HU de acá en adelante puede cerrar. Se hace
+> una vez y sirve para todas.
+>
+> 2 · HU 042 · HU-UI-04 · componente de listado reutilizable. Rama desde develop, PR propio.
+> Es frontend puro, así que no espera el merge del #141. Los criterios de la PISTA B del
+> ESTADO del Sprint 4 son requisito, no preferencia: búsqueda como única cosa que hacer al
+> entrar, sin resultados, inactivos, paginación del servidor. Antes de escribir HTML, leé la
+> habilidad de diseño de frontend y docs/diseno/SISTEMA-VISUAL.md, que ahora sí está en el
+> repo con las 13 referencias.
+>
+> 3 · HU 045 · clientes y proveedores, que reutiliza la 042 y el formulario de la 043.
+> Acordate de lo que dejó anotado la 043: cuando una pantalla necesite un campo de selección,
+> tiene que llegar con su criterio de aceptación — qué pasa si la lista está vacía y qué pasa
+> si el valor guardado ya no está en la lista son preguntas de negocio. Si las necesitás,
+> preguntame.
+>
+> Para cada una: tests de la HU filtrados durante el trabajo, una corrida de integración de su
+> propio camino al cerrarla, y los verificadores UNA vez por PR con el alcance acotado a sus
+> commits. La suite completa recién al cerrar el sprint.
+>
+> El GUION-DEMO.md lo hacemos mañana, antes de que Sergio la vea.
+
+**Plan:**
+1. Aclaración de la regla de la bitácora en `CLAUDE.md` (rama del #142).
+2. `docs/sprint05/COMO-PROBARLO.md`: un comando que levante la API contra `lacentral_demo` y el
+   frontend, y los pasos para entrar. Rama propia desde `develop`, PR propio. Probarlo de verdad.
+3. HU 042 (HU-UI-04): rama desde `develop`; leer la PISTA B del ESTADO del Sprint 4, la
+   habilidad de diseño de frontend y `SISTEMA-VISUAL.md`; rojo → verde; prueba a mano contra
+   `lacentral_demo`; verificador una vez, alcance acotado; PR.
+4. HU 045: reutiliza la 042 y el formulario de la 043; preguntar los CA de los campos de
+   selección si hacen falta. Rama, PR, verificadores una vez.
+
+`git fetch`: `origin/develop` sigue en `9577197`; #139–#142 abiertos.
+
+**Estado:** en curso
+- 22:36 · Paso 1: aclaración en `CLAUDE.md`, regla de la bitácora: la única línea que se reescribe es el `**Estado:**`.
