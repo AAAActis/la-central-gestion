@@ -14,6 +14,8 @@ export interface CampoFormulario {
   patron?: string;
   mensajeFormato?: string;
   ayuda?: string;
+  /** Valores cerrados: se elige de una lista. La primera opción es vacía: sin elegir es válido salvo que sea obligatorio. */
+  opciones?: { valor: string; etiqueta: string }[];
   /** Una lista que se agrega y se quita (teléfonos, direcciones, códigos). */
   multivaluado?: boolean;
   /** Largo máximo: lo fija el endpoint, no el formulario. Va como atributo maxlength: al tipear no se puede pasar. */
