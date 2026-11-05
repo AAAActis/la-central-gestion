@@ -764,3 +764,12 @@ vale esta.)
   - **Sigue:** el verde de las pantallas (un componente configurable para las dos), el registro en `modulos.ts` y el paso D2.
   - **D2:** provincia por dirección (D-S5-02: JOIN y combo). Las direcciones hoy son solo `Calle` (string) en todo el contrato; la provincia pide pasarlas a objeto `{ calle, provinciaId, provincia }`, más `GET /api/provincias`. Van en commits separados, después de las pantallas.
   - **Archivos a medias:** `frontend/src/app/pantallas/terceros/terceros.ts`, que está vacío a propósito.
+- 21:00 · **HU (c) #46 / 045 terminada: PR #151** (se mergea después del #150).
+  - [x] D: rojo `3fcc8c5`, verde `7626469` (más el menú, rojo `9b31dc4`).
+  - [x] E: prueba a mano contra la demo, sobre la 045 + #150 mergeados solo en local (rama descartable, ya borrada). Encontró un bug: la baja de un cliente con CUIT pide el CUIT, no el código. Rojo `8325781`, verde `ebfc2cb`.
+  - **Suites:** backend 462/462 sobre `7626469`; frontend 135/135 sobre `2650a91`.
+  - **D2 (provincia) NO se hizo.** Sale de una nota mía del ESTADO (D-S5-02), no de un CA ni de una decisión de Santi, y cambia el contrato de cuatro endpoints cerrados. Queda en el PR como «para decidir».
+  - **Datos de prueba en `lacentral_demo`:** clientes `D045-*` («Gomería del Parque …») y proveedores `P045-*` («Lubricantes del Oeste …», dados de baja).
+- **HU / paso:** (d) #23 / 016 (historial de compras en la ficha), paso 1: leer la proforma y lo que ya existe de facturas de compra.
+  - CA-003 y CA-004 van PARCIAL, porque dependen de la anulación (028, #9).
+  - **Falta:** todo. **Archivos a medias:** ninguno.
