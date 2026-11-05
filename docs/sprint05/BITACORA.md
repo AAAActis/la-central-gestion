@@ -393,3 +393,5 @@ vale esta.)
 5. Preguntar lo que quedó truncado de las dos respuestas.
 
 **Estado:** en curso
+- 00:20 · Paso 1, 044: `git merge origin/develop` (`922e2b8`), un solo conflicto, en `formulario.ts`; se conservan `password`, `autocompletar`, `maximo` y `coincideCon`. Frontend 99/99, `ng build` limpio. ESTADO (`d174566`), push, **PR #144**. `verificador-tdd` lanzado sobre el #144 (la 044 nunca había pasado por él).
+- 00:20 · **PR #145** de la 042 (ronda 2 APTO), con los CA, el recorrido contra la demo y el aviso de posible conflicto con el #141 en `articulos.ts`.
