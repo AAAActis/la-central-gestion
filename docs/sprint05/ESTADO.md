@@ -239,7 +239,7 @@ cada una está en la tabla «Tablero». Demo del 06/11 con `GUION-DEMO.md`.
 1. **Fase d (S5-06):** el lunes 09/11 (o con el #141 mergeado y verificado, nunca jueves ni
    viernes), 07 y después 08 a `lacentral_demo`. Desde ahí la demo corre solo con el código del
    #141: `develop` lee `articulo.ubicacion_deposito`, que el 07 borra.
-2. **La 042 y después la 045, una HU por PR** (regla 2 de `CLAUDE.md`).
+2. **La 042 está hecha (#145); la 045 sigue en el tablero de arriba**, una HU por PR (regla 2 de `CLAUDE.md`).
 3. Pendientes del 04/11, en este orden: `git merge develop` en la 044 (resolver
    `formulario.ts` sin perder `password` ni `autocompletar`); aviso flotante con foco devuelto y
    Escape.
