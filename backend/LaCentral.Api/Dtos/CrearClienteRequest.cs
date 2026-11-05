@@ -16,9 +16,9 @@ public record CrearClienteRequest
     [MaxLength(13, ErrorMessage = "El CUIT no puede superar los 13 caracteres.")]
     public string? Cuit { get; init; }
 
-    [Required(ErrorMessage = "La condición fiscal es obligatoria.")]
+    // 045: opcional. Vacía es un estado válido (clientes importados sin informarla).
     [MaxLength(30, ErrorMessage = "La condición fiscal no puede superar los 30 caracteres.")]
-    public string CondicionFiscal { get; init; } = string.Empty;
+    public string? CondicionFiscal { get; init; }
 
     [Required(ErrorMessage = "La condición de pago es obligatoria.")]
     [MaxLength(60, ErrorMessage = "La condición de pago no puede superar los 60 caracteres.")]
