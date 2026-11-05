@@ -643,6 +643,10 @@ Sprint 6 al 4 por el replan del 27/10.
 - CA-001: verificado el motivo obligatorio; la clave queda capaz, pendiente de la v1.1.
 - CA-002: verificado; botón activo y error junto al campo, como en la 043.
 - CA-003: verificado, con Escape y con Cancelar.
+- **05/11/2026 · merge de `develop` (`922e2b8`) y PR.** Conflicto solo en `formulario.ts`
+  (interfaz del campo e `<input>`): se conservan `password` y `autocompletar` (#138) y `maximo`
+  y `coincideCon` (044). Frontend **99/99** (88 de develop + 11), `ng build` limpio. Sigue sin
+  pantalla que lo use: la prueba a mano contra `lacentral_demo` (DoD 10) llega con la 045.
 
 **Deuda · el largo del motivo no se decidió (28/10/2026).** En el esquema, todos los motivos
 son `TEXT`, sin límite (`motivo_baja`, `motivo_anulacion`, `*_historial_baja.motivo`). Los
