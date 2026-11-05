@@ -744,3 +744,13 @@ vale esta.)
 - **HU / paso:** (c) #46, la 045 (pantallas de clientes y proveedores, con la baja y la confirmación de la 044), paso 1: leer la proforma 045 y la API de clientes y proveedores (alta, detalle, modificación, baja, reactivación).
   - **Ojo:** la 045 necesita la paginación del #150, que no está en `develop`. Opciones: esperar el merge, o mergear `origin/feature/147-…` en la rama de la 045. Lo segundo es encadenar, y está prohibido. Se arranca desde `develop` con lo que no depende de la paginación.
   - **Falta:** todo. **Archivos a medias:** ninguno.
+- 18:00 · **HU (c) #46 / 045**, rama `feature/hu-ui-07-clientes-proveedores` desde `develop` (local). Lo que se encontró al leer:
+  - proveedores no tiene `GET /api/proveedores/{id}`, y el CA-002 (ver todos los teléfonos y direcciones) lo necesita;
+  - `ClienteValidaciones.ValidarLimites` y el DTO exigen la condición fiscal, pero la columna es nullable y el CHECK `cliente_condicion_fiscal_valida` admite NULL (verificado en `lacentral_test`, solo lectura; según S5-05, el esquema de `lacentral` es idéntico). La regla de Santi del 05/11 («el vacío es un estado válido y se puede guardar vacío») va en esta HU. La condición de pago sigue como texto libre y obligatoria (opción 1);
+  - el `Formulario` (HU-UI-05) no tiene campo de selección: se le agrega `opciones`.
+- **Pasos de la 045, en orden** (se marcan al hacerse):
+  - [ ] A. `GET /api/proveedores/{id}`: use case + DTO + endpoint; Moq y HTTP + PostgreSQL.
+  - [ ] B. Condición fiscal opcional en el alta y la modificación de cliente: Moq + PostgreSQL (fila con NULL, releída con un contexto nuevo).
+  - [ ] C. `Formulario` con `opciones` (select con vacío): spec.
+  - [ ] D. `api.ts` de clientes y proveedores; pantallas `pantallas/clientes` y `pantallas/proveedores` con `Listado`, `Formulario` y `ConfirmacionMotivo`; `modulos.ts`; specs por CA.
+  - [ ] E. Suites completas; a mano contra la demo con el #150 mergeado solo en local, sin push; PR que se mergea después del #150.
