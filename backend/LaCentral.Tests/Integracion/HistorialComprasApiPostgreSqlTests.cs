@@ -38,7 +38,7 @@ public class HistorialComprasApiPostgreSqlTests : IClassFixture<WebApplicationFa
     private static DateTime Dia(int mes, int dia) => new(2026, mes, dia, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>
-    /// Tres registros del artículo, insertados en un orden que NO es el de las fechas (el más
+    /// Cuatro registros del artículo, insertados en un orden que NO es el de las fechas (el más
     /// viejo entra último, con el Id más alto): ordenar por Id daría otro resultado. Más uno de
     /// otro artículo, que no tiene que aparecer.
     /// </summary>
@@ -65,11 +65,17 @@ public class HistorialComprasApiPostgreSqlTests : IClassFixture<WebApplicationFa
         contexto.AddRange(f1, f2, f3);
         await contexto.SaveChangesAsync();
 
-        foreach (var (a, p, f, costo) in new[] { (articulo, norte, f1, 100m), (articulo, sur, f2, 120.5m), (otro, sur, f2, 7m), (articulo, norte, f3, 90m) })
+        // El último registro es una segunda línea de f2: misma fecha que la otra, Id más alto. Va
+        // anulado: la proyección de `anulado` no puede devolver siempre false (verificador-tdd, 05/11/2026).
+        foreach (var (a, p, f, costo, anulado) in new[]
+        {
+            (articulo, norte, f1, 100m, false), (articulo, sur, f2, 120.5m, false), (otro, sur, f2, 7m, false),
+            (articulo, norte, f3, 90m, false), (articulo, sur, f2, 130m, true),
+        })
         {
             contexto.ArticuloHistorialCompra.Add(new ArticuloHistorialCompra
             {
-                ArticuloId = a.Id, ProveedorId = p.Id, FacturaCompraId = f.Id, PrecioCosto = costo, Fecha = f.FechaRegistro,
+                ArticuloId = a.Id, ProveedorId = p.Id, FacturaCompraId = f.Id, PrecioCosto = costo, Fecha = f.FechaRegistro, Anulado = anulado,
             });
             await contexto.SaveChangesAsync();
         }
@@ -94,6 +100,8 @@ public class HistorialComprasApiPostgreSqlTests : IClassFixture<WebApplicationFa
             Anulado: f.GetProperty("anulado").GetBoolean())).ToList();
         Assert.Equal(new[]
         {
+            // Misma fecha: primero el de Id más alto (desempate id DESC).
+            (Dia(10, 20), "Repuestos Sur", 130m, "A-0002-00000020", true),
             (Dia(10, 20), "Repuestos Sur", 120.5m, "A-0002-00000020", false),
             (Dia(10, 5), "Distribuidora Norte", 100m, "A-0001-00000010", false),
             (Dia(9, 1), "Distribuidora Norte", 90m, "A-0001-00000003", false),
