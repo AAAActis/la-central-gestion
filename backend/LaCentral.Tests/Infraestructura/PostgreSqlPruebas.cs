@@ -82,7 +82,11 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         config.Timeout = 10;
         config.CommandTimeout = 30;
         var admin = new NpgsqlConnection(config.ConnectionString);
-        config.SearchPath = esquema;
+        // El esquema aislado primero: ahí está clonada cada tabla del modelo, así que toda tabla se
+        // resuelve en él. public va detrás solo para que se vean las funciones de pg_trgm
+        // (similarity), que viven ahí como en producción. Sin eso, la búsqueda difusa de clientes
+        // y proveedores no se podía probar contra PostgreSQL (#147).
+        config.SearchPath = $"{esquema}, public";
         // Identifica en pg_stat_activity las conexiones del pool de este esquema.
         config.ApplicationName = esquema;
         var fixture = new PostgreSqlPruebas(admin, esquema, config.ConnectionString);

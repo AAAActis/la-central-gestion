@@ -48,7 +48,7 @@ public class PostgreSqlPruebasLimpiezaTests
         string esquema;
         await using (var fixture = await PostgreSqlPruebas.CrearAsync(_salida))
         {
-            esquema = new NpgsqlConnectionStringBuilder(fixture.ConexionAislada).SearchPath!;
+            esquema = new NpgsqlConnectionStringBuilder(fixture.ConexionAislada).ApplicationName!; // el fixture la llama como su esquema
             await using var contexto = fixture.CrearContexto();
             Assert.True(await contexto.Rol.AnyAsync());
             Assert.True(await ConexionesDelEsquemaAsync(esquema) > 0, "La consulta tenía que abrir una conexión del pool.");
