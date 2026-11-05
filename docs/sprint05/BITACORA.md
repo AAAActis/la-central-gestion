@@ -599,3 +599,19 @@ vale esta.)
 **Estado:** en curso
 - 14:45 · Pasos 1 y 2: 58 issues (`gh issue list --state all`), 39 abiertos. Cruce contra `docs/sprint04/ESTADO.md` y `docs/sprint05/ESTADO.md` (los de `origin/develop`). Hallazgos: 6 de los 16 abiertos de Sprint 4 están mergeados (#40, #24, #44, #42, #45, #43); #1 y #48 son duplicados (de #2 y #47); #15 sigue en Sprint 3 aunque el ESTADO del Sprint 4 lo da por movido; la 045 (#46) está en Sprint 7; la paginación y el formato es-AR no tienen issue; ningún issue tiene etiquetas. #21 (HU-ART-04) tiene el CA-001 hecho dentro de HU-ART-03 (#122) y del CA-002 al CA-005 sin hacer. Propuesta de triage entregada a Santi en el chat; no se movió nada.
 **BLOQUEADO EN:** la aprobación del triage por parte de Santi, con cuatro preguntas: el comparador, ¿a Sprint 6 o a backlog?; la 042, ¿a Sprint 4 o a Sprint 5?; los milestones Sprint 6 a 8 vacíos; y una etiqueta `deuda`.
+
+## 05/11/2026 14:55 · cerrar los 6 mergeados, la 042 y la 045 a Sprint 5, tabla del resto
+**Instrucción recibida (verbatim):**
+> Aprobado lo de los 6 mergeados: cerralos con un comentario que diga qué PR los cerró y la
+> fecha. El de la 042 (#43) además pasa a milestone Sprint 5, que es cuando se construyó.
+>
+> La 045 pasa de Sprint 7 a Sprint 5: la estamos haciendo ahora.
+>
+> Y pasame el resto de la tabla: los 10 issues de Sprint 4 que NO están mergeados, y los 3 de
+> Sprint 5 que no son lo que estamos haciendo. Esos los decido yo.
+**Plan:**
+1. Fecha de merge de #130, #131, #134, #138, #144 y #145 con `gh`.
+2. Cerrar #40, #24, #44, #42, #45 y #43, cada uno con un comentario que diga el PR y la fecha; #43 pasa a Sprint 5.
+3. #46 de Sprint 7 a Sprint 5.
+4. Verificar con `gh`; tabla de los 10 de Sprint 4 y los 3 de Sprint 5, sin moverlos.
+**Estado:** en curso
