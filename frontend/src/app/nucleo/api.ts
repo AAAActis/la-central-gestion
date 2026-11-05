@@ -54,7 +54,6 @@ export interface FichaArticulo {
   motivoBaja: string | null;
 }
 
-/** La ubicación no va en el alta: se carga desde la ficha, por sucursal (N-9). */
 /** 016 · un registro del historial de compras (solo lectura: lo escribe la factura de compra). */
 export interface RegistroHistorialCompra {
   fecha: string;
@@ -66,6 +65,7 @@ export interface RegistroHistorialCompra {
   anulado: boolean;
 }
 
+/** La ubicación no va en el alta: se carga desde la ficha, por sucursal (N-9). */
 export interface AltaArticulo {
   nombre: string;
   codigosProveedor: { proveedorId: number; codigo: string }[];
