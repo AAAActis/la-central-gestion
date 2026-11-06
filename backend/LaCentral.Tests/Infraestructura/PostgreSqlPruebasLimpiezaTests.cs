@@ -41,6 +41,26 @@ public class PostgreSqlPruebasLimpiezaTests
         Assert.Contains("tabla_ajena", error.Message);
     }
 
+    // auditor-persistencia, ronda 2: lo que se valida (la fuente) tiene que ser lo que el search_path
+    // resuelve detrás del aislado. Con LA_CENTRAL_TEST_SCHEMA definido, eso no puede ser public.
+    [PostgreSqlFact]
+    public async Task ConOtraFuente_ElSearchPathResuelveEnEsaFuenteYNoEnPublic()
+    {
+        await using var fuente = await PostgreSqlPruebas.CrearAsync(_salida);
+        string esquemaFuente;
+        await using (var contexto = fuente.CrearContexto())
+            esquemaFuente = await contexto.Database.SqlQueryRaw<string>("SELECT current_schema() AS \"Value\"").SingleAsync();
+
+        await using var aislado = await PostgreSqlPruebas.CrearAsync(_salida, origen: esquemaFuente);
+        await using var lectura = aislado.CrearContexto();
+        var esquemas = await lectura.Database.SqlQueryRaw<string>(
+            "SELECT unnest(current_schemas(false))::text AS \"Value\"").ToListAsync();
+
+        Assert.Equal(2, esquemas.Count);
+        Assert.Matches(new Regex("^pr110_test_[0-9a-f]{32}$"), esquemas[0]);
+        Assert.Equal(esquemaFuente, esquemas[1]);
+    }
+
     [PostgreSqlFact]
     public async Task CreacionCortadaAMitadDeCamino_NoDejaElEsquemaHuerfano()
     {
