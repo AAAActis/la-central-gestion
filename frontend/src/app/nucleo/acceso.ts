@@ -6,6 +6,8 @@ import { SesionActual } from './sesion';
 export interface Modulo {
   ruta: string;
   titulo: string;
+  /** La línea bajo el título de la pantalla, copiada de docs/diseno/referencias. Sin referencia, no hay. */
+  bajada?: string;
   roles: readonly string[];
   componente: Type<unknown>;
 }

@@ -125,6 +125,8 @@ export class Formulario {
   readonly textoEnviar = input('Guardar');
   readonly textoEnviando = input('Guardando…');
   readonly varianteEnviar = input<'primario' | 'peligro'>('primario');
+  /** El envío ocupa todo el ancho y lleva una flecha: el ingreso de la pantalla de acceso. */
+  readonly enviarDestacado = input(false);
   readonly erroresPorCampo = input<Record<string, string>>({});
   readonly errorGeneral = input<string | null>(null);
   readonly confirmacion = input<string | null>(null);
