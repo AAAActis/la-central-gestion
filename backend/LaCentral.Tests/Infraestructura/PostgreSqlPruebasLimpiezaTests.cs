@@ -17,9 +17,9 @@ public class PostgreSqlPruebasLimpiezaTests
     private readonly ITestOutputHelper _salida;
     public PostgreSqlPruebasLimpiezaTests(ITestOutputHelper salida) => _salida = salida;
 
-    // auditor-persistencia, 05/11/2026: con search_path «aislado, public», una tabla de la fuente
-    // que no se clona se resolvería en public, donde lacentral_test tiene la copia de los datos
-    // reales. Se usa como fuente el esquema aislado de otra prueba: no se escribe en public.
+    // auditor-persistencia, 05/11/2026: con search_path «aislado, fuente», una tabla de la fuente
+    // que no se clona se resolvería en ella (en public, lacentral_test tiene la copia de los datos
+    // reales). Se usa como fuente el esquema aislado de otra prueba: no se escribe en public.
     [PostgreSqlFact]
     public async Task FuenteConUnaTablaFueraDelModelo_FallaAntesDeCrearElEsquema()
     {
