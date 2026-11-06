@@ -57,8 +57,11 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
     /// Solo para probar la limpieza: corre sobre la conexión de administración apenas
     /// creado el esquema, para forzar una falla real a mitad de la creación.
     /// </param>
+    /// <param name="origen">
+    /// Solo para probar la validación del esquema fuente. Por defecto, LA_CENTRAL_TEST_SCHEMA o public.
+    /// </param>
     public static async Task<PostgreSqlPruebas> CrearAsync(ITestOutputHelper salida,
-        Func<NpgsqlConnection, string, Task>? trasCrearEsquema = null)
+        Func<NpgsqlConnection, string, Task>? trasCrearEsquema = null, string? origen = null)
     {
         var conexion = ConexionRequerida;
         var alias = Environment.GetEnvironmentVariable("LACENTRAL_TEST_PG");
@@ -72,7 +75,7 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         if (config.MaxPoolSize < 2)
             throw new InvalidOperationException($"Maximum Pool Size = {config.MaxPoolSize} en la conexión de test: " +
                 "tiene que ser al menos 2. Ver la cuenta de conexiones en LaCentral.Tests/README.md.");
-        var origen = Environment.GetEnvironmentVariable("LA_CENTRAL_TEST_SCHEMA") ?? "public";
+        origen ??= Environment.GetEnvironmentVariable("LA_CENTRAL_TEST_SCHEMA") ?? "public";
         if (!Regex.IsMatch(origen, "^[a-z_][a-z0-9_]*$"))
             throw new InvalidOperationException("El esquema fuente de test no es un identificador válido.");
         var esquema = "pr110_test_" + Guid.NewGuid().ToString("N");
