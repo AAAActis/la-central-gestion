@@ -21,7 +21,7 @@ Una variable de entorno con la cadena de conexión a una base **exclusiva de pru
 |---|---|
 | `LACENTRAL_TEST_PG` | Nombre habitual. |
 | `LA_CENTRAL_TEST_POSTGRES` | Alias. Si están las dos, tienen que tener el mismo valor. |
-| `LA_CENTRAL_TEST_SCHEMA` | Opcional. Esquema plantilla del que se copia la estructura. Por defecto `public`. |
+| `LA_CENTRAL_TEST_SCHEMA` | Opcional. Esquema plantilla del que se copia la estructura. Por defecto `public`. Va también detrás del esquema aislado en el `search_path`: tiene que tener visibles las funciones de pg_trgm, o la búsqueda difusa falla con 42883. |
 
 El nombre de la base **tiene** que ser `test_*` o `*_test` (por ejemplo `la_central_test`).
 `PostgreSqlSeguridadTests` y el fixture rechazan cualquier otro nombre, y cualquiera que

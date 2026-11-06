@@ -21,5 +21,7 @@ public interface IProveedorRepositorio
     /// (coincidencia exacta). El filtro de activos/inactivos se resuelve en la
     /// consulta, no en memoria. Mismo criterio que IClienteRepositorio.BuscarAsync.
     /// </summary>
-    Task<IReadOnlyList<Proveedor>> BuscarAsync(string texto, bool incluirInactivos, CancellationToken ct = default);
+    /// #147: una página (1 en adelante) y el total de coincidencias, en un orden estable.
+    Task<(IReadOnlyList<Proveedor> Items, int Total)> BuscarAsync(
+        string texto, bool incluirInactivos, int pagina, int tamanoPagina, CancellationToken ct = default);
 }

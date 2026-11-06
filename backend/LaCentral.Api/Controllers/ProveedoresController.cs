@@ -62,11 +62,11 @@ public class ProveedoresController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Consultar(
-        [FromQuery] string texto, [FromQuery] bool incluirInactivos, CancellationToken cancellationToken)
+        [FromQuery] string texto, [FromQuery] bool incluirInactivos, CancellationToken cancellationToken,
+        [FromQuery] int pagina = 1, [FromQuery] int tamanoPagina = 20)
     {
-        var resultado = await _consultarProveedores.EjecutarAsync(texto, incluirInactivos, cancellationToken);
+        var resultado = await _consultarProveedores.EjecutarAsync(texto, incluirInactivos, pagina, tamanoPagina, cancellationToken);
 
         return this.AResultadoHttp(resultado);
     }

@@ -1,3 +1,4 @@
+using LaCentral.UseCases.Comun;
 using Moq;
 using Xunit;
 using LaCentral.UseCases.Clientes;
@@ -30,15 +31,15 @@ public class ConsultarClienteUseCaseTests
             new Cliente { Codigo = "002", RazonSocial = "REPUESTOS CORDOBA" }
         };
         
-        _mockRepo.Setup(r => r.BuscarAsync("REPUESTOS CORDOBA", true, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(clientesSimulados);
+        _mockRepo.Setup(r => r.BuscarAsync("REPUESTOS CORDOBA", true, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync((clientesSimulados, clientesSimulados.Count));
 
         // Act
         var resultado = await _consultarUseCase.EjecutarAsync("REPUESTOS CORDOBA", incluirInactivos: true);
 
         // Assert
         Assert.True(resultado.IsSuccess);
-        Assert.Equal(2, resultado.Value.Count);
+        Assert.Equal(2, resultado.Value.Items.Count);
     }
 
     // CA-002
@@ -52,32 +53,52 @@ public class ConsultarClienteUseCaseTests
             new Cliente { Codigo = "010", RazonSocial = "TALLER SAN VICENTE", Cuit = cuitBuscado }
         };
 
-        _mockRepo.Setup(r => r.BuscarAsync(cuitBuscado, false, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(clientesSimulados);
+        _mockRepo.Setup(r => r.BuscarAsync(cuitBuscado, false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync((clientesSimulados, clientesSimulados.Count));
 
         // Act
         var resultado = await _consultarUseCase.EjecutarAsync(cuitBuscado, incluirInactivos: false);
 
         // Assert
         Assert.True(resultado.IsSuccess);
-        Assert.Single(resultado.Value);
-        Assert.Equal(cuitBuscado, resultado.Value.First().Cuit);
+        Assert.Single(resultado.Value.Items);
+        Assert.Equal(cuitBuscado, resultado.Value.Items.First().Cuit);
     }
 
     // CA-003
     [Fact]
-    public async Task Ejecutar_SinCoincidencias_DevuelveFalloConMensajeExplicito()
+    public async Task Ejecutar_SinCoincidencias_DevuelvePaginaVaciaConLaMismaEnvoltura()
     {
-        // Arrange
-        _mockRepo.Setup(r => r.BuscarAsync("ASDXYZ", false, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(new List<Cliente>()); // Lista vacía
+        // CA-003 v1.1 (#147, 05/11/2026): una búsqueda sin coincidencias es una consulta exitosa.
+        _mockRepo.Setup(r => r.BuscarAsync("ASDXYZ", false, 1, 20, It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(((IReadOnlyList<Cliente>)new List<Cliente>(), 0));
 
-        // Act
         var resultado = await _consultarUseCase.EjecutarAsync("ASDXYZ", incluirInactivos: false);
 
-        // Assert
-        Assert.True(resultado.IsFailure);
-        Assert.Equal("No se encontraron clientes que coincidan con la búsqueda.", resultado.Error); // Ajustá el string al mensaje exacto de tu UseCase
+        Assert.True(resultado.IsSuccess);
+        Assert.Empty(resultado.Value.Items);
+        Assert.Equal(0, resultado.Value.Total);
+        Assert.Equal(1, resultado.Value.Pagina);
+        Assert.Equal(20, resultado.Value.TamanoPagina);
+    }
+
+    [Theory]
+    [InlineData(0, 20)]
+    [InlineData(1, 0)]
+    [InlineData(1, 101)]
+    [InlineData(int.MaxValue, 100)] // (página − 1) × tamaño no entra en un int: Skip desbordaría
+    public async Task Ejecutar_PaginaOTamanoInvalido_DevuelveInvalidoSinConsultarRepositorio(int pagina, int tamanoPagina)
+    {
+        // B3 del verificador-tdd (05/11/2026): sin este Setup, el mock devuelve (null, 0). Sin la guarda,
+        // el caso de uso reventaba con NullReferenceException antes de llegar a las aserciones. Con una
+        // página vacía, el test falla por lo que afirma: que no se consulte.
+        _mockRepo.Setup(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(((IReadOnlyList<Cliente>)new List<Cliente>(), 0));
+
+        var resultado = await _consultarUseCase.EjecutarAsync("filtro", false, pagina, tamanoPagina);
+
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+        _mockRepo.Verify(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // CA-004
@@ -85,8 +106,8 @@ public class ConsultarClienteUseCaseTests
     public async Task Ejecutar_SinIncluirInactivos_LlamaAlRepositorioConBanderaEnFalse()
     {
         // Arrange
-        _mockRepo.Setup(r => r.BuscarAsync(It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(new List<Cliente>()); 
+        _mockRepo.Setup(r => r.BuscarAsync(It.IsAny<string>(), false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(((IReadOnlyList<Cliente>)new List<Cliente>(), 0)); 
 
         // Act
         await _consultarUseCase.EjecutarAsync("filtro", incluirInactivos: false);
@@ -94,7 +115,7 @@ public class ConsultarClienteUseCaseTests
         // Assert
         // Verificamos que el UseCase le pasó correctamente el false al puerto, 
         // delegando la responsabilidad de filtrar a la base de datos.
-        _mockRepo.Verify(r => r.BuscarAsync("filtro", false, It.IsAny<CancellationToken>()), Times.Once);
+        _mockRepo.Verify(r => r.BuscarAsync("filtro", false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // CA-005 (Usando el UseCase de Detalle de Santi)
