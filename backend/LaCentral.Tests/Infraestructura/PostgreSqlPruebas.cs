@@ -47,7 +47,11 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
     private PostgreSqlPruebas(NpgsqlConnection administracion, string esquema, string conexionAislada)
         => (_administracion, _esquema, _conexionAislada) = (administracion, esquema, conexionAislada);
 
-    /// <summary>Cadena con search_path al esquema aislado: para levantar la API contra él.</summary>
+    /// <summary>
+    /// Cadena con search_path «esquema aislado, public»: para levantar la API contra él. Toda tabla
+    /// se resuelve en el aislado (CrearAsync falla si la fuente tiene una que no se clona); de public
+    /// solo se ven las funciones de pg_trgm.
+    /// </summary>
     public string ConexionAislada => _conexionAislada;
 
     public LaCentralDbContext CrearContexto() => new(new DbContextOptionsBuilder<LaCentralDbContext>()
@@ -109,6 +113,12 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
             // Fallar ANTES de clonar/cargar si la plantilla real no coincide.
             foreach (var entidad in entidades)
                 await fixture.ValidarTablaAsync(origen, entidad);
+            // Y al revés: con search_path «aislado, public», una relación de la fuente que no se
+            // clona se resolvería en public, que en lacentral_test guarda la copia de los datos reales.
+            var sobrantes = await fixture.RelacionesFueraDelModeloAsync(origen, tablas);
+            if (sobrantes.Count > 0)
+                throw new InvalidOperationException($"El esquema fuente '{origen}' tiene tablas o vistas que el modelo no " +
+                    $"clona ({string.Join(", ", sobrantes)}): se resolverían en él. Re-scaffold antes de correr los tests.");
 
             // El DDL de PostgreSQL es transaccional: si algo falla antes del COMMIT,
             // incluso si se corta la conexión, el esquema no llega a existir.
@@ -234,6 +244,21 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
     {
         _aLiberar.Add(recurso);
         return recurso;
+    }
+
+    private async Task<List<string>> RelacionesFueraDelModeloAsync(string origen, IReadOnlyCollection<string> tablas)
+    {
+        await using var comando = new NpgsqlCommand("""
+            SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = @schema AND c.relkind IN ('r', 'v', 'm', 'p', 'f') AND NOT c.relispartition
+            ORDER BY c.relname
+            """, _administracion);
+        comando.Parameters.AddWithValue("schema", origen);
+        var sobrantes = new List<string>();
+        await using var reader = await comando.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+            if (!tablas.Contains(reader.GetString(0))) sobrantes.Add(reader.GetString(0));
+        return sobrantes;
     }
 
     private async Task ValidarTablaAsync(string origen, IEntityType entidad)
