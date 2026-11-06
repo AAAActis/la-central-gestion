@@ -175,6 +175,30 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       expect(rol?.getBoundingClientRect().top ?? 0).withContext('el rol, debajo del nombre').toBeGreaterThanOrEqual(nombre?.getBoundingClientRect().bottom ?? 1);
     });
 
+    // El backend devuelve DESCONOCIDO para un rol que no es ninguno de los dos (AuthenticarUsuarioCase.cs).
+    it('un rol que el encabezado no conoce se muestra como lo devolvió el servidor', async () => {
+      entrarComo('DESCONOCIDO', 'mostrador');
+      await fixture.whenStable().catch(() => undefined);
+      const rol = (fixture.nativeElement as HTMLElement).querySelector('header .usuario-rol');
+      expect(rol?.textContent?.trim()).toBe('DESCONOCIDO');
+    });
+
+    // Sin sesión, la ruta de un módulo muestra el login con la misma URL (app.routes.ts).
+    it('sin sesión, sobre el acceso no aparecen el título ni la bajada del módulo de la URL', async () => {
+      await ir(fixture, '/articulos');
+      expect(pantalla(fixture, 'app-login')).not.toBeNull();
+      const titulos = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('main h1'));
+      expect(titulos.map(h => h.textContent?.trim())).toEqual(['Ingresar']);
+      expect(pantalla(fixture, '.pantalla-encabezado')).toBeNull();
+    });
+
+    it('con la URL escrita a mano con parámetros, la pantalla conserva su título', async () => {
+      entrarComo('OPERADOR');
+      await ir(fixture, '/articulos?x=1#y');
+      const titulos = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('main h1'));
+      expect(titulos.map(h => h.textContent?.trim())).toEqual(['Artículos']);
+    });
+
     it('cada pantalla lleva su título y, si tiene referencia, su bajada', async () => {
       entrarComo('OPERADOR');
       const casos: [string, string, string | null][] = [
