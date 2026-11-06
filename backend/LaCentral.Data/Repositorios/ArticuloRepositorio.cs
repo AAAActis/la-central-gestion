@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LaCentral.Data.Repositorios;
 
-public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepositorio, IPreciosArticuloRepositorio
+public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepositorio, IPreciosArticuloRepositorio, IHistorialComprasRepositorio
 {
     private readonly LaCentralDbContext _context;
 
@@ -233,6 +233,19 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
                 a.ArticuloCodigoAlternativo.Any(c => c.Codigo.Trim(new[] { ' ' }).ToUpper() == clave))
             .OrderBy(a => a.Id)
             .Select(a => new ArticuloResumenConsultaDto(a.Id, a.CodigoInterno, a.Nombre, a.Activo))
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<RegistroHistorialCompraDto>?> HistorialComprasAsync(int articuloId, CancellationToken ct = default)
+    {
+        if (!await _context.Articulo.AnyAsync(a => a.Id == articuloId, ct)) return null;
+        // Desempate por Id: dos líneas de la misma factura tienen la misma fecha.
+        return await _context.ArticuloHistorialCompra.AsNoTracking()
+            .Where(h => h.ArticuloId == articuloId)
+            .OrderByDescending(h => h.Fecha).ThenByDescending(h => h.Id)
+            .Select(h => new RegistroHistorialCompraDto(
+                h.Fecha, h.ProveedorId, h.Proveedor.RazonSocial, h.PrecioCosto,
+                h.FacturaCompraId, h.FacturaCompra.Numero, h.Anulado))
             .ToListAsync(ct);
     }
 

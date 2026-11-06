@@ -62,14 +62,22 @@ public class ProveedoresController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Consultar(
-        [FromQuery] string texto, [FromQuery] bool incluirInactivos, CancellationToken cancellationToken)
+        [FromQuery] string texto, [FromQuery] bool incluirInactivos, CancellationToken cancellationToken,
+        [FromQuery] int pagina = 1, [FromQuery] int tamanoPagina = 20)
     {
-        var resultado = await _consultarProveedores.EjecutarAsync(texto, incluirInactivos, cancellationToken);
+        var resultado = await _consultarProveedores.EjecutarAsync(texto, incluirInactivos, pagina, tamanoPagina, cancellationToken);
 
         return this.AResultadoHttp(resultado);
     }
+
+    /// <summary>Ficha del proveedor con todos sus teléfonos, direcciones y URL. 045 · CA-002 y CA-003.</summary>
+    [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ObtenerDetalle(
+        int id, [FromServices] ObtenerProveedorDetalleUseCase obtenerDetalle, CancellationToken cancellationToken)
+        => this.AResultadoHttp(await obtenerDetalle.EjecutarAsync(id, cancellationToken));
 
     /// <summary>
     /// Modificación de un proveedor activo, incluidos teléfonos, direcciones y URL. HU-PRO-03.

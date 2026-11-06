@@ -13,7 +13,9 @@ public interface IClienteRepositorio
     /// (coincidencia exacta). El filtro de activos/inactivos se resuelve en la consulta,
     /// no en memoria.
     /// </summary>
-    Task<IReadOnlyList<Cliente>> BuscarAsync(string texto, bool incluirInactivos, CancellationToken ct = default);
+    /// #147: una página (1 en adelante) y el total de coincidencias, en un orden estable.
+    Task<(IReadOnlyList<Cliente> Items, int Total)> BuscarAsync(
+        string texto, bool incluirInactivos, int pagina, int tamanoPagina, CancellationToken ct = default);
     
     /// <summary>
     /// HU-CLI-02 (CA-005): Obtiene un cliente por ID incluyendo la totalidad 

@@ -71,8 +71,8 @@ public class ClienteRepositorio : IClienteRepositorio
     // traer resultados que no tienen nada que ver con lo buscado.
     private const double UmbralSimilitudRazonSocial = 0.2;
 
-    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Cliente>> BuscarAsync(
-        string texto, bool incluirInactivos, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<LaCentral.UseCases.Entidades.Cliente> Items, int Total)> BuscarAsync(
+        string texto, bool incluirInactivos, int pagina, int tamanoPagina, CancellationToken cancellationToken = default)
     {
         var query = _context.Cliente.AsQueryable();
 
@@ -89,7 +89,7 @@ public class ClienteRepositorio : IClienteRepositorio
         {
             // Coincidencia exacta: igual criterio que ExisteCuitAsync, sin normalizar
             // el valor guardado en la base.
-            query = query.Where(c => c.CuitCuil == texto);
+            query = query.Where(c => c.CuitCuil == texto).OrderBy(c => c.Id);
         }
         else
         {
@@ -97,13 +97,16 @@ public class ClienteRepositorio : IClienteRepositorio
             // ix_cliente_razon_social_trgm ya existente en la base.
             query = query
                 .Where(c => EF.Functions.TrigramsSimilarity(c.RazonSocial, texto) > UmbralSimilitudRazonSocial)
-                .OrderByDescending(c => EF.Functions.TrigramsSimilarity(c.RazonSocial, texto));
+                .OrderByDescending(c => EF.Functions.TrigramsSimilarity(c.RazonSocial, texto))
+                .ThenBy(c => c.Id);
         }
 
-        var clientesBd = await query.ToListAsync(cancellationToken);
+        var total = await query.CountAsync(cancellationToken);
+        // El orden tiene desempate por Id: sin él, dos páginas pueden repetir o saltear filas.
+        var clientesBd = await query.Skip((pagina - 1) * tamanoPagina).Take(tamanoPagina).ToListAsync(cancellationToken);
 
         // Mapeo inverso: Entidad de EF Core -> Entidad de dominio pura.
-        return clientesBd
+        return (clientesBd
             .Select(c => new LaCentral.UseCases.Entidades.Cliente
             {
                 Id = c.Id,
@@ -114,7 +117,7 @@ public class ClienteRepositorio : IClienteRepositorio
                 CondicionPago = c.CondicionPago ?? string.Empty,
                 Activo = c.Activo
             })
-            .ToList(); 
+            .ToList(), total);
     }
 
     public async Task<LaCentral.UseCases.Entidades.Cliente?> ObtenerDetallePorIdAsync(int id, CancellationToken cancellationToken = default)

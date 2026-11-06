@@ -14,29 +14,28 @@ public class ConsultarProveedoresUseCase
         _proveedorRepositorio = proveedorRepositorio;
     }
 
-    public async Task<Result<IReadOnlyList<ProveedorResumenDto>>> EjecutarAsync(
-        string texto, bool incluirInactivos, CancellationToken ct = default)
+    public async Task<Result<PaginaDto<ProveedorResumenDto>>> EjecutarAsync(
+        string texto, bool incluirInactivos, int pagina = 1, int tamanoPagina = 20, CancellationToken ct = default)
     {
         // CA-003: hace falta un criterio de búsqueda, no se lista todo el padrón.
         if (string.IsNullOrWhiteSpace(texto))
         {
-            return Result<IReadOnlyList<ProveedorResumenDto>>.Failure(
+            return Result<PaginaDto<ProveedorResumenDto>>.Failure(
                 TipoError.Invalido, "Ingresá una razón social o un CUIT para buscar.");
         }
 
-        var proveedores = await _proveedorRepositorio.BuscarAsync(texto.Trim(), incluirInactivos, ct);
-
-        // CA-003: sin resultados hay que avisarlo explícitamente, no devolver una lista vacía sin más.
-        if (proveedores.Count == 0)
+        if (pagina < 1 || tamanoPagina is < 1 or > 100 || (long)(pagina - 1) * tamanoPagina > int.MaxValue)
         {
-            return Result<IReadOnlyList<ProveedorResumenDto>>.Failure(
-                TipoError.NoEncontrado, "No se encontraron proveedores que coincidan con la búsqueda.");
+            return Result<PaginaDto<ProveedorResumenDto>>.Failure(TipoError.Invalido, "La página o su tamaño no son válidos.");
         }
 
-        var respuesta = proveedores
+        // CA-003 v1.1 (#147): sin coincidencias es una página vacía, no un 404.
+        var (lista, total) = await _proveedorRepositorio.BuscarAsync(texto.Trim(), incluirInactivos, pagina, tamanoPagina, ct);
+
+        var respuesta = lista
             .Select(p => new ProveedorResumenDto(p.Id, p.Codigo, p.RazonSocial, p.Cuit, p.UrlReferencia, p.Activo))
             .ToList();
 
-        return Result<IReadOnlyList<ProveedorResumenDto>>.Success(respuesta);
+        return Result<PaginaDto<ProveedorResumenDto>>.Success(new PaginaDto<ProveedorResumenDto>(respuesta, total, pagina, tamanoPagina));
     }
 }

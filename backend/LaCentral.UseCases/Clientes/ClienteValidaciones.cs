@@ -4,11 +4,12 @@ namespace LaCentral.UseCases.Clientes;
 
 public static class ClienteValidaciones
 {
-    public static Result ValidarLimites(string codigo, string razonSocial, string? cuit, string condicionFiscal, string condicionPago)
+    public static Result ValidarLimites(string codigo, string razonSocial, string? cuit, string? condicionFiscal, string condicionPago)
     {
         if (string.IsNullOrWhiteSpace(codigo) || codigo.Length > 20 || 
             string.IsNullOrWhiteSpace(razonSocial) || razonSocial.Length > 120 || 
-            string.IsNullOrWhiteSpace(condicionFiscal) || condicionFiscal.Length > 30 || 
+            // 045: la condición fiscal vacía es válida (se guarda NULL); solo se limita el largo.
+            (condicionFiscal?.Length ?? 0) > 30 || 
             string.IsNullOrWhiteSpace(condicionPago) || condicionPago.Length > 60)
         {
             return Result.Failure(TipoError.Invalido, "Faltan campos obligatorios o superan la longitud máxima permitida en la base de datos.");

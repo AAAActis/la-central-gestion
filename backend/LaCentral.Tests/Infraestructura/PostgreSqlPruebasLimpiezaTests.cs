@@ -17,6 +17,67 @@ public class PostgreSqlPruebasLimpiezaTests
     private readonly ITestOutputHelper _salida;
     public PostgreSqlPruebasLimpiezaTests(ITestOutputHelper salida) => _salida = salida;
 
+    // auditor-persistencia, 05/11/2026: con search_path «aislado, fuente», una tabla de la fuente
+    // que no se clona se resolvería en ella (en public, lacentral_test tiene la copia de los datos
+    // reales). Se usa como fuente el esquema aislado de otra prueba: no se escribe en public.
+    [PostgreSqlFact]
+    public Task FuenteConUnaTablaFueraDelModelo_FallaAntesDeCrearElEsquema()
+        => AfirmarQueLaFuenteSeRechazaAsync("tabla_ajena", "CREATE TABLE tabla_ajena (x int)");
+
+    // verificador-tdd, 05/11/2026: el filtro de relkind sin 'v', 'm' o 'p' sobrevivía. Una vista,
+    // una vista materializada o una tabla particionada también se resolverían en la fuente.
+    [PostgreSqlFact]
+    public Task FuenteConUnaVistaFueraDelModelo_FallaAntesDeCrearElEsquema()
+        => AfirmarQueLaFuenteSeRechazaAsync("vista_ajena", "CREATE VIEW vista_ajena AS SELECT 1 AS x");
+
+    [PostgreSqlFact]
+    public Task FuenteConUnaVistaMaterializadaFueraDelModelo_FallaAntesDeCrearElEsquema()
+        => AfirmarQueLaFuenteSeRechazaAsync("vista_mat_ajena", "CREATE MATERIALIZED VIEW vista_mat_ajena AS SELECT 1 AS x");
+
+    [PostgreSqlFact]
+    public Task FuenteConUnaTablaParticionadaFueraDelModelo_FallaAntesDeCrearElEsquema()
+        => AfirmarQueLaFuenteSeRechazaAsync("particionada_ajena", "CREATE TABLE particionada_ajena (x int) PARTITION BY RANGE (x)");
+
+    private async Task AfirmarQueLaFuenteSeRechazaAsync(string relacion, string ddl)
+    {
+        await using var fuente = await PostgreSqlPruebas.CrearAsync(_salida);
+        string esquemaFuente;
+        await using (var contexto = fuente.CrearContexto())
+        {
+            esquemaFuente = await contexto.Database.SqlQueryRaw<string>("SELECT current_schema() AS \"Value\"").SingleAsync();
+            Assert.Matches(new Regex("^pr110_test_[0-9a-f]{32}$"), esquemaFuente);
+            // Sin calificar, el CREATE va a current_schema(), que se acaba de afirmar.
+            await contexto.Database.ExecuteSqlRawAsync(ddl);
+        }
+
+        PostgreSqlPruebas? creado = null;
+        var error = await Record.ExceptionAsync(async () => creado = await PostgreSqlPruebas.CrearAsync(_salida, origen: esquemaFuente));
+        if (creado is not null) await creado.DisposeAsync();
+
+        Assert.IsType<InvalidOperationException>(error);
+        Assert.Contains(relacion, error.Message);
+    }
+
+    // auditor-persistencia, ronda 2: lo que se valida (la fuente) tiene que ser lo que el search_path
+    // resuelve detrás del aislado. Con LA_CENTRAL_TEST_SCHEMA definido, eso no puede ser public.
+    [PostgreSqlFact]
+    public async Task ConOtraFuente_ElSearchPathResuelveEnEsaFuenteYNoEnPublic()
+    {
+        await using var fuente = await PostgreSqlPruebas.CrearAsync(_salida);
+        string esquemaFuente;
+        await using (var contexto = fuente.CrearContexto())
+            esquemaFuente = await contexto.Database.SqlQueryRaw<string>("SELECT current_schema() AS \"Value\"").SingleAsync();
+
+        await using var aislado = await PostgreSqlPruebas.CrearAsync(_salida, origen: esquemaFuente);
+        await using var lectura = aislado.CrearContexto();
+        var esquemas = await lectura.Database.SqlQueryRaw<string>(
+            "SELECT unnest(current_schemas(false))::text AS \"Value\"").ToListAsync();
+
+        Assert.Equal(2, esquemas.Count);
+        Assert.Matches(new Regex("^pr110_test_[0-9a-f]{32}$"), esquemas[0]);
+        Assert.Equal(esquemaFuente, esquemas[1]);
+    }
+
     [PostgreSqlFact]
     public async Task CreacionCortadaAMitadDeCamino_NoDejaElEsquemaHuerfano()
     {
@@ -48,7 +109,7 @@ public class PostgreSqlPruebasLimpiezaTests
         string esquema;
         await using (var fixture = await PostgreSqlPruebas.CrearAsync(_salida))
         {
-            esquema = new NpgsqlConnectionStringBuilder(fixture.ConexionAislada).SearchPath!;
+            esquema = new NpgsqlConnectionStringBuilder(fixture.ConexionAislada).ApplicationName!; // el fixture la llama como su esquema
             await using var contexto = fixture.CrearContexto();
             Assert.True(await contexto.Rol.AnyAsync());
             Assert.True(await ConexionesDelEsquemaAsync(esquema) > 0, "La consulta tenía que abrir una conexión del pool.");

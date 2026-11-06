@@ -49,8 +49,8 @@ public class ProveedorRepositorio : IProveedorRepositorio
     // --- MÉTODO FALTANTE QUE ROMPÍA LA INTERFAZ ---
     private const double UmbralSimilitudRazonSocial = 0.2;
 
-    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarAsync(
-        string texto, bool incluirInactivos, CancellationToken ct = default)
+    public async Task<(IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor> Items, int Total)> BuscarAsync(
+        string texto, bool incluirInactivos, int pagina, int tamanoPagina, CancellationToken ct = default)
     {
         var query = _context.Proveedor.AsQueryable();
 
@@ -63,18 +63,21 @@ public class ProveedorRepositorio : IProveedorRepositorio
 
         if (soloDigitos.Length == 11)
         {
-            query = query.Where(p => p.Cuit == texto);
+            query = query.Where(p => p.Cuit == texto).OrderBy(p => p.Id);
         }
         else
         {
             query = query
                 .Where(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto) > UmbralSimilitudRazonSocial)
-                .OrderByDescending(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto));
+                .OrderByDescending(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto))
+                .ThenBy(p => p.Id);
         }
 
-        var bd = await query.ToListAsync(ct);
+        var total = await query.CountAsync(ct);
+        // El orden tiene desempate por Id: sin él, dos páginas pueden repetir o saltear filas.
+        var bd = await query.Skip((pagina - 1) * tamanoPagina).Take(tamanoPagina).ToListAsync(ct);
 
-        return bd.Select(p => new LaCentral.UseCases.Entidades.Proveedor
+        return (bd.Select(p => new LaCentral.UseCases.Entidades.Proveedor
         {
             Id = p.Id,
             Codigo = p.Codigo,
@@ -82,7 +85,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
             Cuit = p.Cuit,
             UrlReferencia = p.UrlReferencia,
             Activo = p.Activo
-        }).ToList();
+        }).ToList(), total);
     }
     // ----------------------------------------------
 

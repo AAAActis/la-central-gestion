@@ -81,7 +81,7 @@ public class ManejoGlobalExcepcionesTests : IClassFixture<WebApplicationFactory<
     private async Task<HttpResponseMessage> BuscarClientesLanzando(Exception excepcion)
     {
         var repo = new Mock<IClienteRepositorio>();
-        repo.Setup(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        repo.Setup(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(excepcion);
 
         var cliente = _factory.WithWebHostBuilder(builder =>

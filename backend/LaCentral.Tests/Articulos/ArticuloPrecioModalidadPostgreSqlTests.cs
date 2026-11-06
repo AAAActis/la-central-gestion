@@ -112,7 +112,8 @@ public class ArticuloPrecioModalidadPostgreSqlTests
         await using (var esquema = fixture.CrearContexto())
         {
             // Para sembrar un valor inválido hay que quitar el CHECK, y SOLO en el esquema
-            // aislado de esta prueba: search_path apunta únicamente a él.
+            // aislado de esta prueba. La tabla sin calificar se resuelve en él (es el primero del
+            // search_path y CrearAsync garantiza que toda tabla está clonada); igual se afirma acá.
             var actual = await esquema.Database.SqlQueryRaw<string>("SELECT current_schema() AS \"Value\"").SingleAsync();
             Assert.Matches(new Regex("^pr110_test_[0-9a-f]{32}$"), actual);
             await esquema.Database.ExecuteSqlRawAsync(

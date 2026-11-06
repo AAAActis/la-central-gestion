@@ -48,7 +48,7 @@ public class ClientesController : ControllerBase
             request.Codigo,
             request.RazonSocial,
             request.Cuit,
-            request.CondicionFiscal,
+            request.CondicionFiscal ?? string.Empty,
             request.CondicionPago,
             // El núcleo espera listas, no null. La ausencia de teléfonos se
             // representa con una lista vacía y no obliga al caso de uso a
@@ -72,11 +72,11 @@ public class ClientesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Consultar(
-        [FromQuery] string texto, [FromQuery] bool incluirInactivos, CancellationToken cancellationToken)
+        [FromQuery] string texto, [FromQuery] bool incluirInactivos, CancellationToken cancellationToken,
+        [FromQuery] int pagina = 1, [FromQuery] int tamanoPagina = 20)
     {
-        var resultado = await _consultarClientes.EjecutarAsync(texto, incluirInactivos, cancellationToken);
+        var resultado = await _consultarClientes.EjecutarAsync(texto, incluirInactivos, pagina, tamanoPagina, cancellationToken);
 
         return this.AResultadoHttp(resultado);
     }

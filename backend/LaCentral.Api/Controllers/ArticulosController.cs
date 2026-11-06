@@ -49,6 +49,17 @@ public class ArticulosController : ControllerBase
         return this.AResultadoHttp(resultado);
     }
 
+    /// <summary>
+    /// Historial de compras, del más reciente al más antiguo. HU-ART-06 (016). Es solo lectura: los
+    /// registros los escribe la factura de compra y no hay endpoint para editarlos ni borrarlos (CA-005).
+    /// </summary>
+    [HttpGet("{id:int}/historial-compras")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> HistorialCompras(
+        int id, [FromServices] ObtenerHistorialComprasUseCase historial, CancellationToken ct)
+        => this.AResultadoHttp(await historial.EjecutarAsync(id, ct));
+
     /// <summary>Ficha: las seis modalidades, cada una con precio o con la razón de su ausencia. HU-ART-02.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]

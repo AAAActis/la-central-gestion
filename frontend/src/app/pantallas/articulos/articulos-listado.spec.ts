@@ -34,7 +34,11 @@ describe('Articulos · listado', () => {
     await fixture.whenStable();
   });
 
-  afterEach(() => servidor.verify());
+  // 016: la ficha también pide su historial de compras; lo prueba articulos-historial.spec.ts.
+  afterEach(() => {
+    servidor.match(r => r.url.endsWith('/historial-compras'));
+    servidor.verify();
+  });
 
   it('busca en /api/articulos con la página y su tamaño, y muestra código, nombre y códigos de proveedor', () => {
     buscar('buj');

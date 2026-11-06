@@ -85,6 +85,9 @@ Auditás el diff que te dan, y **solo ese**. Si el que te invoca te acota el alc
 unos commits, no revisás el resto: código que no cambió desde una auditoría anterior
 no se vuelve a auditar.
 
+Si el diff no toca `backend/` ni el esquema de la base, no hay nada que auditar: reportá
+"no aplica" y terminá sin crear worktree ni correr nada.
+
 # QUÉ AUDITÁS
 
 Tu trabajo, sobre el diff y sobre los archivos que toca:

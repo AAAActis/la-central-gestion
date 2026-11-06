@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { map } from 'rxjs';
@@ -6,7 +6,7 @@ import { ConfirmacionMotivo } from '../../compartido/confirmacion-motivo';
 import { Consulta, Listado } from '../../compartido/listado';
 import {
   AltaArticulo, ApiLaCentral, ArticuloResultado, FichaArticulo, Modalidad, ModificacionArticulo,
-  RazonAusencia, mensajeDeError,
+  RazonAusencia, RegistroHistorialCompra, mensajeDeError,
 } from '../../nucleo/api';
 import { SesionActual } from '../../nucleo/sesion';
 
@@ -109,6 +109,28 @@ const TEXTO_RAZON: Record<RazonAusencia, string> = {
         } @empty { <p class="tenue">Sin códigos de proveedor.</p> }
         @if (errorCodigos()) { <p class="error">{{ errorCodigos() }}</p> }
 
+        <!-- 016 · solo lectura: los registros los escribe y los anula la factura de compra (CA-005). -->
+        <h3>Historial de compras</h3>
+        @if (errorHistorial()) {
+          <p class="error">{{ errorHistorial() }}</p>
+        } @else {
+          <table>
+            <thead><tr><th>Fecha</th><th>Proveedor</th><th>Factura</th><th>Costo unitario</th></tr></thead>
+            <tbody>
+              @for (h of historial(); track $index) {
+                <tr [class.anulado]="h.anulado" [class.tenue]="h.anulado">
+                  <td>{{ h.fecha | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ h.proveedor }}</td>
+                  <td class="mono">{{ h.numeroFactura }} @if (h.anulado) { <span class="etiqueta">anulado</span> }</td>
+                  <td>$ {{ h.precioCosto | number: '1.2-2' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="tenue">Sin compras registradas.</td></tr>
+              }
+            </tbody>
+          </table>
+        }
+
         <h3>Stock</h3>
         <table>
           <tbody>
@@ -179,6 +201,8 @@ export class Articulos {
 
   readonly ficha = signal<FichaArticulo | null>(null);
   readonly errorFicha = signal<string | null>(null);
+  readonly historial = signal<RegistroHistorialCompra[]>([]);
+  readonly errorHistorial = signal<string | null>(null);
 
   readonly alta = signal(false);
   readonly errorAlta = signal<string | null>(null);
@@ -190,6 +214,12 @@ export class Articulos {
 
   private cargarFicha(id: number) {
     this.errorFicha.set(null);
+    this.historial.set([]);
+    this.errorHistorial.set(null);
+    this.api.historialCompras(id).subscribe({
+      next: h => this.historial.set(h),
+      error: e => this.errorHistorial.set(mensajeDeError(e)),
+    });
     this.api.ficha(id).subscribe({
       next: f => {
         this.ficha.set(f);

@@ -1,7 +1,8 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { Sesion } from './sesion';
+import type { Pagina } from '../compartido/listado';
 
 export interface CodigoProveedorResumen {
   proveedorId: number;
@@ -54,6 +55,17 @@ export interface FichaArticulo {
   motivoBaja: string | null;
 }
 
+/** 016 · un registro del historial de compras (solo lectura: lo escribe la factura de compra). */
+export interface RegistroHistorialCompra {
+  fecha: string;
+  proveedorId: number;
+  proveedor: string;
+  precioCosto: number;
+  facturaCompraId: number;
+  numeroFactura: string;
+  anulado: boolean;
+}
+
 /** La ubicación no va en el alta: se carga desde la ficha, por sucursal (N-9). */
 export interface AltaArticulo {
   nombre: string;
@@ -73,6 +85,31 @@ export interface ProveedorResumen {
   razonSocial: string;
   cuit: string | null;
   activo: boolean;
+}
+
+/** 045 · clientes y proveedores comparten pantalla: lo que difiere lo pone la configuración. */
+export type BaseTerceros = 'clientes' | 'proveedores';
+
+export interface TerceroResumen {
+  id: number;
+  codigo: string;
+  razonSocial: string;
+  cuit: string | null;
+  activo: boolean;
+}
+
+/** La ficha de `GET /api/{clientes|proveedores}/{id}`. Cada base trae sus campos propios. */
+export interface FichaTercero {
+  codigo: string;
+  razonSocial: string;
+  cuit: string | null;
+  activo: boolean;
+  telefonos: string[];
+  direcciones: string[];
+  condicionFiscal?: string | null;
+  condicionPago?: string | null;
+  urlReferencia?: string | null;
+  motivoBaja?: string | null;
 }
 
 export interface LineaFacturaCompra {
@@ -116,6 +153,10 @@ export class ApiLaCentral {
     return this.http.get<FichaArticulo>(`/api/articulos/${id}`);
   }
 
+  historialCompras(id: number): Observable<RegistroHistorialCompra[]> {
+    return this.http.get<RegistroHistorialCompra[]>(`/api/articulos/${id}/historial-compras`);
+  }
+
   crear(alta: AltaArticulo): Observable<{ id: number; codigoInterno: string }> {
     return this.http.post<{ id: number; codigoInterno: string }>('/api/articulos', alta);
   }
@@ -143,10 +184,36 @@ export class ApiLaCentral {
     return this.http.post<void>(`/api/articulos/${id}/reactivacion`, null);
   }
 
-  /** Solo activos: a un proveedor inactivo no se le registran compras. 404 si no hay ninguno. */
+  /** Solo activos: a un proveedor inactivo no se le registran compras. La primera página (#147). */
   proveedores(texto: string): Observable<ProveedorResumen[]> {
     const params = new HttpParams().set('texto', texto).set('incluirInactivos', false);
-    return this.http.get<ProveedorResumen[]>('/api/proveedores', { params });
+    return this.http.get<{ items: ProveedorResumen[] }>('/api/proveedores', { params }).pipe(map(p => p.items));
+  }
+
+  terceros(base: BaseTerceros, texto: string, incluirInactivos: boolean, pagina: number, tamanoPagina: number) {
+    const params = new HttpParams().set('texto', texto).set('incluirInactivos', incluirInactivos)
+      .set('pagina', pagina).set('tamanoPagina', tamanoPagina);
+    return this.http.get<Pagina<TerceroResumen>>(`/api/${base}`, { params });
+  }
+
+  fichaTercero(base: BaseTerceros, id: number): Observable<FichaTercero> {
+    return this.http.get<FichaTercero>(`/api/${base}/${id}`);
+  }
+
+  crearTercero(base: BaseTerceros, alta: Record<string, unknown>): Observable<unknown> {
+    return this.http.post(`/api/${base}`, alta);
+  }
+
+  modificarTercero(base: BaseTerceros, id: number, cambios: Record<string, unknown>): Observable<void> {
+    return this.http.put<void>(`/api/${base}/${id}`, cambios);
+  }
+
+  darDeBajaTercero(base: BaseTerceros, id: number, baja: Record<string, string>): Observable<void> {
+    return this.http.post<void>(`/api/${base}/${id}/baja`, baja);
+  }
+
+  reactivarTercero(base: BaseTerceros, id: number): Observable<void> {
+    return this.http.post<void>(`/api/${base}/${id}/reactivacion`, null);
   }
 
   registrarFacturaCompra(factura: FacturaCompraNueva): Observable<{ id: number }> {
