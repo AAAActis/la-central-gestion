@@ -65,6 +65,8 @@ function obligatorio(control: AbstractControl): ValidationErrors | null {
     .campo-agregar { align-self: flex-start; }
     .formulario-avisos > p { margin: 0 0 var(--esp-16); }
     .formulario-pie { display: flex; justify-content: flex-end; gap: var(--esp-12); }
+    .formulario-pie > .ancho-completo { flex: 1; }
+    .formulario-pie svg { width: 18px; height: 18px; }
   `,
   template: `
     <form [formGroup]="grupo()" (ngSubmit)="intentarEnviar()" novalidate>
@@ -113,7 +115,14 @@ function obligatorio(control: AbstractControl): ValidationErrors | null {
 
       <div class="formulario-pie">
         <ng-content select="[acciones]" />
-        <button type="submit" [class]="varianteEnviar()" [cargando]="enviando()" [textoCarga]="textoEnviando()">{{ textoEnviar() }}</button>
+        <button type="submit" [class]="varianteEnviar()" [class.ancho-completo]="enviarDestacado()" [cargando]="enviando()"
+                [textoCarga]="textoEnviando()">
+          @if (enviarDestacado()) {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
+          }
+          {{ textoEnviar() }}
+        </button>
       </div>
     </form>
   `,
@@ -125,6 +134,8 @@ export class Formulario {
   readonly textoEnviar = input('Guardar');
   readonly textoEnviando = input('Guardando…');
   readonly varianteEnviar = input<'primario' | 'peligro'>('primario');
+  /** El envío ocupa todo el ancho y lleva una flecha: el ingreso de la pantalla de acceso. */
+  readonly enviarDestacado = input(false);
   readonly erroresPorCampo = input<Record<string, string>>({});
   readonly errorGeneral = input<string | null>(null);
   readonly confirmacion = input<string | null>(null);

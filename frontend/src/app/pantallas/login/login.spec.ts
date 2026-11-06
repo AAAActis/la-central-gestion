@@ -145,4 +145,30 @@ describe('Login · pantalla de acceso (HU-UI-03)', () => {
     montar();
     expect(raiz().querySelector('app-marca .logo.completa')).not.toBeNull();
   });
+
+  // Textos copiados de docs/diseno/referencias/01-acceso.png.
+  it('el formulario lleva su título, la bajada y el pie de la referencia', () => {
+    montar();
+    const formulario = raiz().querySelector<HTMLElement>('.acceso-formulario');
+    expect(formulario).withContext('la columna del formulario').not.toBeNull();
+    expect(formulario?.querySelector('h1')?.textContent?.trim()).toBe('Ingresar');
+    expect(formulario?.querySelector('.acceso-antetitulo')?.textContent?.trim()).toBe('Sistema de gestión');
+    expect(formulario?.querySelector('.bajada')?.textContent?.trim()).toBe('Ingresá tus datos para comenzar a trabajar.');
+    expect(formulario?.querySelector('.acceso-pie')?.textContent?.trim()).toBe('Acceso para personal autorizado');
+  });
+
+  it('el panel de la marca lleva su título, su bajada y su pie', () => {
+    montar();
+    const panel = raiz().querySelector<HTMLElement>('.acceso-marca')!;
+    expect(panel.querySelector('h2')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Todo en orden. Listos para seguir.');
+    expect(panel.querySelector('.bajada')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Gestión comercial de La Central Repuestos.');
+    expect(panel.querySelector('.acceso-pie')?.textContent?.trim()).toBe('La Central Repuestos');
+  });
+
+  it('Ingresar ocupa todo el ancho del formulario y lleva una flecha', () => {
+    montar();
+    const formulario = ingresar().closest('form')!;
+    expect(ingresar().getBoundingClientRect().width).toBeCloseTo(formulario.getBoundingClientRect().width, 0);
+    expect(ingresar().querySelector('svg[aria-hidden="true"]')).withContext('la flecha es decorativa').not.toBeNull();
+  });
 });
