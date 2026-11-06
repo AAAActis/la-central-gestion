@@ -48,9 +48,9 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         => (_administracion, _esquema, _conexionAislada) = (administracion, esquema, conexionAislada);
 
     /// <summary>
-    /// Cadena con search_path «esquema aislado, public»: para levantar la API contra él. Toda tabla
-    /// se resuelve en el aislado (CrearAsync falla si la fuente tiene una que no se clona); de public
-    /// solo se ven las funciones de pg_trgm.
+    /// Cadena con search_path «esquema aislado, fuente»: para levantar la API contra él. Toda tabla
+    /// se resuelve en el aislado (CrearAsync falla si la fuente tiene una que no se clona); de la
+    /// fuente (public, salvo LA_CENTRAL_TEST_SCHEMA) solo se ven las funciones de pg_trgm.
     /// </summary>
     public string ConexionAislada => _conexionAislada;
 
@@ -90,10 +90,10 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         config.CommandTimeout = 30;
         var admin = new NpgsqlConnection(config.ConnectionString);
         // El esquema aislado primero: ahí está clonada cada tabla del modelo, así que toda tabla se
-        // resuelve en él. public va detrás solo para que se vean las funciones de pg_trgm
-        // (similarity), que viven ahí como en producción. Sin eso, la búsqueda difusa de clientes
-        // y proveedores no se podía probar contra PostgreSQL (#147).
-        config.SearchPath = $"{esquema}, public";
+        // resuelve en él. La fuente va detrás solo para que se vean las funciones de pg_trgm
+        // (similarity), que en public viven ahí como en producción (#147). Es la fuente y no un
+        // public fijo: es el esquema que se valida abajo, así que nada se resuelve en uno sin validar.
+        config.SearchPath = $"{esquema}, {origen}";
         // Identifica en pg_stat_activity las conexiones del pool de este esquema.
         config.ApplicationName = esquema;
         var fixture = new PostgreSqlPruebas(admin, esquema, config.ConnectionString);
@@ -113,8 +113,8 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
             // Fallar ANTES de clonar/cargar si la plantilla real no coincide.
             foreach (var entidad in entidades)
                 await fixture.ValidarTablaAsync(origen, entidad);
-            // Y al revés: con search_path «aislado, public», una relación de la fuente que no se
-            // clona se resolvería en public, que en lacentral_test guarda la copia de los datos reales.
+            // Y al revés: con search_path «aislado, fuente», una relación de la fuente que no se clona
+            // se resolvería en ella. En lacentral_test, public guarda la copia de los datos reales.
             var sobrantes = await fixture.RelacionesFueraDelModeloAsync(origen, tablas);
             if (sobrantes.Count > 0)
                 throw new InvalidOperationException($"El esquema fuente '{origen}' tiene tablas o vistas que el modelo no " +
