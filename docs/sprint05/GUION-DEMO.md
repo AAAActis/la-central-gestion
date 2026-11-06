@@ -20,7 +20,7 @@ número de este guion sale de ese ensayo: no hay que buscar nada mientras el due
 | 2 | `operador.demo` | Buscar `amortiguador` | 2 artículos: `LC-000020` (delantero) y `LC-000021` (trasero), con los códigos de cada proveedor | Se busca por nombre, por código interno o por código de proveedor |
 | 3 | `operador.demo` | Buscar `AC-02877` | Solo `LC-000021` | Es el código con el que lo vende Autopartes del Centro: el mostrador encuentra la pieza con el código que trae el cliente o la factura |
 | 4 | `operador.demo` | Buscar `filtro * aceite` | 6 filtros de aceite | El `*` busca alternativas |
-| 5 | `operador.demo` | Buscar `LC-000021` → **Ver ficha** | Costo vigente **$ 80,204.04**. Lista **$ 120,306.06** (costo +50 %). Efectivo / transferencia **$ 108,275.45** (lista −10 %). Costo **$ 80,204.04**. Tarjeta 3 y 6 cuotas: *tasa sin definir*. Caso especial: *no fijado* | Los montos se ven con formato inglés (coma de miles, punto decimal): ver «Qué NO se muestra». Los precios salen del costo de la última compra. **Las tasas de tarjeta las tiene que definir Sergio**: el sistema no inventa un número (D1) |
+| 5 | `operador.demo` | Buscar `LC-000021` → **Ver ficha** | Costo vigente **$ 80.204,04**. Lista **$ 120.306,06** (costo +50 %). Efectivo / transferencia **$ 108.275,45** (lista −10 %). Costo **$ 80.204,04**. Tarjeta 3 y 6 cuotas: *tasa sin definir*. Caso especial: *no fijado* | Los montos se ven en formato argentino (punto de miles, coma decimal), desde el #149. Los precios salen del costo de la última compra. **Las tasas de tarjeta las tiene que definir Sergio**: el sistema no inventa un número (D1) |
 | 6 | `operador.demo` | En la misma ficha, bajar a **Códigos de proveedor** y **Stock** | 4 códigos (`AC-02877`, `RM03886`, `CRS/04895`, `FEC06913`). Stock: Fragueiro **54**, San Vicente **0**, total **54** | Un artículo, cuatro proveedores, cada uno con su código. La existencia se ve por sucursal |
 | 7 | `operador.demo` | Buscar `amortiguador` → **Ver ficha** de `LC-000020`. En la fila de **San Vicente** se ve `Estante A3`: cambiarlo a `Estante A4` → **Guardar** | La ficha se recarga con `Estante A4`. Stock: Fragueiro **19**, San Vicente **16** | La ubicación en el depósito es **por sucursal**: la misma pieza está en estantes distintos en cada local |
 | 8 | `operador.demo` | En la ficha, mirar **Código interno** en Modificar | Campo deshabilitado, con «solo un administrador lo cambia» | Permisos por rol |
@@ -36,9 +36,7 @@ número de este guion sale de ese ensayo: no hay que buscar nada mientras el due
 - **El comparador de proveedores y los reportes.** No existen todavía.
 - **Las diferencias visuales de la Fase 2.** Esperan a que Javi las priorice. Una de ellas se ve
   en la pantalla de entrada: el fondo hexagonal no carga (`/fondo-hex.jpg` da 404) y queda el
-  color liso de respaldo. Otra está en la ficha: los montos salen en formato inglés
-  (`$ 80,204.04`), no en el argentino (`$ 80.204,04`). Conviene anticiparlo antes de que el
-  dueño lo vea.
+  color liso de respaldo.
 - **Registrar una factura de compra.** La pantalla existe, pero no se ensayó contra la demo. No se
   muestra en vivo.
 - **Clientes y proveedores.** No tienen pantalla: es la 045, parada hasta después de la demo
