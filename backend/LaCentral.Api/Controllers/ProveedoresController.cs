@@ -71,6 +71,14 @@ public class ProveedoresController : ControllerBase
         return this.AResultadoHttp(resultado);
     }
 
+    /// <summary>Ficha del proveedor con todos sus teléfonos, direcciones y URL. 045 · CA-002 y CA-003.</summary>
+    [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ObtenerDetalle(
+        int id, [FromServices] ObtenerProveedorDetalleUseCase obtenerDetalle, CancellationToken cancellationToken)
+        => this.AResultadoHttp(await obtenerDetalle.EjecutarAsync(id, cancellationToken));
+
     /// <summary>
     /// Modificación de un proveedor activo, incluidos teléfonos, direcciones y URL. HU-PRO-03.
     /// </summary>

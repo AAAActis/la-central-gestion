@@ -48,7 +48,7 @@ public class ClientesController : ControllerBase
             request.Codigo,
             request.RazonSocial,
             request.Cuit,
-            request.CondicionFiscal,
+            request.CondicionFiscal ?? string.Empty,
             request.CondicionPago,
             // El núcleo espera listas, no null. La ausencia de teléfonos se
             // representa con una lista vacía y no obliga al caso de uso a

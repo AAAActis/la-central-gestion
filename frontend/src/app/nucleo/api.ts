@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Sesion } from './sesion';
+import type { Pagina } from '../compartido/listado';
 
 export interface CodigoProveedorResumen {
   proveedorId: number;
@@ -75,6 +76,31 @@ export interface ProveedorResumen {
   activo: boolean;
 }
 
+/** 045 · clientes y proveedores comparten pantalla: lo que difiere lo pone la configuración. */
+export type BaseTerceros = 'clientes' | 'proveedores';
+
+export interface TerceroResumen {
+  id: number;
+  codigo: string;
+  razonSocial: string;
+  cuit: string | null;
+  activo: boolean;
+}
+
+/** La ficha de `GET /api/{clientes|proveedores}/{id}`. Cada base trae sus campos propios. */
+export interface FichaTercero {
+  codigo: string;
+  razonSocial: string;
+  cuit: string | null;
+  activo: boolean;
+  telefonos: string[];
+  direcciones: string[];
+  condicionFiscal?: string | null;
+  condicionPago?: string | null;
+  urlReferencia?: string | null;
+  motivoBaja?: string | null;
+}
+
 export interface LineaFacturaCompra {
   articuloId: number;
   sucursalId: number;
@@ -146,6 +172,32 @@ export class ApiLaCentral {
   proveedores(texto: string): Observable<ProveedorResumen[]> {
     const params = new HttpParams().set('texto', texto).set('incluirInactivos', false);
     return this.http.get<ProveedorResumen[]>('/api/proveedores', { params });
+  }
+
+  terceros(base: BaseTerceros, texto: string, incluirInactivos: boolean, pagina: number, tamanoPagina: number) {
+    const params = new HttpParams().set('texto', texto).set('incluirInactivos', incluirInactivos)
+      .set('pagina', pagina).set('tamanoPagina', tamanoPagina);
+    return this.http.get<Pagina<TerceroResumen>>(`/api/${base}`, { params });
+  }
+
+  fichaTercero(base: BaseTerceros, id: number): Observable<FichaTercero> {
+    return this.http.get<FichaTercero>(`/api/${base}/${id}`);
+  }
+
+  crearTercero(base: BaseTerceros, alta: Record<string, unknown>): Observable<unknown> {
+    return this.http.post(`/api/${base}`, alta);
+  }
+
+  modificarTercero(base: BaseTerceros, id: number, cambios: Record<string, unknown>): Observable<void> {
+    return this.http.put<void>(`/api/${base}/${id}`, cambios);
+  }
+
+  darDeBajaTercero(base: BaseTerceros, id: number, baja: Record<string, string>): Observable<void> {
+    return this.http.post<void>(`/api/${base}/${id}/baja`, baja);
+  }
+
+  reactivarTercero(base: BaseTerceros, id: number): Observable<void> {
+    return this.http.post<void>(`/api/${base}/${id}/reactivacion`, null);
   }
 
   registrarFacturaCompra(factura: FacturaCompraNueva): Observable<{ id: number }> {

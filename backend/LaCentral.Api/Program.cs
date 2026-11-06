@@ -49,6 +49,7 @@ builder.Services.AddScoped<ObtenerClienteDetalleUseCase>();
 builder.Services.AddScoped<CrearProveedorUseCase>();
 builder.Services.AddScoped<ModificarProveedorUseCase>();
 builder.Services.AddScoped<ConsultarProveedoresUseCase>();
+builder.Services.AddScoped<ObtenerProveedorDetalleUseCase>();
 builder.Services.AddScoped<DarDeBajaProveedorUseCase>();
 builder.Services.AddScoped<ReactivarProveedorUseCase>();
 builder.Services.AddScoped<ModificarClienteUseCase>();

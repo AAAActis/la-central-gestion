@@ -14,6 +14,8 @@ export interface CampoFormulario {
   patron?: string;
   mensajeFormato?: string;
   ayuda?: string;
+  /** Valores cerrados: se elige de una lista. La primera opción es vacía: sin elegir es válido salvo que sea obligatorio. */
+  opciones?: { valor: string; etiqueta: string }[];
   /** Una lista que se agrega y se quita (teléfonos, direcciones, códigos). */
   multivaluado?: boolean;
   /** Largo máximo: lo fija el endpoint, no el formulario. Va como atributo maxlength: al tipear no se puede pasar. */
@@ -92,9 +94,17 @@ function obligatorio(control: AbstractControl): ValidationErrors | null {
         } @else {
           <div class="campo">
             <label [for]="id(c)">{{ c.etiqueta }}</label>
-            <input [id]="id(c)" [type]="c.tipo ?? 'text'" [formControlName]="c.nombre" [attr.maxlength]="c.maximo ?? null"
-                   [attr.autocomplete]="c.autocompletar ?? null" [attr.aria-required]="c.obligatorio ? 'true' : null"
-                   [attr.aria-invalid]="error(c) ? 'true' : null" [attr.aria-describedby]="descriptores(c)" />
+            @if (c.opciones) {
+              <select [id]="id(c)" [formControlName]="c.nombre" [attr.aria-required]="c.obligatorio ? 'true' : null"
+                      [attr.aria-invalid]="error(c) ? 'true' : null" [attr.aria-describedby]="descriptores(c)">
+                <option value="">Sin informar</option>
+                @for (o of c.opciones; track o.valor) { <option [value]="o.valor">{{ o.etiqueta }}</option> }
+              </select>
+            } @else {
+              <input [id]="id(c)" [type]="c.tipo ?? 'text'" [formControlName]="c.nombre" [attr.maxlength]="c.maximo ?? null"
+                     [attr.autocomplete]="c.autocompletar ?? null" [attr.aria-required]="c.obligatorio ? 'true' : null"
+                     [attr.aria-invalid]="error(c) ? 'true' : null" [attr.aria-describedby]="descriptores(c)" />
+            }
             @if (c.ayuda) { <p class="ayuda" [id]="id(c) + '-ayuda'">{{ c.ayuda }}</p> }
             @if (error(c); as mensaje) { <p class="aviso error" role="alert" [id]="id(c) + '-error'">{{ mensaje }}</p> }
           </div>
