@@ -829,3 +829,209 @@ vale esta.)
     - se reactivó LC-000031: activo y con el historial cerrado por `admin.demo`; motivo y fecha quedan como rastro (D10).
   - **`GUION-DEMO.md`:** los montos van en formato argentino (`$ 80.204,04`) y se sacó la nota del formato inglés (`af27310` en `docs/sprint05-guion-demo`). Es cierto recién cuando el #149 esté mergeado y la demo corra con ese código: hoy el #149 sigue abierto.
 - **HU / paso:** ninguno. **Falta:** que Santi revise y mergee los PR #149 a #153. **Archivos a medias:** ninguno.
+
+## 06/11/2026 18:47 · sesión sin supervisión: T0 a T5
+
+**Instrucción recibida (verbatim):**
+> # Instrucciones para Claude Code · 06/11/2026 · sesión sin supervisión
+>
+> > Javi no puede auditar esta sesión en vivo. Todo lo que hagas queda en PR abiertos para que
+> > lo revise después. **Nada se mergea.**
+>
+> ---
+>
+> ## 0 · Reglas de esta sesión (además de `CLAUDE.md`)
+>
+> 1. **No mergees nada, a ninguna rama.** No hagas push a `develop` ni a `main`. Cada tarea va
+>    en su propia rama y su propio PR, que queda abierto.
+> 2. **No rebasees ramas pusheadas.** Si hace falta traer cambios, es `git merge`.
+> 3. **No escribas en ninguna base de datos compartida.** Nada de scripts SQL, de cambios de
+>    esquema ni de re-scaffold. Tampoco toques `lacentral` (datos reales).
+> 4. **No tomes decisiones de negocio.** Si una tarea necesita una, no la inventes: anotala en
+>    PREGUNTAS y pasá a la siguiente tarea.
+> 5. **La bitácora es obligatoria** (`docs/sprint05/BITACORA.md`): un bloque por tarea, con
+>    esta instrucción verbatim en el primero.
+> 6. **El verificador va por PR, al cerrar cada tarea.** `verificador-tdd` corre en cada PR.
+>    `auditor-persistencia` corre solo si el diff toca `backend/`.
+> 7. **Si una tarea se traba más de dos intentos, cortala.** Anotá en la bitácora dónde quedó
+>    (`BLOQUEADO EN:`) y seguí con la siguiente.
+>
+> ## 1 · Antes de empezar
+>
+> ```bash
+> git fetch --all --prune
+> git log --oneline -5 origin/develop
+> git branch -a | grep fix/merge-historial-baja
+> ```
+>
+> **`develop` hoy no compila el frontend.** El merge de #152 y #153 dejó `DatePipe` sin
+> registrar, y 9 specs quedaron en rojo. El arreglo está en la rama local
+> `fix/merge-historial-baja` (commit `3ad1399`), que todavía no se pusheó.
+>
+> **Conexión a la base:** probá `Test-NetConnection 100.125.169.91 -Port 5432` (o un
+> `dotnet test --filter "FullyQualifiedName~AsignarUbicacionPostgreSqlTests"`). A las 16 h la
+> base no respondía (`Timeout during connection attempt`). Si sigue sin responder, **saltá las
+> tareas marcadas [BASE]** y declaralo en el reporte.
+>
+> ---
+>
+> ## 2 · Tareas, en este orden
+>
+> ### T0 · Subir el arreglo de develop
+>
+> - Hacé push de `fix/merge-historial-baja` y abrí el PR contra `develop`. **No lo mergees.**
+> - Cuerpo del PR:
+>   - qué rompió el merge de #152 y #153 (`DatePipe` y el pedido del historial abierto en los
+>     specs de baja y de es-AR);
+>   - los tres cambios;
+>   - frontend 153/153 y `ng build` limpio;
+>   - backend: NO verificado si la base sigue caída.
+> - **Las ramas de frontend de las tareas siguientes salen de `fix/merge-historial-baja`, no de
+>   `develop`.** En cada cuerpo de PR va: «Depende de #<número del PR de T0>: mergear ese
+>   primero».
+>
+> ### T1 · Fase 2 visual del acceso y del marco (arrastre de HU-UI-03, `Refs #42`)
+>
+> Rama `feature/fase2-visual-acceso-marco`. Frontend solamente.
+>
+> Son los cinco puntos que Javi priorizó de la lista «Diferencias del acceso y el marco contra
+> las referencias» (`docs/sprint04/ESTADO.md`):
+>
+> 1. **Títulos de las pantallas**, como en las referencias de `docs/diseno/referencias/`.
+> 2. **Bajadas debajo de cada título.**
+> 3. **El pie.**
+> 4. **El usuario en dos líneas en el encabezado:** el nombre arriba y el rol abajo.
+> 5. **En el acceso, el botón de ingreso de ancho completo y con flecha**, con la variante
+>    primaria que ya existe (§7 de `docs/diseno/SISTEMA-VISUAL.md`).
+>
+> **Fuera de alcance:** el logo con la C separada (la marca es provisoria), las migas y el
+> filete abajo. No los toques.
+>
+> Criterios:
+> - **Textos:** copialos de las referencias; si una pantalla no tiene referencia, no inventes
+>   el texto y anotalo en PREGUNTAS.
+> - **Estilos:** sin colores escritos a mano, solo `var(--token)`.
+> - **Specs:** prueban comportamiento, no valores visuales. Que el nombre y el rol aparezcan,
+>   que el botón sea el primario y que esté el texto del título.
+> - **Capturas:** a 1024, 768 y 480 px, sin desplazamiento horizontal, en
+>   `docs/sprint05/evidencia/fase2/`, comparadas con las referencias 01 y 02.
+> - **Ciclo de tres commits:** chore, test en rojo por aserción, y feat o style.
+>
+> ### T2 · Formato es-AR completo (deuda del #148)
+>
+> Rama `fix/es-ar-porcentaje-y-total`. Frontend solamente.
+>
+> Lo que quedó registrado como deuda en el tablero del Sprint 5:
+> - el **porcentaje** de los precios por modalidad en `articulos.ts` sale sin `DecimalPipe`;
+> - el **total del listado** («Mostrando a–b de N») sale sin separador de miles.
+>
+> Un spec en rojo por cada caso y después el arreglo. `Refs #148`.
+>
+> ### T3 · [BASE] Motivo de baja en el detalle de cliente (deuda del #151)
+>
+> Rama `fix/detalle-cliente-motivo-baja`. Hoy el detalle de proveedor trae `motivoBaja` y el de
+> cliente no: la ficha de un cliente dado de baja dice «Dado de baja» sin motivo.
+>
+> - Agregalo al DTO de salida del detalle de cliente y mostralo en la ficha, igual que en
+>   proveedor.
+> - La lectura sale de la última baja en el historial (D-S5-08: el cliente lee la ÚLTIMA baja).
+> - Pruebas:
+>   - un test contra PostgreSQL que relea con un contexto nuevo;
+>   - un spec de la ficha.
+>
+> **Si la base está caída, no la hagas.**
+>
+> ### T4 · [BASE] Test de API: OPERADOR recibe 204 en la ubicación (D-S5-09)
+>
+> Rama `test/d-s5-09-operador-ubicacion`. Es solo un test:
+> `PUT /api/articulos/{id}/ubicaciones/{sucursalId}` con un token de OPERADOR devuelve 204, y la
+> ficha muestra la ubicación en esa sucursal.
+>
+> - Va como test de caracterización: tiene que nacer verde.
+> - Demostrá que discrimina con una mutación: con `[Authorize(Roles = "ADMINISTRADOR")]`, rojo.
+> - Esa mutación no se commitea.
+>
+> **Si la base está caída, no la hagas.**
+>
+> ### T5 · Documento: preguntas para Sergio
+>
+> Rama `docs/preguntas-sergio`. Solo documentación, en `docs/sprint05/PREGUNTAS-SERGIO.md`.
+>
+> Juntá en un solo lugar las reglas de negocio que hoy están abiertas, cada una con:
+> - la pregunta en lenguaje del negocio, sin tecnicismos;
+> - de qué HU o issue depende;
+> - qué se hace hoy mientras no hay respuesta.
+>
+> Salen del repo (ESTADO del Sprint 4, del 5 y del 6, y los cuerpos de #150 a #153):
+> 1. ¿La condición fiscal del cliente es obligatoria? (#151, hoy es opcional)
+> 2. ¿Cómo se registra la baja de un artículo con existencia por error de stock? (CA-003 de
+>    HU-ART-04, #21)
+> 3. Los CA2 y CA6 de HU-ART-01 y el CA4 de HU-ART-03 que quedaron desactualizados (#17)
+> 4. El precio manual o «caso especial»
+> 5. El código interno, compuerta C4: respondida el 19/10, falta que el equipo decida
+> 6. **Listas de precios desde archivo:** la HU-CMP-08 (#128) es el entregable del Sprint 6,
+>    pero el 19/10 Sergio dijo que los proveedores no mandan listas en Excel o CSV, que los
+>    precios están en sus páginas web. Hay que preguntar de dónde saldría «el archivo».
+> 7. La provincia en las direcciones (D-S5-02)
+>
+> **No respondas ninguna.** Si en el repo hay una respuesta, citala con fecha.
+>
+> ---
+>
+> ## 3 · Lo que NO hacés hoy
+>
+> - **Las HU del Sprint 6** (053, 054, 055, 050): tienen las compuertas C2, C5 y C6 abiertas.
+> - **Los scripts 06 (C2) y 09 (`error_de_stock`)**: son cambios de esquema y los decide el
+>   equipo.
+> - **Las proformas en E7**: es tarea de Lauti.
+> - **El fondo hexagonal (`fondo-hex.jpg`)**: falta confirmar la licencia de la imagen.
+> - **El recorrido manual contra `lacentral_demo`**: lo hace Javi.
+>
+> ---
+>
+> ## 4 · Reporte final
+>
+> Un solo mensaje, con este formato:
+>
+> **QUÉ HICE**
+> Por tarea: rama, PR (número y link) y estado (abierto, bloqueado o salteado, con el motivo).
+>
+> **EVIDENCIA**
+> Por PR: la corrida completa sobre su último commit (línea literal del resumen, con hash), el
+> resultado del `verificador-tdd` y del `auditor-persistencia` (si aplica), y dónde están las
+> capturas.
+>
+> **QUÉ FALTA**
+> Lo que quedó sin hacer y por qué, y el orden de merge sugerido de los PR.
+>
+> **PREGUNTAS**
+> Lo que necesita una decisión de Javi o del equipo.
+
+**Plan:**
+1. Arranque: fetch, `origin/develop`, rama del arreglo, conexión a la base.
+2. T0: push de `fix/merge-historial-baja` y PR contra `develop`, sin mergear.
+3. T1: `feature/fase2-visual-acceso-marco` desde `fix/merge-historial-baja` (chore, rojo, feat/style; capturas a 1024/768/480).
+4. T2: `fix/es-ar-porcentaje-y-total` desde `fix/merge-historial-baja` (rojo por caso, después el arreglo).
+5. T3 y T4 [BASE]: solo si la base responde.
+6. T5: `docs/preguntas-sergio`, `docs/sprint05/PREGUNTAS-SERGIO.md`.
+7. `verificador-tdd` por PR al cerrar cada tarea; `auditor-persistencia` solo si toca `backend/`.
+8. Reporte final.
+
+**Estado:** en curso
+- 18:47 · Arranque. `git fetch --all --prune` hecho. `origin/develop` = `144c325` (merge #153); `HEAD..origin/develop` vacío. **`fix/merge-historial-baja` YA está en `origin` en `3ad1399`** (la instrucción decía que no). Sin worktrees extra.
+- 18:47 · Base: `Test-NetConnection 100.125.169.91 -Port 5432` → `TcpTestSucceeded: False` (ping TimedOut). **T3 y T4 se saltean.**
+- 18:47 · `gh` no está instalado en esta máquina (ni en PATH ni en `Program Files`). Para abrir PRs se prueba la API de GitHub con la credencial de git.
+- 18:55 · **T0:** `git push` → `Everything up-to-date` (la rama ya estaba en `origin` en `3ad1399`). Sobre `3ad1399`: frontend `TOTAL: 153 SUCCESS`, `ng build` → `Application bundle generation complete.` Backend no verificado (base caída). **PR #154** contra `develop`, abierto, sin mergear. PR creado con la API de GitHub (`gh` no está). `auditor-persistencia`: no aplica. Lanzado `verificador-tdd` acotado a `3ad1399`.
+  - **HU / paso:** T0, esperando el verificador. **Falta:** su resultado en el PR. **Archivos a medias:** ninguno.
+- 19:05 · **T0 cerrada:** `verificador-tdd` sobre #154 (`3ad1399`) → **APTO**. Reprodujo los 9 rojos (5 historial por NG8004 + 3 baja + 1 es-AR por `verify()`); M1 (sin `DatePipe`) muere. No bloqueante: no hay ciclo rojo→verde propio (arreglo de merge), y el `match` sin `flush` en `articulos-baja.spec.ts:55`.
+- 19:20 · **T1:** rama `feature/fase2-visual-acceso-marco` desde `fix/merge-historial-baja`. Chore `5d7c8e2` (bajada en `Modulo`, `enviarDestacado` en `Formulario`). Rojo `ba34479`: `TOTAL: 5 FAILED, 153 SUCCESS`, los 5 por aserción.
+  - **HU / paso:** T1, paso verde. **Falta:** `app.ts` (encabezado de pantalla, usuario en dos líneas, pie), `login.ts` (textos de la referencia 01, panel), `formulario.ts` (envío destacado); capturas; PR; verificador. **Archivos a medias:** ninguno commiteado a medias.
+- 19:45 · **T1:** verde `2998046` (`app.ts`, `login.ts`, `formulario.ts`), capturas y comparación `6d7b92f` en `docs/sprint05/evidencia/fase2/` (9 capturas, ninguna desborda: `scrollWidth` = `clientWidth`). Suite sobre `6d7b92f`: `TOTAL: 158 SUCCESS`, `ng build` limpio. **PR #155**, abierto, «Depende de #154». Resultado del verificador de #154 comentado en el PR.
+  - **HU / paso:** T1, esperando `verificador-tdd` sobre `3ad1399..6d7b92f`. **Falta:** su resultado; T2. **Archivos a medias:** ninguno.
+  - Preguntas que deja T1: bajada de Clientes y Proveedores (sin referencia); pie del marco (los rótulos «Propuesta visual» y «Datos ficticios» del prototipo no se copiaron); la tarjeta «Factura de compra» repite el h1.
+- 20:05 · **T2:** rama `fix/es-ar-porcentaje-y-total` desde `fix/merge-historial-baja`. Rojo `0d0eeea` (`formato-es-ar.spec.ts`: `TOTAL: 2 FAILED, 1 SUCCESS`, por aserción: `costo +12.5 %`, `Mostrando 1001–1020 de 2108`). Fix `ce5bafa` (`DecimalPipe` en `articulos.ts` y `listado.ts`; la columna es `NUMERIC(6,2)`). Suite con el árbol de `ce5bafa`: `TOTAL: 155 SUCCESS`, `ng build` limpio. **PR #156**, abierto, «Depende de #154».
+  - **HU / paso:** T2, falta `verificador-tdd` (espera a que termine el de #155: uno a la vez). **Archivos a medias:** ninguno.
+- 20:05 · **T3 y T4 SALTEADAS:** la base sigue sin responder (`TcpTestSucceeded: False` a las 18:47). Se vuelve a probar antes del reporte.
+- 20:05 · **T5:** arranca, rama `docs/preguntas-sergio` desde `fix/merge-historial-baja`.
+- 20:40 · **T5:** `docs/sprint05/PREGUNTAS-SERGIO.md` en `b6f501d`, con las siete preguntas: la pregunta, de qué depende y qué pasa hoy. Las respuestas del 19/10 (C4 y listas) van citadas textuales. Fuentes: ESTADO del Sprint 4, 5 y 6, los cuerpos de #150 a #153 y #17, y `docs/historias/011` y `013`. `ESTADO.md` del Sprint 5 suma la sección «Sesión del 06/11» y la PRÓXIMA SESIÓN, antes del push (regla de CLAUDE.md). La bitácora se commitea en esta rama porque es la única de solo documentación.
+  - **HU / paso:** T5, push y PR. **Falta:** el PR, el verificador del #155 (corriendo), el del #156 y el del PR de T5; volver a probar la base; el reporte. **Archivos a medias:** ninguno.
