@@ -43,8 +43,8 @@ scripts/probar-demo.sh
    | `admin.demo` | ADMINISTRADOR | Fragueiro |
    | `operador.demo` | OPERADOR | San Vicente |
 
-   La contraseña es la misma para los dos. **No está en el repo:** pedísela a Santi (está en su
-   máquina, en `~/.config/lacentral/clave-demo.txt`).
+   La contraseña es la misma para los dos y **no está en el repo**. Si no la tenés, ponés una
+   vos (ver «Restablecer la clave de los usuarios de demo», abajo) y se la pasás al resto.
 3. Para probar el otro rol, cerrá la sesión y entrá con el otro usuario.
 
 Datos de la demo, todos inventados: 5 proveedores, 30 artículos (por ejemplo, buscá «bujía»),
@@ -55,12 +55,27 @@ Datos de la demo, todos inventados: 5 proveedores, 30 artículos (por ejemplo, b
 Lo que se probó, con qué usuario y con qué datos, va en el cuerpo del PR de la HU (sección de
 CA) y, al cerrar el sprint, en `docs/sprint05/ESTADO.md` (entregable, condición 1).
 
-## Cuidado: el esquema de la demo y el código tienen que coincidir
+## Restablecer la clave de los usuarios de demo
 
-`lacentral_demo` tiene el esquema de `develop` **antes** del #141 (scripts 01 a 04, sin el 07).
-El 07 se le aplica el lunes 09/11 (S5-06 del ESTADO). **Entre el merge del #141 y la aplicación
-del 07, el código de `develop` no coincide con la demo:** la ficha del artículo lee la ubicación
-por sucursal, que sin el 07 no existe. En esa ventana, probá desde un commit anterior al #141.
+Pone una clave nueva a `admin.demo` y `operador.demo`, las dos iguales. No hace falta saber la
+anterior. Solo escribe en `lacentral_demo`: con otra base, no arranca. Desde la raíz del repo, en
+fish:
+
+```fish
+set -x LACENTRAL_DEMO_CLAVE (read -s -P "Clave nueva (mínimo 6): ")
+dotnet run backend/db/demo/restablecer_clave_demo.cs
+```
+
+En bash: `read -rs LACENTRAL_DEMO_CLAVE && export LACENTRAL_DEMO_CLAVE`, y el mismo `dotnet run`.
+
+Imprime `Clave restablecida para admin.demo y operador.demo.` La clave no se escribe en ningún
+archivo del repo. Avisá al equipo que la cambiaste: deja de andar la que tenían los demás.
+
+## El esquema de la demo y el código tienen que coincidir
+
+Desde el 05/11/2026 `lacentral_demo` tiene los scripts 01 a 04, 07 y 08: el mismo esquema que
+`develop` con el #141. Sin el 07, la ficha del artículo da 500 (`column a.codigo_barras does not
+exist`). Si entra a `develop` un script nuevo, aplicalo también a la demo.
 
 ## Verificado el 04/11/2026
 
@@ -68,3 +83,10 @@ Desde `develop` (`9577197`): el comando levantó las dos cosas; por el proxy del
 `admin.demo` y `operador.demo` entraron (200, con su rol y su sucursal) y la búsqueda
 «buj» devolvió artículos de la demo. Con una cadena a `lacentral_test`, o sin la variable, no
 arrancó. Ctrl+C (señal al grupo) liberó los dos puertos.
+
+## Verificado el 05/11/2026
+
+Desde `develop` (`dd22a7d`), con el 07 y el 08 en la demo: por el navegador (Chromium), los dos
+usuarios entraron. Se buscó un artículo, se abrió la ficha y se guardó una ubicación. El
+restablecimiento se probó con la misma clave que ya tenían los dos usuarios, y con una cadena a
+`lacentral_test` no arrancó.
