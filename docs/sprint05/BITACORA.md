@@ -810,3 +810,16 @@ vale esta.)
     - la tabla del ESTADO (rama del #146);
     - avisar a Santi.
   - **Archivos a medias:** ninguno.
+- 05/11 · **Compuertas cerradas: las cinco HU en APTO.**
+  - `auditor-persistencia` #153:
+    - Ronda 1 NO APTO. Con una compra en curso, la baja se escribía con existencia: el UPDATE bloqueado reevaluaba el WHERE con el snapshot viejo de `stock`.
+    - Se arregló con un rojo de dos sesiones reales (`825cac6`) y un `SELECT … FOR UPDATE` antes del UPDATE (`d6c60a0`).
+    - Ronda 2 APTO.
+  - `verificador-tdd` sobre los commits que agregó el auditor:
+    - #150 (`5d90c43..9acf0e9`): ronda 1 NO APTO, porque sacar `'v'` del relkind sobrevivía. Se arregló en `e16840d` con tests de vista, vista materializada y tabla particionada. Ronda 2 APTO.
+    - #153 (`7d55ce4..d6c60a0`): APTO.
+  - Suites finales:
+    - #150: 475/475 sobre `e16840d`.
+    - #153: 469/469 sobre `d6c60a0`.
+  - Deuda nueva: la compra puede sumar stock a un artículo que la baja ya dejó inactivo. Pasa en el orden inverso o en la ventana entre el upsert y el `UPDATE articulo`, y se arregla en la factura de compra.
+- **HU / paso:** ninguno en curso. **Falta:** que Santi revise y mergee, en orden: #149, #150, #151, y #152 y #153 independientes. **Archivos a medias:** ninguno.
