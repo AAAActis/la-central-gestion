@@ -17,6 +17,30 @@ public class PostgreSqlPruebasLimpiezaTests
     private readonly ITestOutputHelper _salida;
     public PostgreSqlPruebasLimpiezaTests(ITestOutputHelper salida) => _salida = salida;
 
+    // auditor-persistencia, 05/11/2026: con search_path «aislado, public», una tabla de la fuente
+    // que no se clona se resolvería en public, donde lacentral_test tiene la copia de los datos
+    // reales. Se usa como fuente el esquema aislado de otra prueba: no se escribe en public.
+    [PostgreSqlFact]
+    public async Task FuenteConUnaTablaFueraDelModelo_FallaAntesDeCrearElEsquema()
+    {
+        await using var fuente = await PostgreSqlPruebas.CrearAsync(_salida);
+        string esquemaFuente;
+        await using (var contexto = fuente.CrearContexto())
+        {
+            esquemaFuente = await contexto.Database.SqlQueryRaw<string>("SELECT current_schema() AS \"Value\"").SingleAsync();
+            Assert.Matches(new Regex("^pr110_test_[0-9a-f]{32}$"), esquemaFuente);
+            // Sin calificar, CREATE TABLE va a current_schema(), que se acaba de afirmar.
+            await contexto.Database.ExecuteSqlRawAsync("CREATE TABLE tabla_ajena (x int)");
+        }
+
+        PostgreSqlPruebas? creado = null;
+        var error = await Record.ExceptionAsync(async () => creado = await PostgreSqlPruebas.CrearAsync(_salida, origen: esquemaFuente));
+        if (creado is not null) await creado.DisposeAsync();
+
+        Assert.IsType<InvalidOperationException>(error);
+        Assert.Contains("tabla_ajena", error.Message);
+    }
+
     [PostgreSqlFact]
     public async Task CreacionCortadaAMitadDeCamino_NoDejaElEsquemaHuerfano()
     {
