@@ -21,7 +21,24 @@ public class PostgreSqlPruebasLimpiezaTests
     // que no se clona se resolvería en ella (en public, lacentral_test tiene la copia de los datos
     // reales). Se usa como fuente el esquema aislado de otra prueba: no se escribe en public.
     [PostgreSqlFact]
-    public async Task FuenteConUnaTablaFueraDelModelo_FallaAntesDeCrearElEsquema()
+    public Task FuenteConUnaTablaFueraDelModelo_FallaAntesDeCrearElEsquema()
+        => AfirmarQueLaFuenteSeRechazaAsync("tabla_ajena", "CREATE TABLE tabla_ajena (x int)");
+
+    // verificador-tdd, 05/11/2026: el filtro de relkind sin 'v', 'm' o 'p' sobrevivía. Una vista,
+    // una vista materializada o una tabla particionada también se resolverían en la fuente.
+    [PostgreSqlFact]
+    public Task FuenteConUnaVistaFueraDelModelo_FallaAntesDeCrearElEsquema()
+        => AfirmarQueLaFuenteSeRechazaAsync("vista_ajena", "CREATE VIEW vista_ajena AS SELECT 1 AS x");
+
+    [PostgreSqlFact]
+    public Task FuenteConUnaVistaMaterializadaFueraDelModelo_FallaAntesDeCrearElEsquema()
+        => AfirmarQueLaFuenteSeRechazaAsync("vista_mat_ajena", "CREATE MATERIALIZED VIEW vista_mat_ajena AS SELECT 1 AS x");
+
+    [PostgreSqlFact]
+    public Task FuenteConUnaTablaParticionadaFueraDelModelo_FallaAntesDeCrearElEsquema()
+        => AfirmarQueLaFuenteSeRechazaAsync("particionada_ajena", "CREATE TABLE particionada_ajena (x int) PARTITION BY RANGE (x)");
+
+    private async Task AfirmarQueLaFuenteSeRechazaAsync(string relacion, string ddl)
     {
         await using var fuente = await PostgreSqlPruebas.CrearAsync(_salida);
         string esquemaFuente;
@@ -29,8 +46,8 @@ public class PostgreSqlPruebasLimpiezaTests
         {
             esquemaFuente = await contexto.Database.SqlQueryRaw<string>("SELECT current_schema() AS \"Value\"").SingleAsync();
             Assert.Matches(new Regex("^pr110_test_[0-9a-f]{32}$"), esquemaFuente);
-            // Sin calificar, CREATE TABLE va a current_schema(), que se acaba de afirmar.
-            await contexto.Database.ExecuteSqlRawAsync("CREATE TABLE tabla_ajena (x int)");
+            // Sin calificar, el CREATE va a current_schema(), que se acaba de afirmar.
+            await contexto.Database.ExecuteSqlRawAsync(ddl);
         }
 
         PostgreSqlPruebas? creado = null;
@@ -38,7 +55,7 @@ public class PostgreSqlPruebasLimpiezaTests
         if (creado is not null) await creado.DisposeAsync();
 
         Assert.IsType<InvalidOperationException>(error);
-        Assert.Contains("tabla_ajena", error.Message);
+        Assert.Contains(relacion, error.Message);
     }
 
     // auditor-persistencia, ronda 2: lo que se valida (la fuente) tiene que ser lo que el search_path
