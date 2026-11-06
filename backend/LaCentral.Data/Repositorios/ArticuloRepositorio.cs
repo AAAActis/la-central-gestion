@@ -134,12 +134,18 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
             .ExecuteDeleteAsync(ct) > 0;
 
     public async Task<bool> DarDeBajaAsync(int id, string motivo, DateTime fechaBaja, CancellationToken ct = default)
-        // 014 · CA-002: la existencia se mira en el mismo UPDATE, no en una lectura previa.
-        => await _context.Articulo.Where(a => a.Id == id && a.Activo && !a.Stock.Any(s => s.Cantidad > 0))
+    {
+        // 014 · CA-002: la existencia se mira en el mismo UPDATE, no en una lectura previa. Antes se
+        // bloquea la fila: si una compra en curso la tiene, se espera a que confirme, y el UPDATE (otra
+        // sentencia, snapshot nuevo) ve su stock. Sin esto, la reevaluación del UPDATE bloqueado
+        // miraba stock con el snapshot viejo y la baja se escribía con existencia.
+        await _context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM articulo WHERE id = {id} FOR UPDATE", ct);
+        return await _context.Articulo.Where(a => a.Id == id && a.Activo && !a.Stock.Any(s => s.Cantidad > 0))
             .ExecuteUpdateAsync(s => s
                 .SetProperty(a => a.Activo, false)
                 .SetProperty(a => a.MotivoBaja, motivo)
                 .SetProperty(a => a.FechaBaja, fechaBaja), ct) == 1;
+    }
 
     // D10: motivo y fecha quedan en la fila como rastro de la última baja.
     public async Task<bool> ReactivarAsync(int id, CancellationToken ct = default)
