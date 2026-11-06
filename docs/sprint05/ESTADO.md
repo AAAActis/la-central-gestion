@@ -235,11 +235,11 @@ La base de pruebas (`100.125.169.91:5432`) no respondió: `TcpTestSucceeded: Fal
 | Tarea | Rama | PR | Estado |
 |---|---|---|---|
 | T0 · arreglo del merge de #152 y #153 | `fix/merge-historial-baja` | #154 | Abierto. Frontend 153/153, `ng build` limpio. `verificador-tdd` APTO. Backend no verificado (base caída) |
-| T1 · fase 2 visual del acceso y del marco (Refs #42) | `feature/fase2-visual-acceso-marco` | #155 | Abierto. Depende de #154. Frontend 158/158. Capturas en `evidencia/fase2/` |
-| T2 · es-AR: porcentaje y total del listado (Refs #148) | `fix/es-ar-porcentaje-y-total` | #156 | Abierto. Depende de #154. Frontend 155/155. Salda la deuda anotada en la fila #148 del tablero |
+| T1 · fase 2 visual del acceso y del marco (Refs #42) | `feature/fase2-visual-acceso-marco` | #155 | Abierto. Depende de #154. Frontend 162/162 sobre `bba4a4a`. `verificador-tdd` NO APTO en la ronda 1 (4 guardas sin test), APTO en la 2. Capturas en `evidencia/fase2/` |
+| T2 · es-AR: porcentaje y total del listado (Refs #148) | `fix/es-ar-porcentaje-y-total` | #156 | Abierto. Depende de #154. Frontend 157/157 sobre `ab1f0ef`. `verificador-tdd` NO APTO en la ronda 1 (precisión y «x de y»), APTO en la 2. Salda la deuda anotada en la fila #148 del tablero |
 | T3 · motivo de baja en el detalle de cliente | — | — | **Salteada:** necesita PostgreSQL y la base estaba caída |
 | T4 · test de API: OPERADOR recibe 204 en la ubicación (D-S5-09) | — | — | **Salteada:** ídem |
-| T5 · preguntas para Sergio | `docs/preguntas-sergio` | el de esta rama | `PREGUNTAS-SERGIO.md`, con las siete reglas abiertas |
+| T5 · preguntas para Sergio | `docs/preguntas-sergio` | #157 | Abierto. `PREGUNTAS-SERGIO.md`, con las siete reglas abiertas. `verificador-tdd` APTO (solo docs) |
 
 La tabla del tablero no se tocó: los issues siguen como estaban en GitHub, y los PR de la sesión
 quedan para que Javi los revise.
@@ -256,8 +256,8 @@ cualquier orden: no comparten archivos. El de T5 es solo documentación.
 
 ## PRÓXIMA SESIÓN
 
-**06/11 · sesión sin supervisión:** cuatro PR abiertos, del #154 al de T5 (ver la sección de
-arriba). Falta: revisión y merge de Javi, primero el #154; T3 y T4 con la base arriba.
+**06/11 · sesión sin supervisión:** cuatro PR abiertos, #154 a #157, todos con `verificador-tdd`
+APTO (ver la sección de arriba). Falta: revisión y merge de Javi, primero el #154; T3 y T4 con la base arriba.
 
 **05/11, a la noche · las cinco HU tienen PR (#149 a #153) y las compuertas en APTO.** Deuda nueva: la compra puede sumar stock a un artículo que la baja ya dejó inactivo (se arregla en la factura de compra). Falta mergear: #149, #150, después #151; #152 y #153 son independientes. Para decidir: D2 de la 045 (provincia) y el CA-003 de la 014 (columna nueva).
 `GUION-DEMO.md` dice que los montos salen en formato inglés: deja de ser cierto cuando entre el #149.

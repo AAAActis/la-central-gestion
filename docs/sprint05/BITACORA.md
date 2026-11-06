@@ -1017,7 +1017,7 @@ vale esta.)
 7. `verificador-tdd` por PR al cerrar cada tarea; `auditor-persistencia` solo si toca `backend/`.
 8. Reporte final.
 
-**Estado:** en curso
+**Estado:** terminada
 - 18:47 · Arranque. `git fetch --all --prune` hecho. `origin/develop` = `144c325` (merge #153); `HEAD..origin/develop` vacío. **`fix/merge-historial-baja` YA está en `origin` en `3ad1399`** (la instrucción decía que no). Sin worktrees extra.
 - 18:47 · Base: `Test-NetConnection 100.125.169.91 -Port 5432` → `TcpTestSucceeded: False` (ping TimedOut). **T3 y T4 se saltean.**
 - 18:47 · `gh` no está instalado en esta máquina (ni en PATH ni en `Program Files`). Para abrir PRs se prueba la API de GitHub con la credencial de git.
@@ -1040,3 +1040,7 @@ vale esta.)
   - **HU / paso:** cierre. **Falta:** el verificador del #155 (corriendo), el del #156 y el del #157, uno a la vez; los comentarios en los PR; el reporte. **Archivos a medias:** ninguno.
 - 19:07 · **#155, verificador-tdd ronda 1: NO APTO.** Sobreviven M5 (sin la guarda `sesion.sesion()` del encabezado de pantalla, el título del módulo aparece sobre el login en `/articulos` sin sesión), M10 (`enviarDestacado` con default `true` pasa), M13 (sin el recorte de `?`/`#`, `/articulos?x=1` pierde el título) y M14 (`?? rol`; el backend emite `DESCONOCIDO` en `AuthenticarUsuarioCase.cs:56`, así que es alcanzable y lleva test).
   - **HU / paso:** #155, ronda 2: un commit de test con 4 specs que matan M5, M10, M13 y M14 por caminos reales; mostrar cada mutación en rojo, sin commitearla. **Archivos:** `app.spec.ts`, `formulario.spec.ts`.
+- 19:12 · **#155 ronda 2:** `bba4a4a` (4 specs: M5, M10, M13 y M14 dan `TOTAL: 1 FAILED, 42 SUCCESS` cada una). Suite `bba4a4a`: `TOTAL: 162 SUCCESS`. `verificador-tdd` **APTO**. Comentado en el #155. Cuerpo actualizado.
+- 19:18 · **#156:** ronda 1 **NO APTO**: sobreviven M1 (`'1.0-1'`) y M9/M10 (`x de y` sin `number`). Arreglo `ab1f0ef`: 12,25 % y «1.050 de 1.250»; cada mutación da `TOTAL: 1 FAILED, 4 SUCCESS`. Suite `ab1f0ef`: `TOTAL: 157 SUCCESS`. Ronda 2 **APTO**. Comentado en el #156. Cuerpo actualizado.
+- 19:22 · **#157:** `verificador-tdd` **APTO** sobre `3ad1399..80dbfe6` (solo docs, sin código). Base re-probada a las 19:22: `TcpTestSucceeded: False`. `ESTADO.md` del Sprint 5 actualizado con los números finales.
+- 19:23 · **Cierre.** Quedan abiertos: los PR #154, #155, #156 y #157, sin mergear, para Javi; T3 y T4, salteadas por la base caída; las preguntas de #155 (bajada de Clientes/Proveedores, pie del marco, título repetido en Factura de compra) y las siete de `PREGUNTAS-SERGIO.md`. Ningún worktree extra. Nada escrito en ninguna base.
