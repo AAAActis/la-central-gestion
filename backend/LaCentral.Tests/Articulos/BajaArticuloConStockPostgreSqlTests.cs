@@ -77,6 +77,46 @@ public class BajaArticuloConStockPostgreSqlTests
         await SinBajaAsync(fixture, id);
     }
 
+    // auditor-persistencia, 05/11/2026: una compra EN CURSO (stock insertado y fila del artículo
+    // bloqueada, sin confirmar). El UPDATE de la baja espera esa fila; al destrabarse, PostgreSQL
+    // reevalúa el WHERE sobre la fila nueva pero mira stock con el snapshot viejo: sin un bloqueo
+    // previo, la baja se escribía con existencia 5.
+    [PostgreSqlFact]
+    public async Task Baja_ConUnaCompraEnCursoSobreElArticulo_EsperaYNoEscribe()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var usuario = await fixture.CrearUsuarioAsync();
+        var (id, codigo, sucursal) = await CrearArticuloAsync(fixture, stock: 0m);
+
+        await using var compra = fixture.CrearContexto();
+        await using var transaccion = await compra.Database.BeginTransactionAsync();
+        await compra.Database.ExecuteSqlInterpolatedAsync(
+            $"INSERT INTO stock (articulo_id, sucursal_id, cantidad) VALUES ({id}, {sucursal}, 5)");
+        await compra.Database.ExecuteSqlInterpolatedAsync($"UPDATE articulo SET precio_costo = 10 WHERE id = {id}");
+
+        await using var contextoBaja = fixture.CrearContexto();
+        var baja = Baja(contextoBaja, usuario).EjecutarAsync(id, new DarDeBajaArticuloRequest("Discontinuado", codigo));
+
+        // La baja tiene que quedar esperando un bloqueo antes de que la compra confirme.
+        await using (var observador = fixture.CrearContexto())
+        {
+            var limite = DateTime.UtcNow.AddSeconds(15);
+            while (await observador.Database.SqlQueryRaw<int>("""
+                SELECT count(*)::int AS "Value" FROM pg_stat_activity
+                WHERE application_name = current_setting('application_name') AND wait_event_type = 'Lock'
+                """).SingleAsync() == 0)
+            {
+                Assert.False(baja.IsCompleted, "La baja terminó sin esperar a la compra en curso.");
+                Assert.True(DateTime.UtcNow < limite, "La baja nunca quedó esperando el bloqueo de la compra.");
+                await Task.Delay(50);
+            }
+        }
+        await transaccion.CommitAsync();
+
+        Assert.Equal(TipoError.Conflicto, (await baja).Tipo);
+        await SinBajaAsync(fixture, id);
+    }
+
     [PostgreSqlFact]
     public Task Baja_SinExistencia_EscribeLaFilaYElHistorial() => BajaQueSeEscribeAsync(0m);
 
