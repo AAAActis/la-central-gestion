@@ -17,9 +17,15 @@ import { Articulos } from './pantallas/articulos/articulos';
   `,
 })
 class ListadoLargo {
-  readonly consultar = () => of<Pagina<{ nombre: string; activo: boolean }>>({
-    items: Array.from({ length: 20 }, (_, i) => ({ nombre: `Cosa ${1001 + i}`, activo: true })), total: 2108, pagina: 51, tamanoPagina: 20,
-  });
+  readonly consultar = () => of(paginaDelServidor);
+}
+
+type Cosa = { nombre: string; activo: boolean };
+let paginaDelServidor: Pagina<Cosa>;
+
+function pagina(total: number, numero: number): Pagina<Cosa> {
+  const desde = (numero - 1) * 20 + 1;
+  return { items: Array.from({ length: 20 }, (_, i) => ({ nombre: `Cosa ${desde + i}`, activo: true })), total, pagina: numero, tamanoPagina: 20 };
 }
 
 /**
@@ -75,16 +81,32 @@ describe('Formato es-AR', () => {
     expect(texto).not.toContain('12.5');
   });
 
-  it('#148 · el listado dice el rango y el total con punto de miles', async () => {
+  // La columna es NUMERIC(6,2): los dos decimales se muestran, no se redondean a uno.
+  it('#148 · un porcentaje con dos decimales sale completo', () => {
+    const texto = verFicha({ ...FICHA, precios: [{ ...FICHA.precios[0], porcentaje: 12.25 }] });
+    expect(texto).toContain('costo +12,25 %');
+  });
+
+  async function listar(p: Pagina<Cosa>): Promise<string> {
+    paginaDelServidor = p;
     TestBed.configureTestingModule({ imports: [ListadoLargo], providers: [...appConfig.providers] });
     const fixture = TestBed.createComponent(ListadoLargo);
     fixture.autoDetectChanges();
     await fixture.whenStable(); // ngModel registra sus controles en una microtarea.
     (fixture.nativeElement as HTMLElement).querySelector('form')!.dispatchEvent(new Event('submit'));
     await fixture.whenStable();
+    return ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ');
+  }
 
-    const texto = ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ');
+  it('#148 · el listado dice el rango y el total con punto de miles', async () => {
+    const texto = await listar(pagina(2108, 51));
     expect(texto).toContain('2.108 ítems encontrados');
     expect(texto).toContain('Mostrando 1.001–1.020 de 2.108 ítems');
+  });
+
+  // Con 20 por página, más de 20.000 resultados dan mil páginas o más.
+  it('#148 · la paginación dice la página y el total de páginas con punto de miles', async () => {
+    const texto = await listar(pagina(25000, 1050));
+    expect(texto).toContain('1.050 de 1.250');
   });
 });
