@@ -55,6 +55,17 @@ export interface FichaArticulo {
   motivoBaja: string | null;
 }
 
+/** 016 · un registro del historial de compras (solo lectura: lo escribe la factura de compra). */
+export interface RegistroHistorialCompra {
+  fecha: string;
+  proveedorId: number;
+  proveedor: string;
+  precioCosto: number;
+  facturaCompraId: number;
+  numeroFactura: string;
+  anulado: boolean;
+}
+
 /** La ubicación no va en el alta: se carga desde la ficha, por sucursal (N-9). */
 export interface AltaArticulo {
   nombre: string;
@@ -140,6 +151,10 @@ export class ApiLaCentral {
 
   ficha(id: number): Observable<FichaArticulo> {
     return this.http.get<FichaArticulo>(`/api/articulos/${id}`);
+  }
+
+  historialCompras(id: number): Observable<RegistroHistorialCompra[]> {
+    return this.http.get<RegistroHistorialCompra[]>(`/api/articulos/${id}/historial-compras`);
   }
 
   crear(alta: AltaArticulo): Observable<{ id: number; codigoInterno: string }> {

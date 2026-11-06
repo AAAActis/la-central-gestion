@@ -55,7 +55,11 @@ describe('Articulos · ubicación por sucursal', () => {
     fixture.detectChanges();
   });
 
-  afterEach(() => servidor.verify());
+  // 016: la ficha también pide su historial de compras; lo prueba articulos-historial.spec.ts.
+  afterEach(() => {
+    servidor.match(r => r.url.endsWith('/historial-compras'));
+    servidor.verify();
+  });
 
   it('el alta no pide ubicación ni la manda', fakeAsync(() => {
     fixture.componentInstance.abrirAlta();
