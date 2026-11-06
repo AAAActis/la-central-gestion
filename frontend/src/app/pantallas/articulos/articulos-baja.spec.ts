@@ -50,7 +50,11 @@ describe('Articulos · baja (014)', () => {
     fixture.detectChanges();
   });
 
-  afterEach(() => servidor.verify());
+  // 016: la ficha también pide su historial de compras; lo prueba articulos-historial.spec.ts.
+  afterEach(() => {
+    servidor.match(r => r.url.endsWith('/historial-compras'));
+    servidor.verify();
+  });
 
   it('CA-004 · pide el motivo y el código interno reescrito, y los manda juntos', () => {
     abrirBaja();

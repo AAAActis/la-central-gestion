@@ -28,7 +28,7 @@ const TEXTO_RAZON: Record<RazonAusencia, string> = {
 
 @Component({
   selector: 'app-articulos',
-  imports: [FormsModule, DecimalPipe, Listado, ConfirmacionMotivo],
+  imports: [FormsModule, DatePipe, DecimalPipe, Listado, ConfirmacionMotivo],
   template: `
     <app-listado [consultar]="consultar" [columnas]="['Código interno', 'Nombre', 'Códigos de proveedor', '']"
       etiqueta="Buscar artículos" nombrePlural="artículos"
