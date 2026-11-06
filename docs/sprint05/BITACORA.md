@@ -823,3 +823,9 @@ vale esta.)
     - #153: 469/469 sobre `d6c60a0`.
   - Deuda nueva: la compra puede sumar stock a un artículo que la baja ya dejó inactivo. Pasa en el orden inverso o en la ventana entre el upsert y el `UPDATE articulo`, y se arregla en la factura de compra.
 - **HU / paso:** ninguno en curso. **Falta:** que Santi revise y mergee, en orden: #149, #150, #151, y #152 y #153 independientes. **Archivos a medias:** ninguno.
+- 05/11 · **Cierre de la sesión** (pedido de Santi).
+  - **Demo limpia:** en `lacentral_demo`, en una sola transacción con conteos afirmados:
+    - se borraron los 5 clientes `D045-*` y el proveedor `P045-*`, con sus historiales, que se borran en cascada;
+    - se reactivó LC-000031: activo y con el historial cerrado por `admin.demo`; motivo y fecha quedan como rastro (D10).
+  - **`GUION-DEMO.md`:** los montos van en formato argentino (`$ 80.204,04`) y se sacó la nota del formato inglés (`af27310` en `docs/sprint05-guion-demo`). Es cierto recién cuando el #149 esté mergeado y la demo corra con ese código: hoy el #149 sigue abierto.
+- **HU / paso:** ninguno. **Falta:** que Santi revise y mergee los PR #149 a #153. **Archivos a medias:** ninguno.
