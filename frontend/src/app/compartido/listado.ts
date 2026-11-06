@@ -1,4 +1,4 @@
-import { NgTemplateOutlet } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import {
   Component, ElementRef, TemplateRef, afterNextRender, computed, contentChild, input, signal, viewChild,
 } from '@angular/core';
@@ -25,7 +25,7 @@ export type Consulta<T> = (texto: string, incluirInactivos: boolean, pagina: num
  */
 @Component({
   selector: 'app-listado',
-  imports: [FormsModule, NgTemplateOutlet, BotonCarga],
+  imports: [FormsModule, DecimalPipe, NgTemplateOutlet, BotonCarga],
   template: `
     <section class="tarjeta listado">
       <form class="tarjeta-cuerpo" (ngSubmit)="buscar()">
@@ -61,7 +61,7 @@ export type Consulta<T> = (texto: string, incluirInactivos: boolean, pagina: num
         } @else {
           <div class="tarjeta-cabecera">
             <h2>Resultados de la búsqueda</h2>
-            <span class="ayuda" role="status">{{ r.total }} {{ nombrePlural() }} encontrados</span>
+            <span class="ayuda" role="status">{{ r.total | number }} {{ nombrePlural() }} encontrados</span>
           </div>
           <div class="tabla-caja">
             <table>
@@ -77,10 +77,10 @@ export type Consulta<T> = (texto: string, incluirInactivos: boolean, pagina: num
             </table>
           </div>
           <div class="tarjeta-pie listado-pie">
-            <span class="ayuda">Mostrando {{ desde() }}–{{ hasta() }} de {{ r.total }} {{ nombrePlural() }}</span>
+            <span class="ayuda">Mostrando {{ desde() | number }}–{{ hasta() | number }} de {{ r.total | number }} {{ nombrePlural() }}</span>
             <div class="listado-paginas">
               <button type="button" class="chico" [disabled]="r.pagina <= 1 || cargando()" (click)="irA(r.pagina - 1)">Anterior</button>
-              <span class="ayuda">{{ r.pagina }} de {{ paginas() }}</span>
+              <span class="ayuda">{{ r.pagina | number }} de {{ paginas() | number }}</span>
               <button type="button" class="chico" [disabled]="r.pagina >= paginas() || cargando()" (click)="irA(r.pagina + 1)">Siguiente</button>
             </div>
           </div>
