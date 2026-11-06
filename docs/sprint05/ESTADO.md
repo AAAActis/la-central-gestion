@@ -37,10 +37,10 @@ la suya).
 |---|---|---|---|---|---|
 | #43 | 042 · HU-UI-04 · listado reutilizable | 5 | Javi | **Cerrado** (#145, 05/11) | Arrastre del Sprint 4 construido en el 5 |
 | #148 | Formato es-AR de montos y cantidades | 1 | Javi | **PR #149**: verificador APTO; auditor no aplica | Lo vio el ensayo de la demo. Deuda: porcentaje sin `DecimalPipe` (`articulos.ts`) y total del listado sin separador de miles |
-| #147 | Paginación de clientes y proveedores | 2 | Santi | **PR #150**: verificador APTO (r3), auditor APTO (r3) | 200 con página vacía; CA-003 v1.1 de HU-CLI-02 y de la HU de proveedores. El auditor endureció el fixture de PostgreSQL (`search_path` = aislado, fuente) |
+| #147 | Paginación de clientes y proveedores | 2 | Santi | **PR #150**: verificador APTO, auditor APTO (r3) | 200 con página vacía; CA-003 v1.1 de HU-CLI-02 y de la HU de proveedores. El auditor endureció el fixture de PostgreSQL (`search_path` = aislado, fuente) |
 | #46 | 045 · HU-UI-07 · clientes y proveedores | 3 | Javi | **PR #151**: verificador APTO (r2), auditor APTO (r1) | Se mergea **después del #150**. D2 (provincia) para decidir. Deuda: la condición fiscal no se valida contra los 5 valores del CHECK |
 | #23 | 016 · HU-ART-06 · historial de compras | 5 | Santi | **PR #152**: verificador APTO (r3), auditor APTO (r1) | CA-003 y CA-004 **PARCIAL**: dependen de la anulación (028, #9, backlog) |
-| #21 | 014 · HU-ART-04 · baja lógica de artículo | 3 | Javi | **PR #153**: verificador APTO (r2), auditor en curso | CA-001 hecho en HU-ART-03 (#122). CA-003 **BLOQUEADO por esquema** (para decidir: `articulo_historial_baja.error_de_stock`) |
+| #21 | 014 · HU-ART-04 · baja lógica de artículo | 3 | Javi | **PR #153**: verificador APTO, auditor APTO (r2) | CA-001 hecho en HU-ART-03 (#122). CA-003 **BLOQUEADO por esquema** (para decidir: `articulo_historial_baja.error_de_stock`) |
 
 Abiertos: 14 SP. Orden de trabajo de esta sesión: #148, #147, #46, #23 y #21.
 
@@ -229,7 +229,7 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
 
 ## PRÓXIMA SESIÓN
 
-**05/11, a la noche · las cinco HU tienen PR (#149 a #153) y sus compuertas, en la tabla «Tablero».** Falta mergear: #149, #150, después #151; #152 y #153 son independientes. Para decidir: D2 de la 045 (provincia) y el CA-003 de la 014 (columna nueva).
+**05/11, a la noche · las cinco HU tienen PR (#149 a #153) y las compuertas en APTO.** Deuda nueva: la compra puede sumar stock a un artículo que la baja ya dejó inactivo (se arregla en la factura de compra). Falta mergear: #149, #150, después #151; #152 y #153 son independientes. Para decidir: D2 de la 045 (provincia) y el CA-003 de la 014 (columna nueva).
 `GUION-DEMO.md` dice que los montos salen en formato inglés: deja de ser cierto cuando entre el #149.
 
 **05/11 · las cinco HU del Sprint 5, en este orden, una rama y un PR cada una:** #148 (es-AR),
