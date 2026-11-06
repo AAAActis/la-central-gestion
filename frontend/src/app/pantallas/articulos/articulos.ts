@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { map } from 'rxjs';
+import { ConfirmacionMotivo } from '../../compartido/confirmacion-motivo';
 import { Consulta, Listado } from '../../compartido/listado';
 import {
   AltaArticulo, ApiLaCentral, ArticuloResultado, FichaArticulo, Modalidad, ModificacionArticulo,
@@ -27,7 +28,7 @@ const TEXTO_RAZON: Record<RazonAusencia, string> = {
 
 @Component({
   selector: 'app-articulos',
-  imports: [FormsModule, DatePipe, DecimalPipe, Listado],
+  imports: [FormsModule, DecimalPipe, Listado, ConfirmacionMotivo],
   template: `
     <app-listado [consultar]="consultar" [columnas]="['Código interno', 'Nombre', 'Códigos de proveedor', '']"
       etiqueta="Buscar artículos" nombrePlural="artículos"
@@ -177,10 +178,11 @@ const TEXTO_RAZON: Record<RazonAusencia, string> = {
           </form>
 
           <h3>Dar de baja</h3>
-          <form class="fila" (ngSubmit)="darDeBaja(f)">
-            <input name="motivo" [(ngModel)]="motivoBaja" maxlength="200" placeholder="Motivo de la baja" required />
-            <button type="submit" class="secundario">Dar de baja</button>
-          </form>
+          <button type="button" class="peligro" (click)="errorBaja.set(null); bajaAbierta.set(true)">Dar de baja</button>
+          <!-- 014 · CA-004: se reescribe el código interno, como pide la 044. -->
+          <app-confirmacion-motivo [titulo]="'Dar de baja ' + f.codigoInterno" [(abierto)]="bajaAbierta" [maximoMotivo]="200"
+            [clave]="f.codigoInterno" textoConfirmar="Dar de baja" [enviando]="enviandoBaja()" [errorGeneral]="errorBaja()"
+            (confirmar)="darDeBaja(f, $event)" />
         } @else {
           <h3>Dado de baja</h3>
           <p>Motivo: {{ f.motivoBaja ?? '—' }}. Para modificarlo, primero hay que reactivarlo.</p>
@@ -224,7 +226,6 @@ export class Articulos {
         this.edicion = Articulos.edicionDe(f);
         this.ubicaciones = Object.fromEntries(f.existencias.map(e => [e.sucursalId, e.ubicacionDeposito ?? '']));
         this.errorUbicacion.set(null);
-        this.motivoBaja = '';
         this.errorModificacion.set(null);
         this.errorCodigos.set(null);
         this.errorEstado.set(null);
@@ -289,7 +290,9 @@ export class Articulos {
   /** N-9 · lo que se escribe en la ubicación de cada sucursal, por Id de sucursal. */
   ubicaciones: Record<number, string> = {};
   readonly errorUbicacion = signal<string | null>(null);
-  motivoBaja = '';
+  readonly bajaAbierta = signal(false);
+  readonly enviandoBaja = signal(false);
+  readonly errorBaja = signal<string | null>(null);
   readonly errorModificacion = signal<string | null>(null);
   readonly errorCodigos = signal<string | null>(null);
   readonly errorEstado = signal<string | null>(null);
@@ -330,11 +333,19 @@ export class Articulos {
     });
   }
 
-  darDeBaja(f: FichaArticulo) {
-    this.errorEstado.set(null);
-    this.api.darDeBaja(f.id, this.motivoBaja).subscribe({
-      next: () => this.cargarFicha(f.id),
-      error: e => this.errorEstado.set(mensajeDeError(e)),
+  darDeBaja(f: FichaArticulo, motivo: string) {
+    this.enviandoBaja.set(true);
+    this.api.darDeBaja(f.id, motivo, f.codigoInterno).subscribe({
+      next: () => {
+        this.enviandoBaja.set(false);
+        this.bajaAbierta.set(false);
+        this.cargarFicha(f.id);
+      },
+      // CA-002: lo que queda en cada sucursal lo informa la API; el diálogo sigue abierto.
+      error: e => {
+        this.enviandoBaja.set(false);
+        this.errorBaja.set(mensajeDeError(e));
+      },
     });
   }
 

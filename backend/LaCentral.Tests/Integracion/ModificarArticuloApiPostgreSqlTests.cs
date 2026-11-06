@@ -220,7 +220,7 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
         var id = await CrearArticuloAsync(cliente, "Bujía");
 
         Assert.Equal(HttpStatusCode.NoContent,
-            (await cliente.PostAsJsonAsync($"/api/articulos/{id}/baja", new { motivo = "Discontinuado" })).StatusCode);
+            (await cliente.PostAsJsonAsync($"/api/articulos/{id}/baja", new { motivo = "Discontinuado", confirmacion = $"LC-{id:D6}" })).StatusCode);
         var ficha = await cliente.GetFromJsonAsync<JsonElement>($"/api/articulos/{id}");
         Assert.False(ficha.GetProperty("activo").GetBoolean());
         Assert.Equal("Discontinuado", ficha.GetProperty("motivoBaja").GetString());
