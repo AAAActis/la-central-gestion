@@ -160,8 +160,34 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       const encabezado = (fixture.nativeElement as HTMLElement).querySelector('header')!;
       expect(encabezado.querySelector('app-marca .logo.compacta')).not.toBeNull();
       expect(encabezado.textContent).toContain('mostrador');
-      expect(encabezado.textContent).toContain('OPERADOR');
-      expect((fixture.nativeElement as HTMLElement).querySelector('footer')).not.toBeNull();
+      expect((fixture.nativeElement as HTMLElement).querySelector('footer')?.textContent).toContain('La Central Repuestos');
+    });
+
+    // Referencias 02 y 09: el nombre arriba y el rol abajo, como se lee, no en mayúsculas.
+    it('el usuario va en dos líneas: el nombre arriba y el rol abajo', async () => {
+      entrarComo('ADMINISTRADOR', 'mostrador');
+      await ir(fixture, '/articulos');
+      const usuario = (fixture.nativeElement as HTMLElement).querySelector('header .usuario')!;
+      const nombre = usuario.querySelector<HTMLElement>('.usuario-nombre');
+      const rol = usuario.querySelector<HTMLElement>('.usuario-rol');
+      expect(nombre?.textContent?.trim()).toBe('mostrador');
+      expect(rol?.textContent?.trim()).toBe('Administrador');
+      expect(rol?.getBoundingClientRect().top ?? 0).withContext('el rol, debajo del nombre').toBeGreaterThanOrEqual(nombre?.getBoundingClientRect().bottom ?? 1);
+    });
+
+    it('cada pantalla lleva su título y, si tiene referencia, su bajada', async () => {
+      entrarComo('OPERADOR');
+      const casos: [string, string, string | null][] = [
+        ['/articulos', 'Artículos', 'Buscá repuestos por nombre o código y consultá su ficha.'],
+        ['/factura-compra', 'Factura de compra', 'Cargá el comprobante y asigná una sucursal de destino a cada artículo.'],
+        ['/clientes', 'Clientes', null],
+      ];
+      for (const [url, titulo, bajada] of casos) {
+        await ir(fixture, url);
+        const titulos = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('main h1'));
+        expect(titulos.map(h => h.textContent?.trim())).withContext(url).toEqual([titulo]);
+        expect(pantalla(fixture, '.bajada')?.textContent?.trim() ?? null).withContext(url).toBe(bajada);
+      }
     });
 
     for (const ancho of [1024, 768, 480]) {
