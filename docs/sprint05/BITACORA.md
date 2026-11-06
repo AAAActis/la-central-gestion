@@ -787,3 +787,26 @@ vale esta.)
 - **HU / paso:** compuertas. Se saca este worktree (`../lc-142`) y se invoca de a uno, en orden: `verificador-tdd` sobre #149, #150, #151, #152 y #153, y `auditor-persistencia` sobre #150, #151, #152 y #153.
   - **Falta:** las 9 invocaciones; ante un NO APTO, arreglar y volver a verificar, hasta 3 rondas. Después actualizar la tabla del ESTADO (rama del #146) y avisar a Santi.
   - **Archivos a medias:** ninguno.
+- 05/11 · **Compuertas, rondas hechas.** Cada NO APTO se arregló con un test que pone en rojo la mutación que sobrevivía:
+  - `verificador-tdd`:
+    - #149: APTO en la ronda 1.
+    - #150: APTO en la ronda 3.
+    - #151: APTO en la ronda 2 (`647ac67`, `ec120fe`).
+    - #152: APTO en la ronda 3 (`658ae15`, `db5106e`, `75d8f73`, `7934939`).
+    - #153: APTO en la ronda 2 (`7d55ce4`, existencia negativa contra PostgreSQL).
+  - `auditor-persistencia`:
+    - #150: APTO en la ronda 3. El `search_path` de los tests podía caer en `public`, que tiene la copia de los datos reales. Se arregló en `10e5ac3`, `4e5c4aa`, `6df6907`, `6ea9525` y `6beec59`, más el comentario de `9acf0e9`.
+    - #151: APTO en la ronda 1.
+    - #152: APTO en la ronda 1.
+  - Las deudas que aparecieron están en el cuerpo de cada PR:
+    - la condición fiscal no se valida contra los 5 valores del CHECK;
+    - `base_completa.sql` está desactualizado;
+    - las respuestas tardías de la ficha de artículo pueden pisar la ficha nueva.
+  - CLAUDE.md suma «Ahorro de tokens · reglas de invocación» (`eef91b4`), y `REGLA-TOKENS.md` se borró. Se aplica desde ahora: al re-invocar, solo los commits del arreglo, más el HEAD, la línea de la suite y el conteo.
+- **HU / paso:** compuertas, lo que queda.
+  - **Falta:**
+    - `auditor-persistencia` sobre el #153 (está corriendo);
+    - `verificador-tdd` solo sobre los commits del auditor en el #150 (`5d90c43..9acf0e9`);
+    - la tabla del ESTADO (rama del #146);
+    - avisar a Santi.
+  - **Archivos a medias:** ninguno.
