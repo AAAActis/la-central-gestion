@@ -337,3 +337,53 @@ que se les da. **Lo que hace que salgan caros es cómo se los invoca.**
   git te avisa si alguno está sucio), y `git worktree prune`.
 - **Si el PR se actualiza con commits que solo tocan documentación, no se relanzan.** Se
   declara en el cuerpo del PR qué commits quedaron fuera de la verificación y por qué.
+
+## Ahorro de tokens · reglas de invocación
+
+Cinco HU costaron unas 553.000 fichas en subagentes, repartidas en 9 invocaciones. El
+desperdicio está identificado y es casi todo evitable.
+
+### 1 · Al re-invocar un verificador, acotá el alcance
+
+Un NO APTO se arregla y se vuelve a verificar. Pero **la segunda invocación solo mira los
+commits del arreglo**, no el diff entero otra vez.
+
+Al re-invocar, decile explícitamente: *"verificá solo los commits `<hash1>..<hash2>`, que
+son el arreglo de las mutaciones que sobrevivieron. El resto ya lo verificaste en la ronda
+anterior y dio APTO."*
+
+Los dos agentes ya tienen la regla de respetar el alcance que se les pasa. Lo que falta es
+pasárselo. Sin esto, la ronda 3 cuesta más que la ronda 1, que es lo que ya pasó en el #152.
+
+### 2 · Pasale siempre el resultado de la suite con su hash
+
+Cuando corriste la suite completa sobre el HEAD del PR, decíselo al invocarlo: el hash del
+commit, la línea literal del resumen y el conteo. Con esos tres datos no la repite. Sin
+ellos, la corre de nuevo: una corrida completa por invocación, a veces dos.
+
+### 3 · El auditor solo si el diff toca backend o el esquema
+
+En una HU de frontend no se invoca. Se declara "no aplica" en el cuerpo del PR y listo.
+
+### 4 · PR chicos
+
+Un diff de 500 líneas le cuesta al verificador unas 115.000 fichas; uno de 150, unas 40.000.
+No es proporcional: crece más rápido que el tamaño. Una HU de 8 SP conviene partirla en dos
+PR con sentido propio antes que mandar uno grande.
+
+### 5 · Preguntale al grafo antes de abrir archivos
+
+Para entender código existente, `graphify query "<pregunta>"` antes de leer archivos de a
+uno. El grafo ya está construido. Abrir seis archivos para encontrar dónde se usa algo
+cuesta mucho más que preguntarlo.
+
+### 6 · Filtrado durante el trabajo
+
+Ya está en la Política de pruebas y es donde está el volumen: durante la HU, pruebas
+filtradas. La suite completa solo en los cuatro momentos que esa política define.
+
+### 7 · No pegues salidas largas de vuelta
+
+Si un comando devuelve cientos de líneas, filtralas antes de leerlas: `grep`, `tail`,
+`--format`. Una suite en rojo con 148 fallos mete 148 trazas en el contexto; filtrá por el
+nombre del test y mirá una.
