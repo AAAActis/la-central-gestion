@@ -1044,3 +1044,18 @@ vale esta.)
 - 19:18 · **#156:** ronda 1 **NO APTO**: sobreviven M1 (`'1.0-1'`) y M9/M10 (`x de y` sin `number`). Arreglo `ab1f0ef`: 12,25 % y «1.050 de 1.250»; cada mutación da `TOTAL: 1 FAILED, 4 SUCCESS`. Suite `ab1f0ef`: `TOTAL: 157 SUCCESS`. Ronda 2 **APTO**. Comentado en el #156. Cuerpo actualizado.
 - 19:22 · **#157:** `verificador-tdd` **APTO** sobre `3ad1399..80dbfe6` (solo docs, sin código). Base re-probada a las 19:22: `TcpTestSucceeded: False`. `ESTADO.md` del Sprint 5 actualizado con los números finales.
 - 19:23 · **Cierre.** Quedan abiertos: los PR #154, #155, #156 y #157, sin mergear, para Javi; T3 y T4, salteadas por la base caída; las preguntas de #155 (bajada de Clientes/Proveedores, pie del marco, título repetido en Factura de compra) y las siete de `PREGUNTAS-SERGIO.md`. Ningún worktree extra. Nada escrito en ninguna base.
+
+## 06/11/2026 22:57 · Reintento de T3 y T4 [BASE]
+
+**Instrucción recibida (verbatim):**
+> probá la base de nuevo y hacé T3 y T4
+
+**Plan:**
+1. Probar la base (`Test-NetConnection 100.125.169.91 -Port 5432`).
+2. Si responde, hacer T3 y T4 tal como están en el bloque de las 18:47.
+
+**Estado:** en curso
+
+- 22:57 · Base: `TcpTestSucceeded: False`; ping sin respuesta. `tailscale status` muestra el nodo `arch` (`santiactis6@`) **offline, last seen 6h ago**: la netbook no está conectada a Tailscale. T3 y T4 no se empiezan.
+
+**BLOQUEADO EN:** que la netbook `arch` vuelva a estar en línea en Tailscale (depende de Santi o de quien tenga la netbook). Después, T3 y T4 desde cero según el bloque de las 18:47.
