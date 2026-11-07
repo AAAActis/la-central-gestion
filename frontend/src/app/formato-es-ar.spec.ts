@@ -33,6 +33,8 @@ describe('Formato es-AR', () => {
     expect(texto).toContain('$ 120.306,06');
     expect(texto).toContain('1.234,5');
     expect(texto).not.toContain('80,204.04');
+    // 016: la ficha también pide su historial de compras.
+    servidor.match(r => r.url.endsWith('/historial-compras'));
     servidor.verify();
   });
 });
