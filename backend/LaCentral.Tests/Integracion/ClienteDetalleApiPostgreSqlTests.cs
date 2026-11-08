@@ -57,6 +57,13 @@ public class ClienteDetalleApiPostgreSqlTests : IClassFixture<WebApplicationFact
         await DarDeBaja(http, id, "Primera baja");
         var reactivacion = await http.PostAsync($"/api/clientes/{id}/reactivacion", null);
         Assert.True(reactivacion.IsSuccessStatusCode, await reactivacion.Content.ReadAsStringAsync());
+
+        // Verificador-tdd, 08/11/2026: sin esto sobrevivía `Activo ? null : MotivoBaja`. Reactivado,
+        // la ficha conserva el motivo de su última baja como rastro (D10, HU-CLI-05 CA-003).
+        var reactivado = await http.GetFromJsonAsync<JsonElement>($"/api/clientes/{id}");
+        Assert.True(reactivado.GetProperty("activo").GetBoolean());
+        Assert.Equal("Primera baja", reactivado.GetProperty("motivoBaja").GetString());
+
         await DarDeBaja(http, id, "Segunda baja");
 
         var ficha = await http.GetFromJsonAsync<JsonElement>($"/api/clientes/{id}");
