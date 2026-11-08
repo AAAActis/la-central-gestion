@@ -11,6 +11,8 @@ public record ClienteDetalleDto(
     string CondicionFiscal,
     string CondicionPago,
     bool Activo,
+    // D-S5-08: el de la ÚLTIMA baja. Reactivado, queda como rastro (D10).
+    string? MotivoBaja,
     IReadOnlyList<string> Telefonos,
     IReadOnlyList<string> Direcciones
 );
