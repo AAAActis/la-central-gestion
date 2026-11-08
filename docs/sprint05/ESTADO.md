@@ -210,6 +210,11 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
 - **D-S5-09 · sin test de concurrencia del upsert de ubicación** (la condición `activo` va
   dentro de la sentencia, pero no hay prueba con dos sesiones), ni test de API que afirme que
   OPERADOR recibe 204 en `PUT .../ubicaciones/{sucursalId}` (el rol es de toda la clase).
+  **08/11: la segunda mitad estaba mal registrada.** El test de API ya existía cuando se escribió
+  esta nota: `ModificarArticuloApiPostgreSqlTests.Put_Ubicacion_204YLaFichaLaMuestraEnEsaSucursal`
+  (`f2bb5a9`, 04/11 12:45; la nota es de `7c4ddc1`, 04/11 16:46). Con
+  `[Authorize(Roles = "ADMINISTRADOR")]` en la acción da `Expected: NoContent / Actual: Forbidden`.
+  Queda abierta solo la concurrencia del upsert.
 - Sigue de antes: D-27a, D-27c, el campo en el `ProblemDetails`, el largo del motivo (200/255),
   `RestablecerContrasenaUseCase.cs:43`.
 
@@ -237,8 +242,8 @@ La base de pruebas (`100.125.169.91:5432`) no respondió: `TcpTestSucceeded: Fal
 | T0 · arreglo del merge de #152 y #153 | `fix/merge-historial-baja` | #154 | Abierto. Frontend 153/153, `ng build` limpio. `verificador-tdd` APTO. Backend no verificado (base caída) |
 | T1 · fase 2 visual del acceso y del marco (Refs #42) | `feature/fase2-visual-acceso-marco` | #155 | Abierto. Depende de #154. Frontend 162/162 sobre `bba4a4a`. `verificador-tdd` NO APTO en la ronda 1 (4 guardas sin test), APTO en la 2. Capturas en `evidencia/fase2/` |
 | T2 · es-AR: porcentaje y total del listado (Refs #148) | `fix/es-ar-porcentaje-y-total` | #156 | Abierto. Depende de #154. Frontend 157/157 sobre `ab1f0ef`. `verificador-tdd` NO APTO en la ronda 1 (precisión y «x de y»), APTO en la 2. Salda la deuda anotada en la fila #148 del tablero |
-| T3 · motivo de baja en el detalle de cliente | — | — | **Salteada:** necesita PostgreSQL y la base estaba caída |
-| T4 · test de API: OPERADOR recibe 204 en la ubicación (D-S5-09) | — | — | **Salteada:** ídem |
+| T3 · motivo de baja en el detalle de cliente | `fix/detalle-cliente-motivo-baja` | #158 | Hecha el 08/11, cuando volvió la base. Abierto. Depende de #154. Backend 497/497 sobre `47204d6`, frontend 154/154 sobre `8e67fd1`. `verificador-tdd` NO APTO en la ronda 1 (M2: el reactivado perdía el motivo), APTO en la 2. `auditor-persistencia` APTO |
+| T4 · test de API: OPERADOR recibe 204 en la ubicación (D-S5-09) | — | — | **Sin PR (08/11):** el test ya existía (`f2bb5a9`) y discrimina con la mutación pedida. Corregida la nota D-S5-09 |
 | T5 · preguntas para Sergio | `docs/preguntas-sergio` | #157 | Abierto. `PREGUNTAS-SERGIO.md`, con las siete reglas abiertas. `verificador-tdd` APTO (solo docs) |
 
 La tabla del tablero no se tocó: los issues siguen como estaban en GitHub, y los PR de la sesión

@@ -1054,7 +1054,7 @@ vale esta.)
 1. Probar la base (`Test-NetConnection 100.125.169.91 -Port 5432`).
 2. Si responde, hacer T3 y T4 tal como están en el bloque de las 18:47.
 
-**Estado:** en curso
+**Estado:** terminada
 
 - 22:57 · Base: `TcpTestSucceeded: False`; ping sin respuesta. `tailscale status` muestra el nodo `arch` (`santiactis6@`) **offline, last seen 6h ago**: la netbook no está conectada a Tailscale. T3 y T4 no se empiezan.
 
@@ -1067,3 +1067,8 @@ vale esta.)
 - 18:26 · **T4:** el test ya existe. `ModificarArticuloApiPostgreSqlTests.Put_Ubicacion_204YLaFichaLaMuestraEnEsaSucursal` (commit `f2bb5a9`, 04/11 12:45, ya en `develop`) hace el PUT con OPERADOR, espera 204 y lee la ubicación en la ficha. D-S5-09 se escribió después (`7c4ddc1`, 04/11 16:46) y no lo registró. Mutación pedida (`[Authorize(Roles = "ADMINISTRADOR")]` en la acción): `Expected: NoContent / Actual: Forbidden`, 1 FAILED. Revertida, no commiteada. **No abro rama ni PR para T4:** sería un test duplicado. Corrijo D-S5-09 en `ESTADO.md`.
 - 18:27 · **T3 PR #158** abierto contra `develop` (depende de #154). `verificador-tdd` invocado sobre `3ad1399..8e67fd1`, con los dos conteos.
 - 18:50 · **#158 ronda 1 NO APTO:** sobrevive M2 (`cliente.Activo ? null : cliente.MotivoBaja`): ningún test lee la ficha HTTP de un cliente reactivado, que tiene que traer el rastro de la última baja (D10). Mueren M1, M3 a M9. El spec de frontend se acepta como caracterización. Arreglo: el test de API lee la ficha entre la reactivación y la segunda baja.
+- 18:40 · **#158 arreglo de M2:** `47204d6` (el test lee la ficha del reactivado: `activo: true`, «Primera baja»). Con M2 aplicada: `Expected: "Primera baja" / Actual: null`. Suite backend `47204d6`: `Correctas! - Con error: 0, Superado: 497, Omitido: 0, Total: 497`. Pusheado.
+- 18:50 · **#158 ronda 2:** `verificador-tdd` **APTO** (solo `47204d6`).
+- 18:54 · **#158:** `auditor-persistencia` **APTO** sobre `3ad1399..47204d6`. No bloqueantes: el test solo cuenta las filas del historial; `Cliente` sin token de concurrencia (anterior al PR). Cuerpo del #158 actualizado (decía «relee las dos filas»: solo las cuenta) y resultados comentados.
+- 18:57 · `ESTADO.md`: filas T3 y T4 de la sesión del 06/11 actualizadas; D-S5-09 corregida con nota del 08/11 (sin borrar el texto original).
+- 18:57 · **Cierre.** Quedan abiertos: los PR #154 a #158, sin mergear, para Javi. T4 sin PR (test ya existente). Nada escrito en ninguna base fuera del esquema de pruebas.
