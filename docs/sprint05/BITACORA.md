@@ -1072,3 +1072,40 @@ vale esta.)
 - 18:54 · **#158:** `auditor-persistencia` **APTO** sobre `3ad1399..47204d6`. No bloqueantes: el test solo cuenta las filas del historial; `Cliente` sin token de concurrencia (anterior al PR). Cuerpo del #158 actualizado (decía «relee las dos filas»: solo las cuenta) y resultados comentados.
 - 18:57 · `ESTADO.md`: filas T3 y T4 de la sesión del 06/11 actualizadas; D-S5-09 corregida con nota del 08/11 (sin borrar el texto original).
 - 18:57 · **Cierre.** Quedan abiertos: los PR #154 a #158, sin mergear, para Javi. T4 sin PR (test ya existente). Nada escrito en ninguna base fuera del esquema de pruebas.
+
+## 09/11/2026 · 07 y 08 en lacentral_demo, recorrido por el navegador, guion y ESTADO
+
+**Instrucción recibida (verbatim):**
+> Hoy es lunes 09/11, que es la fecha que fijó S5-06 para aplicar el 07 y el 08 a
+> lacentral_demo. Hacelo:
+>
+> 1 · Aplicá el 07 y después el 08 a lacentral_demo, con LACENTRAL_DEMO_PG. Pegame el cierre
+> de cada uno. Si el 07 aborta en su compuerta, pará y decime el primer error.
+>
+> 2 · Después, levantá la demo con develop mergeado y recorrela de punta a punta por el
+> navegador: entrar, buscar, ficha con existencia Y ubicación por sucursal, historial de
+> compras. Es lo que hasta ahora no se pudo mostrar.
+>
+> 3 · Actualizá GUION-DEMO.md: ahora la ubicación por sucursal SÍ se puede mostrar, y el
+> historial de compras también, porque el #152 está mergeado. Sacá esos dos de la sección de
+> «qué no se muestra».
+>
+> 4 · Actualizá el ESTADO: S5-06 cumplida con fecha, la fase d cerrada, y las dos condiciones
+> del entregable (recorrido a mano / el dueño lo usó) con su estado real.
+>
+> NO arranques el Sprint 6. Cuando esto esté, paramos y lo prueba Sergio.
+
+**Plan:**
+1. Verificar el estado real del esquema de `lacentral_demo` (el ESTADO dice que el 07 y el 08 ya se aplicaron el 05/11). Si ya están, no se re-aplican: el 07 no es re-ejecutable y su compuerta lo rechazaría.
+2. `scripts/probar-demo.sh` sobre `develop` (`cc6ed4d`) y recorrido por el navegador.
+3. `GUION-DEMO.md`.
+4. `ESTADO.md` y PR.
+
+**Estado:** terminada
+
+- `git pull` de `develop`: `cc6ed4d` (entraron #149 a #158). Rama `docs/sprint05-cierre-fase-d`. `LACENTRAL_DEMO_PG` no está definida en esta sesión; se arma como dice `COMO-PROBARLO.md` (la de `LACENTRAL_TEST_PG` cambiando la base).
+- Paso 1: **no se re-aplicaron.** Verificación de solo lectura (sesión `READ ONLY`, rol `lacentral_santi`) sobre `lacentral_demo`: `articulo.codigo_barras` existe, `articulo.ubicacion_deposito` no, `stock.ubicacion_deposito` es `character varying(60)`, PK de `factura_compra_detalle` (factura_compra_id, articulo_id, sucursal_id), 24 provincias. Es el estado que dejaron el 07 y el 08 el 05/11 13:30 (bloque de ese día). El 07 no es re-ejecutable: su compuerta lo rechazaría. Stock con ubicación: 1 de 62 filas.
+- Paso 2: `scripts/probar-demo.sh` sobre `cc6ed4d`. Claude in Chrome no conectó (dos intentos: «Browser extension is not connected»). Recorrido por la UI con el Chromium local en headless, manejado por CDP (script de un solo uso en el scratchpad, no versionado), con `operador.demo`: entrar, buscar `amortiguador` (2), ficha de `LC-000021` (stock 54/0, historial de 8 compras, 26/10 $ 80.204,04 … 06/08 $ 68.495,00) y de `LC-000020` (stock 19/16, `Estante A3` en San Vicente, historial de 6). Solo lectura. Capturas en `evidencia/fase-d/`. La API y el frontend se apagaron por grupo de procesos.
+- Paso 3: `GUION-DEMO.md`: paso 7 nuevo (historial), renumerados 8 a 10, pestañas de Clientes y Proveedores en el paso 1. De «qué no se muestra» sale el historial; **la ubicación por sucursal no estaba en esa sección** (ya era el paso 7 desde el 05/11). Clientes y proveedores: ahora tienen pantalla (#151), siguen sin mostrarse en vivo por no ensayadas.
+- Paso 4: `ESTADO.md`: S5-06 cumplida 09/11, fase d cerrada, condición 1 parcial (recorrido automatizado, no de una persona; qué falta), condición 2 pendiente (Sergio lo prueba ahora). Los #154 a #158 los mergeó la cuenta `AAAActis`.
+- Cierre. Abierto: lo que diga Sergio (condición 2) y el recorrido a mano de lo que falta de la condición 1. Sprint 6 no arrancado. PR de este bloque: ver abajo.
