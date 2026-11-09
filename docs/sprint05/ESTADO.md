@@ -19,12 +19,23 @@ Es la línea del principio de este archivo (forma de la §1 de `CLAUDE.md`).
   factura por PDF (sin sprint).
 - **El sprint no se cierra por fecha** (13/11 es una estimación) sino cuando se cumplen las dos:
   1. El entregable se recorrió a mano en el navegador contra `lacentral_demo`, y quedó anotado
-     acá qué se probó y con qué datos (punto 10 de la Definición de Terminado). **Pendiente.**
-  2. El dueño lo usó, o está agendado que lo use, y lo que dijo quedó anotado acá. **Pendiente:
-     ni Santi ni el dueño probaron nunca el sistema.**
+     acá qué se probó y con qué datos (punto 10 de la Definición de Terminado). **Parcial
+     (09/11/2026).** Sobre `develop` `cc6ed4d` contra `lacentral_demo`, por la UI en Chromium
+     (headless, manejado por un script; **no lo recorrió una persona**), con `operador.demo`:
+     entrar; buscar `amortiguador` (2: `LC-000020` y `LC-000021`); ficha de `LC-000021` (costo
+     $ 80.204,04; stock Fragueiro 54, San Vicente 0; historial de 8 compras, 26/10 $ 80.204,04 a
+     06/08 $ 68.495,00); ficha de `LC-000020` (stock 19 y 16; ubicación `Estante A3` en San
+     Vicente, vacía en Fragueiro; historial de 6 compras). Solo lectura: no se guardó nada.
+     Capturas en `evidencia/fase-d/`. **Falta:** alta, baja con confirmación y reactivación,
+     clientes y proveedores, factura de compra y el rol administrador.
+  2. El dueño lo usó, o está agendado que lo use, y lo que dijo quedó anotado acá. **Pendiente
+     (09/11/2026):** Sergio lo prueba después de esta sesión, sobre `lacentral_demo`. Todavía no
+     hay nada que anotar de lo que dijo.
 - **La demo del 06/11 corre sobre `develop` con el #141**, con el 07 y el 08 aplicados a
   `lacentral_demo` el 05/11 (S5-06 levantada, ver Decisiones). Guion: `GUION-DEMO.md`. **No
   muestra el historial de compras**: no hay pantalla ni endpoint que lo lea (HU-ART-06 pendiente).
+  **Desde el 09/11 sí:** con el #152 mergeado, la ficha trae el historial (paso 7 de
+  `GUION-DEMO.md`).
 
 
 ## Tablero · Sprint 5 (milestone «Sprint 5», cierra el 13/11/2026)
@@ -57,7 +68,7 @@ Abiertos: 14 SP. Orden de trabajo de esta sesión: #148, #147, #46, #23 y #21.
 | S5-02 | **`stock.ubicacion_deposito` pasa de `VARCHAR(30)` a `VARCHAR(60)`** en las dos bases (Santi, con el superusuario). Versionado en `08_Ubicacion_Deposito_60.sql`. La validación de la API no cambia. | El 30 del 07 fue un número sin fundamento; la validación ya estaba en 60 y la columna de origen, `articulo.ubicacion_deposito`, era de 60. |
 | S5-03 | **La ubicación sale del alta y de la modificación del artículo.** Se carga desde la ficha, **por sucursal**, igual que se ve la cantidad. | El estante se asigna cuando la mercadería llega; en el alta no hay existencia en ninguna sucursal. Copiarla a todas afirmaría que la pieza está en el mismo estante en las dos: la redundancia que N-9 eliminó. |
 | S5-04 | **Numeración de scripts:** la normalización llegó como `05_…` y queda **07**. El 05 es `05_rol_tests.sql`; el **06 sigue reservado para C2**. | Primer número libre. |
-| S5-06 | ~~**El 07 y el 08 NO se aplican a `lacentral_demo` antes de la demo.** Van el lunes 09/11, o antes si el #141 está mergeado y verificado — **nunca jueves ni viernes**.~~ **Levantada el 05/11/2026 (Santi)**: el 07 y el 08 se aplicaron ese jueves. | Su motivo era que la demo no dependiera de que el #141 entrara a tiempo; el #141 entró y la regla perdió su motivo. Sin el 07, `develop` daba 500 en la ficha contra la demo (`codigo_barras` no existe). |
+| S5-06 | ~~**El 07 y el 08 NO se aplican a `lacentral_demo` antes de la demo.** Van el lunes 09/11, o antes si el #141 está mergeado y verificado — **nunca jueves ni viernes**.~~ **Levantada el 05/11/2026 (Santi)**: el 07 y el 08 se aplicaron ese jueves. **Cumplida el 09/11/2026:** verificado ese lunes, en una sesión de solo lectura, que `lacentral_demo` tiene el 07 y el 08; no se re-aplicaron (el 07 no es re-ejecutable). | Su motivo era que la demo no dependiera de que el #141 entrara a tiempo; el #141 entró y la regla perdió su motivo. Sin el 07, `develop` daba 500 en la ficha contra la demo (`codigo_barras` no existe). |
 | S5-07 | ~~**Hasta que Sergio pruebe el sistema no se construye nada nuevo** (05/11/2026, Santi): ni la paginación de clientes y proveedores ni la 045.~~ **Levantada el mismo 05/11** (Santi): con la demo andando, se arrancan las cinco HU del tablero. | La demo era lo único con fecha, y quedó lista. |
 | S5-08 | **Tablero rehecho por entregable** (05/11/2026, Santi): al Sprint 5 entra lo que suma al entregable; el comparador va al 6 y al 7, sin dejarlo a medias; lo que depende de una compuerta abierta no entra; la deuda no lleva milestone. Sprint 6: 055, 053, 054 y 050 (opción a). Sprint 7: 030 y 032. La CMP-02 queda afuera (etapa 2, D16). | El tablero no se había actualizado desde el replan del 27/10. |
 | S5-05 | **La comparación de esquemas `lacentral_test` ↔ `lacentral` la hace Santi** con el superusuario: el rol de desarrollo no tiene `CONNECT` sobre `lacentral` y no se le va a dar. 04/11: md5 de columnas idéntico. | Seguridad de los datos reales. |
@@ -71,7 +82,7 @@ Abiertos: 14 SP. Orden de trabajo de esta sesión: #148, #147, #46, #23 y #21.
 | a · C3 | `lacentral_demo` creada (owner `lacentral_santi`), con Parte A + 01 a 04, y **sembrada** con `backend/db/demo/sembrar_demo.cs` contra la API de `develop` | `feature/c3-lacentral-demo` | ver abajo | **Hecha 04/11.** Esquema igual al de `develop` (huella comparada). 2 usuarios, 5 proveedores, 30 artículos, 90 códigos, 15 facturas, 180 líneas, 15 fechas. Login de `operador.demo` y búsqueda verificados por HTTP |
 | b · re-scaffold | 07 versionado, re-scaffold, arreglos del modelo, ubicación por sucursal (backend y ficha) | `feature/normalizacion-3fn-rescaffold` | ver abajo | **Hecha 04/11.** `verificador-tdd`: ronda 1 NO APTO (arreglado), **ronda 2 APTO**. `auditor-persistencia`: **APTO**. Las dos sobre `0d41569` |
 | c · tests | Los 7 del esquema y la corrida completa | idem | idem | **Hecha.** Ver «Tests» |
-| d · 07 en demo | Aplicar 07 y 08 a `lacentral_demo` | — | — | **Hecha 05/11** (S5-06 levantada). 07: compuerta OK, cierre «TODO OK», PK de `factura_compra_detalle` de tres columnas, 24 provincias. 08: «VARCHAR(60). TODO OK» |
+| d · 07 en demo | Aplicar 07 y 08 a `lacentral_demo` | — | — | **Hecha 05/11** (S5-06 levantada). 07: compuerta OK, cierre «TODO OK», PK de `factura_compra_detalle` de tres columnas, 24 provincias. 08: «VARCHAR(60). TODO OK». **Cerrada el 09/11/2026:** verificado en solo lectura (`codigo_barras` existe, `articulo.ubicacion_deposito` no, `stock.ubicacion_deposito` VARCHAR(60), PK de tres columnas, 24 provincias) y recorrida la ficha con ubicación e historial sobre `develop` `cc6ed4d` |
 
 **C3 (compuerta del Sprint 4): cerrada el 04/11/2026.** La demo del viernes corre sobre
 `lacentral_demo` con el esquema de `develop`. **No se toca hasta después de la demo.** La clave
@@ -260,6 +271,15 @@ cualquier orden: no comparten archivos. El de T5 es solo documentación.
 ---
 
 ## PRÓXIMA SESIÓN
+
+**09/11 · fase d cerrada, la demo se prueba con Sergio. NO se arranca el Sprint 6.** Se mergearon
+#154 a #158 el 09/11 (`develop` en `cc6ed4d`); con eso #149 a #153 y #154 a #158 están en
+`develop`. El 07 y el 08 ya estaban en `lacentral_demo` desde el 05/11: se verificó, no se
+re-aplicaron. Recorrido de la ficha con existencia, ubicación por sucursal e historial: ver
+condición 1 del entregable. `GUION-DEMO.md` actualizado (paso 7 nuevo: historial).
+Lo que sigue: Sergio prueba el sistema → anotar acá lo que dijo (condición 2); recorrido a
+mano por una persona de lo que falta de la condición 1. La tabla del Tablero no se tocó: los
+estados de #149 a #153 ahí son de antes del merge.
 
 **06/11 · sesión sin supervisión:** cuatro PR abiertos, #154 a #157, todos con `verificador-tdd`
 APTO (ver la sección de arriba). Falta: revisión y merge de Javi, primero el #154; T3 y T4 con la base arriba.
