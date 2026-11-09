@@ -1244,7 +1244,7 @@ vale esta.)
 5. C4: en esta rama (`docs/sprint05-cierre`, desde #157), sección «CIERRE DEL SPRINT 5» del ESTADO, `informe-cierre-sprint5.md`, PR o cuerpo en `docs/sprint05/pr-docs-sprint05-cierre.md`, `verificador-tdd`.
 6. C5: lista de issues para Javi; nada se toca en GitHub.
 
-**Estado:** en curso
+**Estado:** terminada
 - 08:35 · **Estado de partida:** `origin/develop` = `144c325`. #154 a #158 abiertos, ninguno mergeado (leído de la API pública de GitHub, sin autenticar: `gh` no está instalado y no se usa la credencial de git). `graphify update .`: grafo actualizado. Base: `TcpTestSucceeded: True`.
 - 08:40 · **C1 hecho:** `prueba/cierre-s5` (local, no pusheada) = `144c325` + #154 + #155 + #156 + #158, sin conflictos. HEAD `0bd5b67`.
 - 08:45 · **C2 frontend** sobre `0bd5b67`: `TOTAL: 167 SUCCESS` (153 + 9 + 4 + 1).
@@ -1252,3 +1252,10 @@ vale esta.)
   **BLOQUEADO EN:** C3 necesita las dos variables en el entorno (de Javi). Sigo con C4 sin el recorrido.
 - 08:58 · **C2 backend** sobre `0bd5b67`: `Correctas! - Con error: 0, Superado: 497, Omitido: 0, Total: 497, Duración: 11 m 12 s`.
 - 09:05 · **C4:** sección «CIERRE DEL SPRINT 5» en `ESTADO.md`, `informe-cierre-sprint5.md` y el cuerpo del PR en `docs/sprint05/pr-docs-sprint05-cierre.md` (regla 5: `gh` no está). Tablero desde GitHub y git: comprometidos 19 SP, entregados completos 11, mergeados con CA pendientes 8 (#23, #21). Condición 2 pendiente: no hay registro de que Sergio lo usó.
+- 09:20 · Corrección de la línea de las 08:58 (no se reescribe): la línea literal del backend es `Correctas! - Con error:     0, Superado:   497, Omitido:     0, Total:   497, Duración: 11 m 12 s - LaCentral.Tests.dll (net10.0)`.
+- 09:20 · **`verificador-tdd` ronda 1 NO APTO** sobre `cdf1d65..6e256d4`: el cuerpo del PR decía que este bloque estaba cerrado y no lo estaba. Todo lo demás coincide con git (`0bd5b67`, 15 merges, `f2bb5a9` en #141, SP, conteos). No bloqueantes, corregidos: los bloques abiertos de la bitácora son siete y no cuatro (228, 395, 469, 566, 599, 661 y 712); las «r1» de #149, #150 y #153 eran inferidas y pasan a «APTO (sin ronda registrada)»; en C1, #154 y #155 entraron por avance rápido. Este bloque se cierra en el mismo commit.
+- 09:22 · **Cierre de la sesión.** Quedan abiertos:
+  - C3 (recorrido contra `lacentral_demo`): faltan `LACENTRAL_DEMO_PG` y `LACENTRAL_DEMO_CLAVE` en el entorno;
+  - el PR de `docs/sprint05-cierre`: lo abre Javi con `docs/sprint05/pr-docs-sprint05-cierre.md`;
+  - los merges #154 a #158, las dos condiciones de cierre y los issues (ver «CIERRE DEL SPRINT 5» en el ESTADO).
+  Nada se mergeó; ningún issue ni milestone se tocó; no se escribió en `lacentral` ni en `lacentral_demo`.

@@ -298,7 +298,8 @@ cada una está en la tabla «Tablero». Demo del 06/11 con `GUION-DEMO.md`.
 
 Local, no pusheada: `origin/develop` (`144c325`) + `fix/merge-historial-baja` (#154) +
 `feature/fase2-visual-acceso-marco` (#155) + `fix/es-ar-porcentaje-y-total` (#156) +
-`fix/detalle-cliente-motivo-baja` (#158). Los cuatro merges entraron sin conflictos. HEAD
+`fix/detalle-cliente-motivo-baja` (#158). Los cuatro merges entraron sin conflictos: #154 y #155
+por avance rápido, #156 y #158 con commit de merge (`54ed2b8` y `0bd5b67`). HEAD
 **`0bd5b67`**. Es el estado de `develop` cuando entren los cuatro PR de código (más #157, que es
 solo documentación).
 
@@ -380,8 +381,10 @@ origin/develop`. Los SP son los del tablero del 05/11 (no están en GitHub).
   compra.
 - **D-S5-02 · la provincia:** sin JOIN ni combo. Pregunta 7 de `PREGUNTAS-SERGIO.md`.
 - **D-S5-09 · concurrencia del upsert de ubicación**, sin test con dos sesiones.
-- **Bloques viejos de la bitácora con `Estado: en curso`** en las líneas 566, 599, 661 y 712 de
-  `BITACORA.md`: son de Santi y Lauti, y los cierran ellos.
+- **Bloques viejos de la bitácora con `Estado: en curso`:** siete, con el `Estado` en las líneas
+  228, 395, 469, 566, 599, 661 y 712 de `BITACORA.md` (bloques del 04/11 21:32 y del 05/11 a las
+  00:05, 12:35, 13:20, 14:20, 15:10 y 15:45). La instrucción del cierre los asigna a Santi y
+  Lauti, que son quienes los cierran; `git blame` los atribuye a la cuenta `AAAActis`.
 - El resto, en la sección «Deuda» de arriba.
 
 ### PRÓXIMA SESIÓN

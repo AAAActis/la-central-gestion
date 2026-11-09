@@ -39,11 +39,11 @@ El detalle parte por parte está en `ESTADO.md`, sección «CIERRE DEL SPRINT 5�
 | Issue | HU | SP | PR | Mergeado | Verificadores (rondas hasta APTO) | Entregada |
 |---|---|---|---|---|---|---|
 | #43 | 042 · HU-UI-04 · listado reutilizable | 5 | #145 | 05/11 | — (no registrado en el ESTADO) | Sí · issue cerrado |
-| #148 | Formato es-AR | 1 | #149 | 06/11 | verificador r1; auditor no aplica | Sí · la deuda (porcentaje y total) va en #156, abierto |
-| #147 | Paginación de clientes y proveedores | 2 | #150 | 06/11 | verificador r1; auditor r3 | Sí |
+| #148 | Formato es-AR | 1 | #149 | 06/11 | verificador APTO (sin ronda registrada); auditor no aplica | Sí · la deuda (porcentaje y total) va en #156, abierto |
+| #147 | Paginación de clientes y proveedores | 2 | #150 | 06/11 | verificador APTO (sin ronda registrada); auditor r3 | Sí |
 | #46 | 045 · HU-UI-07 · clientes y proveedores | 3 | #151 | 06/11 | verificador r2; auditor r1 | Sí · el motivo de baja del cliente va en #158, abierto |
 | #23 | 016 · HU-ART-06 · historial de compras | 5 | #152 | 06/11 | verificador r3; auditor r1 | **Parcial:** CA-003 y CA-004 |
-| #21 | 014 · HU-ART-04 · baja de artículo | 3 | #153 | 06/11 | verificador r1; auditor r2 | **Parcial:** CA-003 |
+| #21 | 014 · HU-ART-04 · baja de artículo | 3 | #153 | 06/11 | verificador APTO (sin ronda registrada); auditor r2 | **Parcial:** CA-003 |
 
 ### 2.2 · El resto de lo mergeado a `develop` en el sprint
 
@@ -80,8 +80,9 @@ motivo), #142 y #146 (bitácora y guion de la demo). Quince merges en total, sum
 | Rondas NO APTO del `verificador-tdd` | 6: #151 (1), #152 (2), #155 (1), #156 (1), #158 (1) | tablas 2.1 y 2.3 |
 | Rondas NO APTO del `auditor-persistencia` | 3: #150 (2), #153 (1) | ídem |
 
-Nota sobre las dos últimas filas: una «rN» cuenta N − 1 rondas NO APTO, y «r1» quiere decir que dio
-APTO a la primera. El ESTADO no registra las rondas de #145.
+Nota sobre las dos últimas filas: una «rN» cuenta N − 1 rondas NO APTO. «APTO (sin ronda
+registrada)» es como lo dejó el ESTADO, sin número de ronda; se cuenta como APTO a la primera, y
+puede haber rondas que no quedaron escritas. El ESTADO no registra las rondas de #145.
 
 ---
 
