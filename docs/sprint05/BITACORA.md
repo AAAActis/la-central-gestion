@@ -1307,3 +1307,34 @@ vale esta.)
 - 4 · Commit `617b714`, PR #161 a `develop` con Javi como revisor (no se mergea sin su revisión: S5-09). 5 · PR de release: a continuación.
 - 5 · PR de release #162 (`develop` → `main`, revisor Javi). **Falta, después del merge de #161 y #162 por Javi:** tag `sprint-5` sobre el merge del #162 y cerrar a mano #148, #147 y #46. **Archivos a medias:** ninguno; el `stash` tiene el `angular.json` local (analytics), que no se commitea.
 **BLOQUEADO EN:** revisión y merge de #161 y #162 por Javi (no se mergean sin revisión: S5-09). Después, los dos pasos de arriba.
+
+## 09/11/2026 · etiqueta sprint-5 y cierre de issues si el #162 entró; origen de 004, 007 y 018; asignar #13 y #51
+
+**Instrucción recibida (verbatim):**
+> Fijate si el #162 ya está mergeado a main. Si sí:
+>
+> 1 · Creá la etiqueta sprint-5 sobre el commit de merge del #162 y subila a origin.
+> 2 · Cerrá a mano la #148, la #147 y la #46.
+> 3 · Anotá en el ESTADO que el #161 y el #162 los mergeé yo con bypass, con la fecha y el
+>     motivo, igual que hicimos con el #159. Que quede el rastro.
+>
+> Si todavía no está mergeado, dejalo y avisame.
+>
+> Y dos cosas sueltas que levantaste:
+>
+> 4 · Las HU 004, 007 y 018 figuran sin PR en el INDICE. Averiguá si es que se construyeron
+>     antes de que usáramos PR, o si de verdad nunca se hicieron, y dejalo dicho en el INDICE
+>     con esas palabras. Hoy «sin PR» se lee como «sin hacer», y puede no serlo.
+>
+> 5 · Asigná la #13 y la #51 (la factura por PDF del Sprint 6). Van para mí.
+
+**Plan:**
+1. Estado del #162. Si no entró: no se hace 1 a 3, se avisa.
+2. Origen de 004, 007 y 018 en el historial de git; INDICE con «construida antes de que usáramos PR» o «nunca se hizo». Commit en la rama del #161.
+3. #13 y #51 a Santi (`AAAActis`); ESTADO del Sprint 6 igual.
+
+**Estado:** en curso
+- 1 · #161 y #162 OPEN, `REVIEW_REQUIRED`, `origin/main` sigue en `a9dcae7`. Pasos 1 a 3 de la instrucción **no se hacen**; se avisa a Santi.
+- 2 · 004, 007 y 018: **ni antes de los PR ni sin hacer.** El primer PR mergeado es el #55 (27/08/2026). La 004 entró con el #93 (22/09, junto con la 005: `DarDeBajaClienteUseCase`, commit `b61ff85`), la 007 con el #95 (23/09, `ConsultarProveedoresUseCase`, `83830dc`) y la 018 con el #119 (16/10, dentro de la 025: el stock por línea de `FacturaCompraRepositorio`, `97cdbea`). Esos PR no se enlazaron a su issue. El INDICE lo dice así.
+- 3 · #13 y #51 asignadas a `AAAActis` (verificado con `gh`); ESTADO del Sprint 6 con la asignación: Santi 37 SP, Javi 5.
+**BLOQUEADO EN:** el merge de #161 y #162 (Santi o Javi). Después: etiqueta `sprint-5`, cerrar #148, #147 y #46, y anotar en el ESTADO quién los mergeó, cuándo y con qué motivo.

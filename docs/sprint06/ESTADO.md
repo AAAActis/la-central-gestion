@@ -23,11 +23,11 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | #128 | 055 · HU-CMP-08 · lista de precios de un proveedor desde archivo | 5 | Javi | Pregunta 6 a Sergio · C2 | No empezada |
 | #126 | 053 · HU-CMP-06 · candidatos por aproximación entre catálogos | 8 | Santi | C2 · C5 · C6 | No empezada |
 | #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | Santi | C2 · C5 · la 053 | No empezada |
-| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | — | C2 (cotejo de códigos, CA-004) | No empezada |
-| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | — | la 029 | No empezada |
+| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | C2 (cotejo de códigos, CA-004) | No empezada |
+| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | No empezada |
 
-**42 SP.** La pantalla de vinculación va en las proformas de la 053 y la 054 (C5); sus 16 SP son
-estimación hasta que existan. #13 y #51 no tienen asignado todavía.
+**42 SP: Santi 37, Javi 5** (asignación del 09/11/2026). La pantalla de vinculación va en las
+proformas de la 053 y la 054 (C5); sus 16 SP son estimación hasta que existan.
 
 ## Compuertas · cada una bloquea solo las HU de su fila
 

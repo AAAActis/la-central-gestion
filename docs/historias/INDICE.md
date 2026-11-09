@@ -8,10 +8,10 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 001 | HU-CLI-01 | Alta de cliente | Alto | 5 | Sprint 2 | 5 | [`001-HU-CLI-01.md`](./001-HU-CLI-01.md) | #2 | Sprint 1 | Terminada · PR #75, #77, #78 |
 | 002 | HU-CLI-02 | Consulta de clientes | Alto | 3 | Sprint 2 | 5 | [`002-HU-CLI-02.md`](./002-HU-CLI-02.md) | #3 | Sprint 2 | Terminada · PR #88 |
 | 003 | HU-CLI-03 | Modificación de cliente | Alto | 3 | Sprint 2 | 5 | [`003-HU-CLI-03.md`](./003-HU-CLI-03.md) | #4 | Sprint 2 | Terminada · PR #92 |
-| 004 | HU-CLI-04 | Baja lógica de cliente | Medio | 3 | Sprint 2 | 5 | [`004-HU-CLI-04.md`](./004-HU-CLI-04.md) | #5 | Sprint 2 | Terminada · sin PR enlazado en la issue |
+| 004 | HU-CLI-04 | Baja lógica de cliente | Medio | 3 | Sprint 2 | 5 | [`004-HU-CLI-04.md`](./004-HU-CLI-04.md) | #5 | Sprint 2 | Terminada · PR #93 (22/09/2026, junto con la 005). Se construyó con PR; el PR no quedó enlazado a la issue |
 | 005 | HU-CLI-05 | Reactivación de cliente | Bajo | 1 | Sprint 6 | 4 | [`005-HU-CLI-05.md`](./005-HU-CLI-05.md) | #6 | Sprint 2 | Terminada · PR #105, #108 |
 | 006 | HU-PRO-01 | Alta de proveedor | Alto | 3 | Sprint 2 | 5 | [`006-HU-PRO-01.md`](./006-HU-PRO-01.md) | #7 | Sprint 2 | Terminada · PR #91 |
-| 007 | HU-PRO-02 | Consulta de proveedores | Alto | 2 | Sprint 2 | 5 | [`007-HU-PRO-02.md`](./007-HU-PRO-02.md) | #8 | Sprint 2 | Terminada · sin PR enlazado en la issue |
+| 007 | HU-PRO-02 | Consulta de proveedores | Alto | 2 | Sprint 2 | 5 | [`007-HU-PRO-02.md`](./007-HU-PRO-02.md) | #8 | Sprint 2 | Terminada · PR #95 (23/09/2026). Se construyó con PR; el PR no quedó enlazado a la issue |
 | 008 | HU-PRO-03 | Modificación de proveedor | Alto | 2 | Sprint 2 | 4 | [`008-HU-PRO-03.md`](./008-HU-PRO-03.md) | #10 | Sprint 2 | Terminada · PR #91, #99 |
 | 009 | HU-PRO-04 | Baja lógica de proveedor | Medio | 2 | Sprint 2 | 5 | [`009-HU-PRO-04.md`](./009-HU-PRO-04.md) | #11 | Sprint 2 | Terminada · PR #99 |
 | 010 | HU-PRO-05 | Reactivación de proveedor | Bajo | 1 | Sprint 6 | 4 | [`010-HU-PRO-05.md`](./010-HU-PRO-05.md) | #12 | Sprint 2 | Terminada · PR #99 |
@@ -22,7 +22,7 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 015 | HU-ART-05 | Precio de venta estimado por márgenes | Alto | 5 | Sprint 6 | 4 | [`015-HU-ART-05.md`](./015-HU-ART-05.md) | #22 | Sprint 3 | Terminada · PR #121 |
 | 016 | HU-ART-06 | Historial de compras del artículo | Alto | 5 | Sprint 4 | 5 | [`016-HU-ART-06.md`](./016-HU-ART-06.md) | #23 | Sprint 5 | Abierta · PR #152; CA-003 y CA-004 PARCIAL, dependen de la 028 (#9, Sprint 7) |
 | 017 | HU-STK-01 | Consulta de existencias por ubicación | Alto | 3 | Sprint 4 | 3 | [`017-HU-STK-01.md`](./017-HU-STK-01.md) | #24 | Sprint 4 | Terminada · PR #131 |
-| 018 | HU-STK-02 | Incremento de stock por factura de compra | Alto | 3 | Sprint 4 | 3 | [`018-HU-STK-02.md`](./018-HU-STK-02.md) | #25 | Sprint 3 | Terminada · sin PR enlazado en la issue |
+| 018 | HU-STK-02 | Incremento de stock por factura de compra | Alto | 3 | Sprint 4 | 3 | [`018-HU-STK-02.md`](./018-HU-STK-02.md) | #25 | Sprint 3 | Terminada · PR #119 (16/10/2026, dentro de la 025 (HU-FCO-01)). Se construyó con PR; el PR no quedó enlazado a la issue |
 | 019 | HU-STK-03 | Descuento de stock por factura de venta | Alto | 5 | Sprint 4 | 5 | [`019-HU-STK-03.md`](./019-HU-STK-03.md) | #26 | Sprint 8 | Pendiente |
 | 020 | HU-STK-04 | Transferencia entre ubicaciones | Medio | 8 | Sprint 4 | 5 | [`020-HU-STK-04.md`](./020-HU-STK-04.md) | #27 | Sprint 8 | Pendiente |
 | 021 | HU-FVE-01 | Registro de factura de venta | Alto | 8 | Sprint 6 | 5 | [`021-HU-FVE-01.md`](./021-HU-FVE-01.md) | #28 | Sprint 8 | Pendiente |
@@ -66,3 +66,5 @@ issue en GitHub y que el `ESTADO.md` de cada sprint; si uno cambia, los otros ca
 push. Las HU 053, 054 y 055 no tienen proforma todavía (C5): figuran en
 `docs/PLAN-SPRINTS-6-7-8.md`. La 045, la paginación (#147) y es-AR (#148) están terminadas: sus
 issues se cierran a mano cuando el release del Sprint 5 entra a `main`.
+La 004, la 007 y la 018 se construyeron con PR (el primer PR mergeado es el #55, del 27/08/2026),
+pero esos PR no se enlazaron a la issue: el PR de cada una sale del historial de git (09/11/2026).
