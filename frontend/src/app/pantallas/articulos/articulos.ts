@@ -91,7 +91,7 @@ const TEXTO_RAZON: Record<RazonAusencia, string> = {
                 </td>
                 <td class="tenue">
                   @if (p.calculoManual) { manual }
-                  @else if (p.base) { {{ p.base === 'CostoArticulo' ? 'costo' : 'lista' }} {{ p.porcentaje! >= 0 ? '+' : '' }}{{ p.porcentaje }} % }
+                  @else if (p.base) { {{ p.base === 'CostoArticulo' ? 'costo' : 'lista' }} {{ p.porcentaje! >= 0 ? '+' : '' }}{{ p.porcentaje | number: '1.0-2' }} % }
                   @else { — }
                 </td>
               </tr>
