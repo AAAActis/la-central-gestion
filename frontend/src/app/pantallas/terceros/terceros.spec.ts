@@ -228,6 +228,12 @@ describe('Clientes (045)', () => {
     pedido.flush(null);
     h.servidor.expectOne('/api/clientes/4').flush(FICHA);
   });
+
+  // Deuda del #151: la ficha decía «Dado de baja» sin motivo porque la API no lo mandaba.
+  it('la ficha de un cliente dado de baja muestra el motivo', () => {
+    abrirFicha({ ...FICHA, activo: false, motivoBaja: 'Cerró el taller' });
+    expect(h.raiz().textContent).toContain('Dado de baja: Cerró el taller');
+  });
 });
 
 describe('Proveedores (045)', () => {
