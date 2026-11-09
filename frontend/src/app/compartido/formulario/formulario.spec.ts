@@ -73,6 +73,13 @@ describe('Formulario (HU-UI-05)', () => {
     }
   });
 
+  // El envío destacado es del acceso (login.spec.ts): un formulario común no lo lleva.
+  it('sin enviarDestacado, el botón de enviar no ocupa todo el ancho ni lleva flecha', () => {
+    const enviar = raiz().querySelector<HTMLButtonElement>('button[type=submit]')!;
+    expect(enviar.classList).not.toContain('ancho-completo');
+    expect(enviar.querySelector('svg')).toBeNull();
+  });
+
   it('la ayuda va debajo del campo y queda vinculada con aria-describedby', () => {
     const nombre = control('Nombre');
     const ayuda = descriptoresDe(nombre).find(d => d?.classList.contains('ayuda'));

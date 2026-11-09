@@ -8,9 +8,15 @@ import { Clientes, Proveedores } from './pantallas/terceros/terceros';
  * los roles son los mismos que exige el [Authorize] de su controlador.
  */
 export const MODULOS_DEL_SISTEMA: readonly Modulo[] = [
-  { ruta: 'articulos', titulo: 'Artículos', roles: ['ADMINISTRADOR', 'OPERADOR'], componente: Articulos },
+  {
+    ruta: 'articulos', titulo: 'Artículos', bajada: 'Buscá repuestos por nombre o código y consultá su ficha.',
+    roles: ['ADMINISTRADOR', 'OPERADOR'], componente: Articulos,
+  },
   // [Authorize] sin roles en ClientesController y ProveedoresController: cualquier puesto autenticado.
   { ruta: 'clientes', titulo: 'Clientes', roles: ['ADMINISTRADOR', 'OPERADOR'], componente: Clientes },
   { ruta: 'proveedores', titulo: 'Proveedores', roles: ['ADMINISTRADOR', 'OPERADOR'], componente: Proveedores },
-  { ruta: 'factura-compra', titulo: 'Factura de compra', roles: ['ADMINISTRADOR', 'OPERADOR'], componente: FacturaCompra },
+  {
+    ruta: 'factura-compra', titulo: 'Factura de compra', bajada: 'Cargá el comprobante y asigná una sucursal de destino a cada artículo.',
+    roles: ['ADMINISTRADOR', 'OPERADOR'], componente: FacturaCompra,
+  },
 ];

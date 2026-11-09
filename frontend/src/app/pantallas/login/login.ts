@@ -30,11 +30,18 @@ const CAMPOS: CampoFormulario[] = [
       display: grid; grid-template-columns: 1fr 1fr; width: min(var(--ancho-form), 100%);
       margin: 0; overflow: hidden; color: var(--tinta); box-shadow: var(--sombra);
     }
-    h1 { margin: 0 0 var(--esp-20); }
+    .acceso-formulario { display: flex; flex-direction: column; justify-content: center; }
+    .acceso-antetitulo { margin: 0 0 var(--esp-12); font-size: var(--t-etiqueta); color: var(--texto-2); }
+    h1 { margin: 0 0 var(--esp-12); }
+    .bajada { margin: 0 0 var(--esp-24); color: var(--texto-2); }
+    .acceso-pie { margin: var(--esp-24) 0 0; padding-top: var(--esp-16); border-top: 1px solid var(--linea); font-size: var(--t-ayuda); color: var(--texto-2); }
     .acceso-marca {
-      display: grid; place-items: center; padding: var(--esp-24);
-      background: var(--grafito); border-left: var(--filete-marca) solid var(--rojo);
+      display: flex; flex-direction: column; gap: var(--esp-24); padding: var(--esp-24);
+      background: var(--grafito); color: var(--blanco); border-left: var(--filete-marca) solid var(--rojo);
     }
+    .acceso-marca h2 { margin: auto 0 0; font-size: var(--t-acceso); }
+    .acceso-marca .bajada { margin: 0; color: var(--linea-2); }
+    .acceso-marca .acceso-pie { margin-top: auto; padding: 0; border: 0; color: var(--linea-2); }
     @media (max-width: 760px) {
       .acceso-tarjeta { grid-template-columns: 1fr; }
       .acceso-marca { border-left: 0; border-top: var(--filete-marca) solid var(--rojo); }
@@ -43,12 +50,20 @@ const CAMPOS: CampoFormulario[] = [
   host: { class: 'fondo-hex' },
   template: `
     <div class="tarjeta acceso-tarjeta">
-      <div class="tarjeta-cuerpo">
-        <h1>Acceso al sistema</h1>
+      <div class="tarjeta-cuerpo acceso-formulario">
+        <p class="acceso-antetitulo">Sistema de gestión</p>
+        <h1>Ingresar</h1>
+        <p class="bajada">Ingresá tus datos para comenzar a trabajar.</p>
         <app-formulario [campos]="campos" [enviando]="enviando()" textoEnviar="Ingresar" textoEnviando="Ingresando…"
-                        (enviar)="entrar($event)" />
+                        [enviarDestacado]="true" (enviar)="entrar($event)" />
+        <p class="acceso-pie">Acceso para personal autorizado</p>
       </div>
-      <div class="acceso-marca"><app-marca variante="completa" /></div>
+      <div class="acceso-marca">
+        <app-marca variante="completa" />
+        <h2>Todo en orden. <br />Listos para seguir.</h2>
+        <p class="bajada">Gestión comercial de <br />La Central Repuestos.</p>
+        <p class="acceso-pie">La Central Repuestos</p>
+      </div>
     </div>
     <app-aviso-flotante [(mensaje)]="aviso" tipo="error" />
   `,
