@@ -15,8 +15,8 @@ Cierre del Sprint 4 y arrastre: `docs/sprint04/ESTADO.md` (PR #139).
 
 Es la línea del principio de este archivo (forma de la §1 de `CLAUDE.md`).
 
-- **Fuera del Sprint 5:** el comparador (Sprint 6 y 7, ver `docs/sprint06/ESTADO.md`) y la
-  factura por PDF (sin sprint).
+- **Fuera del Sprint 5:** todo lo que queda, repartido el 09/11/2026 en
+  `docs/PLAN-SPRINTS-6-7-8.md`: vinculación y PDF (6), comparador y compra (7), venta, stock y UI (8).
 - **El sprint no se cierra por fecha** (13/11 es una estimación) sino cuando se cumplen las dos:
   1. El entregable se recorrió a mano en el navegador contra `lacentral_demo`, y quedó anotado
      acá qué se probó y con qué datos (punto 10 de la Definición de Terminado). **Parcial
@@ -38,7 +38,7 @@ Es la línea del principio de este archivo (forma de la §1 de `CLAUDE.md`).
   `GUION-DEMO.md`).
 
 
-## Tablero · Sprint 5 (milestone «Sprint 5», cierra el 13/11/2026)
+## Tablero · Sprint 5 (milestone «Sprint 5», al 09/11/2026)
 
 El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el mismo push.
 Capacidad: ~18 SP, con tres personas (Santi y Lauti comparten la sesión y se turnan; Javi tiene
@@ -46,17 +46,30 @@ la suya).
 
 | Issue | HU | SP | Asignado | Estado | Nota |
 |---|---|---|---|---|---|
-| #43 | 042 · HU-UI-04 · listado reutilizable | 5 | Javi | **Cerrado** (#145, 05/11) | Arrastre del Sprint 4 construido en el 5 |
-| #148 | Formato es-AR de montos y cantidades | 1 | Javi | **PR #149**: verificador APTO; auditor no aplica | Lo vio el ensayo de la demo. Deuda: porcentaje sin `DecimalPipe` (`articulos.ts`) y total del listado sin separador de miles |
-| #147 | Paginación de clientes y proveedores | 2 | Santi | **PR #150**: verificador APTO, auditor APTO (r3) | 200 con página vacía; CA-003 v1.1 de HU-CLI-02 y de la HU de proveedores. El auditor endureció el fixture de PostgreSQL (`search_path` = aislado, fuente) |
-| #46 | 045 · HU-UI-07 · clientes y proveedores | 3 | Javi | **PR #151**: verificador APTO (r2), auditor APTO (r1) | Se mergea **después del #150**. D2 (provincia) para decidir. Deuda: la condición fiscal no se valida contra los 5 valores del CHECK |
-| #23 | 016 · HU-ART-06 · historial de compras | 5 | Santi | **PR #152**: verificador APTO (r3), auditor APTO (r1) | CA-003 y CA-004 **PARCIAL**: dependen de la anulación (028, #9, backlog) |
-| #21 | 014 · HU-ART-04 · baja lógica de artículo | 3 | Javi | **PR #153**: verificador APTO, auditor APTO (r2) | CA-001 hecho en HU-ART-03 (#122). CA-003 **BLOQUEADO por esquema** (para decidir: `articulo_historial_baja.error_de_stock`) |
+| #43 | 042 · HU-UI-04 · listado reutilizable | 5 | Javi | **Cerrada** (#145, 05/11) | Arrastre del Sprint 4 construido en el 5 |
+| #148 | Formato es-AR de montos y cantidades | 1 | Javi | **Terminada.** #149 mergeado por Javi el 06/11; deuda saldada en #156 (mergeado por Santi el 09/11). La issue se cierra a mano cuando el release entre a `main` | Verificador APTO; auditor no aplica |
+| #147 | Paginación de clientes y proveedores | 2 | Santi | **Terminada.** #150 mergeado por Javi el 06/11. Se cierra con el release | Verificador APTO, auditor APTO (r3) |
+| #46 | 045 · HU-UI-07 · clientes y proveedores | 3 | Javi | **Terminada.** #151 mergeado por Santi el 06/11; motivo de baja en la ficha, #158 (Santi, 09/11). Se cierra con el release | Verificador APTO (r2), auditor APTO (r1). Provincia y condición fiscal: preguntas 7 y 1 a Sergio, Sprint 8 |
+| #23 | 016 · HU-ART-06 · historial de compras | 5 | Santi | **Abierta.** #152 mergeado por Javi el 06/11. CA-003 y CA-004 **PARCIAL** | Dependen de la anulación (028, #9, Sprint 7) |
+| #21 | 014 · HU-ART-04 · baja lógica de artículo | 3 | Javi | **Abierta.** #153 mergeado por Javi el 06/11. CA-003 **BLOQUEADO por esquema** | Depende de #160 (columna para la baja por error de stock, Sprint 8), que espera la pregunta 2 a Sergio |
 
-Abiertos: 14 SP. Orden de trabajo de esta sesión: #148, #147, #46, #23 y #21.
+Entregado: 14 SP de HU (más los 5 de la 042). Quedan abiertas #23 y #21, cada una con la issue de
+la que depende.
 
-**Fuera del sprint y sin milestone (backlog), decisión del 05/11/2026:** #9 (028), #27 (020),
-#33 (026), #53 (051), #54 (052), #26, #28, #29, #31 y #41. **Deuda, sin milestone:** #137.
+**Los PR del cierre, todos mergeados a `develop`:**
+
+| PR | Qué | Mergeó | Fecha |
+|---|---|---|---|
+| #154 | Arreglo del merge de #152 y #153 | Santi (`AAAActis`) | 09/11 |
+| #155 | Fase 2 visual del acceso y del marco (Refs #42) | Santi | 09/11 |
+| #156 | es-AR: porcentaje y total del listado (Refs #148) | Santi | 09/11 |
+| #157 | Preguntas para Sergio | Santi | 09/11 |
+| #158 | Motivo de la última baja en la ficha de cliente | Santi | 09/11 |
+| #159 | Fase d cerrada, historial en el guion | Santi | 09/11, **sin revisión de Javi** (ver S5-09) |
+
+**Fuera del sprint:** todo lo demás está repartido en los sprints 6, 7 y 8
+(`docs/PLAN-SPRINTS-6-7-8.md`). Sin milestone queda solo #137 (Deuda27, mantenimiento). #1 y #48
+se cerraron como duplicados el 09/11.
 
 ---
 
@@ -71,6 +84,9 @@ Abiertos: 14 SP. Orden de trabajo de esta sesión: #148, #147, #46, #23 y #21.
 | S5-06 | ~~**El 07 y el 08 NO se aplican a `lacentral_demo` antes de la demo.** Van el lunes 09/11, o antes si el #141 está mergeado y verificado — **nunca jueves ni viernes**.~~ **Levantada el 05/11/2026 (Santi)**: el 07 y el 08 se aplicaron ese jueves. **Cumplida el 09/11/2026:** verificado ese lunes, en una sesión de solo lectura, que `lacentral_demo` tiene el 07 y el 08; no se re-aplicaron (el 07 no es re-ejecutable). | Su motivo era que la demo no dependiera de que el #141 entrara a tiempo; el #141 entró y la regla perdió su motivo. Sin el 07, `develop` daba 500 en la ficha contra la demo (`codigo_barras` no existe). |
 | S5-07 | ~~**Hasta que Sergio pruebe el sistema no se construye nada nuevo** (05/11/2026, Santi): ni la paginación de clientes y proveedores ni la 045.~~ **Levantada el mismo 05/11** (Santi): con la demo andando, se arrancan las cinco HU del tablero. | La demo era lo único con fecha, y quedó lista. |
 | S5-08 | **Tablero rehecho por entregable** (05/11/2026, Santi): al Sprint 5 entra lo que suma al entregable; el comparador va al 6 y al 7, sin dejarlo a medias; lo que depende de una compuerta abierta no entra; la deuda no lleva milestone. Sprint 6: 055, 053, 054 y 050 (opción a). Sprint 7: 030 y 032. La CMP-02 queda afuera (etapa 2, D16). | El tablero no se había actualizado desde el replan del 27/10. |
+| S5-09 | **El #159 entró a `develop` sin revisión de Javi** (09/11/2026, mergeado por Santi; GitHub: cero revisiones). Se acepta y no se revierte. **No se hace costumbre.** | Es solo documentación; revertirlo cuesta más de lo que vale. |
+| S5-10 | **La 031 (CMP-02) entra completa, no como prueba de concepto: reemplaza la D16** (09/11/2026, Santi). Los scrapes los arman a mano Javi, Lauti y Santi en paralelo, fuera del conteo de SP. Es D-PL-02 de `docs/PLAN-SPRINTS-6-7-8.md`. | Todo lo abierto entra en los sprints 6, 7 y 8; no queda trabajo futuro. |
+| S5-11 | **Release del Sprint 5 a `main` con la etiqueta `sprint-5`.** El Sprint 4 nunca llegó a `main`: su trabajo entra con este release y **no lleva etiqueta propia**. Se creó `sprint-3` sobre `a9dcae7` (merge del #125), que el #125 declaraba y no existía. | La etiqueta marca lo que llegó a `main`, y solo eso. |
 | S5-05 | **La comparación de esquemas `lacentral_test` ↔ `lacentral` la hace Santi** con el superusuario: el rol de desarrollo no tiene `CONNECT` sobre `lacentral` y no se le va a dar. 04/11: md5 de columnas idéntico. | Seguridad de los datos reales. |
 
 ---
@@ -271,6 +287,18 @@ cualquier orden: no comparten archivos. El de T5 es solo documentación.
 ---
 
 ## PRÓXIMA SESIÓN
+
+**09/11 · cierre y release.** Suite completa sobre `develop` `a00c772`: backend **497/497**
+(«Correctas! - Con error: 0, Superado: 497, Omitido: 0, Total: 497, Duración: 3 m 45 s»),
+frontend **167/167** (Chromium). Release `develop` → `main` abierto; al entrar: etiqueta
+`sprint-5` y cerrar a mano #148, #147 y #46. Plan de los sprints 6, 7 y 8 aprobado
+(`docs/PLAN-SPRINTS-6-7-8.md`); milestones con fechas estimadas de tres semanas (6 → 04/12,
+7 → 25/12, 8 → 15/01/2027). **Antes del 16/11:** la pregunta 6 a Sergio (la lleva Santi), que
+bloquea la 055. Siguen abiertas las dos condiciones del entregable (recorrido a mano por una
+persona y lo que diga Sergio).
+
+**Lo de abajo es historia de sesiones anteriores.**
+
 
 **09/11 · fase d cerrada, la demo se prueba con Sergio. NO se arranca el Sprint 6.** Se mergearon
 #154 a #158 el 09/11 (`develop` en `cc6ed4d`); con eso #149 a #153 y #154 a #158 están en

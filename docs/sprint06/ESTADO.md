@@ -1,56 +1,55 @@
 # ESTADO · Sprint 6
 
 **Entregable:** al cerrar este sprint, una persona puede entrar al sistema, cargar la lista de
-precios de un proveedor desde un archivo, ver los artículos propios que el sistema le propone
-para cada renglón y vincularlos en un clic —y desde ahí el código del proveedor encuentra el
-artículo para siempre—, sobre `lacentral_demo`.
+precios de un proveedor, vincular sus renglones con los artículos propios a partir de las
+propuestas del sistema, y cargar una factura de compra subiendo el PDF del proveedor y
+revisándola antes de confirmar, sobre `lacentral_demo`.
 
 > Única fuente de verdad del estado del sprint. Se actualiza **antes** de cada push, en el
-> mismo PR que el código que describe. Escrito el 05/11/2026, al rehacer el tablero (S5-08 del
-> `ESTADO.md` del Sprint 5).
+> mismo PR que el código que describe. Reescrito el 09/11/2026 con el plan aprobado
+> (`docs/PLAN-SPRINTS-6-7-8.md`), que reemplaza el reparto del 05/11.
 
-**Sprint 6 · 16/11/2026 → 27/11/2026** (fechas estimadas: sprint de dos semanas después del 5).
-Comparador, etapa 1, sobre datos propios (D16). La comparación propiamente dicha (030 y 032)
-es el Sprint 7: vincular ya le sirve al dueño aunque todavía no compare (opción a, Santi,
-05/11/2026).
+**Sprint 6 · 16/11/2026 → 04/12/2026 (fechas ESTIMADAS, tres semanas).** Cierra por entregable,
+no por fecha. Vinculación de catálogos + factura por PDF.
 
 ---
 
-## Tablero · Sprint 6 (milestone «Sprint 6», cierra el 27/11/2026)
+## Tablero · Sprint 6 (milestone «Sprint 6»)
 
 El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el mismo push.
 
-| Issue | HU | SP | Asignado | La bloquea | Nota |
+| Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
-| #128 | 055 · HU-CMP-08 · lista de precios de un proveedor desde archivo | 5 | Javi | C2 | De dónde sale «lo que cuesta» |
-| #126 | 053 · HU-CMP-06 · candidatos por aproximación entre catálogos | 8 | Santi | C2 · C5 · C6 | Sin proforma: C5 es escribirla |
-| #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | Santi | C2 · C5 · la 053 | Sin proforma: C5 es escribirla |
-| #52 | 050 · HU-UI-12 · pantalla del comparador y de vinculación | 8 | Javi | la 053 | En este sprint, solo la parte de vinculación; la comparación llega con la 030 y la 032 |
+| #128 | 055 · HU-CMP-08 · lista de precios de un proveedor desde archivo | 5 | Javi | Pregunta 6 a Sergio · C2 | No empezada |
+| #126 | 053 · HU-CMP-06 · candidatos por aproximación entre catálogos | 8 | Santi | C2 · C5 · C6 | No empezada |
+| #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | Santi | C2 · C5 · la 053 | No empezada |
+| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | — | C2 (cotejo de códigos, CA-004) | No empezada |
+| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | — | la 029 | No empezada |
 
-29 SP: Santi 16, Javi 13.
+**42 SP.** La pantalla de vinculación va en las proformas de la 053 y la 054 (C5); sus 16 SP son
+estimación hasta que existan. #13 y #51 no tienen asignado todavía.
 
-## Compuertas · cada una bloquea solo las HU de su fila (D17)
+## Compuertas · cada una bloquea solo las HU de su fila
 
-| # | Qué | Responsable | Bloquea | Estado al 05/11 |
+| # | Qué | Responsable | Bloquea | Estado al 09/11 |
 |---|---|---|---|---|
-| C2 | Esquema `proveedor_articulo` (script SQL + re-scaffold) | Santi | 055, 053, 054 | Abierta |
-| C5 | Escribir las proformas de la 053 y la 054 | Santi | 053, 054 | Abierta |
+| P6 | Pregunta 6 de `PREGUNTAS-SERGIO.md`: de dónde sale «el archivo» | Santi → Sergio | 055 | Abierta. Santi la lleva esta semana; tiene que estar antes del 16/11 |
+| C2 | Esquema `proveedor_articulo` y vinculaciones aprendidas (script SQL + re-scaffold) | Santi | 055, 053, 054, cotejo de la 029 | Abierta |
+| C5 | Proformas de la 053 y la 054, con la pantalla de vinculación | Santi | 053, 054 | Abierta |
 | C6 | Medición sobre 50 artículos | Javi | 053 | Abierta |
+| C1 | L2 y retiro de Tarjeta3/6 | Santi | 032, 033, 050 (Sprint 7) | Abierta. Va en el mismo cambio de esquema que C2 |
 
 **Una HU no se empieza hasta que su compuerta esté cerrada**, aunque esté en el milestone.
 
 ## Fuera del Sprint 6
 
-- **Sprint 7 (milestone «Sprint 7», cierra el 11/12/2026):** #16 · 030 · HU-CMP-01, búsqueda
-  comparativa (Javi), y #19 · 032 · HU-CMP-03, vista Compra (Santi). La 032 espera a C1 (L2 y
-  retiro de Tarjeta3/6) y a la 016.
-- **CMP-02 (#18), consulta en vivo a los sitios:** afuera. Es etapa 2 (D16), con un proveedor
-  como prueba de concepto.
-- **Ventas** (#26, #28, #29, #31) y la pantalla de login (#41): sin milestone (backlog). Son otro
-  entregable.
+Sprint 7 (comparador completo + lo que falta de compra) y Sprint 8 (venta, stock, UI y
+artículos): ver `docs/PLAN-SPRINTS-6-7-8.md`. La 031 entra completa en el 7 (D-PL-02, reemplaza
+la D16).
 
 ---
 
 ## PRÓXIMA SESIÓN
 
-El sprint todavía no empezó. Antes de la primera HU: cerrar C2, C5 y C6 (tabla de arriba).
+El sprint todavía no empezó. Antes de la primera HU: cerrar P6, C2, C5 y C6, y C1 en el mismo
+cambio de esquema que C2 (tabla de arriba).

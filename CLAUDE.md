@@ -249,6 +249,17 @@ definido.
 Las fechas del Product Backlog y del Plan de Acción son **estimaciones**, y así se rotulan.
 No cierran ni abren un sprint.
 
+**Un sprint entrega features completas, nunca dos a medias.** Una feature a medias no se
+puede demostrar ni probar. Por eso:
+
+- una feature nunca se parte entre dos sprints: si una sola no entra en uno, se avisa con el
+  número de SP y lo decide el equipo, no se parte;
+- las áreas grandes se llevan un sprint cada una; las chicas se agrupan, todas terminadas;
+- si la suma de SP supera la capacidad, el sprint se estira (cierra por entregable, no por
+  fecha), no se recorta.
+
+Reparto vigente: `docs/PLAN-SPRINTS-6-7-8.md`.
+
 ---
 
 ## 2 · Un PR por historia de usuario

@@ -1109,3 +1109,198 @@ vale esta.)
 - Paso 3: `GUION-DEMO.md`: paso 7 nuevo (historial), renumerados 8 a 10, pestañas de Clientes y Proveedores en el paso 1. De «qué no se muestra» sale el historial; **la ubicación por sucursal no estaba en esa sección** (ya era el paso 7 desde el 05/11). Clientes y proveedores: ahora tienen pantalla (#151), siguen sin mostrarse en vivo por no ensayadas.
 - Paso 4: `ESTADO.md`: S5-06 cumplida 09/11, fase d cerrada, condición 1 parcial (recorrido automatizado, no de una persona; qué falta), condición 2 pendiente (Sergio lo prueba ahora). Los #154 a #158 los mergeó la cuenta `AAAActis`.
 - Cierre. Abierto: lo que diga Sergio (condición 2) y el recorrido a mano de lo que falta de la condición 1. Sprint 6 no arrancado. PR de este bloque: ver abajo.
+
+## 09/11/2026 · A · cierre y release del Sprint 5 · B · propuesta de los sprints 6, 7 y 8
+
+**Instrucción recibida (verbatim):**
+> Dos cosas. La primera cuando Javi apruebe el #159.
+>
+> === A · CIERRE Y RELEASE DEL SPRINT 5 ===
+>
+> 1. PR de release de develop a main.
+>
+> 2 · En ese PR:
+> · Etiqueta de versión, con la misma convención que usamos para el Sprint 3 (fijate cómo
+>   quedó etiquetado en main y seguí ese formato).
+> · Cuerpo con lo que entró: los PR #149 a #159 con una línea cada uno, el entregable del
+>   sprint tal como quedó escrito en el ESTADO, y los números de la última corrida completa
+>   sobre develop.
+> · Qué NO entró y por qué.
+>
+> 3 · Issues: cerrá SOLO las que tengan todos sus CA cumplidos. Las que tienen algún CA en NO
+> VERIFICADO quedan abiertas con su motivo y referenciando la issue de la que dependen — es lo
+> que nos marcó Javi en el #152 y el #153, y no lo repitamos.
+>
+> 4 · Product Backlog: movelo para que diga lo mismo que el tablero y el ESTADO. Las HU
+> entregadas pasan a su estado final con el PR que las cerró. Cero discrepancias entre los
+> tres.
+>
+> 5 · Actualizá la tabla del Tablero en el ESTADO: todavía muestra los #149 a #153 como
+> abiertos, y los #154 a #158 figuran como «se mergearon» sin quién.
+>
+> === B · EL PLAN DE LOS TRES SPRINTS QUE QUEDAN ===
+>
+> Quedan CUATRO áreas y TRES sprints: vinculación de catálogos, comparador, factura de venta y
+> factura por PDF. Una tiene que salir, y la decisión no se toma por gusto.
+>
+> El criterio: CADA SPRINT CIERRA UN ÁREA COMPLETA, y entre los tres tienen que quedar
+> cubiertos todos los objetivos del Mandato. Lo que no sirva a ningún objetivo del mandato se
+> declara trabajo futuro.
+>
+> Hacé esto y PARÁ:
+>
+> 1 · Leé los objetivos del Mandato (docs/, el GR-01) y listalos.
+> 2 · Cruzá las HU que quedan abiertas contra esos objetivos: qué objetivo cubre cada una, y
+>    cuáles no cubren ninguno.
+> 3 · Proponeme los tres sprints, uno por área, con: qué HU entran, qué objetivo del mandato
+>    cierra cada sprint, los SP, y qué queda como trabajo futuro con su motivo.
+> 4 · Marcá qué compuertas (C1, C2, C5, C6) bloquean qué, y en qué sprint se cierran.
+>
+> NO lo apliques todavía: pasame la propuesta y la decido yo.
+>
+> Cuando la apruebe, va a docs/PLAN-SPRINTS-6-7-8.md y el criterio de «un sprint = un área
+> completa» queda como regla en CLAUDE.md, junto a la §1 que ya dice que el sprint cierra por
+> entregable.
+
+**Plan:**
+1. A: #159 está mergeado (lo mergeó `AAAActis`, sin revisión formal registrada). Suite completa sobre `develop` (`a00c772`).
+2. A: convención de etiqueta del Sprint 3 (PR #125: «Etiqueta: `sprint-3`»).
+3. A: CA de cada issue del sprint contra los PR; cerrar solo las completas; comentar las que quedan abiertas con su motivo y la issue de la que dependen.
+4. A: Product Backlog, tabla del Tablero del ESTADO, PR de docs y PR de release develop → main.
+5. B: objetivos del Mandato (GR-01), cruce con las HU abiertas, propuesta de los tres sprints. PARAR sin aplicarla.
+
+**Estado:** terminada
+- Reemplazada por el bloque siguiente (la instrucción llegó de nuevo, con la parte B cambiada). De este bloque no se ejecutó nada: solo el plan.
+
+## 09/11/2026 · A · cierre y release del Sprint 5 · B · reparto de todo lo que queda en los sprints 6, 7 y 8 (v2)
+
+**Instrucción recibida (verbatim):**
+> Dos cosas. La primera cuando Javi apruebe el #159.
+>
+> === A · CIERRE Y RELEASE DEL SPRINT 5 ===
+>
+> 1 · Esperá la aprobación del #159 y mergealo. Después, PR de release de develop a main.
+>
+> 2 · En ese PR:
+> · Etiqueta de versión, con la misma convención que usamos para el Sprint 3 (fijate cómo
+>   quedó etiquetado en main y seguí ese formato).
+> · Cuerpo con lo que entró: los PR #149 a #159 con una línea cada uno, el entregable del
+>   sprint tal como quedó escrito en el ESTADO, y los números de la última corrida completa
+>   sobre develop.
+>
+> 3 · Issues: cerrá SOLO las que tengan todos sus CA cumplidos. Las que tienen algún CA en NO
+> VERIFICADO quedan abiertas con su motivo y referenciando la issue de la que dependen — es lo
+> que nos marcó Javi en el #152 y el #153, y no lo repitamos.
+>
+> 4 · Product Backlog: movelo para que diga lo mismo que el tablero y el ESTADO. Las HU
+> entregadas pasan a su estado final con el PR que las cerró. Cero discrepancias entre los
+> tres.
+>
+> 5 · Actualizá la tabla del Tablero en el ESTADO: todavía muestra los #149 a #153 como
+> abiertos, y los #154 a #158 figuran como «se mergearon» sin quién.
+>
+> === B · LOS TRES SPRINTS QUE QUEDAN ===
+>
+> TODO lo que queda entra en los sprints 6, 7 y 8. NO se recorta funcionalidad y NO hay
+> trabajo futuro: si algo quedó en backlog sin milestone, vuelve a entrar.
+>
+> La única regla es que cada sprint entregue cosas COMPLETAS. Nada de dos features a medias
+> en un mismo sprint: eso no se puede demostrar ni probar, y es trabajo al vicio.
+>
+> Cómo repartirlas:
+> · Las áreas grandes se llevan un sprint entero cada una.
+> · Las chicas se agrupan: dos o tres juntas en el mismo sprint, pero las tres terminadas.
+> · Una feature nunca se parte entre dos sprints. Si una sola no entra en un sprint, decímelo
+>   con el número y vemos, no la partas por tu cuenta.
+>
+> Hacé esto y PARÁ:
+>
+> 1 · Listá TODO lo que queda abierto: las issues con milestone, las que quedaron en backlog
+>    sin milestone, las compuertas C1, C2, C5 y C6, y la deuda que sea funcionalidad y no
+>    mantenimiento.
+> 2 · Agrupalas por área: vinculación de catálogos, comparador, factura de venta, factura por
+>    PDF, y las que sobren.
+> 3 · Proponeme el reparto en tres sprints con esa regla, con los SP de cada uno y el
+>    entregable de cada sprint en una línea, con la forma de la §1 de CLAUDE.md: «al cerrar
+>    este sprint, una persona puede...».
+> 4 · Marcá qué compuerta bloquea qué y en qué sprint se cierra cada una.
+> 5 · Decime si la suma de SP de algún sprint se va muy por encima de la capacidad. No la
+>    recortes: avisame el número y lo decido yo.
+>
+> NO lo apliques todavía: pasame la propuesta y la apruebo.
+>
+> Cuando la apruebe, va a docs/PLAN-SPRINTS-6-7-8.md, y el criterio de «un sprint entrega
+> features completas, nunca dos a medias» queda como regla en CLAUDE.md junto a la §1.
+
+**Plan:**
+1. A: estado del #159 → ya está MERGED (17:14 UTC, por `AAAActis`), con `reviewDecision: REVIEW_REQUIRED` y cero revisiones: Javi no lo aprobó. Preparar A en solo lectura (suite completa sobre `develop`, convención de etiqueta, CA por issue) y no ejecutar lo que sale hacia afuera (cerrar issues, release a main) sin confirmación.
+2. B: inventario de abiertos (issues con y sin milestone, compuertas, deuda funcional), agrupado por área, SP.
+3. B: reparto en sprints 6, 7 y 8 con entregable de una línea, compuertas y capacidad. PARAR.
+
+**Estado:** terminada
+- Cerrado: Santi aprobó todo (bloque siguiente). Sigue abierta la ejecución, en el bloque siguiente.
+- **HU / paso:** ninguna; paso 1. **Archivos:** solo esta bitácora.
+- Paso 1 (A, solo lectura): #159 MERGED 09/11 17:14 UTC por `AAAActis`, `reviewDecision: REVIEW_REQUIRED`, cero revisiones. Etiqueta: en `origin` solo existe `sprint-2`; el `sprint-3` figura en el cuerpo del #125 pero **nunca se creó el tag**, y el Sprint 4 no tuvo release a `main` (último merge a `main`: #125). Los #148, #147 y #46 siguen abiertos aunque sus PR dicen `Closes`: se mergearon a `develop`, no a la rama por defecto. #23 queda abierto (CA-003/004 → #9); #21 queda abierto (CA-003 → decisión de esquema; no hay issue de la que dependa: hay que crearla). Suite completa sobre `a00c772` lanzada en segundo plano.
+- Paso 2 y 3 (B): inventario y propuesta entregados a Santi en el chat. Total 141 SP con SP conocidos, más cinco ítems sin SP (C4, precio «caso especial», CA-003 de la 014, provincia, condición fiscal) contra ~34 SP por sprint (velocidad del Sprint 3) o ~19 (lo que entregó el Sprint 5). Hallazgos: la 050 no tiene ningún CA de vinculación (todos son del comparador, y el CA-002 y el CA-003 dependen de la 031), así que no se puede partir entre el 6 y el 7; la 048 cubre venta y compra (su CA-005 necesita la 024 y la 028); el milestone «Sprint 8» vence el 13/12, dos días después del 7.
+**BLOQUEADO EN:** Santi: (1) si el #159 sin aprobación de Javi cuenta para arrancar A (release a `main`, cerrar issues); (2) aprobar o corregir el reparto de B, con el sobrepaso de SP y la fecha del Sprint 8.
+- Suite completa de backend sobre `develop` `a00c772`: «Correctas! - Con error: 0, Superado: 497, Omitido: 0, Total: 497, Duración: 3 m 45 s». Frontend no se corrió (sin cambios en `frontend/` desde el #158, que dio 154/154 sobre `8e67fd1`; a confirmar en el release).
+
+## 09/11/2026 · aplicar el cierre del Sprint 5 y el plan de los sprints 6, 7 y 8
+
+**Instrucción recibida (verbatim):**
+> Todo aprobado. Las respuestas:
+>
+> 1 · #159: adelante. Está mergeado y es solo documentación; revertirlo cuesta más de lo que
+> vale. Anotá en el ESTADO que entró sin revisión de Javi, con la fecha, y seguimos. No lo
+> hagamos costumbre.
+>
+> 2 · Etiquetas. Creá sprint-3 sobre el commit de merge del #125, que sí llegó a main: es
+> cierto y corrige el hueco. NO inventes un sprint-4: nunca llegó a main, así que su trabajo
+> entra ahora con el release del Sprint 5, y eso lo decís en el cuerpo del PR. Después,
+> sprint-5.
+>
+> 3 · Las issues #148, #147 y #46 cerralas a mano cuando el release entre a main. Y creá la
+> issue del CA-003 de la 014 («columna para la baja por error de stock»), que la #21 necesita
+> para quedar referenciada.
+>
+> 4 · Los duplicados #1 y #48: cerralos.
+>
+> 5 · EL REPARTO QUEDA COMO LO PROPUSISTE. Vinculación + PDF, comparador + lo que falta de
+> compra, y venta + stock + UI. Tus dos hallazgos son correctos y los acepto: la 050 no se
+> parte, y la pantalla de vinculación entra en las proformas de la 053 y la 054 cuando se
+> escriban en C5.
+>
+> 6 · LO DE LOS 141 SP CONTRA 102: no se recorta nada, se estiran los sprints. Ya decidimos
+> que un sprint cierra por entregable y no por fecha, así que uno que tarde tres semanas en
+> vez de dos es coherente con la regla, no una excepción. Poné las fechas de los milestones
+> como estimaciones de tres semanas cada uno y rotulalas así. El proyecto termina a fines de
+> enero, y eso es lo que hay.
+>
+> Corregí la fecha del milestone Sprint 8, que hoy vence el 13/12, dos días después de que
+> cierra el 7.
+>
+> 7 · La 031 entra completa, no como prueba de concepto. Eso cambia la D16, así que anotalo
+> como decisión nueva con su motivo, y dejá dicho que el trabajo de armar los scrapes lo
+> hacemos a mano Javi, Lauti y yo en paralelo, fuera del conteo de SP.
+>
+> 8 · Lo único con fecha: la pregunta 6 de PREGUNTAS-SERGIO.md bloquea la 055 y el Sprint 6
+> arranca el 16/11. La llevo yo a Sergio esta semana.
+>
+> Aplicá todo: el release, las issues, los milestones, docs/PLAN-SPRINTS-6-7-8.md y la regla
+> en CLAUDE.md. Corré la suite de frontend una vez para el cuerpo del release, que el backend
+> ya dio 497/497 sobre a00c772.
+
+**Plan:**
+1. Suite de frontend una vez sobre `a00c772`.
+2. Tag `sprint-3` sobre el merge del #125 (`a9dcae7`).
+3. GitHub: issue nueva del CA-003 de la 014; comentario en #21 y #23 con su dependencia; cerrar #1 y #48 como duplicados; milestones con fechas de tres semanas rotuladas como estimación y las issues movidas al reparto.
+4. Rama `docs/sprint05-cierre-release`: ESTADO del Sprint 5 (tablero con quién mergeó, #159 sin revisión, decisión de la 031), ESTADO del Sprint 6 según el reparto, `docs/PLAN-SPRINTS-6-7-8.md`, regla en `CLAUDE.md`, estado en `docs/historias/INDICE.md`. PR a `develop`.
+5. PR de release `develop` → `main`. Después del merge a `main`: tag `sprint-5` y cerrar #148, #147 y #46.
+
+**Estado:** en curso
+- **HU / paso:** ninguna; paso 1. **Archivos:** solo esta bitácora.
+- 1 · Frontend sobre `a00c772`: «Executed 167 of 167 SUCCESS», TOTAL 167. 2 · Tag `sprint-3` creado y pusheado sobre `a9dcae7` (merge del #125).
+- 3a · Issue #160 creada (014 CA-003, Sprint 8); comentarios de dependencia en #21 (→ #160) y #23 (→ #9); #1 y #48 cerradas como duplicados (not planned).
+- 3b · Milestones: 6 → 04/12, 7 → 25/12, 8 → 15/01/2027, rotulados «Fechas ESTIMADAS (tres semanas)» en la descripción; 5 con descripción real. Issues movidas: Sprint 6 = 13 51 126 127 128; Sprint 7 = 9 16 18 19 20 33 34 35 52; Sprint 8 = 15 26 27 28 29 30 31 41 47 49 50 53 54 160; sin milestone: 137 (mantenimiento). Verificado con `gh issue list`.
+- 4 (en curso) · rama `docs/sprint05-cierre-release` desde `a00c772`: `docs/historias/INDICE.md` con columnas Issue, Sprint vigente y Estado (PR por HU, de las referencias cruzadas de cada issue); `docs/PLAN-SPRINTS-6-7-8.md` escrito; regla en `CLAUDE.md` §1. **Falta:** ESTADO del Sprint 5 y del 6, commit, PR a develop, PR de release. **A medias:** ninguno de los tres hechos.
+- 4 · ESTADO del Sprint 5 (tablero con quién mergeó cada PR, S5-09 #159 sin revisión, S5-10 la 031 reemplaza la D16, S5-11 etiquetas, PRÓXIMA SESIÓN con 497/497 y 167/167) y del Sprint 6 (reescrito con el plan) hechos. Commit y PR a develop: a continuación.
