@@ -261,6 +261,10 @@ cualquier orden: no comparten archivos. El de T5 es solo documentación.
 
 ## PRÓXIMA SESIÓN
 
+**09/11 · cierre preparado, sprint NO cerrado.** Lo que falta para cerrarlo está en
+«CIERRE DEL SPRINT 5 → PRÓXIMA SESIÓN», al final de este archivo. Lo de abajo es el rastro
+anterior.
+
 **06/11 · sesión sin supervisión:** cuatro PR abiertos, #154 a #157, todos con `verificador-tdd`
 APTO (ver la sección de arriba). Falta: revisión y merge de Javi, primero el #154; T3 y T4 con la base arriba.
 
@@ -281,3 +285,119 @@ cada una está en la tabla «Tablero». Demo del 06/11 con `GUION-DEMO.md`.
 3. Pendientes del 04/11, en este orden: `git merge develop` en la 044 (resolver
    `formulario.ts` sin perder `password` ni `autocompletar`); aviso flotante con foco devuelto y
    Escape.
+
+---
+
+## CIERRE DEL SPRINT 5 (09/11/2026)
+
+> Lo escribió un agente el 09/11, sin supervisión en vivo. Instrucción y rastro: `BITACORA.md`,
+> bloque «09/11/2026 08:32». **El sprint NO está cerrado:** faltan las dos condiciones de la §1 de
+> `CLAUDE.md` y los merges de #154 a #158.
+
+### Línea de base: la rama de integración `prueba/cierre-s5`
+
+Local, no pusheada: `origin/develop` (`144c325`) + `fix/merge-historial-baja` (#154) +
+`feature/fase2-visual-acceso-marco` (#155) + `fix/es-ar-porcentaje-y-total` (#156) +
+`fix/detalle-cliente-motivo-baja` (#158). Los cuatro merges entraron sin conflictos. HEAD
+**`0bd5b67`**. Es el estado de `develop` cuando entren los cuatro PR de código (más #157, que es
+solo documentación).
+
+| Suite | HEAD | Línea literal |
+|---|---|---|
+| Backend (`dotnet test`, desde `backend/`) | `0bd5b67` | `Correctas! - Con error:     0, Superado:   497, Omitido:     0, Total:   497, Duración: 11 m 12 s - LaCentral.Tests.dll (net10.0)` |
+| Frontend (`npx ng test --watch=false --browsers=ChromeHeadless`) | `0bd5b67` | `TOTAL: 167 SUCCESS` |
+
+Frontend: 153 (#154) + 9 (#155) + 4 (#156) + 1 (#158) = 167.
+
+### Entregable
+
+> Al cerrar este sprint, una persona puede entrar al sistema con cualquiera de los dos roles y
+> buscar artículos, ver en su ficha la existencia y la ubicación por sucursal y el historial de
+> compras, darlos de alta, de baja con confirmación y reactivarlos, gestionar clientes y
+> proveedores, y registrar una factura de compra, con montos y cantidades en formato argentino,
+> sobre `lacentral_demo`.
+
+**El recorrido (C3) no se hizo:** en esta máquina no están definidas `LACENTRAL_DEMO_PG` ni
+`LACENTRAL_DEMO_CLAVE` (ni en el proceso, ni en el usuario, ni en la máquina), y las credenciales
+no se piden. `scripts/probar-demo.sh` no arranca sin la primera. Ninguna parte del entregable
+está probada en el navegador contra `lacentral_demo`; lo que hay es la suite de arriba.
+
+| Parte del entregable | HU / PR | En el navegador contra `lacentral_demo` | Cobertura automática |
+|---|---|---|---|
+| Entrar con los dos roles; el rol en el encabezado | HU-UI-03 (#138), #155 | **No probado** (sin credenciales) | Frontend: `app.spec.ts` (nombre y rol en dos líneas, #155) |
+| Buscar artículos (nombre, código de proveedor, sin resultados) | 042 (#145) | **No probado** | Backend y frontend en verde |
+| Ficha: existencia y ubicación por sucursal | #141 | **No probado** | `Put_Ubicacion_204YLaFichaLaMuestraEnEsaSucursal` (HTTP + PG) |
+| Ficha: historial de compras | 016 (#152) | **No probado** | CA-003 y CA-004 **parciales** (dependen de la 028) |
+| Alta, baja con confirmación y reactivación de artículo | 014 (#153) | **No probado** | CA-003 **bloqueado por esquema** (`error_de_stock`) |
+| Clientes y proveedores: buscar, alta, modificación, baja y reactivación, motivo en la ficha | 045 (#151), #147 (#150), #158 | **No probado** | El motivo del cliente, recién con #158 |
+| Factura de compra con destino por línea | HU-FCO-01 (Sprint 3) | **No probado** | Backend en verde |
+| Montos y cantidades en formato argentino | #148 (#149), #156 | **No probado** | `formato-es-ar.spec.ts`; porcentaje y total del listado, recién con #156 |
+
+### Condiciones de cierre
+
+1. **Recorrido en el navegador contra `lacentral_demo`: PENDIENTE.** No se hizo (ver arriba).
+   Cuando se haga por script, va dicho tal cual: lo hizo un agente con un navegador manejado por
+   script, no una persona con clics. Javi decide si con eso alcanza para el punto 10 de la
+   Definición de Terminado o si lo repite a mano.
+2. **El dueño lo usó: PENDIENTE.** No hay registro en el repo de que Sergio haya usado el sistema
+   ni de lo que dijo. La demo del 06/11 estaba agendada (`GUION-DEMO.md`), pero su resultado no
+   quedó escrito.
+
+### Tablero final
+
+Sacado de GitHub el 09/11 (API pública, sin autenticar) y de `git log --first-parent
+origin/develop`. Los SP son los del tablero del 05/11 (no están en GitHub).
+
+| Issue | HU | SP | PR | Estado del PR | Issue en GitHub | Entregada |
+|---|---|---|---|---|---|---|
+| #43 | 042 · HU-UI-04 · listado reutilizable | 5 | #145 | Mergeado 05/11 | Cerrado (05/11) | Sí |
+| #148 | Formato es-AR | 1 | #149 · #156 | #149 mergeado 06/11 · #156 abierto | Abierto | Sí con #149; #156 salda la deuda (porcentaje, total) |
+| #147 | Paginación de clientes y proveedores | 2 | #150 | Mergeado 06/11 | Abierto | Sí |
+| #46 | 045 · HU-UI-07 · clientes y proveedores | 3 | #151 · #158 | #151 mergeado 06/11 · #158 abierto | Abierto | Sí con #151; #158 salda el motivo del cliente |
+| #23 | 016 · HU-ART-06 · historial de compras | 5 | #152 | Mergeado 06/11 | Abierto | **Parcial:** CA-003 y CA-004 dependen de la 028 |
+| #21 | 014 · HU-ART-04 · baja de artículo | 3 | #153 | Mergeado 06/11 | Abierto | **Parcial:** CA-003 bloqueado por esquema |
+
+- **Comprometidos: 19 SP** (seis issues). **Entregados completos: 11 SP** (#43, #148, #147, #46).
+  **Mergeados con CA pendientes: 8 SP** (#23 y #21), que siguen abiertos y no se cuentan como
+  entregados.
+- **Fuera de HU, abiertos:** #154 (arreglo de `develop`), #155 (fase 2 visual, Refs #42),
+  #157 (preguntas para Sergio, ESTADO y bitácora) y el PR de este cierre.
+- Milestone «Sprint 5» en GitHub: 5 abiertos y 1 cerrado. No se tocó.
+
+### Arrastre al Sprint 6
+
+- **014 · CA-003** (#21): la baja de un artículo con existencia por error de stock. Necesita la
+  columna `articulo_historial_baja.error_de_stock` (script 09): es cambio de esquema y lo decide
+  el equipo. Pregunta 2 de `PREGUNTAS-SERGIO.md`.
+- **016 · CA-003 y CA-004** (#23): dependen de la anulación de compras (028, #9, backlog).
+
+### Deuda abierta
+
+- **Concurrencia de la modificación contra la baja del cliente** (`auditor-persistencia`, #158):
+  `Cliente` no tiene token de concurrencia; que una modificación cruzada no pise una baja depende
+  de que EF solo actualice lo que cambió, y no hay test en el motor. Es anterior al #158.
+- **La compra que suma stock a un artículo inactivo** (05/11): se arregla en la factura de
+  compra.
+- **D-S5-02 · la provincia:** sin JOIN ni combo. Pregunta 7 de `PREGUNTAS-SERGIO.md`.
+- **D-S5-09 · concurrencia del upsert de ubicación**, sin test con dos sesiones.
+- **Bloques viejos de la bitácora con `Estado: en curso`** en las líneas 566, 599, 661 y 712 de
+  `BITACORA.md`: son de Santi y Lauti, y los cierran ellos.
+- El resto, en la sección «Deuda» de arriba.
+
+### PRÓXIMA SESIÓN
+
+Para cerrar el Sprint 5 de verdad, en este orden:
+
+1. **Merges** (los revisa otro integrante, DoD), sin rebase:
+   1. **#154 primero:** `develop` (`144c325`) no compila el frontend sin él.
+   2. #155, #156 y #158, en cualquier orden: entran sin conflictos (lo probó `prueba/cierre-s5`).
+   3. #157 y después el PR de este cierre, que sale de #157.
+   4. Una corrida completa sobre `develop` con todo adentro; tiene que dar lo de `0bd5b67`.
+2. **Condición 1:** el recorrido de los 9 puntos contra `lacentral_demo`, con `admin.demo` y
+   `operador.demo`. Hace falta `LACENTRAL_DEMO_PG` (y `LACENTRAL_DEMO_CLAVE`) en el entorno de
+   quien lo corra.
+3. **Condición 2:** que Sergio lo use, o agendarlo, y anotar lo que diga.
+4. **Issues** (los mueve Javi): cerrar #46 y #147; #21 y #23 quedan abiertas; el milestone se
+   cierra con las dos condiciones cumplidas.
+5. **Decisiones:** `error_de_stock` (014 CA-003), la provincia (D-S5-02) y las siete preguntas de
+   `PREGUNTAS-SERGIO.md`.

@@ -1245,3 +1245,10 @@ vale esta.)
 6. C5: lista de issues para Javi; nada se toca en GitHub.
 
 **Estado:** en curso
+- 08:35 · **Estado de partida:** `origin/develop` = `144c325`. #154 a #158 abiertos, ninguno mergeado (leído de la API pública de GitHub, sin autenticar: `gh` no está instalado y no se usa la credencial de git). `graphify update .`: grafo actualizado. Base: `TcpTestSucceeded: True`.
+- 08:40 · **C1 hecho:** `prueba/cierre-s5` (local, no pusheada) = `144c325` + #154 + #155 + #156 + #158, sin conflictos. HEAD `0bd5b67`.
+- 08:45 · **C2 frontend** sobre `0bd5b67`: `TOTAL: 167 SUCCESS` (153 + 9 + 4 + 1).
+- 08:47 · **C3:** `LACENTRAL_DEMO_PG` y `LACENTRAL_DEMO_CLAVE` no están definidas, ni en el proceso, ni en el usuario, ni en la máquina. `probar-demo.sh` no arranca sin la primera. Las credenciales no se piden: C3 no se hace.
+  **BLOQUEADO EN:** C3 necesita las dos variables en el entorno (de Javi). Sigo con C4 sin el recorrido.
+- 08:58 · **C2 backend** sobre `0bd5b67`: `Correctas! - Con error: 0, Superado: 497, Omitido: 0, Total: 497, Duración: 11 m 12 s`.
+- 09:05 · **C4:** sección «CIERRE DEL SPRINT 5» en `ESTADO.md`, `informe-cierre-sprint5.md` y el cuerpo del PR en `docs/sprint05/pr-docs-sprint05-cierre.md` (regla 5: `gh` no está). Tablero desde GitHub y git: comprometidos 19 SP, entregados completos 11, mergeados con CA pendientes 8 (#23, #21). Condición 2 pendiente: no hay registro de que Sergio lo usó.
