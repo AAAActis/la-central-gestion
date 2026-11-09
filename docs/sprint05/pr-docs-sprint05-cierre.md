@@ -25,7 +25,8 @@ Es `develop` (`144c325`) con #154, #155, #156 y #158 mergeados, sin conflictos. 
 
 ## Verificadores
 - `auditor-persistencia`: no aplica (no toca `backend/` ni el esquema).
-- `verificador-tdd`: ver el comentario o la bitácora.
+- `verificador-tdd`: ronda 1 NO APTO sobre `cdf1d65..6e256d4` (este cuerpo decía que el bloque de la bitácora estaba cerrado y no lo estaba); arreglo en `c1b22af`; ronda 2 APTO sobre `6e256d4..c1b22af`.
+- El commit que agrega esta línea solo toca este archivo y queda fuera de la verificación.
 
 ## De dónde salen los números
 De `git log --first-parent origin/develop`, de la API pública de GitHub (09/11, sin autenticar) y
