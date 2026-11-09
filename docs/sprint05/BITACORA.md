@@ -1072,3 +1072,176 @@ vale esta.)
 - 18:54 · **#158:** `auditor-persistencia` **APTO** sobre `3ad1399..47204d6`. No bloqueantes: el test solo cuenta las filas del historial; `Cliente` sin token de concurrencia (anterior al PR). Cuerpo del #158 actualizado (decía «relee las dos filas»: solo las cuenta) y resultados comentados.
 - 18:57 · `ESTADO.md`: filas T3 y T4 de la sesión del 06/11 actualizadas; D-S5-09 corregida con nota del 08/11 (sin borrar el texto original).
 - 18:57 · **Cierre.** Quedan abiertos: los PR #154 a #158, sin mergear, para Javi. T4 sin PR (test ya existente). Nada escrito en ninguna base fuera del esquema de pruebas.
+
+## 09/11/2026 08:32 · Cierre del Sprint 5 (C1 a C5)
+
+**Instrucción recibida (verbatim):**
+> # Instrucciones para Claude Code · cierre del Sprint 5
+>
+> > Objetivo: dejar el Sprint 5 listo para cerrar, con todo en PR abiertos en GitHub.
+> > Javi no va a estar auditando en vivo. **Nada se mergea.**
+>
+> ---
+>
+> ## 0 · Reglas de esta sesión (además de `CLAUDE.md`)
+>
+> 1. **No mergees nada, a ninguna rama.** No hagas push a `develop` ni a `main`. Los PR que
+>    abras quedan abiertos: los revisa otro integrante (DoD).
+> 2. **No rebasees ramas pusheadas.** Si hace falta traer cambios, es `git merge`.
+> 3. **Bases de datos:** `lacentral` nunca. `lacentral_test` solo a través de la suite.
+>    `lacentral_demo` sí se escribe en el recorrido (es para eso), con datos que digan
+>    «CIERRE-S5» en el nombre, para que se reconozcan.
+> 4. **Credenciales:** usá las variables `LACENTRAL_DEMO_PG` y `LACENTRAL_DEMO_CLAVE` del
+>    entorno. No las imprimas, no las escribas en archivos ni en commits, no las pidas.
+> 5. **GitHub:** abrí los PR con `gh`. **Si `gh` no está instalado o no está logueado, no uses
+>    la credencial de git para llamar a la API.** Pusheá la rama y dejá el cuerpo del PR en
+>    `docs/sprint05/pr-<rama>.md` para que Javi lo abra.
+> 6. **No tomes decisiones de negocio.** Lo que necesite una, va a PREGUNTAS.
+> 7. **La bitácora es obligatoria** (`docs/sprint05/BITACORA.md`), con esta instrucción verbatim
+>    en el primer bloque.
+> 8. **Si algo se traba más de dos intentos, cortalo.** Anotá `BLOQUEADO EN:` y seguí con lo que
+>    no dependa de eso.
+>
+> ## 1 · Estado de partida (verificalo, no lo asumas)
+>
+> ```bash
+> git fetch --all --prune
+> git log --oneline -8 origin/develop
+> gh pr list --state open      # o la página de PR, si no hay gh
+> graphify update .            # el grafo local está viejo; si no está instalado, seguí
+> ```
+>
+> - **`develop` (`144c325`) no compila el frontend.** El arreglo es el PR #154.
+> - **Abiertos y sin revisar:** #154 (arreglo de develop), #155 (Fase 2 visual), #156 (es-AR),
+>   #157 (preguntas para Sergio, ESTADO y bitácora) y #158 (motivo de baja del cliente).
+> - **La base:** `Test-NetConnection 100.125.169.91 -Port 5432`. Si `arch` sigue offline, hacé
+>   solo las tareas que no la necesitan y declaralo.
+>
+> Si algún PR ya se mergeó, manda git: ajustá lo que sigue.
+>
+> ---
+>
+> ## 2 · Tareas, en este orden
+>
+> ### C1 · Rama local de integración (no se pushea)
+>
+> ```bash
+> git checkout -b prueba/cierre-s5 origin/develop
+> git merge --no-edit origin/fix/merge-historial-baja
+> git merge --no-edit origin/feature/fase2-visual-acceso-marco
+> git merge --no-edit origin/fix/es-ar-porcentaje-y-total
+> git merge --no-edit origin/fix/detalle-cliente-motivo-baja
+> ```
+>
+> Si aparece un conflicto, **no lo resuelvas a ciegas**: anotá dónde y en qué PR, y cortá C1.
+>
+> ### C2 · Suites completas sobre la integración
+>
+> Backend y frontend, una corrida cada una, con la línea literal del resumen y el hash.
+> Es la línea de base con la que cierra el sprint (va en C4).
+>
+> ### C3 · Recorrido del entregable contra `lacentral_demo` [BASE]
+>
+> Levantá el sistema con `bash scripts/probar-demo.sh` desde `prueba/cierre-s5` y recorré el
+> entregable **en un navegador real** (Playwright o CDP), con los dos roles.
+>
+> Por cada punto: qué se hizo, con qué datos, qué se vio, y una captura en
+> `docs/sprint05/evidencia/cierre/`.
+>
+> | # | Qué | Datos |
+> |---|---|---|
+> | 1 | Entrar con los dos roles; el rol se ve en el encabezado | `admin.demo`, `operador.demo` |
+> | 2 | Buscar por nombre, por código de proveedor y sin resultados | «buj», un código de proveedor de la demo, «zx999» |
+> | 3 | Ficha: existencia y ubicación por sucursal; cambiar una ubicación y dejarla como estaba | `LC-000021` |
+> | 4 | Ficha: historial de compras, del más reciente al más antiguo | `LC-000021` (8 compras) |
+> | 5 | Alta de artículo con dos códigos de proveedor | nombre «CIERRE-S5 Artículo de prueba» |
+> | 6 | Baja con confirmación y reactivación del artículo del punto 5; intento de baja de uno con existencia, que tiene que bloquear | el del punto 5 y `LC-000021` |
+> | 7 | Clientes y proveedores: buscar, alta, modificación, baja con confirmación y reactivación; el motivo se ve en la ficha del dado de baja | razón social «CIERRE-S5 …» |
+> | 8 | Factura de compra de dos líneas con destino a las dos sucursales; después la ficha muestra el stock y el costo nuevos | el artículo del punto 5 |
+> | 9 | Montos y cantidades en formato argentino en la ficha, los precios y la factura | lo de arriba |
+>
+> - **Si un punto falla,** anotá el error literal (navegador y consola de la API) y seguí con el
+>   resto. **No arregles código en esta sesión:** cada falla va en QUÉ FALTA, con su causa probable.
+> - **En el ESTADO va dicho tal cual:** el recorrido lo hizo un agente con un navegador manejado
+>   por script, no una persona con clics. Javi decide si con eso alcanza para el punto 10 o lo
+>   repite a mano.
+>
+> ### C4 · Cierre del Sprint 5 en documentación
+>
+> Rama `docs/sprint05-cierre`, **que sale de `origin/docs/preguntas-sergio` (#157)**, porque ese
+> PR ya toca el ESTADO y la bitácora. En el cuerpo: «Depende de #154 y de #157».
+>
+> 1. **`docs/sprint05/ESTADO.md`, sección «CIERRE DEL SPRINT 5»:**
+>    - **Entregable:** cada parte, con lo que salió en C3 (hecho, falló o no probado, y por qué).
+>    - **Condiciones de cierre:**
+>      - **Condición 1** (recorrido): lo que salió de C3, con la aclaración de que fue por
+>        script.
+>      - **Condición 2** (el dueño lo usó): **pendiente**, salvo que haya registro en el repo de
+>        que Sergio lo usó. No la des por cumplida.
+>    - **Tablero final:** cada issue, su PR, SP y estado, sacado de git y GitHub, no del ESTADO
+>      viejo. SP comprometidos contra entregados.
+>    - **Qué pasa al Sprint 6 como arrastre:** el CA-003 de la 014 (#21, columna
+>      `error_de_stock`, para decidir) y los CA-003 y CA-004 de la 016 (#23, dependen de la 028).
+>    - **Deuda abierta:**
+>      - concurrencia de la modificación contra la baja (del auditor, #158);
+>      - la compra que suma stock a un artículo inactivo (05/11);
+>      - D-S5-02, la provincia;
+>      - los bloques viejos de la bitácora en curso (líneas 566, 599, 661 y 712; los cierran
+>        Santi y Lauti).
+>    - **Las suites de C2**, con hash.
+>    - **PRÓXIMA SESIÓN:** qué falta para cerrar de verdad: los merges, la condición 2 y las
+>      decisiones.
+> 2. **`docs/sprint05/informe-cierre-sprint5.md`,** con la misma forma que
+>    `docs/sprint03/informe-cierre-sprint3.md`: entregable, qué entró, métricas, arrastre,
+>    decisiones y lecciones. **Sin inventar números:** todo sale de git, de los PR o de C2 y C3.
+> 3. **Bitácora:** el bloque de esta sesión, cerrado.
+>
+> Abrí el PR (o dejá su cuerpo, regla 5). Es solo documentación, así que `auditor-persistencia`
+> no aplica. El `verificador-tdd` corre igual, sobre el diff.
+>
+> ### C5 · Lo que no se hace en GitHub
+>
+> **No cierres ni muevas issues.** Dejá la lista para Javi en QUÉ FALTA:
+> - cerrar #46 y #147 (completas);
+> - #21 y #23 quedan abiertas;
+> - el milestone del Sprint 5 se cierra cuando se cumplan las dos condiciones.
+>
+> ---
+>
+> ## 3 · Lo que NO hacés
+>
+> - **Mergear, cerrar issues ni tocar milestones.**
+> - **Arreglar fallas que aparezcan en el recorrido:** se anotan; los arreglos van en otra sesión.
+> - **Empezar algo del Sprint 6** (C2, C5 y C6 siguen abiertas).
+> - **Responder las preguntas de `PREGUNTAS-SERGIO.md`.**
+>
+> ---
+>
+> ## 4 · Reporte final
+>
+> Un solo mensaje, con este formato:
+>
+> **QUÉ HICE**
+> Por tarea (C1 a C5): estado (hecho, parcial o bloqueado) y, si hay, rama y PR con su link.
+>
+> **EVIDENCIA**
+> - Las suites de C2: línea literal del resumen y hash.
+> - C3: tabla de los 9 puntos con su resultado y dónde está cada captura.
+> - `verificador-tdd` del PR de C4.
+>
+> **QUÉ FALTA**
+> Para cerrar el sprint: merges en orden, condición 2, fallas del recorrido, issues para Javi y
+> decisiones.
+>
+> **PREGUNTAS**
+> Lo que necesita una decisión de Javi o del equipo.
+
+**Plan:**
+1. Estado de partida: fetch, `origin/develop`, `gh`, `graphify update .`, base.
+2. C1: rama local `prueba/cierre-s5` con los cuatro merges; si hay conflicto, se anota y se corta.
+3. C2: suites completas de backend y frontend sobre la integración.
+4. C3: `scripts/probar-demo.sh` y recorrido de los 9 puntos por CDP, con los dos roles; capturas en `docs/sprint05/evidencia/cierre/`. Fallas se anotan, no se arreglan.
+5. C4: en esta rama (`docs/sprint05-cierre`, desde #157), sección «CIERRE DEL SPRINT 5» del ESTADO, `informe-cierre-sprint5.md`, PR o cuerpo en `docs/sprint05/pr-docs-sprint05-cierre.md`, `verificador-tdd`.
+6. C5: lista de issues para Javi; nada se toca en GitHub.
+
+**Estado:** en curso
