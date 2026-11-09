@@ -210,6 +210,11 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
 - **D-S5-09 · sin test de concurrencia del upsert de ubicación** (la condición `activo` va
   dentro de la sentencia, pero no hay prueba con dos sesiones), ni test de API que afirme que
   OPERADOR recibe 204 en `PUT .../ubicaciones/{sucursalId}` (el rol es de toda la clase).
+  **08/11: la segunda mitad estaba mal registrada.** El test de API ya existía cuando se escribió
+  esta nota: `ModificarArticuloApiPostgreSqlTests.Put_Ubicacion_204YLaFichaLaMuestraEnEsaSucursal`
+  (`f2bb5a9`, 04/11 12:45; la nota es de `7c4ddc1`, 04/11 16:46). Con
+  `[Authorize(Roles = "ADMINISTRADOR")]` en la acción da `Expected: NoContent / Actual: Forbidden`.
+  Queda abierta solo la concurrencia del upsert.
 - Sigue de antes: D-27a, D-27c, el campo en el `ProblemDetails`, el largo del motivo (200/255),
   `RestablecerContrasenaUseCase.cs:43`.
 
@@ -227,7 +232,37 @@ una sesión de solo lectura: «ya era VARCHAR(60); sin cambios».
 
 ---
 
+## Sesión del 06/11/2026 · sin supervisión (Javi revisa después)
+
+Instrucción y rastro completo en `BITACORA.md`, bloque «06/11/2026 18:47». **Nada se mergeó.**
+La base de pruebas (`100.125.169.91:5432`) no respondió: `TcpTestSucceeded: False`.
+
+| Tarea | Rama | PR | Estado |
+|---|---|---|---|
+| T0 · arreglo del merge de #152 y #153 | `fix/merge-historial-baja` | #154 | Abierto. Frontend 153/153, `ng build` limpio. `verificador-tdd` APTO. Backend no verificado (base caída) |
+| T1 · fase 2 visual del acceso y del marco (Refs #42) | `feature/fase2-visual-acceso-marco` | #155 | Abierto. Depende de #154. Frontend 162/162 sobre `bba4a4a`. `verificador-tdd` NO APTO en la ronda 1 (4 guardas sin test), APTO en la 2. Capturas en `evidencia/fase2/` |
+| T2 · es-AR: porcentaje y total del listado (Refs #148) | `fix/es-ar-porcentaje-y-total` | #156 | Abierto. Depende de #154. Frontend 157/157 sobre `ab1f0ef`. `verificador-tdd` NO APTO en la ronda 1 (precisión y «x de y»), APTO en la 2. Salda la deuda anotada en la fila #148 del tablero |
+| T3 · motivo de baja en el detalle de cliente | `fix/detalle-cliente-motivo-baja` | #158 | Hecha el 08/11, cuando volvió la base. Abierto. Depende de #154. Backend 497/497 sobre `47204d6`, frontend 154/154 sobre `8e67fd1`. `verificador-tdd` NO APTO en la ronda 1 (M2: el reactivado perdía el motivo), APTO en la 2. `auditor-persistencia` APTO |
+| T4 · test de API: OPERADOR recibe 204 en la ubicación (D-S5-09) | — | — | **Sin PR (08/11):** el test ya existía (`f2bb5a9`) y discrimina con la mutación pedida. Corregida la nota D-S5-09 |
+| T5 · preguntas para Sergio | `docs/preguntas-sergio` | #157 | Abierto. `PREGUNTAS-SERGIO.md`, con las siete reglas abiertas. `verificador-tdd` APTO (solo docs) |
+
+La tabla del tablero no se tocó: los issues siguen como estaban en GitHub, y los PR de la sesión
+quedan para que Javi los revise.
+
+**Orden de merge sugerido:** #154 primero (destraba `develop`). Después #155 y #156, en
+cualquier orden: no comparten archivos. El de T5 es solo documentación.
+
+**Preguntas de la sesión para Javi o el equipo** (también en el cuerpo de #155):
+- la bajada de Clientes y Proveedores, que no tienen referencia;
+- el pie del marco: los rótulos «Propuesta visual» y «Datos ficticios para revisión» de la referencia 02 no se copiaron;
+- la tarjeta «Factura de compra» repite el `h1` (la referencia 09 la titula «Proveedor»).
+
+---
+
 ## PRÓXIMA SESIÓN
+
+**06/11 · sesión sin supervisión:** cuatro PR abiertos, #154 a #157, todos con `verificador-tdd`
+APTO (ver la sección de arriba). Falta: revisión y merge de Javi, primero el #154; T3 y T4 con la base arriba.
 
 **05/11, a la noche · las cinco HU tienen PR (#149 a #153) y las compuertas en APTO.** Deuda nueva: la compra puede sumar stock a un artículo que la baja ya dejó inactivo (se arregla en la factura de compra). Falta mergear: #149, #150, después #151; #152 y #153 son independientes. Para decidir: D2 de la 045 (provincia) y el CA-003 de la 014 (columna nueva).
 `GUION-DEMO.md` dice que los montos salen en formato inglés: deja de ser cierto cuando entre el #149.
