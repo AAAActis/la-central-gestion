@@ -288,6 +288,16 @@ cualquier orden: no comparten archivos. El de T5 es solo documentación.
 
 ## PRÓXIMA SESIÓN
 
+**11/11 · el release NO entró. Verificado contra la API de GitHub el 11/11/2026:** #161
+(`docs/sprint05-cierre-release` → `develop`) y #162 (`develop` → `main`, 299 commits, 324
+archivos) **siguen abiertos y sin mergear, con cero reviews**. El merge con bypass del 09/11 no
+quedó. La rama exige una aprobación y no hay checks de CI; `AAAActis` es la cuenta de Santi y de
+Lauti, así que **aprueba Javi (`Jotelsooon`)**. Orden: **#161 primero, después #162** (al revés,
+el cierre documental queda fuera de `main`). Hasta entonces siguen abiertas #148, #147 y #46, y
+no existe la etiqueta `sprint-5`. Lo que se dice abajo del release «abierto» es correcto; lo
+que no se cumplió es que entrara.
+Respuestas de Sergio del 11/11: `docs/sprint06/ESTADO.md` (D-S6-01 a 07).
+
 **09/11 · cierre y release.** Suite completa sobre `develop` `a00c772`: backend **497/497**
 («Correctas! - Con error: 0, Superado: 497, Omitido: 0, Total: 497, Duración: 3 m 45 s»),
 frontend **167/167** (Chromium). Release `develop` → `main` abierto; al entrar: etiqueta
