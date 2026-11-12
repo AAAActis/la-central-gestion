@@ -14,30 +14,29 @@ public class ConsultarClientesUseCase
         _clienteRepositorio = clienteRepositorio;
     }
 
-    public async Task<Result<IReadOnlyList<ClienteResumenDto>>> EjecutarAsync(
-        string texto, bool incluirInactivos, CancellationToken ct = default)
+    public async Task<Result<PaginaDto<ClienteResumenDto>>> EjecutarAsync(
+        string texto, bool incluirInactivos, int pagina = 1, int tamanoPagina = 20, CancellationToken ct = default)
     {
         // CA: hace falta un criterio de búsqueda, no se lista todo el padrón.
         if (string.IsNullOrWhiteSpace(texto))
         {
-            return Result<IReadOnlyList<ClienteResumenDto>>.Failure(
+            return Result<PaginaDto<ClienteResumenDto>>.Failure(
                 TipoError.Invalido, "Ingresá una razón social o un CUIT/CUIL para buscar.");
         }
 
-        var clientes = await _clienteRepositorio.BuscarAsync(texto.Trim(), incluirInactivos, ct);
-
-        // CA: sin resultados hay que avisarlo explícitamente, no devolver una lista vacía sin más.
-        if (clientes.Count == 0)
+        if (pagina < 1 || tamanoPagina is < 1 or > 100 || (long)(pagina - 1) * tamanoPagina > int.MaxValue)
         {
-            return Result<IReadOnlyList<ClienteResumenDto>>.Failure(
-                TipoError.NoEncontrado, "No se encontraron clientes que coincidan con la búsqueda.");
+            return Result<PaginaDto<ClienteResumenDto>>.Failure(TipoError.Invalido, "La página o su tamaño no son válidos.");
         }
 
-        var respuesta = clientes
+        // CA-003 v1.1 (#147): sin coincidencias es una página vacía, no un 404.
+        var (lista, total) = await _clienteRepositorio.BuscarAsync(texto.Trim(), incluirInactivos, pagina, tamanoPagina, ct);
+
+        var respuesta = lista
             .Select(c => new ClienteResumenDto(
-                c.Codigo, c.RazonSocial, c.Cuit, c.CondicionFiscal, c.CondicionPago, c.Activo))
+                c.Id, c.Codigo, c.RazonSocial, c.Cuit, c.CondicionFiscal, c.CondicionPago, c.Activo))
             .ToList();
 
-        return Result<IReadOnlyList<ClienteResumenDto>>.Success(respuesta);
+        return Result<PaginaDto<ClienteResumenDto>>.Success(new PaginaDto<ClienteResumenDto>(respuesta, total, pagina, tamanoPagina));
     }
 }

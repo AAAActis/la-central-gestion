@@ -52,7 +52,7 @@ public class ModificarClienteUseCase
         cliente.Codigo = request.Codigo;
         cliente.RazonSocial = request.RazonSocial;
         cliente.Cuit = request.Cuit;
-        cliente.CondicionFiscal = request.CondicionFiscal;
+        cliente.CondicionFiscal = request.CondicionFiscal ?? string.Empty;
         cliente.CondicionPago = request.CondicionPago;
         cliente.Telefonos = (request.Telefonos ?? new List<string>()).Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
         // Una dirección sin calle viaja como "": se conserva para no borrar su localidad.

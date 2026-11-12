@@ -52,7 +52,19 @@ public partial class FacturaCompra
 
     public int? UsuarioAnulacionId { get; set; }
 
-    public virtual ICollection<ArticuloHistorialCompra> ArticuloHistorialCompra { get; set; } = new List<ArticuloHistorialCompra>();
+    /// <summary>
+    /// Quién AUTORIZÓ la anulación. Mismo criterio que en factura_venta: la condición de rol ADMINISTRADOR se valida en el caso de uso, no acá. Alimenta R-08.
+    /// </summary>
+    public int? UsuarioAutorizacionId { get; set; }
+
+    /// <summary>
+    /// Indica si la operación se respaldó con comprobante fiscal. TRUE por defecto.
+    /// </summary>
+    public bool ConComprobanteFiscal { get; set; }
+
+    public virtual ICollection<ArticuloHistorialCompra> ArticuloHistorialCompraFacturaCompra { get; set; } = new List<ArticuloHistorialCompra>();
+
+    public virtual ICollection<ArticuloHistorialCompra> ArticuloHistorialCompraFacturaCompraNavigation { get; set; } = new List<ArticuloHistorialCompra>();
 
     public virtual ICollection<FacturaCompraDetalle> FacturaCompraDetalle { get; set; } = new List<FacturaCompraDetalle>();
 
@@ -61,4 +73,6 @@ public partial class FacturaCompra
     public virtual Usuario Usuario { get; set; } = null!;
 
     public virtual Usuario? UsuarioAnulacion { get; set; }
+
+    public virtual Usuario? UsuarioAutorizacion { get; set; }
 }

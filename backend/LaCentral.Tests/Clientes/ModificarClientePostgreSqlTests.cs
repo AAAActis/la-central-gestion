@@ -15,6 +15,7 @@ namespace LaCentral.Tests.Clientes;
 /// Toda afirmación relee la fila con un contexto nuevo.
 /// </summary>
 [Trait("Cliente", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class ModificarClientePostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;

@@ -1,3 +1,4 @@
+using LaCentral.UseCases.Comun;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -116,10 +117,10 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
             .ReturnsAsync(() => clienteGuardado);
         repoMock.Setup(r => r.ObtenerPorCuitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Cliente?)null);
-        repoMock.Setup(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        repoMock.Setup(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => clienteGuardado is null
-                ? (IReadOnlyList<Cliente>)new List<Cliente>()
-                : new List<Cliente> { clienteGuardado });
+                ? ((IReadOnlyList<Cliente>)new List<Cliente>(), 0)
+                : (new List<Cliente> { clienteGuardado }, 1));
         repoMock.Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
             .Callback<Cliente, CancellationToken>((c, _) => clienteGuardado = c)
             .ReturnsAsync(true);
@@ -238,8 +239,8 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
                 tabla.Add(p);
             })
             .Returns(Task.CompletedTask);
-        repoMock.Setup(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => (IReadOnlyList<Proveedor>)tabla.ToList());
+        repoMock.Setup(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => ((IReadOnlyList<Proveedor>)tabla.ToList(), tabla.Count));
         repoMock.Setup(r => r.ObtenerDetallePorIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((int id, CancellationToken _) => tabla.FirstOrDefault(p => p.Id == id));
         repoMock.Setup(r => r.ObtenerPorCuitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -272,9 +273,9 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
         var respuestaConsulta = await http.GetAsync(
             $"/api/proveedores?texto={Uri.EscapeDataString("Proveedor Integracion SA")}&incluirInactivos=false");
         Assert.Equal(HttpStatusCode.OK, respuestaConsulta.StatusCode);
-        var resultados = await respuestaConsulta.Content.ReadFromJsonAsync<List<ProveedorResumenDto>>();
+        var resultados = await respuestaConsulta.Content.ReadFromJsonAsync<PaginaDto<ProveedorResumenDto>>();
         Assert.NotNull(resultados);
-        var idProveedor = Assert.Single(resultados!).Id;
+        var idProveedor = Assert.Single(resultados!.Items).Id;
 
         // 3. Modificación — HU-PRO-03
         var modificarRequest = new

@@ -18,6 +18,5 @@ public class Usuario
     // valores junto.
     public string? MotivoBaja { get; set; }
     public DateTime? FechaBaja { get; set; }
-    public int? UsuarioAltaId { get; set; }
     public int? UsuarioBajaId { get; set; }
 }

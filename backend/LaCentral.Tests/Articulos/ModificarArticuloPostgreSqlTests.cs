@@ -18,6 +18,7 @@ namespace LaCentral.Tests.Articulos;
 /// doble. Todo se relee con un contexto nuevo.
 /// </summary>
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class ModificarArticuloPostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;
@@ -61,7 +62,7 @@ public class ModificarArticuloPostgreSqlTests
         await using var contexto = fixture.CrearContexto();
         var alta = await new CrearArticuloUseCase(new ArticuloRepositorio(contexto), new ArticuloRepositorio(contexto),
                 new ProveedorRepositorio(contexto), new UnidadDeTrabajo(contexto))
-            .EjecutarAsync(new(nombre, "Estante 1",
+            .EjecutarAsync(new(nombre,
                 codigos.Select(c => new CodigoProveedorRequest(c.ProveedorId, c.Codigo)).ToArray()));
         Assert.True(alta.IsSuccess, alta.Error);
         return alta.Value.Id;
@@ -79,11 +80,11 @@ public class ModificarArticuloPostgreSqlTests
 
     private static ModificarArticuloRequest Datos(string nombre, string? codigoInterno = null,
         params (int ProveedorId, string Codigo)[] codigos) =>
-        new(nombre, " Pasillo 9 ", codigoInterno, codigos.Select(c => new CodigoProveedorRequest(c.ProveedorId, c.Codigo)).ToArray());
+        new(nombre, codigoInterno, codigos.Select(c => new CodigoProveedorRequest(c.ProveedorId, c.Codigo)).ToArray());
 
     // ---- CA1: por Id ----
 
-    // La lección del Crítico 3: se actualiza por Id. Cambiar nombre, ubicación y código
+    // La lección del Crítico 3: se actualiza por Id. Cambiar nombre y código
     // interno de A no toca a B.
     [PostgreSqlFact]
     public async Task Modificar_ActualizaPorIdYNoTocaOtroArticulo()
@@ -99,10 +100,10 @@ public class ModificarArticuloPostgreSqlTests
 
         Assert.True(resultado.IsSuccess, resultado.Error);
         var modificado = await LeerAsync(fixture, a);
-        Assert.Equal(("Bujía NGK BPR6ES", "Pasillo 9", "BUJIA-01", true),
-            (modificado.Nombre, modificado.UbicacionDeposito, modificado.CodigoInterno, modificado.Activo));
+        Assert.Equal(("Bujía NGK BPR6ES", "BUJIA-01", true),
+            (modificado.Nombre, modificado.CodigoInterno, modificado.Activo));
         var otro = await LeerAsync(fixture, b);
-        Assert.Equal(("Filtro de aire", "Estante 1", $"LC-{b:D6}"), (otro.Nombre, otro.UbicacionDeposito, otro.CodigoInterno));
+        Assert.Equal(("Filtro de aire", $"LC-{b:D6}"), (otro.Nombre, otro.CodigoInterno));
     }
 
     // ---- CA2 ----
@@ -258,7 +259,7 @@ public class ModificarArticuloPostgreSqlTests
         var usuario = await fixture.CrearUsuarioAsync();
         var id = await CrearArticuloAsync(fixture, "Bujía");
         await using (var contexto = fixture.CrearContexto())
-            Assert.True((await Baja(contexto, usuario).EjecutarAsync(id, new("Discontinuado"))).IsSuccess);
+            Assert.True((await Baja(contexto, usuario).EjecutarAsync(id, new("Discontinuado", $"LC-{id:D6}"))).IsSuccess);
 
         Result resultado;
         await using (var contexto = fixture.CrearContexto())
@@ -312,7 +313,7 @@ public class ModificarArticuloPostgreSqlTests
         Assert.Equal(TipoError.Invalido, resultado.Tipo);
         var articulo = await LeerAsync(fixture, id);
         Assert.False(articulo.Activo);
-        Assert.Equal(("Bujía", "Estante 1"), (articulo.Nombre, articulo.UbicacionDeposito));
+        Assert.Equal("Bujía", articulo.Nombre);
         Assert.Empty(articulo.ArticuloCodigoAlternativo);
     }
 
@@ -367,7 +368,7 @@ public class ModificarArticuloPostgreSqlTests
         }
 
         var articulo = await LeerAsync(fixture, id);
-        Assert.Equal(("Bujía", "Estante 1"), (articulo.Nombre, articulo.UbicacionDeposito));
+        Assert.Equal("Bujía", articulo.Nombre);
         Assert.Empty(articulo.ArticuloCodigoAlternativo);
         Assert.Equal(new[] { ("NGK-1", norte) }, Codigos(await LeerAsync(fixture, otro)));
     }
@@ -424,7 +425,7 @@ public class ModificarArticuloPostgreSqlTests
         var otro = await CrearArticuloAsync(fixture, "Filtro de aire");
 
         await using (var contexto = fixture.CrearContexto())
-            Assert.True((await Baja(contexto, quienBaja).EjecutarAsync(id, new(" Discontinuado "))).IsSuccess);
+            Assert.True((await Baja(contexto, quienBaja).EjecutarAsync(id, new(" Discontinuado ", $"LC-{id:D6}"))).IsSuccess);
 
         var dadoDeBaja = await LeerAsync(fixture, id);
         Assert.False(dadoDeBaja.Activo);
@@ -472,7 +473,7 @@ public class ModificarArticuloPostgreSqlTests
         await using (var contexto = fixture.CrearContexto())
         {
             var excepcion = await Assert.ThrowsAsync<DbUpdateException>(() =>
-                Baja(contexto, usuario).EjecutarAsync(id, new("Discontinuado")));
+                Baja(contexto, usuario).EjecutarAsync(id, new("Discontinuado", $"LC-{id:D6}")));
             Assert.Contains("ux_articulo_hist_abierta", excepcion.InnerException?.Message);
         }
 
@@ -512,20 +513,20 @@ public class ModificarArticuloPostgreSqlTests
 
     // ---- Ficha ----
 
-    // La ficha trae la ubicación (para editarla) y el motivo de la baja.
+    // La ficha trae el motivo de la baja.
     [PostgreSqlFact]
-    public async Task Detalle_TraeUbicacionYMotivoDeBaja()
+    public async Task Detalle_TraeMotivoDeBaja()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
         var usuario = await fixture.CrearUsuarioAsync();
         var id = await CrearArticuloAsync(fixture, "Bujía");
         await using (var contexto = fixture.CrearContexto())
-            Assert.True((await Baja(contexto, usuario).EjecutarAsync(id, new("Discontinuado"))).IsSuccess);
+            Assert.True((await Baja(contexto, usuario).EjecutarAsync(id, new("Discontinuado", $"LC-{id:D6}"))).IsSuccess);
 
         await using var relectura = fixture.CrearContexto();
         var detalle = await new ArticuloRepositorio(relectura).ObtenerDetallePorIdAsync(id);
 
         Assert.NotNull(detalle);
-        Assert.Equal(("Estante 1", "Discontinuado", false), (detalle.UbicacionDeposito, detalle.MotivoBaja, detalle.Activo));
+        Assert.Equal(("Discontinuado", false), (detalle.MotivoBaja, detalle.Activo));
     }
 }

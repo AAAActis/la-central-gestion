@@ -40,9 +40,6 @@ public class Articulo
     // una fila activa puede conservarlos como rastro de su última baja (D10).
     public string? MotivoBaja { get; set; }
     public DateTime? FechaBaja { get; set; }
-    
-    // Texto libre e informativo: el sistema no gestiona el depósito.
-    public string? UbicacionDeposito { get; set; }
 
     public decimal? CostoVigente { get; set; }
 

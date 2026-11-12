@@ -49,6 +49,17 @@ public class ArticulosController : ControllerBase
         return this.AResultadoHttp(resultado);
     }
 
+    /// <summary>
+    /// Historial de compras, del más reciente al más antiguo. HU-ART-06 (016). Es solo lectura: los
+    /// registros los escribe la factura de compra y no hay endpoint para editarlos ni borrarlos (CA-005).
+    /// </summary>
+    [HttpGet("{id:int}/historial-compras")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> HistorialCompras(
+        int id, [FromServices] ObtenerHistorialComprasUseCase historial, CancellationToken ct)
+        => this.AResultadoHttp(await historial.EjecutarAsync(id, ct));
+
     /// <summary>Ficha: las seis modalidades, cada una con precio o con la razón de su ausencia. HU-ART-02.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -75,7 +86,6 @@ public class ArticulosController : ControllerBase
     {
         var entrada = new DtosNucleo.CrearArticuloRequest(
             request.Nombre,
-            request.UbicacionDeposito,
             (request.CodigosProveedor ?? new List<CodigoProveedorRequest>())
                 .Select(c => new DtosNucleo.CodigoProveedorRequest(c.ProveedorId, c.Codigo)).ToList());
 
@@ -102,12 +112,29 @@ public class ArticulosController : ControllerBase
     {
         var entrada = new DtosNucleo.ModificarArticuloRequest(
             request.Nombre,
-            request.UbicacionDeposito,
             request.CodigoInterno,
             (request.CodigosProveedor ?? new List<CodigoProveedorRequest>())
                 .Select(c => new DtosNucleo.CodigoProveedorRequest(c.ProveedorId, c.Codigo)).ToList());
 
         var resultado = await useCase.EjecutarAsync(id, entrada, cancellationToken);
+        return this.AResultadoHttp(resultado);
+    }
+
+    /// <summary>
+    /// N-9 · Ubicación en depósito del artículo en una sucursal, desde la ficha.
+    /// ADMINISTRADOR y OPERADOR. Vacío la borra. Dado de baja → 400.
+    /// </summary>
+    [HttpPut("{id:int}/ubicaciones/{sucursalId:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AsignarUbicacion(
+        int id, short sucursalId, AsignarUbicacionRequest request,
+        [FromServices] AsignarUbicacionArticuloUseCase useCase, CancellationToken cancellationToken)
+    {
+        var resultado = await useCase.EjecutarAsync(id, sucursalId, request.UbicacionDeposito, cancellationToken);
         return this.AResultadoHttp(resultado);
     }
 
@@ -134,10 +161,10 @@ public class ArticulosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DarDeBaja(
-        int id, DarDeBajaRequest request,
+        int id, BajaArticuloRequest request,
         [FromServices] DarDeBajaArticuloUseCase useCase, CancellationToken cancellationToken)
     {
-        var resultado = await useCase.EjecutarAsync(id, new DtosNucleo.DarDeBajaArticuloRequest(request.Motivo), cancellationToken);
+        var resultado = await useCase.EjecutarAsync(id, new DtosNucleo.DarDeBajaArticuloRequest(request.Motivo, request.Confirmacion ?? string.Empty), cancellationToken);
         return this.AResultadoHttp(resultado);
     }
 

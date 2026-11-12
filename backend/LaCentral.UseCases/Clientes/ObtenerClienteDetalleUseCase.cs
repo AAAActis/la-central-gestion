@@ -29,6 +29,7 @@ public class ObtenerClienteDetalleUseCase
             cliente.CondicionFiscal,
             cliente.CondicionPago,
             cliente.Activo,
+            cliente.MotivoBaja,
             cliente.Telefonos ?? new List<string>(),
             cliente.Direcciones ?? new List<string>()
         );

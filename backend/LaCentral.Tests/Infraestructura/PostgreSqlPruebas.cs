@@ -47,7 +47,11 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
     private PostgreSqlPruebas(NpgsqlConnection administracion, string esquema, string conexionAislada)
         => (_administracion, _esquema, _conexionAislada) = (administracion, esquema, conexionAislada);
 
-    /// <summary>Cadena con search_path al esquema aislado: para levantar la API contra él.</summary>
+    /// <summary>
+    /// Cadena con search_path «esquema aislado, fuente»: para levantar la API contra él. Toda tabla
+    /// se resuelve en el aislado (CrearAsync falla si la fuente tiene una que no se clona); de la
+    /// fuente (public, salvo LA_CENTRAL_TEST_SCHEMA) solo se ven las funciones de pg_trgm.
+    /// </summary>
     public string ConexionAislada => _conexionAislada;
 
     public LaCentralDbContext CrearContexto() => new(new DbContextOptionsBuilder<LaCentralDbContext>()
@@ -57,8 +61,11 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
     /// Solo para probar la limpieza: corre sobre la conexión de administración apenas
     /// creado el esquema, para forzar una falla real a mitad de la creación.
     /// </param>
+    /// <param name="origen">
+    /// Solo para probar la validación del esquema fuente. Por defecto, LA_CENTRAL_TEST_SCHEMA o public.
+    /// </param>
     public static async Task<PostgreSqlPruebas> CrearAsync(ITestOutputHelper salida,
-        Func<NpgsqlConnection, string, Task>? trasCrearEsquema = null)
+        Func<NpgsqlConnection, string, Task>? trasCrearEsquema = null, string? origen = null)
     {
         var conexion = ConexionRequerida;
         var alias = Environment.GetEnvironmentVariable("LACENTRAL_TEST_PG");
@@ -68,7 +75,11 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
 
         var config = new NpgsqlConnectionStringBuilder(conexion);
         ValidarBase(config.Database);
-        var origen = Environment.GetEnvironmentVariable("LA_CENTRAL_TEST_SCHEMA") ?? "public";
+        // Con una sola conexión, los tests de dos conexiones simultáneas se serializan y pasan sin probar nada.
+        if (config.MaxPoolSize < 2)
+            throw new InvalidOperationException($"Maximum Pool Size = {config.MaxPoolSize} en la conexión de test: " +
+                "tiene que ser al menos 2. Ver la cuenta de conexiones en LaCentral.Tests/README.md.");
+        origen ??= Environment.GetEnvironmentVariable("LA_CENTRAL_TEST_SCHEMA") ?? "public";
         if (!Regex.IsMatch(origen, "^[a-z_][a-z0-9_]*$"))
             throw new InvalidOperationException("El esquema fuente de test no es un identificador válido.");
         var esquema = "pr110_test_" + Guid.NewGuid().ToString("N");
@@ -78,7 +89,11 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
         config.Timeout = 10;
         config.CommandTimeout = 30;
         var admin = new NpgsqlConnection(config.ConnectionString);
-        config.SearchPath = esquema;
+        // El esquema aislado primero: ahí está clonada cada tabla del modelo, así que toda tabla se
+        // resuelve en él. La fuente va detrás solo para que se vean las funciones de pg_trgm
+        // (similarity), que en public viven ahí como en producción (#147). Es la fuente y no un
+        // public fijo: es el esquema que se valida abajo, así que nada se resuelve en uno sin validar.
+        config.SearchPath = $"{esquema}, {origen}";
         // Identifica en pg_stat_activity las conexiones del pool de este esquema.
         config.ApplicationName = esquema;
         var fixture = new PostgreSqlPruebas(admin, esquema, config.ConnectionString);
@@ -98,6 +113,12 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
             // Fallar ANTES de clonar/cargar si la plantilla real no coincide.
             foreach (var entidad in entidades)
                 await fixture.ValidarTablaAsync(origen, entidad);
+            // Y al revés: con search_path «aislado, fuente», una relación de la fuente que no se clona
+            // se resolvería en ella. En lacentral_test, public guarda la copia de los datos reales.
+            var sobrantes = await fixture.RelacionesFueraDelModeloAsync(origen, tablas);
+            if (sobrantes.Count > 0)
+                throw new InvalidOperationException($"El esquema fuente '{origen}' tiene tablas o vistas que el modelo no " +
+                    $"clona ({string.Join(", ", sobrantes)}): se resolverían en él. Re-scaffold antes de correr los tests.");
 
             // El DDL de PostgreSQL es transaccional: si algo falla antes del COMMIT,
             // incluso si se corta la conexión, el esquema no llega a existir.
@@ -223,6 +244,21 @@ public sealed class PostgreSqlPruebas : IAsyncDisposable
     {
         _aLiberar.Add(recurso);
         return recurso;
+    }
+
+    private async Task<List<string>> RelacionesFueraDelModeloAsync(string origen, IReadOnlyCollection<string> tablas)
+    {
+        await using var comando = new NpgsqlCommand("""
+            SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = @schema AND c.relkind IN ('r', 'v', 'm', 'p', 'f') AND NOT c.relispartition
+            ORDER BY c.relname
+            """, _administracion);
+        comando.Parameters.AddWithValue("schema", origen);
+        var sobrantes = new List<string>();
+        await using var reader = await comando.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+            if (!tablas.Contains(reader.GetString(0))) sobrantes.Add(reader.GetString(0));
+        return sobrantes;
     }
 
     private async Task ValidarTablaAsync(string origen, IEntityType entidad)

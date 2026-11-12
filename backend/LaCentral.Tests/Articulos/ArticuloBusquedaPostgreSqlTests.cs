@@ -9,6 +9,7 @@ using Xunit.Abstractions;
 namespace LaCentral.Tests.Articulos;
 
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class ArticuloBusquedaPostgreSqlTests
 {
     private readonly ITestOutputHelper _salida;

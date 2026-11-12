@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LaCentral.Data.Repositorios;
 
-public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepositorio, IPreciosArticuloRepositorio
+public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepositorio, IPreciosArticuloRepositorio, IHistorialComprasRepositorio
 {
     private readonly LaCentralDbContext _context;
 
@@ -62,7 +62,6 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
         {
             CodigoInterno = "TMP-" + Guid.NewGuid().ToString("N"),
             Nombre = articulo.Nombre,
-            UbicacionDeposito = articulo.UbicacionDeposito,
             PrecioCosto = articulo.CostoVigente,
             Activo = articulo.Activo,
             MotivoBaja = articulo.MotivoBaja,
@@ -98,20 +97,27 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
     // escribir, no lo que era al leer (otra sesión pudo darla de baja entre medio).
     // Sin código interno nuevo, la columna no entra en el SET: escribir el valor leído pisaría
     // el que otra sesión pudo cambiar entre la lectura y la escritura.
-    public async Task<bool> ActualizarDatosAsync(int id, string nombre, string? ubicacionDeposito, string? codigoInterno,
+    public async Task<bool> ActualizarDatosAsync(int id, string nombre, string? codigoInterno,
         CancellationToken ct = default)
     {
         var articulo = _context.Articulo.Where(a => a.Id == id && a.Activo);
         var filas = codigoInterno is null
             ? await articulo.ExecuteUpdateAsync(s => s
-                .SetProperty(a => a.Nombre, nombre)
-                .SetProperty(a => a.UbicacionDeposito, ubicacionDeposito), ct)
+                .SetProperty(a => a.Nombre, nombre), ct)
             : await articulo.ExecuteUpdateAsync(s => s
                 .SetProperty(a => a.Nombre, nombre)
-                .SetProperty(a => a.UbicacionDeposito, ubicacionDeposito)
                 .SetProperty(a => a.CodigoInterno, codigoInterno), ct);
         return filas == 1;
     }
+
+    // Un solo INSERT ... SELECT: la condición "activo" y el alta de la fila de stock (en cero,
+    // si no existía) van en la misma sentencia. Con fila, solo cambia la ubicación.
+    public async Task<bool> AsignarUbicacionAsync(int id, short sucursalId, string? ubicacionDeposito, CancellationToken ct = default)
+        => await _context.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO stock (articulo_id, sucursal_id, cantidad, ubicacion_deposito)
+            SELECT a.id, {sucursalId}, 0, {ubicacionDeposito} FROM articulo a WHERE a.id = {id} AND a.activo
+            ON CONFLICT (articulo_id, sucursal_id) DO UPDATE SET ubicacion_deposito = EXCLUDED.ubicacion_deposito
+            """, ct) == 1;
 
     // Solo inserta: los códigos que el artículo ya tiene no se tocan. Una carrera con otro
     // artículo la cierran codigo_unico_global y un_codigo_por_proveedor (23505 → 409).
@@ -128,11 +134,18 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
             .ExecuteDeleteAsync(ct) > 0;
 
     public async Task<bool> DarDeBajaAsync(int id, string motivo, DateTime fechaBaja, CancellationToken ct = default)
-        => await _context.Articulo.Where(a => a.Id == id && a.Activo)
+    {
+        // 014 · CA-002: la existencia se mira en el mismo UPDATE, no en una lectura previa. Antes se
+        // bloquea la fila: si una compra en curso la tiene, se espera a que confirme, y el UPDATE (otra
+        // sentencia, snapshot nuevo) ve su stock. Sin esto, la reevaluación del UPDATE bloqueado
+        // miraba stock con el snapshot viejo y la baja se escribía con existencia.
+        await _context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM articulo WHERE id = {id} FOR UPDATE", ct);
+        return await _context.Articulo.Where(a => a.Id == id && a.Activo && !a.Stock.Any(s => s.Cantidad > 0))
             .ExecuteUpdateAsync(s => s
                 .SetProperty(a => a.Activo, false)
                 .SetProperty(a => a.MotivoBaja, motivo)
                 .SetProperty(a => a.FechaBaja, fechaBaja), ct) == 1;
+    }
 
     // D10: motivo y fecha quedan en la fila como rastro de la última baja.
     public async Task<bool> ReactivarAsync(int id, CancellationToken ct = default)
@@ -223,22 +236,38 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
             .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<RegistroHistorialCompraDto>?> HistorialComprasAsync(int articuloId, CancellationToken ct = default)
+    {
+        if (!await _context.Articulo.AnyAsync(a => a.Id == articuloId, ct)) return null;
+        // Desempate por Id: dos líneas de la misma factura tienen la misma fecha.
+        return await _context.ArticuloHistorialCompra.AsNoTracking()
+            .Where(h => h.ArticuloId == articuloId)
+            .OrderByDescending(h => h.Fecha).ThenByDescending(h => h.Id)
+            .Select(h => new RegistroHistorialCompraDto(
+                h.Fecha, h.ProveedorId, h.Proveedor.RazonSocial, h.PrecioCosto,
+                h.FacturaCompraId, h.FacturaCompra.Numero, h.Anulado))
+            .ToListAsync(ct);
+    }
+
     public async Task<ArticuloDetalleConsultaDto?> ObtenerDetallePorIdAsync(int id, CancellationToken ct = default)
     {
         var articulo = await _context.Articulo.AsNoTracking()
             .Include(a => a.ArticuloCodigoAlternativo).ThenInclude(c => c.Proveedor)
-            .Include(a => a.Stock).ThenInclude(s => s.Sucursal)
+            .Include(a => a.Stock)
             .Include(a => a.ArticuloPrecioModalidad)
             .SingleOrDefaultAsync(a => a.Id == id, ct);
         if (articulo is null) return null;
+        var sucursales = await _context.Sucursal.AsNoTracking().OrderBy(s => s.Id).ToListAsync(ct);
 
         return new(articulo.Id, articulo.CodigoInterno, articulo.Nombre, articulo.Activo,
             articulo.PrecioCosto, articulo.UltimoProveedorId,
             articulo.ArticuloCodigoAlternativo.OrderBy(c => c.ProveedorId).ThenBy(c => c.Id)
                 .Select(c => new CodigoProveedorConsultaDto(c.ProveedorId, c.Proveedor.RazonSocial,
                     c.Codigo, NormalizacionArticulo.Codigo(c.Codigo))).ToArray(),
-            articulo.Stock.OrderBy(s => s.SucursalId)
-                .Select(s => new StockSucursalConsultaDto(s.SucursalId, s.Sucursal.Nombre, s.Cantidad)).ToArray(),
+            // HU-STK-01 CA-002: toda sucursal aparece; sin fila en stock (sin movimientos) es cero, no vacío.
+            sucursales.Select(s => new StockSucursalConsultaDto(s.Id, s.Nombre,
+                articulo.Stock.SingleOrDefault(e => e.SucursalId == s.Id)?.Cantidad ?? 0m,
+                articulo.Stock.SingleOrDefault(e => e.SucursalId == s.Id)?.UbicacionDeposito)).ToArray(),
             // D1: precios estampados en articulo_precio_modalidad, sin recalcular.
             // Sin filas, lista vacía: la razón de cada ausencia la arma ObtenerArticuloDetalleUseCase.
             PreciosPorModalidad: articulo.ArticuloPrecioModalidad
@@ -246,7 +275,6 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
                         ModalidadPersistida.LeerBase(p.Base), p.Porcentaje, p.Precio,
                         p.CalculoManual, p.FechaCalculo, p.UsuarioId))
                     .OrderBy(p => p.Modalidad).ToArray(),
-            UbicacionDeposito: articulo.UbicacionDeposito,
             MotivoBaja: articulo.MotivoBaja);
     }
 

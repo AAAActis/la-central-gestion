@@ -18,11 +18,6 @@ public partial class Articulo
 
     public int? UltimoProveedorId { get; set; }
 
-    /// <summary>
-    /// Posición física de referencia en el depósito, en texto libre. Dato informativo: el sistema no gestiona el depósito.
-    /// </summary>
-    public string? UbicacionDeposito { get; set; }
-
     public bool Activo { get; set; }
 
     public string? MotivoBaja { get; set; }
@@ -30,6 +25,11 @@ public partial class Articulo
     public DateTime? FechaBaja { get; set; }
 
     public DateTime FechaAlta { get; set; }
+
+    /// <summary>
+    /// EAN/UPC del fabricante. Identificador común de equivalencia entre proveedores: dos proveedores que venden la misma pieza traen el mismo código de barras, así que la equivalencia se deduce sin declararla. No reemplaza a articulo_codigo_alternativo (hay repuestos sin EAN, y marcas distintas tienen EAN distinto). VARCHAR y no numérico: los ceros a la izquierda cuentan. Pedido de la Dirección, 02/11/2026. Alimenta el reporte R-10.
+    /// </summary>
+    public string? CodigoBarras { get; set; }
 
     public virtual ICollection<ArticuloCodigoAlternativo> ArticuloCodigoAlternativo { get; set; } = new List<ArticuloCodigoAlternativo>();
 

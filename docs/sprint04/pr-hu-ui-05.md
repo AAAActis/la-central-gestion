@@ -1,0 +1,92 @@
+## 043 · HU-UI-05 · Componente de formulario reutilizable
+
+Rama `feature/hu-ui-05-formulario-reutilizable`. **Base: `feature/hu-ui-fase1-fundamentos-visuales`**
+(#135), porque necesita sus tokens y el botón en carga. El diff de este PR es solo el de la HU;
+cuando la Fase 1 entre en `develop`, GitHub reapunta este PR solo.
+
+Los CA salen de `docs/historias/043-HU-UI-05.md` (v1.2). **HU-UI-04 (el listado, HU 042) sigue en
+curso**: Javi la está haciendo en paralelo. Su precondición se quitó de la proforma en la v1.1
+porque era un resto del plan viejo: el formulario no usa el listado.
+
+### Qué se hizo
+
+Todo vive en `frontend/src/app/compartido/formulario/`. No se tocó nada fuera de ese directorio:
+ni `styles.css` ni pantallas. La única excepción es una línea en el README de `app/` que nombra
+la carpeta nueva.
+
+- **`Formulario`** (`app-formulario`) se arma a partir de una lista de campos
+  (`CampoFormulario[]`). El campo sigue la anatomía de la §8 de `SISTEMA-VISUAL.md` y el botón,
+  la §7. Recibe los errores del servidor por dos entradas separadas, `erroresPorCampo` y
+  `errorGeneral`, y no traduce ningún texto.
+- **`erroresDelServidor()`** reparte una respuesta de error de la API:
+  - los `errors` de un 400 de validación van a su campo, según la propiedad raíz y sin
+    distinguir mayúsculas. Las claves son las del contrato que fija `ArticulosApiPostgreSqlTests`;
+  - el `detail` de un ProblemDetails va al mensaje general.
+
+### Criterios de aceptación
+
+| CA | Estado | Prueba |
+|---|---|---|
+| CA-001 · completo y válido → envía y confirma | Verificado | `CA-001 · completo y válido…` |
+| CA-002 · obligatorio vacío o formato inválido → bloquea, indica el campo, no llama a la API | Verificado | dos tests `CA-002 · …` |
+| CA-003 · agregar o quitar un multivaluado sin afectar el resto | Verificado | `CA-003 · agregar y quitar un teléfono…` |
+| CA-004 · motivo del servidor junto al campo, por **validación de modelo** | Verificado | `CA-004 · un error del servidor por campo…` y `los errors de un 400 de validación…` |
+| CA-004 · motivo del servidor junto al campo, por **regla de negocio** | **NO verificado** | ver abajo |
+
+**CA-004 se declara en dos partes**, porque la DoD no tiene un estado intermedio:
+- **Validación de modelo** (los `errors` por propiedad de un 400): **verificado**. Cada error va
+  junto a su campo, vinculado y con `role="alert"`.
+- **Regla de negocio** (409 y 400 de un caso de uso): **NO verificado**. Motivo: el ProblemDetails
+  no indica a qué campo corresponde el error; la API devuelve el motivo como `detail` de texto, y
+  el formulario lo muestra en el mensaje general. Lo deja fijado
+  `el detail de un ProblemDetails (regla de negocio) va al mensaje general: hoy no dice el campo`.
+
+Lo destraba la **decisión de backend del 28/10/2026**, registrada en `docs/sprint04/ESTADO.md`:
+agregar el campo como miembro de extensión del ProblemDetails en `MapeoResultado.Falla`, para
+`Conflicto` e `Invalido`. Cuando esté, el componente no cambia: cambia lo que la pantalla le pasa
+en `erroresPorCampo`. La proforma (v1.2) registra el mismo estado.
+
+Además, con una prueba cada uno:
+- etiqueta asociada por for/id;
+- ayuda debajo y vinculada con `aria-describedby`;
+- error junto al campo, vinculado y con `role="alert"`;
+- envío con el botón en carga, sin doble envío;
+- error general con `role="alert"`;
+- valores iniciales para modificar.
+
+### Ciclo
+
+`chore` (estructura) → `test` (13 en rojo, todos por aserción: los helpers fallan con `fail()` y
+un motivo, no con `TypeError`) → `feat`. Mutaciones sin commitear, cada una en rojo:
+- sin la guarda de envío en curso;
+- enviar con el formulario inválido;
+- error sin `aria-describedby`;
+- error de campo sin `role=alert`;
+- `label` sin `for`;
+- sin `markAllAsTouched`;
+- números enviados como texto;
+- quitar que vacía toda la lista;
+- ignorar los errores del servidor;
+- mapeo sensible a mayúsculas;
+- sin validar el formato.
+
+La señal `intentado` sobrevivió a su mutación, porque `markAllAsTouched` ya la cubre, y se borró.
+
+### Verificación
+
+- `npx ng build`: sin errores ni warnings.
+- `npx ng test --watch=false --browsers=ChromeHeadless`: **48/48** (35 previos + 13 nuevos).
+  Corre solo en Chromium.
+- Sin hexadecimales ni medidas a mano en el componente: todo es `var(--token)`.
+
+### Qué no se hizo y por qué
+
+- **Ninguna pantalla usa el formulario todavía.** Lo van a usar las HU 045 y siguientes. Por eso
+  no hay capturas ni medición de desplazamiento horizontal: no hay pantalla que lo monte, y no se
+  crean pantallas nuevas.
+- No hay campos de selección (`select`) ni de texto largo. Ningún CA los pide; se agregan cuando
+  una pantalla los necesite. Un `select` tiene que llegar con su CA: qué pasa si la lista está
+  vacía y qué pasa si el valor guardado ya no está en la lista son preguntas de negocio.
+- **El Issue de la 043 no existe todavía**: pendiente de creación, con el milestone Sprint 4.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)

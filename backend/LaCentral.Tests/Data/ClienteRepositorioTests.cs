@@ -9,6 +9,7 @@ using Xunit.Abstractions;
 namespace LaCentral.Tests.Data;
 
 [Trait("Proveedor", "PostgreSQL")]
+[Trait("Base", "PostgreSQL")]
 public class ClienteRepositorioTests
 {
     private readonly ITestOutputHelper _salida;
