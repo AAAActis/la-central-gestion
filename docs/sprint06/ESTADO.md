@@ -2,15 +2,16 @@
 
 **Entregable:** al cerrar este sprint, una persona puede entrar al sistema, cargar la lista de
 precios de un proveedor, vincular sus renglones con los artículos propios a partir de las
-propuestas del sistema, y cargar una factura de compra subiendo el PDF del proveedor y
-revisándola antes de confirmar, sobre `lacentral_demo`.
+propuestas del sistema, y cargar una factura de compra con la mecánica que pidió Javi (056 ·
+HU-FCO-06; detalle en `docs/PLAN-SPRINTS-6-7-8.md`), sobre `lacentral_demo`. **12/11:** el PDF
+pasó al Sprint 7 (D-PL-04).
 
 > Única fuente de verdad del estado del sprint. Se actualiza **antes** de cada push, en el
 > mismo PR que el código que describe. Reescrito el 09/11/2026 con el plan aprobado
 > (`docs/PLAN-SPRINTS-6-7-8.md`), que reemplaza el reparto del 05/11.
 
 **Sprint 6 · 16/11/2026 → 04/12/2026 (fechas ESTIMADAS, tres semanas).** Cierra por entregable,
-no por fecha. Vinculación de catálogos + factura por PDF.
+no por fecha. Vinculación de catálogos + rehecha de la carga de factura de compra.
 
 ---
 
@@ -23,11 +24,11 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | #128 | 055 · HU-CMP-08 · lista de precios de un proveedor desde archivo | 5 | Javi | C2 · **reescritura (D-S6-01)** | No empezada. **11/11:** no se construye como está escrita; ver «Revisión de la 053, 054 y 055» |
 | #126 | 053 · HU-CMP-06 · candidatos por aproximación entre catálogos | 8 | Santi | C2 · C5 · C6 | No empezada |
 | #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | Santi | C2 · C5 · la 053 | No empezada |
-| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | C2 (cotejo de códigos, CA-004) | No empezada |
-| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | No empezada |
+| — (sin issue) | 056 · HU-FCO-06 · rehecha de la carga de factura de compra | 13 (estimación) | sin asignar | cambio de esquema del sprint (con C2 y C1) · proforma sin escribir | No empezada |
 
-**42 SP: Santi 37, Javi 5** (asignación del 09/11/2026). La pantalla de vinculación va en las
-proformas de la 053 y la 054 (C5); sus 16 SP son estimación hasta que existan.
+**34 SP** (12/11/2026, D-PL-04: entra la 056, salen al Sprint 7 la #13 y la #51, que siguen
+asignadas a Santi). La pantalla de vinculación va en las proformas de la 053 y la 054 (C5); sus
+16 SP y los 13 de la 056 son estimación hasta que existan sus proformas.
 
 ## Compuertas · cada una bloquea solo las HU de su fila
 
@@ -146,6 +147,12 @@ la D16).
 ---
 
 ## PRÓXIMA SESIÓN
+
+**12/11 · el Sprint 5 ya está en `main`** (`f0187d37`, etiqueta `sprint-5`; ver el `ESTADO.md`
+del Sprint 5) y **#160 está cerrada**. Lo de abajo del 11/11 queda como historia en esos dos
+puntos. D-PL-04: entra la 056 (correcciones de Javi a la carga de factura de compra) y el PDF
+(#13, #51) pasa al Sprint 7. Falta escribir la proforma de la 056 y abrir su issue, y sumar sus
+tres cambios al script de esquema del sprint, junto con C2 y C1.
 
 **11/11 · respuestas de Sergio registradas (D-S6-01 a 07).** El sprint todavía no empezó, y
 **el Sprint 5 todavía no llegó a `main`**: #161 y #162 siguen abiertos (ver el `ESTADO.md` del
