@@ -1440,3 +1440,4 @@ vale esta.)
 - 18:05 · Paso 4: decisiones D-S6-01 a 07 con fecha, lo que vuelve a Sergio, R1 y R2, la revisión y la HU nueva de Javi en `docs/sprint06/ESTADO.md`; nota del 11/11 sobre #161/#162 en `docs/sprint05/ESTADO.md`; puntero en `PREGUNTAS-SERGIO.md`. No se tocó código.
 
 **BLOQUEADO EN:** (1) aprobar #161 y después #162: Javi (`Jotelsooon`); (2) abrir el PR de esta rama y cerrar #160 con comentario: necesita `gh` o un token, Lauti; (3) contar R1: que la base responda; (4) qué entrega un scrape, opción (a)/(b) del plan, CA3 de la 054 contra D2 y la D1 de `CLAUDE.md`: el equipo.
+
