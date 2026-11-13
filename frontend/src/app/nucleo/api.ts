@@ -206,7 +206,7 @@ export class ApiLaCentral {
    * HU-FCO-06 CA-001: por código o nombre, sin CUIT.
    */
   proveedores(texto: string): Observable<ProveedorResumen[]> {
-    const params = new HttpParams().set('texto', texto).set('incluirInactivos', false);
+    const params = new HttpParams().set('texto', texto).set('incluirInactivos', false).set('porCuit', false);
     return this.http.get<{ items: ProveedorResumen[] }>('/api/proveedores', { params }).pipe(map(p => p.items));
   }
 

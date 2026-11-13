@@ -51,11 +51,17 @@ const CLIENTES: ConfigTerceros = (() => {
 })();
 
 const URL: CampoFormulario = { nombre: 'urlReferencia', etiqueta: 'URL de referencia', maximo: 300 };
+// HU-FCO-06 CA-004: solo el valor que propone la factura de compra; puede emitir A y B.
+const COMPROBANTE: CampoFormulario = {
+  nombre: 'tipoComprobanteHabitual', etiqueta: 'Comprobante habitual',
+  opciones: [{ valor: 'A', etiqueta: 'A' }, { valor: 'B', etiqueta: 'B' }],
+  ayuda: 'Lo que suele emitir. La factura lo propone y se puede cambiar.',
+};
 const PROVEEDORES: ConfigTerceros = {
   base: 'proveedores', singular: 'proveedor', plural: 'proveedores',
-  camposAlta: [CODIGO, RAZON_SOCIAL, CUIT, URL, ...CONTACTO],
+  camposAlta: [CODIGO, RAZON_SOCIAL, CUIT, URL, COMPROBANTE, ...CONTACTO],
   // PUT /api/proveedores/{id} no cambia el código y exige el CUIT.
-  camposModificacion: [RAZON_SOCIAL, { ...CUIT, obligatorio: true }, URL, ...CONTACTO],
+  camposModificacion: [RAZON_SOCIAL, { ...CUIT, obligatorio: true }, URL, COMPROBANTE, ...CONTACTO],
   campoMotivo: 'motivoBaja',
   // DarDeBajaProveedorUseCase acepta el código o el CUIT: el código lo tienen todos.
   claveBaja: f => f.codigo,
@@ -135,6 +141,7 @@ function cuerpo(campos: CampoFormulario[], valores: ValoresFormulario): Record<s
                   <a [href]="f.urlReferencia" target="_blank" rel="noopener noreferrer">{{ f.urlReferencia }}</a>
                 } @else { — }
               </dd>
+              <dt>Comprobante habitual</dt><dd>{{ f.tipoComprobanteHabitual ?? '—' }}</dd>
             }
             <dt>Estado</dt><dd>{{ f.activo ? 'Activo' : 'Dado de baja' }}@if (!f.activo && f.motivoBaja) {: {{ f.motivoBaja }}}</dd>
             <dt>Teléfonos</dt>
