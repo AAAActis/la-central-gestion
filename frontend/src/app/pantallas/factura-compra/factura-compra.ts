@@ -12,6 +12,8 @@ interface LineaEnCarga {
   cantidad: number | null;
   precioUnitario: number | null;
   descuentoPorcentaje: number;
+  descuento2Porcentaje: number;
+  descuento3Porcentaje: number;
 }
 
 interface Sucursal { id: number; nombre: string; }
@@ -185,7 +187,7 @@ export class FacturaCompra {
       this.errorArticulo.set(`${articulo.codigoInterno} ya está en la factura: corregí su línea.`);
       return;
     }
-    this.lineas.push({ articulo, sucursalId: null, cantidad: null, precioUnitario: null, descuentoPorcentaje: 0 });
+    this.lineas.push({ articulo, sucursalId: null, cantidad: null, precioUnitario: null, descuentoPorcentaje: 0, descuento2Porcentaje: 0, descuento3Porcentaje: 0 });
     if (this.sucursales().length === 0) {
       this.api.ficha(articulo.id).subscribe(f =>
         this.sucursales.set(f.existencias.map(e => ({ id: e.sucursalId, nombre: e.sucursal }))));
@@ -205,8 +207,10 @@ export class FacturaCompra {
     const factura: FacturaCompraNueva = {
       proveedorId: proveedor.id,
       numero: this.numero,
+      tipoComprobante: this.tipoComprobante,
       fechaEmision: this.fechaEmision,
       fechaVencimiento: this.fechaVencimiento || null,
+      fechaImputacion: this.fechaImputacion || null,
       percepcionIva: Number(this.percepciones.iva) || 0,
       percepcionIibb: Number(this.percepciones.iibb) || 0,
       percepcionMunicipal: Number(this.percepciones.municipal) || 0,
@@ -217,6 +221,8 @@ export class FacturaCompra {
         cantidad: Number(l.cantidad),
         precioUnitario: Number(l.precioUnitario),
         descuentoPorcentaje: Number(l.descuentoPorcentaje) || 0,
+        descuento2Porcentaje: Number(l.descuento2Porcentaje) || 0,
+        descuento3Porcentaje: Number(l.descuento3Porcentaje) || 0,
       })),
     };
     this.errorRegistro.set(null);
@@ -240,6 +246,18 @@ export class FacturaCompra {
     const existencia = ficha.existencias.find(e => e.sucursalId === sucursalId);
     return existencia ? `${existencia.cantidad} en ${existencia.sucursal}` : '—';
   }
+
+  // HU-FCO-06 · estructura, sin comportamiento todavía.
+  tipoComprobante = '';
+  fechaImputacion = '';
+  sucursalCabecera: number | null = null;
+  enterProveedor() { /* pendiente */ }
+  cambiarTipo(_tipo: string) { /* pendiente */ }
+  escribirArticulo(_texto: string) { /* pendiente */ }
+  enterArticulo() { /* pendiente */ }
+  reemplazar(_i: number) { /* pendiente */ }
+  confirmar() { /* pendiente */ }
+  invalidarTotales() { /* pendiente */ }
 
   nueva() {
     this.registrada.set(null);
