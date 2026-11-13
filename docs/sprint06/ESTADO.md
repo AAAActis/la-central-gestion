@@ -19,7 +19,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 
 | Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
-| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend:** PR de `feature/163-esquema-backend` (13/11). **Frontend:** PR aparte, después |
+| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend: PR #166.** **Frontend:** PR de `feature/163-frontend` (13/11). Falta el recorrido en el navegador contra la demo (en la máquina de esta sesión no hay Chrome) |
 | #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | No empezada |
 | #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | No empezada |
 
