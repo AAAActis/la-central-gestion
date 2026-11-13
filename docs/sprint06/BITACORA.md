@@ -1,0 +1,156 @@
+# BITÁCORA · Sprint 6
+
+Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tarea».
+
+## 13/11/2026 12:23 · Respuestas de Sergio del 13/11, Sprint 6 = factura de compra (docs + esquema + backend + frontend de la 056)
+
+**Instrucción recibida (verbatim):**
+> Trabajo largo y seguido. No me preguntes: si te trabás, dejalo escrito en la bitácora y
+> seguí con lo que puedas. Las únicas paradas son las que ya dice CLAUDE.md (3 rondas sin
+> APTO, CA contradictorios, regla de negocio faltante).
+>
+> Antes de la primera acción: leé CLAUDE.md, abrí un bloque de bitácora con esta instrucción
+> verbatim, y hacé git fetch --all --prune.
+>
+> RAMA BASE: fijate si el PR #164 ya está mergeado a develop. Si sí, partí de develop. Si
+> sigue abierto, partí de origin/docs/sergio-11-11-y-revision-comparador y decilo en el
+> cuerpo de tus PR: toca los mismos archivos de docs y si no, hay conflicto seguro.
+>
+> === RESPUESTAS DE SERGIO · 13/11/2026 (vía Santi) ===
+>
+> 1. Documento del cliente: alcanza con informar UNO cualquiera de los tres (CUIL, CUIT o
+>    DNI).
+> 2. Precio manual: lo puede cambiar cualquiera, pero tiene que quedar registrado QUIÉN lo
+>    cambió.
+> 3. Número de comprobante: el 999 NO se usa nunca. Comprobante B lleva 99 en el primer
+>    tramo. Comprobante A no lleva prefijo: se copia el número exacto que trae la factura,
+>    cualquier combinación. Depende del tipo de comprobante, no del proveedor.
+> 4. Un mismo proveedor PUEDE entregar A y B indistintamente. Algunos mandan todo B, otros
+>    mitad y mitad, otros todo A. Es variable.
+> 5. El código de barras se ESCANEA para encontrar el artículo. El código original del
+>    fabricante es otro dato y queda aparte. El mismo artículo siempre trae el mismo código
+>    de barras, así que el código de barras es la clave de unicidad.
+>
+> === DECISIÓN DE SANTI · 13/11/2026 ===
+>
+> El Sprint 6 pasa a ser FACTURA DE COMPRA, y el comparador se va completo al Sprint 7.
+> Motivo: el entregable del Sprint 6 como estaba (vinculación de catálogos) no se puede
+> demostrar, porque necesita filas de catálogo y la única fuente son los scrapes, que están
+> en el 7. Los SP no cambian: es un intercambio.
+>
+> === PARTE A · DOCUMENTACIÓN Y BACKLOG (un solo PR, antes de tocar código) ===
+>
+> A1 · En GitHub:
+>   - #163 (HU-FCO-06, ID 056): milestone Sprint 6, asignada a AAAActis.
+>   - #13 (029 · HU-FCO-05) y #51 (049 · HU-UI-11): volver al milestone Sprint 6.
+>   - #126, #127 y #128 (053, 054, 055): pasar al milestone Sprint 7.
+>   - Reemplazá en el cuerpo de la #163 los CA4, CA5 y CA14 por los de A3.
+>   - Marcá como aceptados los CA que ya estén cumplidos y verificados en las issues y
+>     proformas que toques.
+>
+> A2 · docs/PLAN-SPRINTS-6-7-8.md:
+>   - Sprint 6 = 056 (#163) + 029 (#13) + 049 (#51). Sprint 7 suma 053, 054 y 055.
+>   - Recalculá los SP de los dos sprints desde las tablas.
+>   - Reescribí el entregable del Sprint 6: una persona puede cargar una factura de compra
+>     con la mecánica del negocio, a mano o desde el PDF del proveedor, sobre lacentral_demo.
+>   - Reescribí el entregable del Sprint 7 con el comparador completo, scrapes incluidos.
+>   - Agregá la decisión D-PL-05 con fecha 13/11/2026, autor Santi, con el motivo de arriba.
+>     Dejá dicho que reemplaza la D-PL-04 del 12/11.
+>
+> A3 · docs/historias/056-HU-FCO-06.md: escribí la proforma con el formato de las demás.
+>   Trazabilidad RF-009, CU-003, APS-006, igual que la 025. Los criterios salen de la #163,
+>   con estos tres cambiados:
+>
+>   CA4: Dado que selecciono un proveedor, cuando se carga la cabecera, entonces el sistema
+>   propone el tipo de comprobante que ese proveedor suele emitir, y el usuario lo puede
+>   cambiar siempre. Un proveedor puede emitir A y B indistintamente: el campo del proveedor
+>   es un valor por defecto, nunca una regla.
+>
+>   CA5: Dado que el comprobante es tipo B, cuando cargo el número, entonces el sistema
+>   precarga 99 en el primer tramo y me deja escribir el resto. Dado que es tipo A, entonces
+>   no precarga nada y se copia el número exacto que trae la factura. El 999 no se usa.
+>
+>   CA14: Dado un comprobante tipo A, cuando se calcula la factura, entonces el sistema suma
+>   el 21 % de IVA; dado un comprobante tipo B, no lo suma. Sale del tipo de comprobante de
+>   esa factura, no del proveedor.
+>
+> A4 · docs/sprint06/ESTADO.md: reescribilo con el entregable nuevo, el tablero nuevo y las
+>   compuertas que queden. Registrá las cinco respuestas de Sergio como decisiones nuevas,
+>   numeradas a continuación de las que ya están (D-S6-07 es la última). Y:
+>   - El riesgo R2 se CIERRA: el código de barras es la clave de búsqueda y ya es único en
+>     articulo; el código original queda como dato aparte, no único, y no se hace ningún
+>     backfill desde el código de barras. La D2 no se toca.
+>   - El riesgo R1 sigue abierto: falta que Santi corra la consulta de clientes sin teléfono
+>     ni domicilio.
+>   - La respuesta 2 (queda registrado quién cambió el precio) NO es de esta HU: es de la HU
+>     de precio manual, que todavía no existe. Dejala anotada como decisión para cuando se
+>     escriba.
+>   - La respuesta 1 (alcanza un documento cualquiera) es de la HU de alta de cliente, no de
+>     ésta. Anotala igual.
+>
+> A5 · docs/historias/INDICE.md: alineado con todo lo anterior, en el mismo PR.
+>
+> Abrí el PR de documentación contra develop. En el cuerpo: qué decisiones registra, que es
+> solo documentación, sin corrida de suite y auditor-persistencia no aplica.
+>
+> === PARTE B · CÓDIGO (dos PR, después del de documentación) ===
+>
+> B1 · Esquema. Script SQL nuevo en backend/db/, numerado como corresponda, más re-scaffold.
+>   Database First, nunca dotnet ef migrations.
+>   - Averiguá primero si factura_compra ya tiene el tipo de comprobante (A/B). Si no lo
+>     tiene, agregalo: es de donde salen el IVA y el prefijo 99.
+>   - proveedor: campo con el tipo de comprobante habitual, NULLABLE, solo como valor por
+>     defecto de la cabecera.
+>   - factura_compra: fecha de emisión, de vencimiento y de imputación, separadas.
+>   - factura_compra_detalle: precio editable y hasta tres descuentos por línea.
+>   Antes de aplicarlo a lacentral_test y lacentral_demo, dejá un comentario en la #163
+>   diciendo qué script vas a aplicar y cuándo, y mencioná a @Jotelsooon: el re-scaffold deja
+>   en rojo los tests de PostgreSQL de todas las ramas abiertas y Javi tiene trabajo en
+>   curso. No esperes respuesta, pero que quede el aviso.
+>   Aplicalo también a lacentral_demo: el esquema de la demo y el del código tienen que
+>   coincidir.
+>
+> B2 · Backend: casos de uso, validaciones y endpoints de todo lo nuevo. El IVA y el prefijo
+>   del número salen del tipo de comprobante de la factura. El tipo se propone desde el
+>   proveedor y el usuario lo cambia.
+>
+> B3 · Frontend:
+>   - proveedor: búsqueda por código y por nombre; se retira la búsqueda por CUIT/CUIL
+>   - Enter sobre un código de proveedor exacto lo selecciona sin abrir la búsqueda
+>   - ceros a la izquierda ignorados: escribir 35 encuentra el 00035
+>   - artículos: coincidencias aproximadas por código y por nombre mientras se escribe,
+>     con pg_trgm
+>   - Enter sobre el código exacto de un artículo lo selecciona
+>   - botón para cambiar o reemplazar el artículo de una línea
+>   - precio editable y hasta tres descuentos por línea
+>   - la sucursal elegida en la cabecera se hereda en cada línea nueva y se cambia solo en
+>     las líneas que van a otro destino (D9)
+>   - percepciones cargables (D8)
+>   - total final con percepciones e IVA antes de confirmar
+>
+> Partí el código en dos PR: uno con esquema y backend, otro con frontend. Un PR por entrega,
+> con los CA uno por uno en el cuerpo y qué quedó sin verificar.
+>
+> === REGLAS QUE NO SE NEGOCIAN ===
+>
+> - Suite completa solo antes de abrir cada PR, sobre su último commit, y ese número va en el
+>   cuerpo. Durante el trabajo, filtrada con --no-build.
+> - Todo lo que toque persistencia se verifica releyendo la fila con un contexto nuevo, contra
+>   PostgreSQL real. Nunca InMemory.
+> - Un verificador por PR, al cerrar, con el alcance acotado a los commits de esa HU y
+>   pasándole el hash y el conteo de la suite. auditor-persistencia solo si el diff toca
+>   backend o esquema.
+> - Sacá los worktrees antes de invocarlos.
+> - Bitácora mientras trabajás, no al final.
+> - Todo en español.
+
+**Plan:**
+1. Base: #164 sigue abierto → rama `docs/sprint06-factura-compra` desde `origin/docs/sergio-11-11-y-revision-comparador`.
+2. A1 GitHub (milestones, asignación, CA de la #163, CA aceptados).
+3. A2 plan, A3 proforma 056, A4 ESTADO, A5 INDICE → PR de docs contra `develop`.
+4. B1 esquema: averiguar tipo de comprobante, script SQL, aviso en #163 a Javi, aplicar a `lacentral_test` y `lacentral_demo`, re-scaffold.
+5. B2 backend (TDD, PostgreSQL real) → suite completa → PR → `verificador-tdd` + `auditor-persistencia`.
+6. B3 frontend (TDD) → suite → PR → `verificador-tdd`.
+
+**Estado:** en curso
+- 12:23 · Paso 1: `git fetch --all --prune` hecho; #164 `OPEN`, no mergeado. Rama `docs/sprint06-factura-compra` creada desde `origin/docs/sergio-11-11-y-revision-comparador` (`92d5787`). La bitácora del Sprint 6 no existía: se crea con este bloque.
