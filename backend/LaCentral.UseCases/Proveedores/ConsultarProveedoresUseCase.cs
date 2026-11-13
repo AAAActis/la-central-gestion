@@ -34,7 +34,7 @@ public class ConsultarProveedoresUseCase
         var (lista, total) = await _proveedorRepositorio.BuscarAsync(texto.Trim(), incluirInactivos, pagina, tamanoPagina, porCuit, ct);
 
         var respuesta = lista
-            .Select(p => new ProveedorResumenDto(p.Id, p.Codigo, p.RazonSocial, p.Cuit, p.UrlReferencia, p.Activo))
+            .Select(p => new ProveedorResumenDto(p.Id, p.Codigo, p.RazonSocial, p.Cuit, p.UrlReferencia, p.Activo, p.TipoComprobanteHabitual))
             .ToList();
 
         return Result<PaginaDto<ProveedorResumenDto>>.Success(new PaginaDto<ProveedorResumenDto>(respuesta, total, pagina, tamanoPagina));

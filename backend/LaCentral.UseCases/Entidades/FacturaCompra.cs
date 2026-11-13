@@ -42,6 +42,8 @@ public class FacturaCompraDetalle
     /// articulo.precio_costo (NUMERIC(14,2)). El medio centavo se aleja del cero, como
     /// redondea PostgreSQL. Las percepciones son de la cabecera y no entran (D8).
     /// </summary>
+    // HU-FCO-06: los tres descuentos son sucesivos y se redondea una sola vez, al final.
     public decimal CostoUnitario =>
-        Math.Round(PrecioUnitario * (100m - DescuentoPorcentaje) / 100m, 2, MidpointRounding.AwayFromZero);
+        Math.Round(PrecioUnitario * (100m - DescuentoPorcentaje) / 100m * (100m - Descuento2Porcentaje) / 100m
+            * (100m - Descuento3Porcentaje) / 100m, 2, MidpointRounding.AwayFromZero);
 }

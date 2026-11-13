@@ -19,7 +19,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 
 | Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
-| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | Proforma escrita (`docs/historias/056-HU-FCO-06.md`). CA-007 aceptado (lo cumple la 025). Resto no empezado |
+| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend:** PR de `feature/163-esquema-backend` (13/11). **Frontend:** PR aparte, después |
 | #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | No empezada |
 | #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | No empezada |
 
@@ -30,7 +30,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 
 | # | Qué | Responsable | Bloquea | Estado al 13/11 |
 |---|---|---|---|---|
-| E56 | Esquema de la 056: `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `fecha_imputacion`, dos descuentos más por línea (script SQL + re-scaffold, en `lacentral_test` y `lacentral_demo`) | Santi | 056; la 029 y la 049 lo usan | Abierta. Es el único cambio de esquema del sprint |
+| E56 | Esquema de la 056: `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `fecha_imputacion`, dos descuentos más por línea (script SQL + re-scaffold, en `lacentral_test` y `lacentral_demo`) | Santi | 056; la 029 y la 049 lo usan | **Script 09 escrito y aplicado en `lacentral_demo`** (13/11) con re-scaffold. **Falta `lacentral_test.public`:** sus tablas son del rol `lacentral`; lo aplica Santi con el superusuario. Hasta entonces la suite corre con `LA_CENTRAL_TEST_SCHEMA=fco06_fuente` (plantilla con el 09). Después: borrar `fco06_fuente` |
 | C7 | Facturas reales de varios proveedores, para decidir parser por reglas o interpretación asistida (nota de la 029) | Lauti | 029 | Abierta |
 
 C2, C5, C6 y C1 pasaron al Sprint 7 con el comparador (D-PL-05). La P6 se cerró el 11/11.
@@ -141,6 +141,12 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 ---
 
 ## PRÓXIMA SESIÓN
+
+**13/11 tarde · 056 esquema + backend.** Script `09_Factura_Compra_Mecanica.sql` aplicado en
+`lacentral_demo` y re-scaffold. **Pendiente de Santi: aplicar el 09 a `lacentral_test`** (con el
+superusuario, como el 08); mientras tanto la suite corre con `LA_CENTRAL_TEST_SCHEMA=fco06_fuente`.
+Backend en su PR; el frontend de la 056 va en otro PR encima. El backend exige `tipoComprobante`:
+**los dos PR se mergean juntos** (si entra solo el backend, la pantalla actual no puede registrar).
 
 **13/11 · D-PL-05 y respuestas de Sergio (D-S6-08 a 12).** El Sprint 6 es factura de compra
 (056 + 029 + 049); el comparador (053, 054, 055) pasó al Sprint 7. Proforma de la 056 escrita,

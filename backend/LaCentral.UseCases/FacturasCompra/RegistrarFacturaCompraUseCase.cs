@@ -43,6 +43,7 @@ public class RegistrarFacturaCompraUseCase
             return Fallo(validacion.Tipo, validacion.Error);
         var numero = request.Numero.Trim();
         var lineas = request.Lineas!;
+        var tipo = TipoNormalizado(request.TipoComprobante)!;
 
         var usuarioId = _contexto.UsuarioId;
         if (usuarioId <= 0)
@@ -83,6 +84,8 @@ public class RegistrarFacturaCompraUseCase
             Numero = numero,
             FechaEmision = request.FechaEmision,
             FechaVencimiento = request.FechaVencimiento,
+            FechaImputacion = request.FechaImputacion ?? request.FechaEmision,
+            TipoComprobante = tipo,
             PercepcionIva = request.PercepcionIva,
             PercepcionIibb = request.PercepcionIibb,
             PercepcionMunicipal = request.PercepcionMunicipal,
@@ -95,7 +98,9 @@ public class RegistrarFacturaCompraUseCase
                 SucursalId = l.SucursalId,
                 Cantidad = l.Cantidad,
                 PrecioUnitario = l.PrecioUnitario,
-                DescuentoPorcentaje = l.DescuentoPorcentaje
+                DescuentoPorcentaje = l.DescuentoPorcentaje,
+                Descuento2Porcentaje = l.Descuento2Porcentaje,
+                Descuento3Porcentaje = l.Descuento3Porcentaje
             }).ToList()
         };
 
@@ -121,7 +126,32 @@ public class RegistrarFacturaCompraUseCase
 
     /// <summary>HU-FCO-06 CA-014 y CA-015: los totales de la factura, sin guardar nada.</summary>
     public Result<TotalesFacturaCompra> CalcularTotales(RegistrarFacturaCompraRequest request)
-        => throw new NotImplementedException();
+    {
+        var validacion = ValidarDatos(request);
+        if (!validacion.IsSuccess)
+            return Result<TotalesFacturaCompra>.Failure(validacion.Tipo, validacion.Error);
+
+        var neto = request.Lineas!.Sum(l => Math.Round(l.Cantidad * new FacturaCompraDetalle
+        {
+            PrecioUnitario = l.PrecioUnitario, DescuentoPorcentaje = l.DescuentoPorcentaje,
+            Descuento2Porcentaje = l.Descuento2Porcentaje, Descuento3Porcentaje = l.Descuento3Porcentaje
+        }.CostoUnitario, 2, MidpointRounding.AwayFromZero));
+        // CA-014: el IVA sale del tipo de ESTA factura, no del proveedor (D-S6-11).
+        var iva = TipoNormalizado(request.TipoComprobante) == "A"
+            ? Math.Round(neto * TasaIva, 2, MidpointRounding.AwayFromZero)
+            : 0m;
+        var percepciones = request.PercepcionIva + request.PercepcionIibb + request.PercepcionMunicipal + request.PercepcionGanancias;
+        return Result<TotalesFacturaCompra>.Success(new(neto, iva, percepciones, neto + iva + percepciones));
+    }
+
+    private const decimal TasaIva = 0.21m;
+
+    private static string? TipoNormalizado(string? tipo) => tipo?.Trim().ToUpperInvariant() switch
+    {
+        "A" => "A",
+        "B" => "B",
+        _ => null
+    };
 
     private static Result ValidarDatos(RegistrarFacturaCompraRequest request)
     {
@@ -129,6 +159,13 @@ public class RegistrarFacturaCompraUseCase
             return Result.Failure(TipoError.Invalido, "El número de factura es obligatorio.");
         if (request.Numero.Trim().Length > LargoMaximoNumero)
             return Result.Failure(TipoError.Invalido, $"El número de factura no puede superar los {LargoMaximoNumero} caracteres.");
+        // HU-FCO-06 (D-S6-10): el tipo es de la factura. El B lleva 99 en el primer tramo; el A
+        // se copia tal cual. El 999 no se usa.
+        var tipo = TipoNormalizado(request.TipoComprobante);
+        if (tipo is null)
+            return Result.Failure(TipoError.Invalido, "El tipo de comprobante es obligatorio: A o B.");
+        if (tipo == "B" && request.Numero.Trim().Split('-')[0] != "99")
+            return Result.Failure(TipoError.Invalido, "El comprobante B lleva 99 en el primer tramo del número (por ejemplo, 99-00001234).");
         if (request.FechaVencimiento < request.FechaEmision)
             return Result.Failure(TipoError.Invalido, "El vencimiento no puede ser anterior a la emisión.");
         // CA4/D8: las percepciones se guardan como datos; solo se exige que no sean negativas
@@ -149,14 +186,14 @@ public class RegistrarFacturaCompraUseCase
                 return Result.Failure(TipoError.Invalido, $"La cantidad del artículo {linea.ArticuloId} tiene que ser mayor que cero.");
             if (linea.PrecioUnitario < 0)
                 return Result.Failure(TipoError.Invalido, $"El precio unitario del artículo {linea.ArticuloId} no puede ser negativo.");
-            if (linea.DescuentoPorcentaje < 0 || linea.DescuentoPorcentaje > 100)
-                return Result.Failure(TipoError.Invalido, $"El descuento del artículo {linea.ArticuloId} tiene que estar entre 0 y 100.");
+            if (new[] { linea.DescuentoPorcentaje, linea.Descuento2Porcentaje, linea.Descuento3Porcentaje }.Any(d => d < 0 || d > 100))
+                return Result.Failure(TipoError.Invalido, $"Los descuentos del artículo {linea.ArticuloId} tienen que estar entre 0 y 100.");
             if (!EntraEnColumna(linea.Cantidad, Cantidad))
                 return Result.Failure(TipoError.Invalido, $"La cantidad del artículo {linea.ArticuloId} admite hasta 3 decimales y 9 dígitos enteros.");
             if (!EntraEnColumna(linea.PrecioUnitario, Importe))
                 return Result.Failure(TipoError.Invalido, $"El precio unitario del artículo {linea.ArticuloId} admite hasta 2 decimales y 12 dígitos enteros.");
-            if (!EntraEnColumna(linea.DescuentoPorcentaje, Descuento))
-                return Result.Failure(TipoError.Invalido, $"El descuento del artículo {linea.ArticuloId} admite hasta 2 decimales.");
+            if (!new[] { linea.DescuentoPorcentaje, linea.Descuento2Porcentaje, linea.Descuento3Porcentaje }.All(d => EntraEnColumna(d, Descuento)))
+                return Result.Failure(TipoError.Invalido, $"Los descuentos del artículo {linea.ArticuloId} admiten hasta 2 decimales.");
         }
         // Una línea por artículo y sucursal: es la clave primaria del detalle (07). El mismo
         // artículo puede ir a dos sucursales en la misma factura (D9).

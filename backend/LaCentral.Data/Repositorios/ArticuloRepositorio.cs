@@ -152,6 +152,8 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
         => await _context.Articulo.Where(a => a.Id == id && !a.Activo)
             .ExecuteUpdateAsync(s => s.SetProperty(a => a.Activo, true), ct) == 1;
 
+    private const double UmbralAproximada = 0.3;
+
     // Query completo antes de paginar, expuesto a los tests de traducción SQL.
     internal IQueryable<CoincidenciaArticulo> CrearCoincidencias(ConsultaArticulos consulta)
     {
@@ -180,6 +182,17 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
             var grupo = interno.Concat(proveedor).Concat(nombres.Select(
                 a => new CoincidenciaArticulo { Id = a.Id, Prioridad = 2 }));
             coincidencias = coincidencias is null ? grupo : coincidencias.Concat(grupo);
+        }
+
+        // HU-FCO-06 CA-008: además, lo parecido por nombre o código interno (pg_trgm), después
+        // de lo exacto. Umbral 0,3: el de pg_trgm por defecto.
+        if (consulta.Aproximada)
+        {
+            var texto = consulta.Texto.Trim();
+            coincidencias = coincidencias!.Concat(articulos
+                .Where(a => EF.Functions.TrigramsSimilarity(a.Nombre, texto) > UmbralAproximada ||
+                    EF.Functions.TrigramsSimilarity(a.CodigoInterno, texto) > UmbralAproximada)
+                .Select(a => new CoincidenciaArticulo { Id = a.Id, Prioridad = 3 }));
         }
 
         return coincidencias!.GroupBy(c => c.Id)

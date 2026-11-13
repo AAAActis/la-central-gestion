@@ -467,6 +467,7 @@ public class RegistrarFacturaCompraPostgreSqlTests
             var factura = new LaCentral.UseCases.Entidades.FacturaCompra
             {
                 ProveedorId = e.Proveedor, Numero = "A-0001-00000001", FechaEmision = new DateOnly(2026, 10, 1),
+                FechaImputacion = new DateOnly(2026, 10, 1), TipoComprobante = "A",
                 UsuarioId = e.UsuarioId, FechaRegistro = DateTime.UtcNow,
                 Lineas = { new() { ArticuloId = e.Comprado1, SucursalId = e.Sucursal1, Cantidad = 1m, PrecioUnitario = 10m } }
             };

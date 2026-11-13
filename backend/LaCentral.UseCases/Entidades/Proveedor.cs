@@ -15,4 +15,14 @@ public class Proveedor
     public List<string> Direcciones { get; set; } = new();
     public string? MotivoBaja { get; set; }
     public DateTime? FechaBaja { get; set; }
+
+    /// <summary>
+    /// HU-FCO-06: "A" o "B" (sin espacios ni mayúsculas que importen), null si viene vacío.
+    /// Devuelve false si trae otra cosa.
+    /// </summary>
+    public static bool NormalizarTipoComprobante(string? tipo, out string? normalizado)
+    {
+        normalizado = string.IsNullOrWhiteSpace(tipo) ? null : tipo.Trim().ToUpperInvariant();
+        return normalizado is null or "A" or "B";
+    }
 }

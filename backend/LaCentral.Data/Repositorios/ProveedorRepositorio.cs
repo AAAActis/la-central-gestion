@@ -21,6 +21,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
             RazonSocial = proveedor.RazonSocial,
             Cuit = proveedor.Cuit, 
             UrlReferencia = proveedor.UrlReferencia,
+            TipoComprobanteHabitual = proveedor.TipoComprobanteHabitual?[0],
             Activo = proveedor.Activo,
             
             ProveedorTelefono = proveedor.Telefonos
@@ -61,9 +62,21 @@ public class ProveedorRepositorio : IProveedorRepositorio
 
         var soloDigitos = new string(texto.Where(char.IsDigit).ToArray());
 
-        if (soloDigitos.Length == 11)
+        if (porCuit && soloDigitos.Length == 11)
         {
             query = query.Where(p => p.Cuit == texto).OrderBy(p => p.Id);
+        }
+        else if (!porCuit)
+        {
+            // HU-FCO-06 CA-001 a CA-003: código (sin ceros a la izquierda: 35 encuentra 00035)
+            // o razón social; el código exacto primero. Sin CUIT.
+            var codigo = texto.TrimStart('0');
+            query = query
+                .Where(p => p.Codigo.TrimStart('0') == codigo ||
+                    EF.Functions.TrigramsSimilarity(p.RazonSocial, texto) > UmbralSimilitudRazonSocial)
+                .OrderBy(p => p.Codigo.TrimStart('0') == codigo ? 0 : 1)
+                .ThenByDescending(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto))
+                .ThenBy(p => p.Id);
         }
         else
         {
@@ -84,6 +97,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
             RazonSocial = p.RazonSocial,
             Cuit = p.Cuit,
             UrlReferencia = p.UrlReferencia,
+            TipoComprobanteHabitual = p.TipoComprobanteHabitual?.ToString(),
             Activo = p.Activo
         }).ToList(), total);
     }
@@ -105,6 +119,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
             RazonSocial = bd.RazonSocial,
             Cuit = bd.Cuit, 
             UrlReferencia = bd.UrlReferencia,
+            TipoComprobanteHabitual = bd.TipoComprobanteHabitual?.ToString(),
             Activo = bd.Activo,
             MotivoBaja = bd.MotivoBaja, // <--- FALTABA ESTA LÍNEA
             FechaBaja = bd.FechaBaja,
@@ -155,6 +170,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
     bd.RazonSocial = proveedor.RazonSocial;
     bd.Cuit = proveedor.Cuit;
     bd.UrlReferencia = proveedor.UrlReferencia;
+    bd.TipoComprobanteHabitual = proveedor.TipoComprobanteHabitual?[0];
 
     // FIX CRÍTICO 2: Mapeo de estado y motivo. La fecha la fija el caso de uso:
     // el repositorio ya no la estampa por su cuenta.
