@@ -505,6 +505,7 @@ public class RegistrarFacturaCompraUseCaseTests
     [InlineData(0, -0.01)]
     [InlineData(0, 101)]
     [InlineData(0.001, 0)]
+    [InlineData(0, 0.001)]
     public async Task Fco06_SegundoOTercerDescuentoFueraDeRango_Invalido(double segundo, double tercero)
     {
         var resultado = await Caso().EjecutarAsync(Request(new[]
@@ -543,6 +544,27 @@ public class RegistrarFacturaCompraUseCaseTests
 
         Assert.True(resultado.IsSuccess, resultado.Error);
         Assert.Equal(new TotalesFacturaCompra(0.15m, 0.03m, 0m, 0.18m), resultado.Value);
+    }
+
+    [Fact]
+    public void Fco06_Totales_LasPercepcionesIncluyenGanancias()
+    {
+        // 30 + 4,5 + 1,25 + 2 = 37,75: las cuatro percepciones (D8).
+        var resultado = Caso().CalcularTotales(Request(new[] { Linea(100, 1, 5m, 200m, 10m) }, ganancias: 2m));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(new TotalesFacturaCompra(900m, 189m, 37.75m, 1126.75m), resultado.Value);
+    }
+
+    [Fact]
+    public void Fco06_Totales_CadaLineaSeRedondeaACentavosAntesDeSumar()
+    {
+        // 1,005 × 1,00 = 1,005 → 1,01 por línea; dos líneas = 2,02 (sumar sin redondear daría 2,01).
+        var resultado = Caso().CalcularTotales(Request(new[] { Linea(100, 1, 1.005m, 1m, 0m), Linea(200, 1, 1.005m, 1m, 0m) },
+            tipo: "B", numero: "99-00000001", iva: 0m, iibb: 0m, municipal: 0m));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(new TotalesFacturaCompra(2.02m, 0m, 0m, 2.02m), resultado.Value);
     }
 
     [Fact]
