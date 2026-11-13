@@ -357,4 +357,17 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
         Assert.False(await relectura.FacturaCompra.AnyAsync());
         Assert.Equal(1m, await relectura.Stock.Where(x => x.ArticuloId == s.ArticuloId).Select(x => x.Cantidad).SingleAsync());
     }
+
+    // Hallazgo no bloqueante de la ronda 1: /calculo pide sesión, como el registro.
+    [PostgreSqlFact]
+    public async Task Fco06_PostCalculoSinToken_401()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, rol: null);
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra/calculo", CuerpoFco06(s, "A", "0001-1"));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, respuesta.StatusCode);
+    }
 }
