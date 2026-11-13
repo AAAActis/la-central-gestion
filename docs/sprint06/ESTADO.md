@@ -19,7 +19,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 
 | Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
-| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend: PR #166.** **Frontend:** PR de `feature/163-frontend` (13/11). Falta el recorrido en el navegador contra la demo (en la máquina de esta sesión no hay Chrome) |
+| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend: PR #166.** **Frontend: PR #167.** Los dos con `verificador-tdd` APTO; #166 también con `auditor-persistencia` APTO, todo contra `lacentral_test.public` (13/11). Orden de merge: #164 → #165 → #166 y #167 juntos. Falta el recorrido en el navegador contra `lacentral_demo` (DoD 10, Santi o Lauti) |
 | #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | No empezada |
 | #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | No empezada |
 
@@ -30,7 +30,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 
 | # | Qué | Responsable | Bloquea | Estado al 13/11 |
 |---|---|---|---|---|
-| E56 | Esquema de la 056: `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `fecha_imputacion`, dos descuentos más por línea (script SQL + re-scaffold, en `lacentral_test` y `lacentral_demo`) | Santi | 056; la 029 y la 049 lo usan | **Script 09 escrito y aplicado en `lacentral_demo`** (13/11) con re-scaffold. **CERRADA 13/11:** Santi aplicó el 09 a `lacentral_test.public` con el superusuario (`09: TODO OK`). La suite corre contra `public`, sin `LA_CENTRAL_TEST_SCHEMA`. Falta borrar la plantilla `fco06_fuente` |
+| E56 | Esquema de la 056: `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `fecha_imputacion`, dos descuentos más por línea (script SQL + re-scaffold, en `lacentral_test` y `lacentral_demo`) | Santi | 056; la 029 y la 049 lo usan | **Script 09 escrito y aplicado en `lacentral_demo`** (13/11) con re-scaffold. **CERRADA 13/11:** Santi aplicó el 09 a `lacentral_test.public` con el superusuario (`09: TODO OK`). La suite corre contra `public`, sin `LA_CENTRAL_TEST_SCHEMA`. La plantilla `fco06_fuente` se borró el 13/11 |
 | C7 | Facturas reales de varios proveedores, para decidir parser por reglas o interpretación asistida (nota de la 029) | Lauti | 029 | Abierta |
 
 C2, C5, C6 y C1 pasaron al Sprint 7 con el comparador (D-PL-05). La P6 se cerró el 11/11.
@@ -141,6 +141,16 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 ---
 
 ## PRÓXIMA SESIÓN
+
+**13/11 noche (cierre) · #166 y #167 verificados, falta mergear y recorrer.** `verificador-tdd` del
+#167: ronda 1 NO APTO (sobrevivía sacar `invalidarTotales()` de `cambiarTipo()`), arreglado con un
+spec en `9ad0497`; ronda 2 APTO. Frontend 185/185 sobre `9ad0497`; backend 560/560 sobre `772e934`
+(mismo `backend/`). #166: `verificador-tdd` y `auditor-persistencia` APTO contra `public`.
+`fco06_fuente` borrado. **Orden de merge (escrito en los cuerpos de #166 y #167):** #164 → #165 →
+#166 y #167 juntos (el backend exige `tipoComprobante` y el PUT de proveedor sin el campo borra el
+tipo habitual). **Siguen, de personas:** el merge (Javi) y el recorrido en el navegador contra
+`lacentral_demo`, DoD 10 (Santi o Lauti, con `scripts/probar-demo.sh`). Después del merge a
+`develop`, suite completa una vez. Luego la 029 y la 049.
 
 **13/11 noche · E56 cerrada, verificación contra el esquema real.** Santi aplicó el 09 a
 `lacentral_test.public`. Suites completas contra `public` (sin `fco06_fuente`): #166 560/560 sobre

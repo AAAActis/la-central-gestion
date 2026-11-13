@@ -152,7 +152,7 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 5. B2 backend (TDD, PostgreSQL real) → suite completa → PR → `verificador-tdd` + `auditor-persistencia`.
 6. B3 frontend (TDD) → suite → PR → `verificador-tdd`.
 
-**Estado:** en curso
+**Estado:** terminada (lo abierto, en el bloque de las 20:50)
 - 12:23 · Paso 1: `git fetch --all --prune` hecho; #164 `OPEN`, no mergeado. Rama `docs/sprint06-factura-compra` creada desde `origin/docs/sergio-11-11-y-revision-comparador` (`92d5787`). La bitácora del Sprint 6 no existía: se crea con este bloque.
 - 12:40 · Paso 2 (A1) hecho, verificado con `gh issue view`: #163 → Sprint 6, asignada a `AAAActis`; #13 y #51 → Sprint 6; #126, #127 y #128 → Sprint 7. Cuerpo de la #163: CA4, CA5 y CA14 reemplazados por los de A3; **CA7 marcado aceptado** (ya lo cumple la 025: `RegistrarFacturaCompraPostgreSqlTests` relee las cuatro percepciones con un contexto nuevo); notas de esquema y de Sergio puestas al día. Ningún CA de #13, #51, #126-128 está cumplido: no se marcó nada ahí.
 - Hallazgos para B1: `factura_compra` **no** tiene tipo de comprobante; ya tiene `fecha_emision` y `fecha_vencimiento`, falta `fecha_imputacion`. `factura_compra_detalle` ya tiene `precio_unitario` (editable) y **un** `descuento_porcentaje`: faltan el segundo y el tercero.
@@ -236,7 +236,7 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 5. `verificador-tdd` del #167 (acotado a sus commits), arreglos si hay NO APTO.
 6. ESTADO.md y cierre de los bloques.
 
-**Estado:** en curso
+**Estado:** terminada (lo abierto, en el bloque de las 20:50)
 - 19:30 · Paso 1: el bloque de las 12:23 termina en «Sigue `verificador-tdd` del #167». No se rehace nada de lo anterior.
 - 19:32 · Paso 2: `git fetch --all --prune` hecho. Las tres ramas locales = origin (`bc14489`, `b8b8ba3`, `707cbf9`), = HEAD de los PR #165/#166/#167, los tres `OPEN`. `HEAD..origin/develop` vacío: nada nuevo en develop. Sin worktrees extra. Único cambio local: `analytics` en `frontend/angular.json` (ajeno, no se commitea).
 - 19:40 · Paso 3, consulta de solo lectura (Npgsql desde un script en el scratchpad, sin psql en la máquina):
@@ -277,7 +277,7 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 4. Verificadores, de a uno, acotados y con hash y conteo: #166 `verificador-tdd` + `auditor-persistencia`; #167 `verificador-tdd` (auditor no aplica, solo frontend).
 5. Borrar `fco06_fuente` cuando nada lo use. ESTADO.md antes del push.
 
-**Estado:** en curso
+**Estado:** terminada (lo abierto, en el bloque de las 20:50)
 - 20:00 · **BLOQUEO CERRADO** (el de las 14:20 y 19:40): Santi aplicó el 09 a `lacentral_test.public` con el superusuario el 13/11/2026 («09: TODO OK», COMMIT). Verificado por consulta de solo lectura: las 5 columnas en `lacentral_test.public` (5/5, igual que `lacentral_demo.public`). La corrida de las 19:50 contra `fco06_fuente` se cortó sin reportarse: no vale.
 - 19:12 · Suite completa backend sobre `707cbf9` (#167), contra `lacentral_test.public`, sin `LA_CENTRAL_TEST_SCHEMA`: `Correctas! - Con error: 0, Superado: 557, Omitido: 0, Total: 557, Duración: 11 m 10 s`. Build `--no-incremental`: 0 advertencias. Nada que pasaba contra `fco06_fuente` falla contra el esquema real. Sigue #166 sobre `b8b8ba3` en un worktree temporal.
 - 19:25 · Suite completa backend sobre `b8b8ba3` (#166), contra `public`, sin la variable: `Correctas! - Con error: 0, Superado: 557, Omitido: 0, Total: 557, Duración: 11 m 58 s`; 0 advertencias. Números puestos en los cuerpos de #166 y #167 (reemplazan los de `fco06_fuente`). Worktree temporal sacado. Siguen los verificadores, de a uno.
@@ -293,3 +293,79 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 - 21:55 · **`auditor-persistencia` #166 contra `public`: APTO.** `lacentral_test.public` coincide con el 09 y el re-scaffold (tipos, nulabilidad, defaults, los 4 CHECK por nombre). Filtrada Fco06 + aproximada contra `public`: 58/58. No bloqueantes: `fcd_descuento_3_valido` sin test que lo dispare en el motor (sí el `_2`; el caso de uso valida los tres); `TipoComprobante[0]` con texto vacío lanzaría (el caso de uso lo impide antes); el PUT de proveedor sin el campo borra el tipo habitual (ya anotado, ver 19:15 del bloque anterior). **#166 cerrado de verificación.** Sigue: merge a `feature/163-frontend`, suite completa sobre su HEAD, `verificador-tdd` del #167.
 - 20:18 · Push del #166 (bitácora). Merge `feature/163-esquema-backend` → `feature/163-frontend`: `772e934`, sin conflictos. Árboles: `backend/` = `c06bd2d` (= #166), `frontend/` = `bc6bf91` (= `707cbf9`, sigue valiendo 184/184; la política no pide correrla si no se tocó `frontend/`). Suite completa backend sobre `772e934` contra `public`, corriendo.
 - 20:31 · **Suite completa backend sobre `772e934` (#167), contra `public`:** `Correctas! - Con error: 0, Superado: 560, Omitido: 0, Total: 560, Duración: 12 m 10 s`; 0 advertencias. Push y `verificador-tdd` del #167.
+- 20:32 · Cuerpos: #167 con 560/560 sobre `772e934`; #166 con los dos APTO contra `public` y los no bloqueantes del auditor. **`verificador-tdd` del #167 lanzado**, acotado a `aede936^..9f6cf1c`, con 184/184 (`frontend/` = `bc6bf91`) y 560/560 sobre `772e934`. **`fco06_fuente` borrado** de `lacentral_test` (`DROP SCHEMA … CASCADE`, con guarda: base = `lacentral_test` y 0 dependientes fuera del esquema salvo sus propias tablas TOAST); `public` sigue con 27 tablas antes y después.
+
+## 13/11/2026 20:50 · Retomar tras el segundo corte: verificador del #167 y cierre
+
+**Instrucción recibida (verbatim):**
+> Se cortó la luz otra vez y la máquina se apagó. Retomá.
+>
+> 1. Leé el último bloque de docs/sprint06/BITACORA.md con Estado: en curso (el de las 20:00).
+>    Lo último anotado es: verificador-tdd del #167 lanzado, acotado a aede936^..9f6cf1c, y
+>    fco06_fuente borrado. No rehagas nada de lo que ya figure hecho con su evidencia.
+> 2. git fetch --all --prune.
+>
+> Estado verificado contra GitHub al 13/11 20:45:
+> - #165 docs/sprint06-factura-compra -> develop, abierto, head bc14489
+> - #166 feature/163-esquema-backend -> develop, abierto, head bd300e5
+> - #167 feature/163-frontend -> develop, abierto, head addc96f
+> - Ninguno mergeado. develop sin commits de hoy.
+>
+> Lo único que falta:
+>
+> A. El verificador-tdd del #167 nunca reportó: se cortó con él corriendo. Relanzalo, acotado
+>    a los commits de frontend de esa HU, con los números que ya tenés (184/184 de frontend y
+>    560/560 de backend sobre 772e934). Si hay NO APTO, arreglás y volvés a verificar acotado
+>    al arreglo, como hiciste con el #166.
+>
+> B. fco06_fuente YA ESTÁ BORRADO. No lo vuelvas a crear ni lo busques.
+>
+> C. El head del #167 (addc96f) y el del #166 (bd300e5) son posteriores a las corridas que
+>    figuran en los cuerpos. Fijate si esos commits tocan solo docs: si es así, NO corras la
+>    suite de nuevo, declaralo en el cuerpo como dice la política (qué commits quedaron fuera
+>    de la verificación y por qué). Una corrida completa está en doce minutos y no vale
+>    gastarla por un commit de bitácora.
+>
+> D. Cerrá los bloques de la bitácora que queden en curso y dejá el ESTADO al día, en el mismo
+>    push.
+>
+> E. En el cuerpo de los dos PR dejá escrito el orden de merge, para que Javi no lo adivine:
+>    #164, después #165, después #166 y #167 JUNTOS. Los dos últimos van juntos porque el
+>    backend exige tipoComprobante y sin el frontend la pantalla no puede registrar, y porque
+>    el PUT de proveedor sin el campo borra el tipo habitual.
+>
+> Lo que queda y no podés hacer vos: el recorrido a mano en el navegador contra lacentral_demo,
+> punto 10 de la Definición de Terminado. Lo hace Santi o Lauti.
+>
+> No me preguntes: si te trabás, dejalo escrito en la bitácora y seguí con lo que puedas.
+
+**Plan:**
+1. Leer el bloque de las 20:00 (lo último: verificador #167 lanzado, `fco06_fuente` borrado). Fetch.
+2. Sacar el worktree que dejó el verificador cortado.
+3. Commits posteriores a las corridas: ¿solo docs? Declararlo en los cuerpos de #166 y #167.
+4. Relanzar `verificador-tdd` del #167 (`aede936^..9f6cf1c`, 184/184 y 560/560 sobre `772e934`). Arreglar si hay NO APTO.
+5. Orden de merge en los cuerpos de #166 y #167.
+6. Cerrar los bloques en curso, ESTADO al día, un solo push.
+
+**Estado:** terminada
+- 20:50 · Paso 1: bloque de las 20:00 leído; la línea de las 20:32 había quedado escrita sin commitear (se conserva tal cual). `git fetch --all --prune`: `HEAD..origin/develop` vacío; ramas locales = origin (`bc14489`, `bd300e5`, `addc96f`).
+- 20:52 · Paso 3: `git diff --name-only 772e934 addc96f` → solo `docs/sprint06/BITACORA.md`; `d92f395..bd300e5` (`e0230fc`, `bd300e5`) → solo `BITACORA.md` y `ESTADO.md`. No se corre la suite: se declara en los cuerpos.
+- 20:53 · Paso 2: worktree `wt-tdd-6103264d` del verificador cortado sacado (`--force`: git lo rechazó sucio; el único cambio era su mutación en `sinCeros()` de `factura-compra.ts`, mirada antes de borrar). `git worktree list`: solo el principal.
+- 20:55 · Paso 4: **`verificador-tdd` del #167 relanzado**, acotado a `aede936^..9f6cf1c` (solo `frontend/`), con 184/184 (`frontend/` = `bc6bf91`) y 560/560 sobre `772e934`.
+- 21:00 · Pasos 3 y 5 en el #166: cuerpo con la sección «Orden de merge» (#164 → #165 → #166 y #167 juntos, con los dos motivos) y «Commits fuera de la verificación» (`e0230fc`, `bd300e5`: solo docs, `backend/` = `c06bd2d`). El #167 se edita junto con el dictamen del verificador.
+- 21:02 · ESTADO: E56 sin el pendiente de `fco06_fuente` (borrado). Esperando el dictamen del `verificador-tdd` del #167 para cerrar ESTADO, cuerpo del #167 y bloques.
+- 21:20 · **`verificador-tdd` #167, ronda 1: NO APTO.** Rojo de `97994af` reproducido (18/166, todos por aserción). 17 mutaciones, 15 en rojo, sobreviven 2 en `factura-compra.ts`: MF4 :427 `sinCeros()` sin el `replace` de ceros (el spec escribe «35», nunca «00035»); MF11 :318 `alCambiarTipo()` sin poner en 0 el IVA por línea en B (los specs miran el total mockeado de `/calculo`). No bloqueante: el nombre de «Enter en el código busca exacto» cubre también la aproximada.
+- 21:40 · Reproducción propia de las dos (solo `factura-compra*.spec`, ChromeHeadless):
+  - **MF4 no sobrevive:** sin el `replace` de `sinCeros()` → `1 FAILED, 18 SUCCESS`: el spec «CA-002 y CA-003: Enter sobre 35 selecciona el 00035» ya la mata (el verificador leyó mal el código del proveedor). Nada que arreglar.
+  - **MF11 como la describe no existe** (no hay `alCambiarTipo` ni `ivaPorLinea`: el IVA lo calcula la API). La mutación real equivalente sí sobrevive: sacar `invalidarTotales()` de `cambiarTipo()` (:266) → `19 SUCCESS`. Camino real: con el total ya calculado, elegir otro proveedor (click en la opción, no dispara el `(change)` del formulario) cambia el tipo y dejaba el total viejo a la vista.
+- 21:45 · Arreglo `9ad0497` (solo test): «CA-004 y CA-015: elegir otro proveedor cambia el tipo propuesto y obliga a recalcular el total». Producción: 20/20 en el archivo; con la mutación: `1 FAILED, 19 SUCCESS`, por aserción (`Expected <section data-totales …> to be null`). **Frontend completo sobre `9ad0497`: `TOTAL: 185 SUCCESS`.** `backend/` no cambia (sigue 560/560 de `772e934`). Sigue: ronda 2 acotada a `9ad0497`.
+- 21:50 · **Ronda 2 del `verificador-tdd` del #167 lanzada**, acotada a `9ad0497`, con 185/185 frontend sobre `9ad0497` y 560/560 backend sobre `772e934` (mismo `backend/`). Worktree colgado de la ronda 1 (`wt-tdd-ed6bb83e`, limpio) sacado antes.
+- 22:05 · **`verificador-tdd` #167, ronda 2 (solo `9ad0497`): APTO.** MF4 confirmada muerta desde `9f6cf1c` (corrige su ronda 1). La mutación real de `cambiarTipo()` (:266): 19 SUCCESS en `9f6cf1c`, 1 FAILED en `9ad0497` por aserción con el spec nuevo, por un camino real. Aceptó 185/185 y 560/560 sin repetir. **#167 cerrado de verificación.**
+- 22:10 · Paso 5: cuerpo del #167 con «Orden de merge», las dos rondas del verificador, 185/185 sobre `9ad0497` y «Commits fuera de la verificación». ESTADO: fila de la #163 (PR #166 y #167, verificados, orden de merge) y PRÓXIMA SESIÓN. Bloques de las 12:23, 19:30 y 20:00 cerrados: lo que quedaba abierto en ellos sigue acá.
+- **Queda abierto (de personas, no de esta sesión):**
+  - merge en este orden: #164 → #165 → #166 y #167 juntos (Javi);
+  - recorrido en el navegador contra `lacentral_demo`, DoD 10 (Santi o Lauti, `scripts/probar-demo.sh`);
+  - suite completa después del merge a `develop`;
+  - supuesto de descuentos sucesivos, a confirmar con Sergio;
+  - R1 (consulta de Santi).
+  - No bloqueantes anotados en los PR: búsqueda de proveedor por código distingue mayúsculas; `fcd_descuento_3_valido` sin test en el motor; `similarity()` sin GIN; nombres de dos tests.
