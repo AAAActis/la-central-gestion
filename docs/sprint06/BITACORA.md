@@ -198,3 +198,96 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
   3. El `Trait("Proveedor")` sobra en `ArticuloBusquedaAproximadaPostgreSqlTests`. Es cosmético.
 
   Sigue `verificador-tdd` del #167.
+
+## 13/11/2026 19:30 · Retomar tras el corte de luz (sigue el bloque de las 12:23)
+
+**Instrucción recibida (verbatim):**
+> Se cortó la luz en medio del trabajo y la máquina se apagó. Retomá desde donde quedaste.
+>
+> Primero, en este orden:
+> 1. Leé el último bloque de docs/sprint06/BITACORA.md con Estado: en curso. Seguís desde
+>    ahí: no vuelvas a empezar ni rehagas lo que ya figure hecho con su evidencia.
+> 2. git fetch --all --prune y mirá qué quedó pusheado y qué no.
+>
+> Estado verificado contra GitHub al 13/11 18:40:
+> - #165 docs/sprint06-factura-compra -> develop, abierto
+> - #166 feature/163-esquema-backend -> develop, abierto
+> - #167 feature/163-frontend -> develop, abierto
+> - Ninguno mergeado. develop no tiene commits de hoy.
+>
+> Antes de tocar nada de código, comprobá el estado real de la base, que es lo que un corte
+> a mitad de camino puede dejar roto:
+> - ¿El script 09 llegó a aplicarse a lacentral_test? ¿Y a lacentral_demo?
+> - ¿El re-scaffold coincide con lo que hay en la base?
+> Si el script entró pero el modelo quedó viejo, o al revés, los tests de PostgreSQL están en
+> rojo en todas las ramas y eso se arregla antes que cualquier otra cosa.
+>
+> Después seguí con lo que falte de la Parte B. Si un PR quedó abierto sin la corrida de la
+> suite sobre su último commit, corré la suite completa una vez y poné el número en el cuerpo.
+>
+> No me preguntes: si te trabás, dejalo escrito en la bitácora y seguí con lo que puedas.
+> Las únicas paradas son las de CLAUDE.md.
+
+**Plan:**
+1. Leer el bloque en curso (12:23): lo último hecho es el APTO del `auditor-persistencia` del #166; sigue `verificador-tdd` del #167.
+2. `git fetch`, ramas contra origin y PR.
+3. Estado de la base: 09 en test y demo, scaffold contra la base.
+4. Suite completa sobre el HEAD de cada PR que no la tenga, con el número en el cuerpo.
+5. `verificador-tdd` del #167 (acotado a sus commits), arreglos si hay NO APTO.
+6. ESTADO.md y cierre de los bloques.
+
+**Estado:** en curso
+- 19:30 · Paso 1: el bloque de las 12:23 termina en «Sigue `verificador-tdd` del #167». No se rehace nada de lo anterior.
+- 19:32 · Paso 2: `git fetch --all --prune` hecho. Las tres ramas locales = origin (`bc14489`, `b8b8ba3`, `707cbf9`), = HEAD de los PR #165/#166/#167, los tres `OPEN`. `HEAD..origin/develop` vacío: nada nuevo en develop. Sin worktrees extra. Único cambio local: `analytics` en `frontend/angular.json` (ajeno, no se commitea).
+- 19:40 · Paso 3, consulta de solo lectura (Npgsql desde un script en el scratchpad, sin psql en la máquina):
+  - `lacentral_demo.public`: las 5 columnas del 09 están. El 09 es una sola transacción: no puede haber quedado a medias.
+  - `lacentral_test.public`: ninguna de las 5. `fco06_fuente`: las 5, intacto.
+  - Scaffold (`Models/Proveedor`, `FacturaCompra`, `FacturaCompraDetalle` + `LaCentralDbContext`): tiene las 5 columnas = demo. Nada que arreglar en el modelo.
+  - **BLOQUEADO EN (sigue, ya estaba):** aplicar el 09 a `lacentral_test.public`. Re-verificado: `pg_has_role('lacentral','MEMBER') = false`, dueño de `factura_compra` = `lacentral`. Lo corre Santi con el superusuario. Hasta entonces: en estas ramas, los tests de PostgreSQL contra `public` dan rojo y se corren con `LA_CENTRAL_TEST_SCHEMA=fco06_fuente`; las ramas sin el 09 (develop, las de Javi) siguen en verde porque `public` no cambió.
+- 19:50 · Paso 4: #165 es solo docs (sin suite, declarado). #166: suite sobre `67092a0`, posteriores solo docs (declarado en el cuerpo). **#167 no tenía corrida sobre su HEAD `707cbf9`** (el merge que trajo los tests de la ronda 1; el cuerpo citaba 553 sobre `1060bb0`). Árboles: `backend/` de `707cbf9` = `67092a0`, `frontend/` = `9f6cf1c` (`git diff --stat` vacío en los dos). Se corre igual una vez sobre `707cbf9`, para el cuerpo y para pasársela al verificador.
+  - Frontend sobre `707cbf9`: `TOTAL: 184 SUCCESS` (ChromeHeadless). Backend corriendo.
+  - Corrección al bloque de las 17:25: **sí hay navegador**, `/usr/bin/chromium` (`CHROME_BIN`, el que usa Karma). Los MCP buscaban `/opt/google/chrome/chrome`. El recorrido en el navegador sigue siendo de una persona (DoD 10), pero ya no falta el binario.
+
+## 13/11/2026 20:00 · El 09 entró a lacentral_test: suites contra public y verificadores
+
+**Instrucción recibida (verbatim):**
+> Santi aplicó el script 09 a lacentral_test con el superusuario. Salió limpio: proveedor.
+> tipo_comprobante_habitual, factura_compra.tipo_comprobante, factura_compra.fecha_imputacion
+> y factura_compra_detalle.descuento_2_porcentaje y descuento_3_porcentaje. Cerró con
+> «09: TODO OK» y COMMIT.
+>
+> Con eso se cae el bloqueo que anotaste en la bitácora. Hacé esto:
+>
+> 1. Dejá de usar la copia fco06_fuente: los tests tienen que correr contra
+>    lacentral_test.public, que ahora tiene el 09.
+> 2. Corré la suite completa de backend una sola vez, sobre el último commit de cada PR, y
+>    poné ese número en el cuerpo del #166 y del #167. El 557/557 anterior no vale como
+>    verificación: validaba contra un esquema que te fabricaste vos.
+> 3. Recién con ese número, invocá el verificador-tdd y el auditor-persistencia, uno por PR,
+>    con el alcance acotado a los commits de cada uno y pasándoles el hash y el conteo.
+> 4. Anotá en la bitácora que el bloqueo se cerró, con la fecha y quién aplicó el script.
+>
+> Si algo que pasaba contra fco06_fuente ahora falla contra el esquema real, eso es
+> exactamente lo que había que encontrar: arreglalo antes de seguir.
+
+**Plan:**
+1. Verificar el 09 en `lacentral_test.public` y cerrar el bloqueo.
+2. Suite completa backend SIN `LA_CENTRAL_TEST_SCHEMA` sobre `b8b8ba3` (#166) y `707cbf9` (#167). Si algo falla, arreglarlo antes de seguir.
+3. Números en los cuerpos de #166 y #167.
+4. Verificadores, de a uno, acotados y con hash y conteo: #166 `verificador-tdd` + `auditor-persistencia`; #167 `verificador-tdd` (auditor no aplica, solo frontend).
+5. Borrar `fco06_fuente` cuando nada lo use. ESTADO.md antes del push.
+
+**Estado:** en curso
+- 20:00 · **BLOQUEO CERRADO** (el de las 14:20 y 19:40): Santi aplicó el 09 a `lacentral_test.public` con el superusuario el 13/11/2026 («09: TODO OK», COMMIT). Verificado por consulta de solo lectura: las 5 columnas en `lacentral_test.public` (5/5, igual que `lacentral_demo.public`). La corrida de las 19:50 contra `fco06_fuente` se cortó sin reportarse: no vale.
+- 19:12 · Suite completa backend sobre `707cbf9` (#167), contra `lacentral_test.public`, sin `LA_CENTRAL_TEST_SCHEMA`: `Correctas! - Con error: 0, Superado: 557, Omitido: 0, Total: 557, Duración: 11 m 10 s`. Build `--no-incremental`: 0 advertencias. Nada que pasaba contra `fco06_fuente` falla contra el esquema real. Sigue #166 sobre `b8b8ba3` en un worktree temporal.
+- 19:25 · Suite completa backend sobre `b8b8ba3` (#166), contra `public`, sin la variable: `Correctas! - Con error: 0, Superado: 557, Omitido: 0, Total: 557, Duración: 11 m 58 s`; 0 advertencias. Números puestos en los cuerpos de #166 y #167 (reemplazan los de `fco06_fuente`). Worktree temporal sacado. Siguen los verificadores, de a uno.
+- 19:25 · `verificador-tdd` del #166 lanzado: alcance `97f2cee^..b8b8ba3` (código hasta `67092a0`), contra `public` sin la variable, con hash `b8b8ba3`, línea literal y 557/557. Después, `auditor-persistencia` del #166 y `verificador-tdd` del #167, de a uno (R1).
+- 20:55 · **`verificador-tdd` #166, ronda 1 contra `public`: NO APTO.** Rojo de `4d4857a` reproducido contra `public` (46/16, igual que el cuerpo del PR). 24 mutaciones: 21 en rojo, 3 sobrevivientes, las tres en `RegistrarFacturaCompraUseCase.cs`:
+  - M1 :143, sin `PercepcionGanancias` en `CalcularTotales` (todos los tests de totales mandaban ganancias 0);
+  - M6 :195, escala sin el tercer descuento (solo el segundo tenía el caso 0,001; en producción 0,001 pasaba y la columna NUMERIC(6,2) lo redondeaba sin avisar);
+  - M9 :138, redondeo por línea a 4 decimales (ninguna línea de prueba daba fracciones de centavo).
+- 21:05 · Arreglo, `3efa04d` (solo tests, producción no cambia): `Fco06_Totales_LasPercepcionesIncluyenGanancias`, `[InlineData(0, 0.001)]` en `Fco06_SegundoOTercerDescuentoFueraDeRango_Invalido`, `Fco06_Totales_CadaLineaSeRedondeaACentavosAntesDeSumar` (2 × 1,005 × 1,00 = 2,02). Filtrada `RegistrarFacturaCompraUseCaseTests`: 70/70. **Con M1, M6 y M9 puestas de a una: 69/70 cada vez, en rojo justo el test nuevo de esa mutación**, por aserción. Sigue: suite completa sobre el HEAD del #166, ronda 2 acotada a `3efa04d`.
+- 20:11 · **Suite completa backend sobre `d92f395` (#166), contra `public`:** `Correctas! - Con error: 0, Superado: 560, Omitido: 0, Total: 560, Duración: 15 m 14 s`; 0 advertencias. ESTADO: E56 cerrada y PRÓXIMA SESIÓN al día. Push y ronda 2.
+- 20:11 · Push de `feature/163-esquema-backend` (`e0230fc`). Cuerpo del #166: 560/560 sobre `d92f395` y la ronda 1 contra `public`. **Ronda 2 del `verificador-tdd` lanzada**, acotada a `3efa04d`, con hash `d92f395`, línea literal y 560/560.
+- 20:13 · **`verificador-tdd` #166, ronda 2 (solo `3efa04d`): APTO.** M1, M6 y M9, cada una en rojo por aserción con su test nuevo (69/70). Aceptó la suite de `d92f395` para el HEAD `e0230fc`: `git rev-parse <commit>:backend` = `c06bd2d` en `3efa04d`, `d92f395` y `e0230fc`. Sigue el `auditor-persistencia` del #166, contra `public`.
+- 21:55 · **`auditor-persistencia` #166 contra `public`: APTO.** `lacentral_test.public` coincide con el 09 y el re-scaffold (tipos, nulabilidad, defaults, los 4 CHECK por nombre). Filtrada Fco06 + aproximada contra `public`: 58/58. No bloqueantes: `fcd_descuento_3_valido` sin test que lo dispare en el motor (sí el `_2`; el caso de uso valida los tres); `TipoComprobante[0]` con texto vacío lanzaría (el caso de uso lo impide antes); el PUT de proveedor sin el campo borra el tipo habitual (ya anotado, ver 19:15 del bloque anterior). **#166 cerrado de verificación.** Sigue: merge a `feature/163-frontend`, suite completa sobre su HEAD, `verificador-tdd` del #167.
