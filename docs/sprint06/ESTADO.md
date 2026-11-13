@@ -30,7 +30,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 
 | # | Qué | Responsable | Bloquea | Estado al 13/11 |
 |---|---|---|---|---|
-| E56 | Esquema de la 056: `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `fecha_imputacion`, dos descuentos más por línea (script SQL + re-scaffold, en `lacentral_test` y `lacentral_demo`) | Santi | 056; la 029 y la 049 lo usan | **Script 09 escrito y aplicado en `lacentral_demo`** (13/11) con re-scaffold. **Falta `lacentral_test.public`:** sus tablas son del rol `lacentral`; lo aplica Santi con el superusuario. Hasta entonces la suite corre con `LA_CENTRAL_TEST_SCHEMA=fco06_fuente` (plantilla con el 09). Después: borrar `fco06_fuente` |
+| E56 | Esquema de la 056: `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `fecha_imputacion`, dos descuentos más por línea (script SQL + re-scaffold, en `lacentral_test` y `lacentral_demo`) | Santi | 056; la 029 y la 049 lo usan | **Script 09 escrito y aplicado en `lacentral_demo`** (13/11) con re-scaffold. **CERRADA 13/11:** Santi aplicó el 09 a `lacentral_test.public` con el superusuario (`09: TODO OK`). La suite corre contra `public`, sin `LA_CENTRAL_TEST_SCHEMA`. Falta borrar la plantilla `fco06_fuente` |
 | C7 | Facturas reales de varios proveedores, para decidir parser por reglas o interpretación asistida (nota de la 029) | Lauti | 029 | Abierta |
 
 C2, C5, C6 y C1 pasaron al Sprint 7 con el comparador (D-PL-05). La P6 se cerró el 11/11.
@@ -141,6 +141,14 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 ---
 
 ## PRÓXIMA SESIÓN
+
+**13/11 noche · E56 cerrada, verificación contra el esquema real.** Santi aplicó el 09 a
+`lacentral_test.public`. Suites completas contra `public` (sin `fco06_fuente`): #166 560/560 sobre
+`d92f395`. El `verificador-tdd` del #166 contra `public` dio NO APTO en ronda 1 (3 mutaciones en
+`CalcularTotales` y en la escala del tercer descuento); arreglado con tests en `3efa04d`. Siguen:
+ronda 2 del verificador acotada a `3efa04d`, `auditor-persistencia` del #166, merge a
+`feature/163-frontend` con su suite y `verificador-tdd` del #167. Después, borrar `fco06_fuente`.
+Detalle en la bitácora.
 
 **13/11 tarde · 056 esquema + backend.** Script `09_Factura_Compra_Mecanica.sql` aplicado en
 `lacentral_demo` y re-scaffold. **Pendiente de Santi: aplicar el 09 a `lacentral_test`** (con el
