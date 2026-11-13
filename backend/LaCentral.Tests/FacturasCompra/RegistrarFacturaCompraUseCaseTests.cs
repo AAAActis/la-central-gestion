@@ -62,9 +62,10 @@ public class RegistrarFacturaCompraUseCaseTests
     private static RegistrarFacturaCompraRequest Request(
         IReadOnlyList<LineaFacturaCompraRequest>? lineas = null, int proveedorId = ProveedorActivo,
         string numero = " A-0001-00000123 ", DateOnly? emision = null, DateOnly? vencimiento = null,
-        decimal iva = 30m, decimal iibb = 4.5m, decimal municipal = 1.25m, decimal ganancias = 0m) =>
+        decimal iva = 30m, decimal iibb = 4.5m, decimal municipal = 1.25m, decimal ganancias = 0m,
+        string? tipo = "A", DateOnly? imputacion = null) =>
         new(proveedorId, numero, emision ?? new DateOnly(2026, 10, 1), vencimiento ?? new DateOnly(2026, 10, 31),
-            iva, iibb, municipal, ganancias, lineas ?? new[] { Linea() });
+            iva, iibb, municipal, ganancias, lineas ?? new[] { Linea() }, tipo, imputacion);
 
     private void NoSeEscribioNada() =>
         _facturas.Verify(f => f.RegistrarConEfectosAsync(It.IsAny<FacturaCompra>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -409,5 +410,146 @@ public class RegistrarFacturaCompraUseCaseTests
 
         _unidad.Verify(u => u.EjecutarAsync(It.IsAny<Func<CancellationToken, Task<Result>>>(), It.IsAny<CancellationToken>()), Times.Once);
         NoSeEscribioNada();
+    }
+
+    // ---- HU-FCO-06 (056) ----
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("C")]
+    [InlineData("AB")]
+    public async Task Fco06_TipoDeComprobanteAusenteODistintoDeAyB_Invalido(string? tipo)
+    {
+        var resultado = await Caso().EjecutarAsync(Request(tipo: tipo));
+
+        AssertFallo(resultado, TipoError.Invalido);
+        NoSeEscribioNada();
+    }
+
+    [Theory]
+    [InlineData("A", "A")]
+    [InlineData(" b ", "B")]
+    public async Task Fco06_TipoDeComprobante_SeRegistraEnLaFactura(string tipo, string esperado)
+    {
+        var numero = esperado == "B" ? "99-00001234" : "0001-00000123";
+
+        var resultado = await Caso().EjecutarAsync(Request(tipo: tipo, numero: numero));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(esperado, _registrada!.TipoComprobante);
+    }
+
+    // CA-005 (D-S6-10): el B lleva 99 en el primer tramo; el 999 no se usa.
+    [Theory]
+    [InlineData("0001-00001234")]
+    [InlineData("999-00001234")]
+    [InlineData("099-00001234")]
+    [InlineData("9900001234")]
+    public async Task Fco06_ComprobanteB_SinNoventaYNueveEnElPrimerTramo_Invalido(string numero)
+    {
+        var resultado = await Caso().EjecutarAsync(Request(tipo: "B", numero: numero));
+
+        AssertFallo(resultado, TipoError.Invalido);
+        NoSeEscribioNada();
+    }
+
+    // CA-005: el A se copia tal cual, cualquier combinación.
+    [Theory]
+    [InlineData("99-00001234")]
+    [InlineData("999-1")]
+    [InlineData("0001-00000123")]
+    [InlineData("A-12")]
+    public async Task Fco06_ComprobanteA_SeCopiaElNumeroExacto(string numero)
+    {
+        var resultado = await Caso().EjecutarAsync(Request(tipo: "A", numero: numero));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(numero, _registrada!.Numero);
+    }
+
+    // CA-006
+    [Fact]
+    public async Task Fco06_FechaDeImputacion_SeGuardaAparte()
+    {
+        var resultado = await Caso().EjecutarAsync(Request(imputacion: new DateOnly(2026, 11, 1)));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(new DateOnly(2026, 10, 1), _registrada!.FechaEmision);
+        Assert.Equal(new DateOnly(2026, 11, 1), _registrada.FechaImputacion);
+    }
+
+    [Fact]
+    public async Task Fco06_SinFechaDeImputacion_EsLaEmision()
+    {
+        var resultado = await Caso().EjecutarAsync(Request(emision: new DateOnly(2026, 10, 5)));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(new DateOnly(2026, 10, 5), _registrada!.FechaImputacion);
+    }
+
+    // CA-012
+    [Fact]
+    public async Task Fco06_TresDescuentos_SeRegistranEnLaLinea()
+    {
+        var resultado = await Caso().EjecutarAsync(Request(new[] { new LineaFacturaCompraRequest(100, 1, 5m, 200m, 10m, 5m, 2.5m) }));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        var linea = Assert.Single(_registrada!.Lineas);
+        Assert.Equal((10m, 5m, 2.5m), (linea.DescuentoPorcentaje, linea.Descuento2Porcentaje, linea.Descuento3Porcentaje));
+    }
+
+    [Theory]
+    [InlineData(-1, 0)]
+    [InlineData(100.01, 0)]
+    [InlineData(0, -0.01)]
+    [InlineData(0, 101)]
+    [InlineData(0.001, 0)]
+    public async Task Fco06_SegundoOTercerDescuentoFueraDeRango_Invalido(double segundo, double tercero)
+    {
+        var resultado = await Caso().EjecutarAsync(Request(new[]
+            { new LineaFacturaCompraRequest(100, 1, 5m, 200m, 0m, (decimal)segundo, (decimal)tercero) }));
+
+        AssertFallo(resultado, TipoError.Invalido);
+        NoSeEscribioNada();
+    }
+
+    // CA-014 y CA-015: neto con descuentos sucesivos, 21 % de IVA solo en el A, percepciones, total.
+    [Fact]
+    public void Fco06_Totales_ComprobanteA_SumaVeintiunoPorCientoDeIva()
+    {
+        // 5 × 180 (200 − 10 %) = 900; 2,5 × 80 = 200 → neto 1100; IVA 231; percepciones 35,75.
+        var resultado = Caso().CalcularTotales(Request(new[] { Linea(100, 1, 5m, 200m, 10m), Linea(200, 2, 2.5m, 80m, 0m) }));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(new TotalesFacturaCompra(1100m, 231m, 35.75m, 1366.75m), resultado.Value);
+    }
+
+    [Fact]
+    public void Fco06_Totales_ComprobanteB_NoSumaIva()
+    {
+        var resultado = Caso().CalcularTotales(Request(new[] { Linea(100, 1, 5m, 200m, 10m), Linea(200, 2, 2.5m, 80m, 0m) },
+            tipo: "B", numero: "99-00000001"));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(new TotalesFacturaCompra(1100m, 0m, 35.75m, 1135.75m), resultado.Value);
+    }
+
+    [Fact]
+    public void Fco06_Totales_ElIvaSeRedondeaACentavos()
+    {
+        // neto 0,15 × 1 = 0,15; IVA 0,0315 → 0,03.
+        var resultado = Caso().CalcularTotales(Request(new[] { Linea(100, 1, 1m, 0.15m, 0m) }, iva: 0m, iibb: 0m, municipal: 0m));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(new TotalesFacturaCompra(0.15m, 0.03m, 0m, 0.18m), resultado.Value);
+    }
+
+    [Fact]
+    public void Fco06_Totales_ConDatosInvalidos_Invalido()
+    {
+        var resultado = Caso().CalcularTotales(Request(tipo: null));
+
+        AssertFallo(resultado, TipoError.Invalido);
     }
 }

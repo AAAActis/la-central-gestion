@@ -108,7 +108,7 @@ public class RegistrarFacturaCompraPostgreSqlTests
         {
             new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal1, 5m, 200m, 10m),
             new LineaFacturaCompraRequest(e.Comprado2, e.Sucursal2, 2.5m, 80m, 0m)
-        });
+        }, TipoComprobante: "A");
 
     // ---- CA1, CA4 y D9 ----
 
@@ -686,4 +686,74 @@ public class RegistrarFacturaCompraPostgreSqlTests
 
     private static async Task<Dictionary<int, (decimal? Costo, int? UltimoProveedor)>> ArticulosAsync(LaCentralDbContext contexto) =>
         (await contexto.Articulo.AsNoTracking().ToListAsync()).ToDictionary(a => a.Id, a => (a.PrecioCosto, a.UltimoProveedorId));
+
+    // ---- HU-FCO-06 (056): tipo de comprobante, imputación y tres descuentos ----
+
+    // CA-005, CA-006, CA-012 y D-S6-10 contra PostgreSQL: la cabecera B con su 99, las tres
+    // fechas por separado, los tres descuentos de la línea y el costo con los descuentos
+    // sucesivos. Se relee con un contexto nuevo.
+    [PostgreSqlFact]
+    public async Task Fco06_ComprobanteB_GuardaTipoImputacionYTresDescuentos_YElCostoEsElNetoSucesivo()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+
+        Result<RegistrarFacturaCompraResponse> resultado;
+        await using (var contexto = fixture.CrearContexto())
+            resultado = await Caso(contexto, e).EjecutarAsync(Compra(e, "99-00004567") with
+            {
+                TipoComprobante = "B",
+                FechaImputacion = new DateOnly(2026, 11, 2),
+                Lineas = new[] { new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal1, 5m, 200m, 10m, 5m, 2.5m) }
+            });
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        await using var relectura = fixture.CrearContexto();
+        var factura = await relectura.FacturaCompra.AsNoTracking().SingleAsync(f => f.Id == resultado.Value.Id);
+        Assert.Equal(('B', "99-00004567"), (factura.TipoComprobante!.Value, factura.Numero));
+        Assert.Equal((new DateOnly(2026, 10, 1), new DateOnly(2026, 10, 31), new DateOnly(2026, 11, 2)),
+            (factura.FechaEmision, factura.FechaVencimiento!.Value, factura.FechaImputacion));
+        var linea = await relectura.FacturaCompraDetalle.AsNoTracking().SingleAsync(d => d.FacturaCompraId == factura.Id);
+        Assert.Equal((10m, 5m, 2.5m), (linea.DescuentoPorcentaje, linea.Descuento2Porcentaje, linea.Descuento3Porcentaje));
+        // 200 × 0,90 × 0,95 × 0,975 = 166,725 → 166,73
+        var articulo = await relectura.Articulo.AsNoTracking().SingleAsync(a => a.Id == e.Comprado1);
+        Assert.Equal(166.73m, articulo.PrecioCosto);
+    }
+
+    // El CHECK fcd_descuento_2_valido existe en el motor: el caso de uso no es la única defensa.
+    [PostgreSqlFact]
+    public async Task Fco06_SegundoDescuentoFueraDeRango_LoRechazaElMotor()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        await using var contexto = fixture.CrearContexto();
+        contexto.FacturaCompra.Add(new FacturaCompra
+        {
+            ProveedorId = e.Proveedor, Numero = "99-1", FechaEmision = new DateOnly(2026, 10, 1),
+            FechaImputacion = new DateOnly(2026, 10, 1), TipoComprobante = 'B', Estado = "ACTIVA", Origen = "MANUAL",
+            UsuarioId = e.UsuarioId, FechaRegistro = DateTime.UtcNow, ConComprobanteFiscal = true,
+            FacturaCompraDetalle = { new FacturaCompraDetalle
+                { ArticuloId = e.Comprado1, SucursalId = e.Sucursal1, Cantidad = 1m, PrecioUnitario = 1m, Descuento2Porcentaje = 101m } }
+        });
+
+        var error = await Assert.ThrowsAsync<DbUpdateException>(() => contexto.SaveChangesAsync());
+        Assert.Equal("fcd_descuento_2_valido", Assert.IsType<PostgresException>(error.InnerException).ConstraintName);
+    }
+
+    [PostgreSqlFact]
+    public async Task Fco06_TipoDeComprobanteDistintoDeAyB_LoRechazaElMotor()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        await using var contexto = fixture.CrearContexto();
+        contexto.FacturaCompra.Add(new FacturaCompra
+        {
+            ProveedorId = e.Proveedor, Numero = "C-1", FechaEmision = new DateOnly(2026, 10, 1),
+            FechaImputacion = new DateOnly(2026, 10, 1), TipoComprobante = 'C', Estado = "ACTIVA", Origen = "MANUAL",
+            UsuarioId = e.UsuarioId, FechaRegistro = DateTime.UtcNow, ConComprobanteFiscal = true
+        });
+
+        var error = await Assert.ThrowsAsync<DbUpdateException>(() => contexto.SaveChangesAsync());
+        Assert.Equal("fc_tipo_comprobante_valido", Assert.IsType<PostgresException>(error.InnerException).ConstraintName);
+    }
 }
