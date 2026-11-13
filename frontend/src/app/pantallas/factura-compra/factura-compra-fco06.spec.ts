@@ -67,6 +67,7 @@ describe('FacturaCompra · HU-FCO-06', () => {
 
     expect(c.proveedor()?.codigo).toBe('00035');
     expect(raiz().querySelectorAll('button.opcion').length).toBe(0);
+    expect(c.proveedores().length).toBe(0);
   });
 
   it('Enter sin un código exacto lista las coincidencias y no elige ninguna', () => {
@@ -170,7 +171,31 @@ describe('FacturaCompra · HU-FCO-06', () => {
     expect(c.lineas[0].precioUnitario).toBeNull();
   });
 
-  it('CA-013: la línea nueva hereda la sucursal de la cabecera; cambiarla no toca las demás', () => {
+  it('CA-011: si escribo el precio antes de que llegue la ficha, el costo propuesto no lo pisa', () => {
+    c.textoArticulo = 'FIL-0712';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(1, 'FIL-0712')));
+    c.lineas[0].precioUnitario = 999;
+    servidor.expectOne('/api/articulos/1').flush(ficha(1, 1500));
+
+    expect(c.lineas[0].precioUnitario).toBe(999);
+  });
+
+  it('CA-008 y CA-009: la búsqueda aproximada que llega después de elegir por Enter no vuelve a listar', fakeAsync(() => {
+    c.escribirArticulo('FIL-0712');
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(1, 'FIL-0712')));
+    servidor.expectOne('/api/articulos/1').flush(ficha(1, null));
+
+    tick(300);
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(1, 'FIL-0712'), articulo(2, 'FIL-07120')));
+    fixture.detectChanges();
+
+    expect(c.lineas.length).toBe(1);
+    expect(raiz().querySelectorAll('button.opcion').length).toBe(0);
+  }));
+
+    it('CA-013: la línea nueva hereda la sucursal de la cabecera; cambiarla no toca las demás', () => {
     agregar(1, 'FIL-0712');
     expect(c.lineas[0].sucursalId).toBe(1);
 
@@ -244,10 +269,47 @@ describe('FacturaCompra · HU-FCO-06', () => {
     servidor.expectOne('/api/facturas-compra/calculo').flush({ neto: 166.73, iva: 0, percepciones: 12.5, total: 179.23 });
     fixture.detectChanges();
 
-    // Click en la opción: no pasa por el (change) del formulario, solo por cambiarTipo().
+    // Elegir el proveedor (Enter o click en la opción) no dispara el (change) del formulario: solo cambiarTipo() borra el total.
     elegirProveedor(proveedor('00040', 'A', 9));
 
     expect(c.tipoComprobante).toBe('A');
+    expect(raiz().querySelector('[data-totales]')).toBeNull();
+  });
+
+  function conTotal() {
+    cargarFactura();
+    c.registrar();
+    servidor.expectOne('/api/facturas-compra/calculo').flush({ neto: 166.73, iva: 0, percepciones: 12.5, total: 179.23 });
+    fixture.detectChanges();
+    expect(raiz().querySelector('[data-totales]')).not.toBeNull();
+  }
+
+  it('CA-015: escribir en un campo del formulario después de ver el total lo borra', () => {
+    conTotal();
+
+    raiz().querySelector<HTMLInputElement>('input[name="numero"]')!.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('[data-totales]')).toBeNull();
+  });
+
+  it('CA-015: quitar una línea después de ver el total lo borra', () => {
+    conTotal();
+
+    const quitar = Array.from(raiz().querySelectorAll<HTMLButtonElement>('button')).find(b => b.textContent?.trim() === 'Quitar')!;
+    quitar.click();
+    fixture.detectChanges();
+
+    expect(c.lineas.length).toBe(0);
+    expect(raiz().querySelector('[data-totales]')).toBeNull();
+  });
+
+  it('CA-015: agregar un artículo después de ver el total lo borra', () => {
+    conTotal();
+
+    agregar(2, 'PAS-0100');
+
+    expect(c.lineas.length).toBe(2);
     expect(raiz().querySelector('[data-totales]')).toBeNull();
   });
 });
