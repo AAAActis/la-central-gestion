@@ -22,4 +22,7 @@ public record CrearProveedorRequest
     public List<string>? Telefonos { get; init; }
 
     public List<string>? Direcciones { get; init; }
+
+    /// <summary>HU-FCO-06: "A", "B" o null. Solo el valor por defecto de la factura de compra.</summary>
+    public string? TipoComprobanteHabitual { get; init; }
 }

@@ -239,7 +239,7 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
                 tabla.Add(p);
             })
             .Returns(Task.CompletedTask);
-        repoMock.Setup(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        repoMock.Setup(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => ((IReadOnlyList<Proveedor>)tabla.ToList(), tabla.Count));
         repoMock.Setup(r => r.ObtenerDetallePorIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((int id, CancellationToken _) => tabla.FirstOrDefault(p => p.Id == id));

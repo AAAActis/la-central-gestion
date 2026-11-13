@@ -6,5 +6,6 @@ public record CrearProveedorRequest(
     string? Cuit,
     string? UrlReferencia,
     List<string>? Telefonos,
-    List<string>? Direcciones
+    List<string>? Direcciones,
+    string? TipoComprobanteHabitual = null
 );

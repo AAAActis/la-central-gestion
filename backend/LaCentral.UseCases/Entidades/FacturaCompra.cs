@@ -12,6 +12,10 @@ public class FacturaCompra
     public string Numero { get; set; } = string.Empty;
     public DateOnly FechaEmision { get; set; }
     public DateOnly? FechaVencimiento { get; set; }
+    /// <summary>HU-FCO-06 CA-006: aparte de la emisión y el vencimiento.</summary>
+    public DateOnly FechaImputacion { get; set; }
+    /// <summary>HU-FCO-06: "A" o "B", de esta factura. De él salen el 99 y el IVA.</summary>
+    public string TipoComprobante { get; set; } = string.Empty;
     public decimal PercepcionIva { get; set; }
     public decimal PercepcionIibb { get; set; }
     public decimal PercepcionMunicipal { get; set; }
@@ -29,6 +33,8 @@ public class FacturaCompraDetalle
     public decimal Cantidad { get; set; }
     public decimal PrecioUnitario { get; set; }
     public decimal DescuentoPorcentaje { get; set; }
+    public decimal Descuento2Porcentaje { get; set; }
+    public decimal Descuento3Porcentaje { get; set; }
 
     /// <summary>
     /// El costo unitario que pasa a ser el costo vigente del artículo y queda en su

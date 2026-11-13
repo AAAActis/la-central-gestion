@@ -4,7 +4,7 @@ using LaCentral.UseCases.Entidades;
 namespace LaCentral.UseCases.Articulos.Dtos;
 
 public sealed record ConsultaArticulos(
-    string Texto, bool IncluirInactivos = false, int Pagina = 1, int TamanoPagina = 20)
+    string Texto, bool IncluirInactivos = false, int Pagina = 1, int TamanoPagina = 20, bool Aproximada = false)
 {
     /// <summary>Regla de negocio de la búsqueda: la aplica el caso de uso, no el repositorio.</summary>
     public Result Validar()

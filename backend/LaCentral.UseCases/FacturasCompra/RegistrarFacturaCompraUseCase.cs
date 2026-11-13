@@ -119,6 +119,10 @@ public class RegistrarFacturaCompraUseCase
             : Fallo(resultado.Tipo, resultado.Error);
     }
 
+    /// <summary>HU-FCO-06 CA-014 y CA-015: los totales de la factura, sin guardar nada.</summary>
+    public Result<TotalesFacturaCompra> CalcularTotales(RegistrarFacturaCompraRequest request)
+        => throw new NotImplementedException();
+
     private static Result ValidarDatos(RegistrarFacturaCompraRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Numero))

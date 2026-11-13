@@ -15,7 +15,8 @@ public class ConsultarProveedoresUseCase
     }
 
     public async Task<Result<PaginaDto<ProveedorResumenDto>>> EjecutarAsync(
-        string texto, bool incluirInactivos, int pagina = 1, int tamanoPagina = 20, CancellationToken ct = default)
+        string texto, bool incluirInactivos, int pagina = 1, int tamanoPagina = 20, CancellationToken ct = default,
+        bool porCuit = true)
     {
         // CA-003: hace falta un criterio de búsqueda, no se lista todo el padrón.
         if (string.IsNullOrWhiteSpace(texto))
@@ -30,7 +31,7 @@ public class ConsultarProveedoresUseCase
         }
 
         // CA-003 v1.1 (#147): sin coincidencias es una página vacía, no un 404.
-        var (lista, total) = await _proveedorRepositorio.BuscarAsync(texto.Trim(), incluirInactivos, pagina, tamanoPagina, ct);
+        var (lista, total) = await _proveedorRepositorio.BuscarAsync(texto.Trim(), incluirInactivos, pagina, tamanoPagina, porCuit, ct);
 
         var respuesta = lista
             .Select(p => new ProveedorResumenDto(p.Id, p.Codigo, p.RazonSocial, p.Cuit, p.UrlReferencia, p.Activo))

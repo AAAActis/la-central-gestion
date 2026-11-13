@@ -50,7 +50,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
     private const double UmbralSimilitudRazonSocial = 0.2;
 
     public async Task<(IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor> Items, int Total)> BuscarAsync(
-        string texto, bool incluirInactivos, int pagina, int tamanoPagina, CancellationToken ct = default)
+        string texto, bool incluirInactivos, int pagina, int tamanoPagina, bool porCuit, CancellationToken ct = default)
     {
         var query = _context.Proveedor.AsQueryable();
 
