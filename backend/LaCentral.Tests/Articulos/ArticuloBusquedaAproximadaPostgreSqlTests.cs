@@ -59,4 +59,26 @@ public class ArticuloBusquedaAproximadaPostgreSqlTests
         Assert.Equal(ids.Codigo, exacto.Articulos[0].Id);
         Assert.Equal(1, exacto.Total);
     }
+
+    // CA-008 (ronda 1 del verificador, M18): lo exacto va antes que lo aproximado, aunque lo
+    // aproximado ordene primero por nombre.
+    [PostgreSqlFact]
+    public async Task Aproximada_LoExactoVaAntesQueLoParecido()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var ids = await SembrarAsync(fixture);
+        int parecido;
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var articulo = new Articulo { CodigoInterno = "BUJ-7789", Nombre = "Aaa bujía de otra marca", Activo = true };
+            contexto.Articulo.Add(articulo);
+            await contexto.SaveChangesAsync();
+            parecido = articulo.Id;
+        }
+        await using var lectura = fixture.CrearContexto();
+
+        var pagina = await new ArticuloRepositorio(lectura).BuscarAsync(new("BUJ-7788", Aproximada: true));
+
+        Assert.Equal(new[] { ids.Codigo, parecido }, pagina.Articulos.Select(a => a.Id));
+    }
 }

@@ -196,4 +196,39 @@ public class ProveedorFco06PostgreSqlTests
         Assert.Empty(sinCuit);
         Assert.Equal("00035", Assert.Single(conCuit).Codigo);
     }
+
+    // CA-003 (ronda 1 del verificador, M13): el código escrito con sus ceros también lo encuentra.
+    [PostgreSqlFact]
+    public async Task BuscarSinCuit_ConLosCerosEscritos_LoEncuentraPorCodigo()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await SembrarAsync(fixture);
+        await using var contexto = fixture.CrearContexto();
+        var repositorio = new ProveedorRepositorio(contexto);
+
+        foreach (var texto in new[] { "00035", "035" })
+        {
+            var (items, _) = await repositorio.BuscarAsync(texto, false, 1, 20, porCuit: false);
+            Assert.Equal("00035", Assert.Single(items).Codigo);
+        }
+    }
+
+    // CA-002 (ronda 1, M14): el código exacto va antes que una razón social idéntica al texto.
+    [PostgreSqlFact]
+    public async Task BuscarSinCuit_ElCodigoExactoVaAntesQueUnNombreIgualAlTexto()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using (var contexto = fixture.CrearContexto())
+        {
+            contexto.Proveedor.AddRange(
+                new LaCentral.Data.Models.Proveedor { Codigo = "777", RazonSocial = "Repuestos 35", Activo = true },
+                new LaCentral.Data.Models.Proveedor { Codigo = "00035", RazonSocial = "Lubricantes del Sur", Activo = true });
+            await contexto.SaveChangesAsync();
+        }
+        await using var lectura = fixture.CrearContexto();
+
+        var (items, _) = await new ProveedorRepositorio(lectura).BuscarAsync("35", false, 1, 20, porCuit: false);
+
+        Assert.Equal(new[] { "00035", "777" }, items.Select(p => p.Codigo));
+    }
 }
