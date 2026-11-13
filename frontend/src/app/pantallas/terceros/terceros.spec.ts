@@ -244,13 +244,13 @@ describe('Proveedores (045)', () => {
     telefonos: ['351 444-4444'], direcciones: ['Ruta 9 km 5'],
   };
 
-  function abrirFicha() {
+  function abrirFicha(ficha: FichaTercero = FICHA) {
     h.buscar('autopartes');
     h.servidor.expectOne(r => r.url === '/api/proveedores').flush(
       pagina([{ id: 8, codigo: 'PRV-001', razonSocial: 'Autopartes del Centro', cuit: '30-11111111-1', activo: true }]));
     h.fixture.detectChanges();
     h.boton('Ver ficha').click();
-    h.servidor.expectOne('/api/proveedores/8').flush(FICHA);
+    h.servidor.expectOne('/api/proveedores/8').flush(ficha);
     h.fixture.detectChanges();
   }
 
@@ -272,8 +272,24 @@ describe('Proveedores (045)', () => {
     const cambio = h.servidor.expectOne(r => r.method === 'PUT' && r.url === '/api/proveedores/8');
     expect(cambio.request.body).toEqual({
       razonSocial: 'Autopartes del Centro', cuit: '30-11111111-1', urlReferencia: null,
-      telefonos: ['351 444-4444'], direcciones: ['Ruta 9 km 5'],
+      tipoComprobanteHabitual: null, telefonos: ['351 444-4444'], direcciones: ['Ruta 9 km 5'],
     });
+    cambio.flush(null);
+    h.servidor.expectOne('/api/proveedores/8').flush(FICHA);
+  });
+
+  // HU-FCO-06 CA-004: el tipo que suele emitir se carga en el proveedor y es solo un valor por defecto.
+  it('056 · la ficha muestra el comprobante habitual y la modificación lo manda', () => {
+    abrirFicha({ ...FICHA, tipoComprobanteHabitual: 'B' });
+    expect(h.raiz().textContent).toContain('Comprobante habitual');
+    expect(h.raiz().textContent).toContain('B');
+    h.boton('Modificar').click();
+    h.fixture.detectChanges();
+    h.escribir(h.control('Comprobante habitual'), 'A');
+
+    h.boton('Guardar').click();
+    const cambio = h.servidor.expectOne(r => r.method === 'PUT' && r.url === '/api/proveedores/8');
+    expect(cambio.request.body.tipoComprobanteHabitual).toBe('A');
     cambio.flush(null);
     h.servidor.expectOne('/api/proveedores/8').flush(FICHA);
   });
