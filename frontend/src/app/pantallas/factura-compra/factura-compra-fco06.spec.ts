@@ -237,4 +237,17 @@ describe('FacturaCompra · HU-FCO-06', () => {
 
     expect(raiz().querySelector('[data-totales]')).toBeNull();
   });
+
+  it('CA-004 y CA-015: elegir otro proveedor cambia el tipo propuesto y obliga a recalcular el total', () => {
+    cargarFactura();
+    c.registrar();
+    servidor.expectOne('/api/facturas-compra/calculo').flush({ neto: 166.73, iva: 0, percepciones: 12.5, total: 179.23 });
+    fixture.detectChanges();
+
+    // Click en la opción: no pasa por el (change) del formulario, solo por cambiarTipo().
+    elegirProveedor(proveedor('00040', 'A', 9));
+
+    expect(c.tipoComprobante).toBe('A');
+    expect(raiz().querySelector('[data-totales]')).toBeNull();
+  });
 });
