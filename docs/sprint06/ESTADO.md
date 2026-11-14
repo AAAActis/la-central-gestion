@@ -175,7 +175,7 @@ y de vencimiento, y la pantalla «Compras registradas», que es un módulo nuevo
 anuladas se muestran marcadas. La 028 parte 2, la pantalla de anulación, se monta sobre esta.
 Verificación (14/11): `verificador-tdd` NO APTO en la ronda 1 (3 mutaciones vivas) y en la ronda 2 (1 viva),
 APTO en la ronda 3 (`ac6f619`). `auditor-persistencia` APTO. Backend 577/577 sobre `b3d96bb` (después solo
-cambió un spec de frontend); frontend 206/206 sobre `ac6f619`. PR contra develop, Sprint 7, `Closes #33`.
+cambió un spec de frontend); frontend 206/206 sobre `ac6f619`. PR #174 contra develop, Sprint 7, `Closes #33`.
 Pendiente: el desempate por id cuando dos facturas tienen la misma emisión no tiene test (observación
 del auditor, no bloquea).
 

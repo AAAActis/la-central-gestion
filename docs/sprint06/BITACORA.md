@@ -592,3 +592,4 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 - 17:47 · `verificador-tdd` ronda 3 (`b3d96bb..ac6f619`): **APTO**. La mutación de `this.resultado.set(null)` muere: 1 FAILED, 8 SUCCESS, en `compras-registradas.spec.ts:143`.
 - auditor-persistencia: **APTO**. Observación menor: el desempate `ThenByDescending(Id)` con la misma emisión no tiene test. Develop: #164 y #165 ya estaban contenidos (el diff `HEAD...origin/develop` dio vacío). #166 y #167 siguen abiertos. Push y PR.
 - **Queda abierto:** la 028 parte 2 (la pantalla de anulación sobre esta), la 027 (#34) y el merge de develop cuando entren el #166 y el #167.
+- 17:50 · PR #174 abierto (milestone Sprint 7). El número quedó anotado en el ESTADO.
