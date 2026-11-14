@@ -586,4 +586,9 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 - **Interpretación:** el CA-001 dice «exactamente una». Con número y proveedor puede haber una activa y además anuladas con el mismo número (CA-004 de la 028); se muestran todas, y las anuladas van marcadas (CA-005).
 - Un `git stash` con una ruta sin seguimiento falló y no tocó nada: el stash del usuario (`stash@{0}`) sigue intacto y no se aplicó.
 
-**Estado:** en curso
+**Estado:** terminada
+- 17:32 · `verificador-tdd` ronda 1 (`84bb4d4..32a9755`): **NO APTO**. Sobrevivieron tres mutaciones: el desborde de `(pagina - 1) × tamaño`, el error que no borra la tabla anterior y el `[disabled]` de «Siguiente». **Corrección:** el rojo de la pantalla fueron **5** TypeError y 3 `expectOne`, no 6 como dicen el commit `30e6c87` y la línea de arriba. Tampoco se había declarado que `UnNumeroEnBlanco_NoFiltraPorNumero` cayó por NullReferenceException. Arreglo `b3d96bb`: `InlineData(30_000_000, 100)`, el spec del error ahora tiene una tabla anterior, y un spec nuevo para los extremos de la paginación. Moq 9/9, pantalla 9/9.
+- 17:46 · `verificador-tdd` ronda 2 (`32a9755..b3d96bb`): **NO APTO**. Morían tres de las cuatro mutaciones; sobrevivía la de `this.resultado.set(null)`, porque la plantilla esconde la tabla mientras hay error. La línea de la ronda 1 que decía «el spec del error ahora tiene una tabla anterior» no alcanzaba para matarla. Arreglo `ac6f619`: el spec busca de nuevo y afirma que no hay tbody mientras el pedido está en vuelo. Con la mutación: 1 FAILED, 8 SUCCESS; con producción: 9/9.
+- 17:47 · `verificador-tdd` ronda 3 (`b3d96bb..ac6f619`): **APTO**. La mutación de `this.resultado.set(null)` muere: 1 FAILED, 8 SUCCESS, en `compras-registradas.spec.ts:143`.
+- auditor-persistencia: **APTO**. Observación menor: el desempate `ThenByDescending(Id)` con la misma emisión no tiene test. Develop: #164 y #165 ya estaban contenidos (el diff `HEAD...origin/develop` dio vacío). #166 y #167 siguen abiertos. Push y PR.
+- **Queda abierto:** la 028 parte 2 (la pantalla de anulación sobre esta), la 027 (#34) y el merge de develop cuando entren el #166 y el #167.
