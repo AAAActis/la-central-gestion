@@ -19,7 +19,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 
 | Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
-| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend: PR #166.** **Frontend: PR #167.** #166: `verificador-tdd` y `auditor-persistencia` APTO contra `lacentral_test.public` (13/11). **#167: `verificador-tdd` NO APTO tras tres rondas** (5 mutaciones sobreviven, faltan specs; decide el equipo si hay cuarta ronda). **No mergear #166/#167 hasta resolverlo.** Orden de merge: #164 → #165 → #166 y #167 juntos. Falta el recorrido en el navegador contra `lacentral_demo` (DoD 10, Santi o Lauti) |
+| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend: PR #166.** **Frontend: PR #167.** #166: `verificador-tdd` y `auditor-persistencia` APTO contra `lacentral_test.public` (13/11). #166 **APROBADO por Javi** (14/11; deuda en #168). #167: cambios pedidos por Javi el 14/11 hechos; cuarta ronda (autorizada el 13/11) y su arreglo: **`verificador-tdd` APTO** sobre `4b624d3`, 196/196 frontend; re-review pedida a Javi. #169: artículo repetido por sucursal en la pantalla. Orden de merge: #164 → #165 (mergeados) → #166 y #167 juntos; el 09 en `lacentral` lo aplica Santi después del merge. Falta el recorrido en el navegador contra `lacentral_demo` (DoD 10, Santi o Lauti) |
 | #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | No empezada |
 | #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | No empezada |
 
@@ -168,6 +168,30 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 ---
 
 ## PRÓXIMA SESIÓN
+
+**14/11 · Revisión de Javi sobre #166 y #167, y cuarta ronda del #167.**
+- **#166: APROBADO por Javi (14/11). No se le pushea nada.** Sus dos observaciones quedan como
+  deuda en la **#168** (sin milestone): `ModificarProveedorUseCase` pisa
+  `TipoComprobanteHabitual` con null si el request no lo trae; el mensaje del tipo B tiene que
+  mostrar el ejemplo `99-00001234`.
+- **#169** (milestone Sprint 6, observación de Javi del 14/11): la pantalla no deja cargar el
+  mismo artículo dos veces aunque vaya a sucursales distintas; el backend lo permite (D9). Ya
+  pasaba antes del #167.
+- **#167, REQUEST CHANGES de Javi (14/11):** `enterProveedor()` con dos coincidencias exactas sin
+  ceros (035 y 00035) ahora lista en lugar de elegir (rojo `4dd89a1`, código `8a331f1`, solo
+  frontend); columna Prueba de la 056 completa (CA-011 sin test que mande al servidor un precio
+  escrito distinto del propuesto); sección DoD 10 armada arriba, para Javi.
+- **Cuarta ronda autorizada por el equipo el 13/11.** Specs de las 5 mutaciones de la ronda 3 en
+  `7b36e8d` (solo tests). Ronda 4 del `verificador-tdd`: **NO APTO** (sobrevivían 2 mutaciones en
+  `terceros.ts:144`); arreglo `4b624d3` (solo spec), verificación acotada al arreglo: **APTO**
+  (14/11). Frontend completo sobre `4b624d3`: 196/196. Backend sin cambios (560/560 sobre
+  `772e934`), no se corrió. Se saca el «NO MERGEAR» de los dos PR; se pide de nuevo la revisión.
+- **Corrección sobre la ronda 1 del #167 (13/11):** se actuó sobre un aviso temprano del
+  verificador como si fuera su reporte, se sacó su worktree mientras corría y se lanzó la ronda 2
+  con la 1 viva, contra la regla R1. Por eso se publicó un APTO inválido (push `443e38b`), que se
+  corrigió en `69b4356`.
+- **El script 09 todavía no está aplicado en `lacentral`:** lo aplica Santi después del merge.
+- Orden de merge, sin cambios: #164 y #165 (ya mergeados el 14/11), y #166 con #167 juntos.
 
 **13/11 noche (cierre) · #167 parado en tres rondas sin APTO.** #166 verificado (`verificador-tdd` y
 `auditor-persistencia` APTO contra `public`). #167: ronda 1 NO APTO (M02, M05, M10, M14), cortada

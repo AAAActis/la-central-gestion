@@ -412,3 +412,106 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
   - **R3** (`f0e5588` y las líneas que R1 no llegó a mutar): las 6 de R1 muertas; 5 nuevas sobreviven.
 
   Los 5 arreglos son specs sin cambios de producción, y el reporte de R3 dice qué test falta en cada uno. Decide el equipo: autorizar una cuarta ronda o mergear con los 5 huecos declarados. **El #167 queda con «NO MERGEAR TODAVÍA», y con él el #166, que va junto.**
+
+## 14/11/2026 09:21 · Revisión de Javi sobre #166 y #167, y cuarta ronda del #167
+
+**Instrucción recibida (verbatim):**
+> Hay revisión de Javi sobre los dos PR. Leé primero el último bloque de
+> docs/sprint06/BITACORA.md con Estado: en curso y hacé git fetch --all --prune. Si la cuarta
+> ronda que te pedí anoche ya arrancó o terminó, no rehagas nada de lo que figure hecho con su
+> evidencia: seguí desde ahí.
+>
+> === #166 · APROBADO por Javi. NO LO TOQUES ===
+> No pushees nada a feature/163-esquema-backend: cualquier commit nuevo puede invalidar la
+> aprobación. Sus dos observaciones van como deuda, en una issue nueva sin milestone, con
+> fecha y origen («revisión de Javi del 14/11 sobre el #166»):
+>   - ModificarProveedorUseCase: si el request no trae TipoComprobanteHabitual, lo pisa con
+>     null. El frontend lo manda siempre, pero cualquier otro cliente de la API lo borra.
+>   - La validación del tipo B exige exactamente «99-». Está bien, pero el mensaje de error
+>     tiene que mostrar un ejemplo del formato (99-00001234).
+>
+> === #167 · REQUEST CHANGES. Primero esto ===
+>
+> 1 · [CÓDIGO] enterProveedor() en factura-compra.ts: si hay más de un proveedor cuyo código
+>     sin ceros a la izquierda coincide (035 y 00035), hoy Enter elige el primero sin avisar.
+>     Con más de una coincidencia exacta tiene que mostrar la lista en lugar de elegir.
+>     TDD: el spec en rojo primero, por aserción, en su propio commit; después el código.
+>     Va solo en frontend. Si para resolverlo hiciera falta tocar el backend, PARÁS y me
+>     avisás: el backend está en el #166 y ese PR no se toca.
+>
+> 2 · [DOCS] docs/historias/056-HU-FCO-06.md: completá la columna Prueba de los CA-001 a 006
+>     y 008 a 015 con el nombre del test que cubre cada uno, igual que está el CA-007. Si
+>     algún CA no tiene test que lo cubra, no lo inventes: escribilo así en la celda y
+>     contámelo.
+>
+> 3 · [DOCS] ESTADO del Sprint 6: dejá armada una sección «Recorrido en el navegador contra
+>     lacentral_demo (DoD 10)» con la lista de qué hay que probar a mano, CA por CA, y las
+>     columnas para anotar quién lo hizo, cuándo, con qué datos y qué pasó. La completa Javi
+>     cuando lo haga con Sergio. No la completes vos.
+>
+> 4 · Issue nueva, milestone Sprint 6: la pantalla de factura de compra no deja cargar el
+>     mismo artículo dos veces aunque vaya a sucursales distintas, y el backend sí lo permite
+>     por la D9. Ya pasaba antes del #167. Origen: observación de Javi del 14/11.
+>
+> === Después, la cuarta ronda que te pedí anoche ===
+>
+> 5 · Los specs que faltan, solo tests, sin tocar producción:
+>       factura-compra.ts:277, :303, :350 y :351 · nucleo/api.ts:165 · terceros.ts:144
+>     Cada uno en rojo con su mutación puesta y en verde al sacarla. En la bitácora, qué
+>     mutación usaste para cada uno y el conteo.
+>
+> === Cierre ===
+>
+> 6 · Suite completa de frontend UNA vez, sobre el último commit, y el número al cuerpo del
+>     #167. El backend del #167 no cambia: declaralo, no lo corras.
+>
+> 7 · UN solo verificador-tdd, acotado a los commits nuevos (el arreglo de enterProveedor y
+>     los specs de la ronda 4), con hash, línea literal y conteo. Una instancia por vez, y
+>     ningún worktree se saca mientras corre.
+>
+> 8 · ESTADO del Sprint 6, con fecha:
+>       - lo de la ronda 1 del #167: actuaste sobre un aviso temprano, sacaste el worktree
+>         del verificador mientras corría y lanzaste la ronda 2 con la 1 viva, contra la
+>         regla R1, y por eso se publicó un APTO inválido que después corregiste;
+>       - que el equipo autorizó la cuarta ronda el 13/11;
+>       - las dos issues nuevas y la deuda del #166;
+>       - que el 09 todavía no está aplicado en lacentral: lo aplica Santi después del merge.
+>
+> 9 · Si el verificador da APTO: comentá en el #167 qué cambió por cada punto de Javi,
+>     pedile de nuevo la revisión, y sacá el cartel de NO MERGEAR de los dos PR. Orden de
+>     merge, sin cambios: #164, #165, y #166 con #167 juntos.
+>     Si da NO APTO: arreglás y verificás acotado al arreglo. Si ya no hay ronda que dé
+>     APTO, parás y me lo contás.
+>
+> No me preguntes en el medio: si te trabás, a la bitácora y seguí con lo que puedas.
+
+**Plan:**
+1. Bitácora y fetch (no hay bloque en curso; la cuarta ronda no arrancó). #164 y #165 ya están mergeados en `develop` y la rama ya los contiene.
+2. Issue de deuda del #166 (sin milestone). Issue de artículo repetido por sucursal (milestone Sprint 6).
+3. Punto 1: spec en rojo de `enterProveedor()` con dos coincidencias exactas (commit propio), después el código.
+4. Punto 5: specs de la ronda 4, cada uno en rojo con su mutación.
+5. Puntos 2 y 3: columna Prueba de la 056; sección DoD 10 en el ESTADO.
+6. Frontend completo una vez sobre el último commit; cuerpo del #167.
+7. Un `verificador-tdd` acotado a los commits nuevos.
+8. ESTADO con fecha (ronda 1, autorización del 13/11, issues, deuda, script 09). Push.
+9. Según dictamen: comentario a Javi, re-review, sacar el cartel; o arreglo acotado.
+
+**Estado:** en curso
+- 09:25 · Paso 2: issues **#168** (deuda del #166, sin milestone) y **#169** (artículo repetido por sucursal, milestone Sprint 6).
+- 09:40 · Paso 3 (punto 1): rojo **`4dd89a1`** (spec «Enter con dos códigos exactos sin ceros (035 y 00035) lista los dos y no elige ninguno»: `1 FAILED, 25 SUCCESS`, por aserción: `Expected Object({ id: 7, codigo: '035', … }) to be null`). Código **`8a331f1`**: `enterProveedor()` elige solo si hay exactamente una coincidencia exacta. `factura-compra*`: `26 SUCCESS`. Solo frontend; no hizo falta backend.
+- 10:05 · Paso 4 (punto 5, ronda 4): **`7b36e8d`**, solo specs (producción sin cambios). Sobre producción, `factura-compra*` + `articulos*` + `terceros*`: `TOTAL: 65 SUCCESS`. Cada mutación puesta de a una (los números de línea son los de `9f6cf1c`), siempre en rojo por aserción, y en verde al sacarla:
+  - `factura-compra.ts:277` `!!alTerminar` → `false`: `1 FAILED, 64 SUCCESS` · «CA-008 y CA-009: Enter busca también aproximado; el botón Buscar, no» · `Expected null to be 'true'`.
+  - `:303` sin `&& i !== reemplazo`: `1 FAILED, 64 SUCCESS` · «CA-010: reemplazar una línea por su mismo artículo no la rechaza como repetida» · `Expected 'FIL-0712 ya está en la factura: corregí su línea.' to be null`.
+  - `:350` sin `|| null` en `fechaVencimiento`: `1 FAILED, 64 SUCCESS` · «CA-012: sin vencimiento ni imputación cargados, se mandan como null…» · `Expected '' to be null`.
+  - `:351` sin `|| null` en `fechaImputacion`: ídem, `1 FAILED, 64 SUCCESS`.
+  - `nucleo/api.ts:165` `if (aproximada)` → `if (true)`: `2 FAILED, 63 SUCCESS` (el de Enter/botón y «HU-FCO-06 CA-008: la búsqueda del listado no pide coincidencias aproximadas», en `articulos-listado.spec`) · `Expected true to be false`. Extra: el default `aproximada = true` en la firma: `1 FAILED` (el del listado).
+  - `terceros.ts:144` valor fijo `—` en lugar de `tipoComprobanteHabitual`: `1 FAILED, 64 SUCCESS` · «056 · la ficha muestra el comprobante habitual…» · `Expected '—' to be 'B'`.
+  - Además, el fix del punto 1 con `>= 1` en lugar de `=== 1`: `1 FAILED, 64 SUCCESS`, por aserción.
+- 10:25 · Paso 5 (puntos 2 y 3): **`41b0699`**. 056: columna Prueba de CA-001 a 006 y 008 a 015 con los nombres de los tests (front y back). **CA-011 sin test que mande al servidor un precio escrito distinto del propuesto**: escrito así en la celda. ESTADO: sección «Recorrido en el navegador contra lacentral_demo (DoD 10)», 15 filas, columnas vacías para Javi.
+- 10:35 · Paso 6: **frontend completo sobre `41b0699`: `TOTAL: 195 SUCCESS`** (190 + 5 specs nuevos). `backend/` del #167 no cambia desde `772e934` (560/560): se declara, no se corre. `git worktree list`: solo el principal.
+- 10:40 · Paso 7: **`verificador-tdd` ronda 4 lanzado** (una instancia), acotado a `4dd89a1`, `8a331f1`, `7b36e8d` (`41b0699` solo docs), con `41b0699` · `TOTAL: 195 SUCCESS` · 195/195; backend sin cambios (560/560 sobre `772e934`). No se toca ningún worktree ni se commitea hasta su reporte final.
+- 11:10 · **`verificador-tdd` #167, ronda 4: NO APTO** (reporte final, hand-back del agente; worktree propio sacado por él, `git worktree list`: solo el principal). Rojo de `4dd89a1` válido (por aserción). 15 mutaciones; mueren todas las de `enterProveedor()`, `:278`, `:304`, `:351`, `:352` y `api.ts:165` (las dos direcciones). **Sobreviven 2 en `terceros.ts:144`**, con la suite entera en 195/195: `<dd>` con `B` fijo (el spec solo abre la ficha con `'B'`) y `?? '—'` → `?? ''` (nadie mira la ficha sin tipo habitual). Sigue: spec con la ficha sin tipo habitual, verificación acotada a ese commit (la instrucción del 14/11: «Si da NO APTO: arreglás y verificás acotado al arreglo»).
+- 11:25 · Arreglo **`4b624d3`** (solo spec): «056 · sin comprobante habitual, la ficha muestra la raya». `terceros*`: 16/16. Mutaciones de `terceros.ts:144`: `<dd>` con `B` fijo → `1 FAILED, 65 SUCCESS` (`Expected 'B' to be '—'`); `?? ''` → `1 FAILED` (`Expected '' to be '—'`); `—` fijo → `1 FAILED` (`Expected '—' to be 'B'`). **Frontend completo sobre `4b624d3`: `TOTAL: 196 SUCCESS`** (reemplaza al 195 de `41b0699`). `git worktree list`: solo el principal.
+- 11:27 · **`verificador-tdd`, verificación del arreglo, lanzada**, acotada a `4b624d3`, con `4b624d3` · `TOTAL: 196 SUCCESS` · 196/196. Una instancia; no se toca ningún worktree hasta su reporte final.
+- 11:45 · **`verificador-tdd`, verificación de `4b624d3`: APTO** (reporte final). 10c (`<dd>B</dd>`) y 11 (`?? ''`) mueren por aserción en «056 · sin comprobante habitual, la ficha muestra la raya». Aceptó 196/196 sobre `4b624d3` sin repetirla. `git worktree list`: solo el principal.
+- 11:50 · Paso 8: ESTADO con fecha (ronda 1 del 13/11, autorización de la cuarta ronda, #168, #169, deuda del #166, 09 sin aplicar en `lacentral`), tablero y PRÓXIMA SESIÓN. Sigue: push del #167, cuerpo, comentario a Javi, re-review y carteles.
