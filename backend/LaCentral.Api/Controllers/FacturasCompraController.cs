@@ -14,8 +14,26 @@ namespace LaCentral.Api.Controllers;
 public class FacturasCompraController : ControllerBase
 {
     private readonly RegistrarFacturaCompraUseCase _registrar;
+    private readonly ConsultarFacturasCompraUseCase _consultar;
 
-    public FacturasCompraController(RegistrarFacturaCompraUseCase registrar) => _registrar = registrar;
+    public FacturasCompraController(RegistrarFacturaCompraUseCase registrar, ConsultarFacturasCompraUseCase consultar)
+        => (_registrar, _consultar) = (registrar, consultar);
+
+    /// <summary>
+    /// HU-FCO-02 (026). Consulta por proveedor, número y rangos de emisión y de vencimiento;
+    /// todos opcionales. Las anuladas vienen marcadas. 200 con la página (vacía si no hay).
+    /// </summary>
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Consultar(
+        [FromQuery] int? proveedorId, [FromQuery] string? numero,
+        [FromQuery] DateOnly? emisionDesde, [FromQuery] DateOnly? emisionHasta,
+        [FromQuery] DateOnly? vencimientoDesde, [FromQuery] DateOnly? vencimientoHasta,
+        CancellationToken ct, [FromQuery] int pagina = 1, [FromQuery] int tamanoPagina = 20)
+        => this.AResultadoHttp(await _consultar.EjecutarAsync(new DtosNucleo.FiltroFacturasCompra(
+            proveedorId, numero, emisionDesde, emisionHasta, vencimientoDesde, vencimientoHasta), pagina, tamanoPagina, ct));
 
     /// <summary>
     /// Registro manual de factura de compra. HU-FCO-01. En una sola operación: factura,
