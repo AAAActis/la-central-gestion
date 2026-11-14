@@ -574,3 +574,41 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
   - que Santi aplique el 09 en `lacentral`;
   - el recorrido DoD 10;
   - #168 y #169.
+
+## 14/11/2026 10:33 · #169: mismo artículo en sucursales distintas en la factura de compra
+
+**Instrucción recibida (verbatim):**
+> Cuando el CA-011 esté cerrado y Javi tenga pedida la re-revisión, seguí con la #169
+> (Sprint 6): la pantalla de factura de compra no deja cargar el mismo artículo dos veces
+> aunque vaya a sucursales distintas, y el backend sí lo permite por la D9.
+>
+> - Rama nueva desde feature/163-frontend, que tiene todo lo de la 056. No esperes el merge
+>   del #166 y el #167. Cuando entren a develop, git merge origin/develop, nunca rebase.
+> - Lo que cuenta como repetido es el mismo artículo en la misma sucursal, no el mismo
+>   artículo a secas. Si se repite artículo y sucursal, se avisa en lugar de agregar la línea.
+> - TDD: el spec en rojo primero, en su propio commit. Después el código.
+> - PR propio contra develop. En el cuerpo: depende del #167 y se mergea después de él.
+> - Suite de frontend una vez antes de abrir el PR, y un verificador-tdd acotado a la HU.
+>
+> La 029 (#13) y la 049 (#51) NO se arrancan: la compuerta C7 sigue abierta hasta que
+> lleguen facturas reales de varios proveedores. Dejalo así en el ESTADO, con fecha.
+
+**Plan:**
+1. Rama `feature/169-articulo-por-sucursal` desde `feature/163-frontend` (`84bb4d4`).
+2. Spec en rojo: el mismo artículo con otra sucursal de cabecera se agrega; con la misma, se avisa y no se agrega. Commit propio.
+3. Código: el repetido es artículo + sucursal (en el reemplazo, la sucursal de la línea reemplazada).
+4. ESTADO: 029 (#13) y 049 (#51) sin arrancar, C7 abierta, con fecha.
+5. Suite de frontend una vez, PR contra develop (depende del #167), `verificador-tdd` acotado.
+
+**Estado:** en curso
+- 10:33 · Paso 1: CA-011 cerrado y re-revisión del #167 pedida (bloque de las 10:27). `git fetch`: sin novedades en `origin/feature/163-frontend` ni diferencias de contenido con `origin/develop`. Rama **`feature/169-articulo-por-sucursal`** creada desde `84bb4d4`.
+- 10:45 · Pasos 2 y 3:
+  - **Rojo `4ccf0fa`:** «#169: el mismo artículo con otro destino se agrega como línea nueva» da `1 FAILED, 31 SUCCESS`, por aserción (`Expected 'FIL-0712 ya está en la factura: corregí su línea.' to be null`). El primer intento caía en el `expectOne` del helper; se reordenó para que fallen primero las aserciones. «… con el mismo destino avisa y no agrega» ya pasaba, porque es la regla que se conserva.
+  - **Código `31cf9d3`:** cuenta como repetido el artículo en el destino de la línea nueva, que en un reemplazo es el de la línea reemplazada. `factura-compra*`: 32/32.
+  - **Specs `c4be707`** para las ramas que el rojo no alcanzaba: el reemplazo usa el destino de su línea; otro artículo en el mismo destino se agrega. Mutaciones, cada una en rojo por aserción:
+    - destino siempre la cabecera: `1 FAILED`;
+    - sin comparar la sucursal: `2 FAILED`;
+    - sin comparar el artículo: `2 FAILED`.
+  - `factura-compra*`: 34/34.
+- 10:45 · Paso 4: ESTADO. El tablero suma la fila de la #169. La 029 (#13) y la 049 (#51) quedan «No se arranca (14/11/2026)», con la C7 abierta. PRÓXIMA SESIÓN actualizada.
+- 10:36 · Corrección: las dos líneas de arriba dicen «10:45», pero son de las 10:36 según `date`.

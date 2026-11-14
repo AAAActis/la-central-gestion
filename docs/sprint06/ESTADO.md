@@ -20,8 +20,9 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
 | #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend: PR #166.** **Frontend: PR #167.** #166: `verificador-tdd` y `auditor-persistencia` APTO contra `lacentral_test.public` (13/11). #166 **APROBADO por Javi** (14/11; deuda en #168). #167: cambios pedidos por Javi el 14/11 hechos; cuarta ronda (autorizada el 13/11) y su arreglo: **`verificador-tdd` APTO** sobre `4b624d3`, 196/196 frontend; re-review pedida a Javi. #169: artículo repetido por sucursal en la pantalla. Orden de merge: #164 → #165 (mergeados) → #166 y #167 juntos; el 09 en `lacentral` lo aplica Santi después del merge. Falta el recorrido en el navegador contra `lacentral_demo` (DoD 10, Santi o Lauti) |
-| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | No empezada |
-| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | No empezada |
+| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | **No se arranca (14/11/2026):** la compuerta C7 sigue abierta hasta que lleguen facturas reales de varios proveedores |
+| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | **No se arranca (14/11/2026):** depende de la 029, que espera la C7 |
+| #169 | Factura de compra: el mismo artículo a sucursales distintas (D9), observación de Javi del 14/11 | sin estimar | Santi | el #167 | En curso (14/11): rama `feature/169-articulo-por-sucursal`, PR contra `develop` que se mergea después del #167 |
 
 **34 SP** (13 + 13 + 8). Salieron al Sprint 7 la #126, la #127 y la #128 (21 SP); entraron la
 #13 y la #51 (21 SP). Es un intercambio: el total no cambia.
@@ -192,6 +193,8 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
   corrigió en `69b4356`.
 - **El script 09 todavía no está aplicado en `lacentral`:** lo aplica Santi después del merge.
 - Orden de merge, sin cambios: #164 y #165 (ya mergeados el 14/11), y #166 con #167 juntos.
+- **14/11 · #169 en curso** en `feature/169-articulo-por-sucursal`, rama desde `feature/163-frontend`. Repetido = mismo artículo **en la misma sucursal**. PR contra `develop`, que se mergea después del #167; cuando entren el #166 y el #167, `git merge origin/develop`, nunca rebase.
+- **14/11 · la 029 (#13) y la 049 (#51) no se arrancan:** la compuerta C7 sigue abierta hasta que lleguen facturas reales de varios proveedores.
 - **14/11 · CA-011 con prueba:** spec `a2e7d1f` (solo test; producción ya lo cumplía, sin rojo por la
   rama real, discrimina por mutación); `verificador-tdd` acotado a `a2e7d1f`: **APTO** (5 mutaciones,
   ninguna sobrevive). Frontend completo sobre `8f79668`: 197/197. **#21 cerrada** (CA-003 anulado
