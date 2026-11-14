@@ -104,6 +104,33 @@ Sergio no es la del archivo, por eso va la columna «Preg.».
 4. ~~El 99 o 999, ¿del proveedor o del tipo de comprobante?~~ Del tipo; el 999 no se usa: D-S6-10.
 5. ~~¿Número del código de barras o escanearlo?~~ Escanearlo: D-S6-12.
 
+## Recorrido en el navegador contra lacentral_demo (DoD 10)
+
+Armada el 14/11/2026 para la 056 (#163, PR #166 y #167). **La completa Javi cuando lo haga con
+Sergio.** Se recorre en la pantalla «Factura de compra», contra `lacentral_demo`, después del
+merge y con el script 09 aplicado. Cada fila: quién, cuándo, con qué datos (proveedor, artículos,
+número de comprobante) y qué pasó; si no pasó lo esperado, el número de issue.
+
+| CA | Qué se prueba a mano | Quién | Cuándo | Con qué datos | Qué pasó |
+|----|----------------------|-------|--------|---------------|----------|
+| CA-001 | Escribir parte del nombre de un proveedor y buscar: aparece. Escribir su CUIT: no lo encuentra por CUIT | | | | |
+| CA-002 | Escribir el código completo de un proveedor y Enter: queda elegido sin abrir la lista | | | | |
+| CA-003 | Proveedor con código con ceros a la izquierda (p. ej. 00035): escribir 35 y Enter lo elige. Si hay dos que coinciden sin ceros (035 y 00035), Enter muestra la lista y no elige | | | | |
+| CA-004 | Elegir un proveedor con comprobante habitual cargado: se propone ese tipo; cambiarlo a mano funciona. Cargar o cambiar el comprobante habitual desde la ficha del proveedor | | | | |
+| CA-005 | Tipo B: el número arranca con «99-» y se completa el resto. Tipo A: no se precarga nada y se copia el número tal cual. Un B con «999-» se rechaza | | | | |
+| CA-006 | Cargar emisión, vencimiento e imputación distintas; registrar y comprobar que quedan las tres | | | | |
+| CA-007 | Cargar las cuatro percepciones (IVA, IIBB, municipal, ganancias) y comprobar que quedan registradas | | | | |
+| CA-008 | En el artículo, con tres caracteres o más aparecen coincidencias aproximadas mientras se escribe (probar con un error de tipeo) | | | | |
+| CA-009 | Código exacto de un artículo y Enter: se agrega la línea sin lista | | | | |
+| CA-010 | «Reemplazar» en una línea con cantidad cargada: cambia el artículo, conserva cantidad, destino y descuentos | | | | |
+| CA-011 | El precio propuesto es el costo vigente; sin costo no propone nada (nunca cero). Escribir otro precio y comprobar que se registra el escrito | | | | |
+| CA-012 | Tres descuentos en una línea: se registran los tres y el costo es el neto sucesivo | | | | |
+| CA-013 | Cambiar la sucursal de la cabecera: las líneas nuevas la heredan, las ya cargadas no cambian; una línea a otra sucursal | | | | |
+| CA-014 | Misma factura como A y como B: el A suma el 21 % de IVA, el B no | | | | |
+| CA-015 | Antes de confirmar se ve el total con percepciones e IVA, sin registrar nada; cambiar algo borra el total y hay que recalcularlo | | | | |
+
+---
+
 ## Fuera del Sprint 6
 
 Sprint 7 (comparador completo, scrapes incluidos, + lo que falta de compra) y Sprint 8 (venta,
