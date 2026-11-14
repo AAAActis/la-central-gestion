@@ -245,6 +245,30 @@ describe('FacturaCompra · HU-FCO-06', () => {
     expect(c.lineas.map(l => l.sucursalId)).toEqual([1, 2]);
   });
 
+  // #169 (D9): repetido es el mismo artículo en la misma sucursal, no el mismo artículo a secas.
+  it('#169: el mismo artículo con otro destino se agrega como línea nueva', () => {
+    agregar(1, 'FIL-0712');
+    c.sucursalCabecera = 2;
+    c.textoArticulo = 'FIL-0712';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(1, 'FIL-0712')));
+
+    expect(c.errorArticulo()).toBeNull();
+    expect(c.lineas.map(l => [l.articulo.id, l.sucursalId])).toEqual([[1, 1], [1, 2]]);
+    servidor.expectOne('/api/articulos/1').flush(ficha(1, null));
+  });
+
+  it('#169: el mismo artículo con el mismo destino avisa y no agrega la línea', () => {
+    agregar(1, 'FIL-0712');
+    c.textoArticulo = 'FIL-0712';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(1, 'FIL-0712')));
+    fixture.detectChanges();
+
+    expect(c.lineas.length).toBe(1);
+    expect(c.errorArticulo()).toContain('ya está en la factura');
+  });
+
   // ---- CA-012, CA-014 y CA-015 · total antes de confirmar ----
 
   function cargarFactura() {
