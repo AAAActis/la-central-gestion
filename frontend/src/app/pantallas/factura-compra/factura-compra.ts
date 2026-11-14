@@ -1,7 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { Subject, catchError, debounceTime, filter, forkJoin, map, of, switchMap } from 'rxjs';
 import {
   ApiLaCentral, ArticuloResultado, FacturaCompraNueva, FichaArticulo, ProveedorResumen, TotalesFacturaCompra, mensajeDeError,
@@ -113,7 +113,7 @@ interface Sucursal { id: number; nombre: string; }
                   <tr [class.elegido]="reemplazando() === i">
                     <td><span class="mono">{{ l.articulo.codigoInterno }}</span> {{ l.articulo.nombre }}</td>
                     <td>
-                      <select [name]="'destino' + i" [(ngModel)]="l.sucursalId" required>
+                      <select [name]="'destino' + i" [ngModel]="l.sucursalId" #destino="ngModel" (ngModelChange)="cambiarDestino(i, $event, destino)" required>
                         <option [ngValue]="null" disabled>Elegí</option>
                         @for (s of sucursales(); track s.id) { <option [ngValue]="s.id">{{ s.nombre }}</option> }
                       </select>
@@ -323,6 +323,17 @@ export class FacturaCompra {
       // CA-011: se propone el costo vigente; sin costo no se propone nada (nunca cero, D1).
       if (linea.precioUnitario === null && linea.articulo.id === articulo.id) linea.precioUnitario = f.costoVigente;
     });
+  }
+
+  // #170: la regla de la #169 también al cambiar el destino a mano; si repite, el select vuelve al anterior.
+  cambiarDestino(i: number, sucursalId: number, control: NgModel) {
+    const linea = this.lineas[i];
+    if (this.lineas.some((l, j) => j !== i && l.articulo.id === linea.articulo.id && l.sucursalId === sucursalId)) {
+      this.errorArticulo.set(`${linea.articulo.codigoInterno} ya está en la factura: corregí su línea.`);
+      control.control.setValue(linea.sucursalId, { emitViewToModelChange: false });
+      return;
+    }
+    linea.sucursalId = sucursalId;
   }
 
   reemplazar(i: number) {
