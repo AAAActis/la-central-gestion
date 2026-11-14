@@ -169,7 +169,7 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
-**14/11 · 028 (#9) parte 2, la pantalla de anulación. Rama `feature/9-anulacion-pantalla`**: sale de la
+**14/11 · 028 (#9) parte 2, la pantalla de anulación: PR #175. Rama `feature/9-anulacion-pantalla`**: sale de la
 026 (`feature/33-consulta-facturas-compra`) con la parte 1 mergeada (`4b59b94`). Depende del #166, el #167,
 el #173 y el #174. Agrega «Anular» en cada fila activa de «Compras registradas»: pide motivo, usuario y
 contraseña de quien autoriza, y después recarga la misma página. Verificación: `verificador-tdd` NO APTO en
