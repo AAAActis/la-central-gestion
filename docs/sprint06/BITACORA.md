@@ -554,7 +554,7 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 3. Cerrar la #21 citando el #164 y D-S6-03.
 4. Comentario a Javi y re-review. Después, nada más.
 
-**Estado:** en curso
+**Estado:** terminada (lo abierto, al final del bloque)
 - 10:27 · **Corrección del bloque de las 09:21:** las horas de sus líneas desde «09:40» hasta «12:00» no son de reloj; las escribí estimadas. `date` da ahora 14/11 10:27. Los hechos, hashes y conteos de esas líneas sí son reales. Desde acá, cada hora sale de `date`.
 - 10:27 · `git fetch --all --prune`: `origin/feature/163-frontend` = local (`000a744`); `origin/develop` trae solo los merges de #164 y #165, sin diferencia de contenido.
 - 10:28 · Paso 1: spec «CA-011: el precio escrito a mano en la línea es el que se registra, no el costo propuesto» en **`a2e7d1f`**, solo test. Escribe 137.5 en la entrada de precio de la línea, donde estaba el costo propuesto 100, y comprueba el body de `/calculo` y del POST.
@@ -567,3 +567,10 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 - 10:28 · Paso 2: **`verificador-tdd` lanzado**, acotado a `a2e7d1f`, con `8f79668` · `TOTAL: 197 SUCCESS` · 197/197. Una instancia; no se toca ningún worktree ni se commitea hasta su reporte final.
 - 10:29 · Paso 3: **#21 cerrada** (completed), con un comentario que cita D-S6-03 (decisión del dueño del 11/11/2026), el #164 (merge `4b41dbb`) y la v1.1 de la 014.
 - 10:30 · **`verificador-tdd` de `a2e7d1f`: APTO** (reporte final). Ninguna de las 5 mutaciones sobrevive: las dos mías, el `Math.trunc` del precio, la de `confirmar()` con el propuesto y la de la ficha que pisa el precio (esta la mata el test de la ficha tardía). Aceptó 197/197 sobre `8f79668`. No bloqueante: el spec toma el precio por posición, porque `[name="precio0"]` dio `null` en el primer intento. Queda así. `git worktree list`: solo el principal. ESTADO al día.
+- 10:31 · Paso 4: en el cuerpo del #167 ahora están el CA-011 y `TOTAL: 197 SUCCESS` sobre `8f79668`. Agregué al comentario para Javi (issuecomment-6877424699) que el CA-011 ya tiene su prueba, y la re-revisión del #167 está pedida por GitHub (`requested_reviewers`: Jotelsooon).
+- **Queda abierto:**
+  - **la respuesta de Javi.** Hasta entonces no se toca nada más (instrucción del 14/11);
+  - el merge de #166 y #167 juntos;
+  - que Santi aplique el 09 en `lacentral`;
+  - el recorrido DoD 10;
+  - #168 y #169.
