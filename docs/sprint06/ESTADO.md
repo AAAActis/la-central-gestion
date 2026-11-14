@@ -19,7 +19,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 
 | Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
-| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend: PR #166.** **Frontend: PR #167.** Los dos con `verificador-tdd` APTO; #166 también con `auditor-persistencia` APTO, todo contra `lacentral_test.public` (13/11). Orden de merge: #164 → #165 → #166 y #167 juntos. Falta el recorrido en el navegador contra `lacentral_demo` (DoD 10, Santi o Lauti) |
+| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend: PR #166.** **Frontend: PR #167.** #166: `verificador-tdd` y `auditor-persistencia` APTO contra `lacentral_test.public` (13/11). **#167: `verificador-tdd` NO APTO tras tres rondas** (5 mutaciones sobreviven, faltan specs; decide el equipo si hay cuarta ronda). **No mergear #166/#167 hasta resolverlo.** Orden de merge: #164 → #165 → #166 y #167 juntos. Falta el recorrido en el navegador contra `lacentral_demo` (DoD 10, Santi o Lauti) |
 | #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | No empezada |
 | #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | No empezada |
 
@@ -142,15 +142,16 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
-**13/11 noche (cierre) · #166 y #167 verificados, falta mergear y recorrer.** `verificador-tdd` del
-#167: ronda 1 NO APTO (sobrevivía sacar `invalidarTotales()` de `cambiarTipo()`), arreglado con un
-spec en `9ad0497`; ronda 2 APTO. Frontend 185/185 sobre `9ad0497`; backend 560/560 sobre `772e934`
-(mismo `backend/`). #166: `verificador-tdd` y `auditor-persistencia` APTO contra `public`.
-`fco06_fuente` borrado. **Orden de merge (escrito en los cuerpos de #166 y #167):** #164 → #165 →
-#166 y #167 juntos (el backend exige `tipoComprobante` y el PUT de proveedor sin el campo borra el
-tipo habitual). **Siguen, de personas:** el merge (Javi) y el recorrido en el navegador contra
-`lacentral_demo`, DoD 10 (Santi o Lauti, con `scripts/probar-demo.sh`). Después del merge a
-`develop`, suite completa una vez. Luego la 029 y la 049.
+**13/11 noche (cierre) · #167 parado en tres rondas sin APTO.** #166 verificado (`verificador-tdd` y
+`auditor-persistencia` APTO contra `public`). #167: ronda 1 NO APTO (M02, M05, M10, M14), cortada
+porque se le sacó el worktree por error; ronda 2 APTO solo para `9ad0497`; ronda 3 NO APTO: los
+specs de `f0e5588` matan lo de la ronda 1, pero sobreviven `factura-compra.ts:277`, `:303`, `:351`,
+`nucleo/api.ts:165` (sobrevive con la suite entera) y `terceros.ts:144`. Son specs faltantes, sin
+cambios de producción. Frontend 190/190 sobre `f0e5588`; backend 560/560 sobre `772e934`.
+**Decide el equipo:** autorizar una cuarta ronda (los 5 specs) o mergear con los huecos declarados.
+Hasta entonces, «NO MERGEAR» en el #167, y el #166 va junto. Orden de merge, cuando toque: #164 →
+#165 → #166 y #167 juntos. Siguen de personas: esa decisión, el merge (Javi) y el recorrido en el
+navegador contra `lacentral_demo`, DoD 10 (Santi o Lauti). `fco06_fuente` borrado.
 
 **13/11 noche · E56 cerrada, verificación contra el esquema real.** Santi aplicó el 09 a
 `lacentral_test.public`. Suites completas contra `public` (sin `fco06_fuente`): #166 560/560 sobre

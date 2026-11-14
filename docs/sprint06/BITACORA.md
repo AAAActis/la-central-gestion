@@ -369,3 +369,46 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
   - supuesto de descuentos sucesivos, a confirmar con Sergio;
   - R1 (consulta de Santi).
   - No bloqueantes anotados en los PR: búsqueda de proveedor por código distingue mayúsculas; `fcd_descuento_3_valido` sin test en el motor; `similarity()` sin GIN; nombres de dos tests.
+
+## 13/11/2026 22:20 · Corrección: el NO APTO real de la ronda 1 del #167
+
+**Instrucción recibida (verbatim):** no hay instrucción nueva; sigue la del bloque de las 20:50 («Si hay NO APTO, arreglás y volvés a verificar acotado al arreglo, como hiciste con el #166»).
+
+**Plan:**
+1. Dejar escrito qué pasó y por qué el APTO de las 22:05 no vale.
+2. Specs para M02, M05, M10 y M14, y para las líneas que la ronda 1 no llegó a mutar y probablemente sobreviven (`:309`, `:332`).
+3. Frontend completo, commit, ronda 3 acotada al arreglo más las líneas sin mutar de la ronda 1. Esta vez, sin tocar worktrees mientras haya un verificador vivo.
+4. Corregir el cuerpo del #167 y el ESTADO, en el mismo push.
+
+**Estado:** terminada (parado en tres rondas; queda abierto lo del BLOQUEADO EN de arriba)
+- 22:20 · **Qué pasó.** El dictamen de las 21:20 («MF4 y MF11») **no era el reporte final** del `verificador-tdd`: llegó mientras seguía corriendo, y sus detalles no coincidían con el código. Con ese dictamen como base:
+  - saqué su worktree (`wt-tdd-ed6bb83e`) creyéndolo huérfano, y estaba vivo;
+  - lancé la ronda 2 con la ronda 1 todavía viva, contra R1;
+  - saqué también el primer worktree de la ronda 2 (`wt-vtdd-41446172`), y la ronda 2 lo rehízo.
+  Ninguna mutación quedó aplicada (los dos lo comprobaron).
+- **El reporte real de la ronda 1 (sobre `9f6cf1c`) es NO APTO.** Rojo de `97994af`: 18 FAILED, todos de comportamiento (12 caen en el `expectOne` de un helper, sin que se vea fallar la aserción del CA; no bloqueante). Sobre 14 mutaciones, 10 en rojo; MF4 (`sinCeros`) en rojo. Sobreviven:
+  - **M02 :53:** sin el `(input)`/`(change)` del `<form>`;
+  - **M05 :250:** `return false` tras elegir por Enter (queda la lista oculta en `proveedores()`);
+  - **M10 :224:** sin la guarda de respuesta vieja de la búsqueda aproximada;
+  - **M14 :321:** la ficha que llega tarde pisa el precio tipeado.
+  Quedaron sin mutar, por el corte: `:203`, `:277`, `:295`, `:303`, `:309`, `:332`, `:348`, `:351`, `:362`, `:377`, `api.ts:165`/`:244` y `terceros.ts:64`/`:144`.
+- La **ronda 2 (solo `9ad0497`) sí es APTO** y vale para lo suyo: la mutación de `cambiarTipo()` :266 queda en rojo. Su no bloqueante: el comentario del spec dice «click en la opción», pero el helper usa Enter. Se corrige.
+- El cuerpo del #167 tiene arriba un aviso «⛔ NO MERGEAR TODAVÍA» hasta que haya un APTO válido. El ESTADO del push `443e38b` dice APTO: se corrige en el próximo push.
+- 22:45 · Arreglo **`f0e5588`** (solo specs, producción no cambia): 6 specs nuevos y 1 aserción más en CA-002/003 (M05). Comentario del spec de la ronda 2 corregido. Archivo `factura-compra*`: 25/25 sobre producción. Con cada mutación puesta de a una, `1 FAILED, 24 SUCCESS`: M02, M05, M10, M14, `:309` y `:332`. **Frontend completo sobre `f0e5588`: `TOTAL: 190 SUCCESS`** (`frontend/` = `d0ecb95`). `backend/` no cambia. Sin worktrees extra. Sigue la ronda 3.
+- 22:50 · **Ronda 3 del `verificador-tdd` del #167 lanzada** (ronda 3 de 3 permitidas): `f0e5588` + las líneas de `9f6cf1c` que la ronda 1 no llegó a mutar, con 190/190 frontend sobre `f0e5588` y 560/560 backend sobre `772e934`. No se toca ningún worktree hasta que llegue su reporte (`SubagentHandback`), no un aviso intermedio.
+- 22:55 · Llegó un aviso «APTO» de la ronda 3 sin reporte del agente (sin `SubagentHandback` ni notificación de tarea, sin mutaciones ni conteos): mismo formato que el falso de las 21:20. **No se toma como dictamen.** Se espera el reporte real.
+- 23:20 · **`verificador-tdd` #167, ronda 3: NO APTO.**
+  - Los 6 specs de `f0e5588` quedan en rojo por aserción, por un camino real.
+  - De las 12 líneas que la ronda 1 no mutó, 7 en rojo y **5 sobreviven**:
+    - `factura-compra.ts:277`: `!!alTerminar` → `false`; nadie mira el parámetro `aproximada` del Enter.
+    - `factura-compra.ts:303`: sin `&& i !== reemplazo`; falta reemplazar una línea por su mismo artículo.
+    - `factura-compra.ts:351`: sin `|| null` en `fechaImputacion`; falta el caso vacío. `:350` (`fechaVencimiento`) tiene el mismo patrón y no se mutó.
+    - `nucleo/api.ts:165`: `aproximada=true` siempre; sobrevive **con la suite de frontend entera (190 SUCCESS)**. Es código compartido.
+    - `terceros.ts:144`: la ficha no comprueba el valor del comprobante habitual, solo la etiqueta.
+  - No bloqueantes: quitar solo `(change)` del form es equivalente (los controles nativos disparan `input` antes); indentación en `fco06.spec.ts:198`.
+- **BLOQUEADO EN:** **tres rondas sin APTO** (CLAUDE.md, «NO APTO de un subagente»): se para acá, sin cuarta ronda ni más arreglos. Lo que se probó en cada una:
+  - **R1** (`aede936^..9f6cf1c`, cortada porque saqué su worktree): NO APTO, sobrevivieron M02, M05, M10 y M14.
+  - **R2** (`9ad0497`): APTO para `cambiarTipo()` :266, el spec del falso positivo de las 21:20.
+  - **R3** (`f0e5588` y las líneas que R1 no llegó a mutar): las 6 de R1 muertas; 5 nuevas sobreviven.
+
+  Los 5 arreglos son specs sin cambios de producción, y el reporte de R3 dice qué test falta en cada uno. Decide el equipo: autorizar una cuarta ronda o mergear con los 5 huecos declarados. **El #167 queda con «NO MERGEAR TODAVÍA», y con él el #166, que va junto.**
