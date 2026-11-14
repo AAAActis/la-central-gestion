@@ -136,6 +136,12 @@ describe('ComprasRegistradas · HU-FCO-02', () => {
 
     expect(raiz().querySelector('[role="alert"]')?.textContent).toContain('El rango de emisión empieza después de terminar.');
     expect(raiz().querySelector('tbody')).toBeNull();
+
+    // Verificador ronda 2: al volver a buscar, mientras el pedido está en vuelo, no reaparece la tabla vieja.
+    buscar();
+    fixture.detectChanges();
+    expect(raiz().querySelector('tbody')).toBeNull();
+    servidor.expectOne(r => r.url === '/api/facturas-compra').flush(pagina([]));
   });
 
   // Verificador ronda 1: los extremos de la paginación.
