@@ -619,3 +619,46 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
   - el merge del #166 y el #167 (Javi); después, `git merge origin/develop` en esta rama y el merge del #170;
   - el aviso en pantalla cuando se cambia el destino de una línea a mano (lo decide el equipo);
   - la C7, que mantiene la 029 y la 049 sin arrancar.
+
+## 14/11/2026 12:02 · #170 cambio de destino, #168 deuda del #166, D1 de CLAUDE.md
+
+**Instrucción recibida (verbatim):**
+> Mientras Javi revisa el #167, tres cosas. La 029 y la 049 siguen sin arrancar: la C7 está
+> abierta.
+>
+> 1 · #170: cerrá el hueco que declaraste. Si después de agregar una línea se le cambia la
+>     sucursal a mano y queda igual a otra línea (mismo artículo y misma sucursal), la
+>     pantalla tiene que avisar y no aceptar el cambio, igual que al agregarla. No lo dejes
+>     para que lo decida el equipo: es la misma regla de la #169, aplicada en otro momento.
+>     TDD, spec en rojo en su propio commit. Suite de frontend y verificador acotado.
+>
+> 2 · #168, la deuda del #166, en rama nueva desde feature/163-frontend y PR propio contra
+>     develop (depende del #166 y el #167, decilo en el cuerpo):
+>     - ModificarProveedorUseCase no puede borrar en silencio el tipo de comprobante
+>       habitual cuando el request no lo trae. Elegí la solución más simple que lo evite y
+>       justificala en el PR.
+>     - El mensaje de error del tipo B tiene que mostrar el ejemplo 99-00001234.
+>     TDD, suite completa antes del PR, verificador-tdd y auditor-persistencia.
+>
+> 3 · La D1 de CLAUDE.md está desactualizada: sigue diciendo «Tarjeta3/6: tasas SIN
+>     DEFINIR». Alineala con las decisiones que ya están tomadas: D12 (16/10/2026, Tarjeta 3
+>     y 6 salen del sistema, confirmado por Alfredo el 17/10; el retiro del esquema va en la
+>     compuerta C1 del Sprint 7), D13 (L2 = costo × 1,40) y D14 (Efectivo = L1 − 10 %).
+>     Leé esas decisiones en los documentos antes de escribir, no las resumas de memoria.
+>     PR de documentación aparte.
+>
+> Cuando Javi mergee el #166 y el #167: git merge origin/develop en las ramas del #170 y del
+> #168, nunca rebase, y la suite que corresponda sobre cada una.
+
+**Plan:**
+1. #170, en `feature/169-articulo-por-sucursal`: spec en rojo en su propio commit (cambiar el destino de una línea a uno que la duplica avisa y deja el destino anterior); después el código en el cambio del `<select>`; suite de frontend; verificador acotado a esos commits; push y ESTADO.
+2. #168, en rama `feature/168-deuda-proveedor` desde `feature/163-frontend`: rojo del caso de uso (modificar sin el tipo conserva el habitual) y del mensaje del tipo B; código; suite completa; verificador-tdd y después auditor-persistencia, uno por vez; PR contra develop.
+3. D1: leer D12, D13 y D14 en los documentos; rama de docs desde develop; PR aparte.
+4. Cuando entren el #166 y el #167: `git merge origin/develop` en las ramas del #170 y del #168, y la suite que corresponda.
+
+- 12:02 · `git fetch`: `origin/develop` trae los merges del #164 y el #165, que esta rama ya contiene (`git diff --name-only HEAD...origin/develop` vacío). El #167 sigue con la revisión de Javi de las 05:00 UTC, sin respuesta nueva.
+
+**Estado:** en curso
+- 12:05 · #170: rojo `492f4af`, por aserción (`Expected null to contain 'FIL-0712 ya está en la factura'`); el spec del destino libre ya pasaba y queda como resguardo. Código `65e1370`: `cambiarDestino()` avisa con el mismo mensaje de la #169 y devuelve el `<select>` al destino anterior. Frontend completo sobre `65e1370`: `TOTAL: 203 SUCCESS`. El script `mutar.sh` apunta a un worktree viejo y no corrió: las mutaciones quedan para el verificador.
+- 12:08 · Verificador ronda 1 sobre `3e3c590..65e1370`: **NO APTO**. De 9 mutaciones sobrevivieron dos: M1, sacar `j !== i` (inalcanzable), y M9, `emitViewToModelChange: true` (equivalente, no bloquea). Arreglo `b7973d6`: se borra la guarda (regla de CLAUDE.md: si no es alcanzable, se borra), y la demostración queda en el spec #170 `:319`. Frontend completo sobre `b7973d6`: `TOTAL: 203 SUCCESS`.
+- 12:10 · Verificador ronda 2 sobre `65e1370..b7973d6`: **APTO**. Cuerpo del #170 actualizado; ESTADO con la fila y la decisión del 14/11.
