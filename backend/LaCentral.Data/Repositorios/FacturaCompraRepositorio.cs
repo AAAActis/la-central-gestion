@@ -10,6 +10,7 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
 {
     // Valores de los CHECK fc_estado_valido y fc_origen_valido.
     private const string EstadoActiva = "ACTIVA";
+    private const string EstadoAnulada = "ANULADA";
     private const string OrigenManual = "MANUAL";
     // stock.cantidad es NUMERIC(12,3): la parte entera tiene a lo sumo 9 dígitos.
     private const decimal LimiteStock = 1_000_000_000m;
@@ -104,9 +105,71 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
         return Result<int>.Success(fila.Id);
     }
 
-    public Task<FacturaCompraParaAnular?> ObtenerParaAnularAsync(int id, CancellationToken ct = default)
-        => Task.FromResult<FacturaCompraParaAnular?>(null);
+    public async Task<FacturaCompraParaAnular?> ObtenerParaAnularAsync(int id, CancellationToken ct = default)
+        => await _context.FacturaCompra.AsNoTracking()
+            .Where(f => f.Id == id)
+            .Select(f => new FacturaCompraParaAnular(f.Id, f.Numero, f.Estado == EstadoActiva,
+                f.FacturaCompraDetalle.Select(d => d.ArticuloId).Distinct().ToList()))
+            .FirstOrDefaultAsync(ct);
 
-    public Task<Result> AnularConEfectosAsync(AnulacionFacturaCompra anulacion, CancellationToken ct = default)
-        => Task.FromResult(Result.Failure(TipoError.Invalido, "Sin implementar."));
+    /// <summary>
+    /// Como el registro, varias sentencias que son atómicas solo porque el caso de uso las
+    /// ejecuta dentro de IUnidadDeTrabajo.
+    /// </summary>
+    public async Task<Result> AnularConEfectosAsync(AnulacionFacturaCompra anulacion, CancellationToken ct = default)
+    {
+        // La cabecera primero y solo si sigue ACTIVA: dos anulaciones simultáneas no restan dos veces.
+        var marcadas = await _context.FacturaCompra
+            .Where(f => f.Id == anulacion.FacturaId && f.Estado == EstadoActiva)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(f => f.Estado, EstadoAnulada)
+                .SetProperty(f => f.MotivoAnulacion, anulacion.Motivo)
+                .SetProperty(f => f.FechaAnulacion, anulacion.Fecha)
+                .SetProperty(f => f.UsuarioAnulacionId, anulacion.UsuarioId)
+                .SetProperty(f => f.UsuarioAutorizacionId, anulacion.UsuarioAutorizacionId), ct);
+        if (marcadas == 0)
+            return Result.Failure(TipoError.Conflicto, "La factura ya no está activa.");
+
+        var lineas = await _context.FacturaCompraDetalle.AsNoTracking()
+            .Where(d => d.FacturaCompraId == anulacion.FacturaId)
+            .OrderBy(d => d.ArticuloId).ThenBy(d => d.SucursalId)
+            .Select(d => new { d.ArticuloId, d.SucursalId, d.Cantidad })
+            .ToListAsync(ct);
+        foreach (var linea in lineas)
+        {
+            // CA-003: resta aunque quede negativo. Si no entra en stock.cantidad, 0 filas: Invalido.
+            var filas = await _context.Database.ExecuteSqlInterpolatedAsync($"""
+                UPDATE stock SET cantidad = cantidad - {linea.Cantidad}
+                WHERE articulo_id = {linea.ArticuloId} AND sucursal_id = {linea.SucursalId}
+                  AND cantidad - {linea.Cantidad} > {-LimiteStock}
+                """, ct);
+            if (filas == 0)
+                return Result.Failure(TipoError.Invalido,
+                    $"El stock del artículo {linea.ArticuloId} en la sucursal {linea.SucursalId} no se puede revertir.");
+        }
+
+        await _context.ArticuloHistorialCompra
+            .Where(h => h.FacturaCompraId == anulacion.FacturaId)
+            .ExecuteUpdateAsync(s => s.SetProperty(h => h.Anulado, true), ct);
+
+        // CA-001 y CA-002: cada artículo vuelve a su último registro válido. Sin ninguno, queda
+        // sin último proveedor y conserva el costo que tiene.
+        foreach (var articuloId in lineas.Select(l => l.ArticuloId).Distinct())
+        {
+            var anterior = await _context.ArticuloHistorialCompra.AsNoTracking()
+                .Where(h => h.ArticuloId == articuloId && !h.Anulado)
+                .OrderByDescending(h => h.Fecha).ThenByDescending(h => h.Id)
+                .Select(h => new { h.PrecioCosto, h.ProveedorId })
+                .FirstOrDefaultAsync(ct);
+            var articulo = _context.Articulo.Where(a => a.Id == articuloId);
+            if (anterior is null)
+                await articulo.ExecuteUpdateAsync(s => s.SetProperty(a => a.UltimoProveedorId, (int?)null), ct);
+            else
+                await articulo.ExecuteUpdateAsync(s => s
+                    .SetProperty(a => a.PrecioCosto, anterior.PrecioCosto)
+                    .SetProperty(a => a.UltimoProveedorId, anterior.ProveedorId), ct);
+        }
+
+        return Result.Success();
+    }
 }
