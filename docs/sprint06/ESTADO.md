@@ -174,6 +174,7 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
   deuda en la **#168** (sin milestone): `ModificarProveedorUseCase` pisa
   `TipoComprobanteHabitual` con null si el request no lo trae; el mensaje del tipo B tiene que
   mostrar el ejemplo `99-00001234`.
+- **14/11 · #168 en curso** (pedido de Santi del 14/11), rama `feature/168-deuda-proveedor` desde `feature/163-frontend`; PR contra `develop` que depende del #166 y el #167. Un PUT de proveedor **sin** la clave `tipoComprobanteHabitual` es 400 con mensaje en español y la fila no cambia; con la clave en `null` lo sigue vaciando, que es lo que manda la pantalla. El mensaje del B ya traía `99-00001234` desde el #166: queda un test que lo fija. Rojo `5901221`, código `dd4e411`, test del mensaje `cf79afb`. `CicloCompletoIntegracionTests` ahora manda la clave.
 - **#169** (milestone Sprint 6, observación de Javi del 14/11): la pantalla no deja cargar el
   mismo artículo dos veces aunque vaya a sucursales distintas; el backend lo permite (D9). Ya
   pasaba antes del #167.

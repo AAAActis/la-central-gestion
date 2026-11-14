@@ -574,3 +574,15 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
   - que Santi aplique el 09 en `lacentral`;
   - el recorrido DoD 10;
   - #168 y #169.
+
+## 14/11/2026 12:24 · #168, continuación del bloque de las 12:02 (en la rama del #170)
+
+**Instrucción recibida (verbatim):** la del bloque de las 12:02, punto 2. Ese bloque está en `feature/169-articulo-por-sucursal`; esta rama sale de `feature/163-frontend` y no lo tiene.
+
+**Plan:** rojo HTTP contra PostgreSQL; DTO de la Api que distingue «no vino» de «vino null»; test del mensaje del B; suite completa; `verificador-tdd` y después `auditor-persistencia`; PR.
+
+- Solución elegida: el PUT reemplaza todo, así que sin la clave es 400 en español; `null` sigue vaciando. Se descartó «`null` conserva y `""` vacía»: obliga a cambiar el frontend, que manda `null` para vacío, y vuelve ambiguo el contrato.
+- Rojo `5901221`, por aserción: `Expected: BadRequest, Actual: NoContent`. Código `dd4e411`. Al filtrar por `Proveedor` cayó `CicloCompletoIntegracionTests` (un PUT sin la clave, ahora 400): se le agregó la clave en `null`, y quedó 8/8 junto con `ProveedorDetalleApiPostgreSqlTests`.
+- Mensaje del B: ya traía `99-00001234` desde `1060bb0` (#166). Test `cf79afb`, que pasó en verde de entrada. Sacar el ejemplo del mensaje lo pone en rojo (1 con error, 5 superados).
+
+**Estado:** en curso
