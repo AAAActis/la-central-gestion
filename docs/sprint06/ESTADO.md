@@ -98,7 +98,7 @@ Sergio no es la del archivo, por eso va la columna «Preg.».
 
 1. ~~Qué es «la segunda lista» y cuánto va para Tarjeta 3 y Tarjeta 6.~~ Ya respondido (D12 y
    D13, 16/10/2026). La D1 de `CLAUDE.md` («tasas SIN DEFINIR») sigue desactualizada: **para
-   corregir por el equipo**.
+   corregir por el equipo**. **14/11/2026:** alineada con D12, D13 y D14 en un PR de documentación aparte (pedido de Santi del 14/11).
 2. ~~¿Alcanza con informar uno de los tres documentos?~~ Sí: D-S6-08.
 3. ~~¿Quién puede modificar el precio a mano?~~ Cualquiera, con registro de quién: D-S6-09.
 4. ~~El 99 o 999, ¿del proveedor o del tipo de comprobante?~~ Del tipo; el 999 no se usa: D-S6-10.

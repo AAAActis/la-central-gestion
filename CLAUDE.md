@@ -75,10 +75,15 @@ clientes. `PostgreSqlSeguridadTests` impide apuntar a la base principal: no lo
 desactives ni lo eludas. Ningún `TRUNCATE` ni `DROP` fuera del esquema de pruebas.
 
 ## Decisiones de negocio vigentes
-- D1 Precios por modalidad persistidos: Lista, Tarjeta3, Tarjeta6,
-  EfectivoTransferencia, Costo, CasoEspecial. Lista = costo × 1,50. Costo = × 1,00 (0%).
-  Efectivo = lista × 0,90. Tarjeta3/6: tasas configurables SIN DEFINIR — no inventar un
-  número. Costo desconocido es null, nunca cero.
+- D1 Precios por modalidad persistidos. Tres listas globales, iguales para todos los
+  artículos (D13, 16/10/2026): L1 = Lista = costo × 1,50; L2 = costo × 1,40; L3 = Costo =
+  × 1,00 (0 %). Efectivo = L1 − 10 % (lista × 0,90), también cuando la fila de Lista es
+  manual (D14, 17/10/2026). Tarjeta3 y Tarjeta6 salen del sistema (D12, 16/10/2026;
+  confirmado por Alfredo el 17/10/2026). Hasta la compuerta C1 del Sprint 7 (script de L2 y
+  retiro de Tarjeta3/6, con re-scaffold) el esquema sigue con las seis de hoy —Lista,
+  Tarjeta3, Tarjeta6, EfectivoTransferencia, Costo, CasoEspecial—, L2 todavía no existe y
+  las tarjetas no tienen tasa: no inventar un número ni sumarles uso. Costo desconocido es
+  null, nunca cero.
 - D2 Un código vigente por proveedor y artículo. Más la unicidad global de códigos.
 - D3 HU-FCO-01 antes que HU-ART-05.
 - D7 Todo en pesos. Sin moneda ni cotización.
