@@ -454,6 +454,16 @@ public class RegistrarFacturaCompraUseCaseTests
         NoSeEscribioNada();
     }
 
+    // #168 (revisión de Javi del #166): el mensaje del B muestra un ejemplo del formato.
+    [Fact]
+    public async Task Fco06_ComprobanteB_SinNoventaYNueve_ElMensajeMuestraElEjemplo()
+    {
+        var resultado = await Caso().EjecutarAsync(Request(tipo: "B", numero: "0099-00001234"));
+
+        AssertFallo(resultado, TipoError.Invalido);
+        Assert.Contains("99-00001234", resultado.Error);
+    }
+
     // CA-005: el A se copia tal cual, cualquier combinación.
     [Theory]
     [InlineData("99-00001234")]
