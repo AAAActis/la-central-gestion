@@ -660,3 +660,7 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 
 **Estado:** en curso
 - Paso 1: rama creada y merge de la parte 1. Conflictos solo por agregados de los dos lados (puerto, repositorio, controlador, Program, test HTTP, bitácora y ESTADO): se conservaron los dos. Build 0 errores; filtrado `FacturasCompra|FacturaCompra`: 168/168.
+- 19:57 · Paso 2: rojo `d0697a5` (solo spec: 4 FAILED, 9 SUCCESS; la primera falla de cada uno es la aserción «botón Anular de la fila», después cae un TypeError porque no hay diálogo). Código `070027b`: 13/13 en `compras-registradas`. Mutaciones mías antes del verificador, todas muertas (1 FAILED cada una): recarga en la página 1 en vez de la actual, el aviso que no se borra, `enviando` que no vuelve a false, autocomplete de la contraseña y Cancelar que no cierra. Los `trim` del motivo y el usuario no se pusieron: los hace el caso de uso.
+- 19:57 · Frontend completo sobre `070027b`: `TOTAL: 210 SUCCESS`. Backend completo en curso.
+- 20:09 · Backend completo sobre `070027b`: `Correctas! - Con error: 0, Superado: 608, Omitido: 0, Total: 608`. Paso 3: `verificador-tdd` lanzado, acotado a `4b59b94..070027b`; el auditor no aplica (el diff de la HU no toca backend ni esquema).
+- 19:57 · Paso 4: P7-01 en `docs/sprint07/ESTADO.md` (nuevo: no existía; el entregable del Sprint 7 queda sin escribir, lo define el equipo). La 027 no se arranca.
