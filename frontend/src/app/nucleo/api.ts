@@ -244,6 +244,11 @@ export class ApiLaCentral {
     return this.http.get<Pagina<FacturaCompraResumen>>('/api/facturas-compra', { params });
   }
 
+  /** HU-FCO-04 (028): quien anula sale de la sesión; autoriza otro ADMINISTRADOR con su usuario y contraseña. */
+  anularFacturaCompra(id: number, anulacion: AnulacionFacturaCompra): Observable<void> {
+    return this.http.post<void>(`/api/facturas-compra/${id}/anulacion`, anulacion);
+  }
+
   registrarFacturaCompra(factura: FacturaCompraNueva): Observable<{ id: number }> {
     return this.http.post<{ id: number }>('/api/facturas-compra', factura);
   }
@@ -251,6 +256,13 @@ export class ApiLaCentral {
   calcularFacturaCompra(factura: FacturaCompraNueva): Observable<TotalesFacturaCompra> {
     return this.http.post<TotalesFacturaCompra>('/api/facturas-compra/calculo', factura);
   }
+}
+
+/** HU-FCO-04 (028): el cuerpo de `POST /api/facturas-compra/{id}/anulacion`. */
+export interface AnulacionFacturaCompra {
+  motivo: string;
+  usuarioAutoriza: string;
+  contrasenaAutoriza: string;
 }
 
 /** HU-FCO-02 (026): criterios de `GET /api/facturas-compra`; las fechas en ISO (aaaa-mm-dd). */

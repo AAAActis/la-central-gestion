@@ -2,16 +2,27 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiLaCentral, FacturaCompraResumen, FiltroFacturasCompra, ProveedorResumen, mensajeDeError } from '../../nucleo/api';
 import type { Pagina } from '../../compartido/listado';
+import { Modal } from '../../compartido/modal';
+import { CampoFormulario, Formulario, ValoresFormulario } from '../../compartido/formulario/formulario';
 
 const TAMANO_PAGINA = 20;
 
 /**
  * HU-FCO-02 (026) · Consulta de facturas de compra registradas: por proveedor, número y
  * rangos de emisión y de vencimiento. Las anuladas se muestran marcadas (CA-005).
+ * HU-FCO-04 (028) · Desde cada fila activa se anula, con motivo y la autorización de otro
+ * ADMINISTRADOR (doble certificación, CA-006).
  */
+const CAMPOS_ANULACION: CampoFormulario[] = [
+  { nombre: 'motivo', etiqueta: 'Motivo', obligatorio: true },
+  // autocomplete off: el navegador no tiene que completar con la clave de quien está en la sesión.
+  { nombre: 'usuarioAutoriza', etiqueta: 'Usuario de quien autoriza', obligatorio: true, autocompletar: 'off' },
+  { nombre: 'contrasenaAutoriza', etiqueta: 'Contraseña de quien autoriza', tipo: 'password', obligatorio: true, autocompletar: 'new-password' },
+];
+
 @Component({
   selector: 'app-compras-registradas',
-  imports: [FormsModule],
+  imports: [FormsModule, Modal, Formulario],
   template: `
     <section class="tarjeta">
       <h2>Compras registradas</h2>
@@ -41,6 +52,7 @@ const TAMANO_PAGINA = 20;
       </form>
     </section>
 
+    @if (aviso()) { <p class="aviso" role="status">{{ aviso() }}</p> }
     @if (error()) {
       <p class="error" role="alert">{{ error() }}</p>
     } @else if (resultado(); as r) {
@@ -50,7 +62,7 @@ const TAMANO_PAGINA = 20;
         <section class="tarjeta">
           <div class="tabla-caja">
             <table>
-              <thead><tr><th>Emisión</th><th>Proveedor</th><th>Número</th><th>Tipo</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+              <thead><tr><th>Emisión</th><th>Proveedor</th><th>Número</th><th>Tipo</th><th>Vencimiento</th><th>Estado</th><th>Acción</th></tr></thead>
               <tbody>
                 @for (f of r.items; track f.id) {
                   <tr [class.anulada]="f.anulada" [class.inactivo]="f.anulada">
@@ -60,6 +72,7 @@ const TAMANO_PAGINA = 20;
                     <td>{{ f.tipoComprobante }}</td>
                     <td>{{ f.fechaVencimiento ?? '—' }}</td>
                     <td>{{ f.anulada ? 'Anulada' : 'Activa' }}</td>
+                    <td>@if (!f.anulada) { <button type="button" class="peligro" (click)="abrirAnulacion(f)">Anular</button> }</td>
                   </tr>
                 }
               </tbody>
@@ -73,6 +86,14 @@ const TAMANO_PAGINA = 20;
         </section>
       }
     }
+
+    <app-modal [titulo]="'Anular factura ' + (aAnular()?.numero ?? '')" [(abierto)]="anulacionAbierta">
+      <app-formulario [campos]="camposAnulacion" [valores]="valoresAnulacion()" varianteEnviar="peligro"
+        textoEnviar="Anular" textoEnviando="Anulando…" [enviando]="enviando()" [errorGeneral]="errorAnulacion()"
+        (enviar)="anular($event)">
+        <button type="button" acciones (click)="anulacionAbierta.set(false)">Cancelar</button>
+      </app-formulario>
+    </app-modal>
   `,
 })
 export class ComprasRegistradas {
@@ -88,6 +109,14 @@ export class ComprasRegistradas {
   readonly proveedores = signal<ProveedorResumen[]>([]);
   readonly resultado = signal<Pagina<FacturaCompraResumen> | null>(null);
   readonly error = signal<string | null>(null);
+  readonly aviso = signal<string | null>(null);
+  protected readonly camposAnulacion = CAMPOS_ANULACION;
+  readonly aAnular = signal<FacturaCompraResumen | null>(null);
+  readonly anulacionAbierta = signal(false);
+  /** Un objeto nuevo en cada apertura: el formulario se rearma vacío, sin la contraseña anterior. */
+  readonly valoresAnulacion = signal<ValoresFormulario>({});
+  readonly enviando = signal(false);
+  readonly errorAnulacion = signal<string | null>(null);
   /** Los criterios de la última búsqueda: la paginación no toma lo que se escribió después. */
   private buscado: FiltroFacturasCompra = {};
 
@@ -104,6 +133,7 @@ export class ComprasRegistradas {
   }
 
   buscar() {
+    this.aviso.set(null);
     this.buscado = {
       proveedorId: this.proveedor()?.id ?? null, numero: this.numero,
       emisionDesde: this.emisionDesde, emisionHasta: this.emisionHasta,
@@ -117,6 +147,30 @@ export class ComprasRegistradas {
     this.api.facturasCompra(this.buscado, pagina, TAMANO_PAGINA).subscribe({
       next: r => this.resultado.set(r),
       error: e => { this.resultado.set(null); this.error.set(mensajeDeError(e)); },
+    });
+  }
+
+  abrirAnulacion(f: FacturaCompraResumen) {
+    this.aAnular.set(f);
+    this.valoresAnulacion.set({});
+    this.errorAnulacion.set(null);
+    this.anulacionAbierta.set(true);
+  }
+
+  anular(v: ValoresFormulario) {
+    const f = this.aAnular()!;
+    this.enviando.set(true);
+    this.api.anularFacturaCompra(f.id, {
+      // El caso de uso recorta motivo y usuario; la contraseña va tal cual.
+      motivo: v['motivo'] as string, usuarioAutoriza: v['usuarioAutoriza'] as string, contrasenaAutoriza: v['contrasenaAutoriza'] as string,
+    }).subscribe({
+      next: () => {
+        this.enviando.set(false);
+        this.anulacionAbierta.set(false);
+        this.aviso.set(`Factura ${f.numero} anulada.`);
+        this.irA(this.resultado()?.pagina ?? 1);
+      },
+      error: e => { this.enviando.set(false); this.errorAnulacion.set(mensajeDeError(e)); },
     });
   }
 }
