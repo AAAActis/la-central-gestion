@@ -278,6 +278,12 @@ describe('Proveedores (045)', () => {
     h.servidor.expectOne('/api/proveedores/8').flush(FICHA);
   });
 
+  it('056 · sin comprobante habitual, la ficha muestra la raya', () => {
+    abrirFicha();
+    const dt = Array.from(h.raiz().querySelectorAll('dt')).find(d => d.textContent?.trim() === 'Comprobante habitual')!;
+    expect(dt.nextElementSibling?.textContent?.trim()).toBe('—');
+  });
+
   // HU-FCO-06 CA-004: el tipo que suele emitir se carga en el proveedor y es solo un valor por defecto.
   it('056 · la ficha muestra el comprobante habitual y la modificación lo manda', () => {
     abrirFicha({ ...FICHA, tipoComprobanteHabitual: 'B' });
