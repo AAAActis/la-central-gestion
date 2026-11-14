@@ -328,7 +328,8 @@ export class FacturaCompra {
   // #170: la regla de la #169 también al cambiar el destino a mano; si repite, el select vuelve al anterior.
   cambiarDestino(i: number, sucursalId: number, control: NgModel) {
     const linea = this.lineas[i];
-    if (this.lineas.some((l, j) => j !== i && l.articulo.id === linea.articulo.id && l.sucursalId === sucursalId)) {
+    // Sin excluir la propia línea: nunca llega su mismo destino (reelegir la opción no dispara change y el rechazo deja el select igual al modelo).
+    if (this.lineas.some(l => l.articulo.id === linea.articulo.id && l.sucursalId === sucursalId)) {
       this.errorArticulo.set(`${linea.articulo.codigoInterno} ya está en la factura: corregí su línea.`);
       control.control.setValue(linea.sucursalId, { emitViewToModelChange: false });
       return;
