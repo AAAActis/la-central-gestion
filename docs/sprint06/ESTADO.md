@@ -192,6 +192,11 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
   corrigió en `69b4356`.
 - **El script 09 todavía no está aplicado en `lacentral`:** lo aplica Santi después del merge.
 - Orden de merge, sin cambios: #164 y #165 (ya mergeados el 14/11), y #166 con #167 juntos.
+- **14/11 · CA-011 con prueba:** spec `a2e7d1f` (solo test; producción ya lo cumplía, sin rojo por la
+  rama real, discrimina por mutación); `verificador-tdd` acotado a `a2e7d1f`: **APTO** (5 mutaciones,
+  ninguna sobrevive). Frontend completo sobre `8f79668`: 197/197. **#21 cerrada** (CA-003 anulado
+  por D-S6-03, entró con el #164). Re-revisión del #167 pedida a Javi: **no se toca nada hasta que
+  responda.**
 
 **13/11 noche (cierre) · #167 parado en tres rondas sin APTO.** #166 verificado (`verificador-tdd` y
 `auditor-persistencia` APTO contra `public`). #167: ronda 1 NO APTO (M02, M05, M10, M14), cortada

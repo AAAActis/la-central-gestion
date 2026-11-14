@@ -525,3 +525,45 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
   - la suite completa después del merge a `develop`;
   - #168 y #169;
   - el CA-011, que no tiene test de un precio escrito que llegue al servidor.
+
+## 14/11/2026 10:27 · CA-011 de la 056 con prueba, cierre de la #21 y re-revisión del #167
+
+**Instrucción recibida (verbatim):**
+> Falta una cosa antes de que Javi vuelva a revisar el #167:
+>
+> 1 · El CA-011 de la 056 (precio editable por línea) no tiene prueba que lo verifique: lo
+>     dejaste declarado en la columna Prueba. Escribí el spec de frontend que cargue una
+>     línea, cambie el precio propuesto por otro escrito a mano, registre la factura y
+>     compruebe que el request que sale al servidor lleva el precio escrito, no el propuesto.
+>     Primero en rojo por aserción, en su propio commit. Si hace falta tocar producción, va
+>     en otro commit. Solo en el #167: el #166 no se toca.
+>     Actualizá la celda del CA-011 con el nombre del test.
+>
+> 2 · Suite de frontend UNA vez sobre el último commit, el número al cuerpo del #167, y un
+>     verificador-tdd acotado a ese commit nuevo, con hash, línea literal y conteo.
+>
+> 3 · El #164 ya entró a develop: cerrá la #21 con el comentario de la anulación del CA-003
+>     por la decisión del dueño del 11/11/2026 (D-S6-03), citando el #164.
+>
+> 4 · Agregá al comentario para Javi en el #167 que el CA-011 ya tiene su prueba, y pedile la
+>     re-revisión por GitHub. Después no toques nada más hasta que responda.
+
+**Plan:**
+1. Spec del CA-011 por el DOM: escribir otro precio en el input de la línea, ver total, confirmar, y comprobar que el POST lleva el escrito. Rojo por aserción en commit propio; si producción ya lo cumple, no se fuerza el rojo: se declara y se demuestra con mutación.
+2. Celda del CA-011. Suite de frontend una vez, cuerpo del #167, un `verificador-tdd` acotado.
+3. Cerrar la #21 citando el #164 y D-S6-03.
+4. Comentario a Javi y re-review. Después, nada más.
+
+**Estado:** en curso
+- 10:27 · **Corrección del bloque de las 09:21:** las horas de sus líneas desde «09:40» hasta «12:00» no son de reloj; las escribí estimadas. `date` da ahora 14/11 10:27. Los hechos, hashes y conteos de esas líneas sí son reales. Desde acá, cada hora sale de `date`.
+- 10:27 · `git fetch --all --prune`: `origin/feature/163-frontend` = local (`000a744`); `origin/develop` trae solo los merges de #164 y #165, sin diferencia de contenido.
+- 10:28 · Paso 1: spec «CA-011: el precio escrito a mano en la línea es el que se registra, no el costo propuesto» en **`a2e7d1f`**, solo test. Escribe 137.5 en la entrada de precio de la línea, donde estaba el costo propuesto 100, y comprueba el body de `/calculo` y del POST.
+  - **No hubo rojo:** sobre producción dio verde al primer intento (`TOTAL: 30 SUCCESS` en `factura-compra*`), porque producción ya cumplía el CA. No se forzó un rojo.
+  - Discrimina por mutación:
+    - `[(ngModel)]` → `[ngModel]` en el precio: `1 FAILED, 66 SUCCESS`, `Expected 100 to be 137.5`;
+    - `factura()` con `precioUnitario: 100` fijo: `1 FAILED, 66 SUCCESS`, ídem.
+  - (El primer intento buscaba `input[name="precio0"]` y daba `TypeError` en el propio spec. No era un rojo válido: se cambió el selector.)
+- 10:28 · Celda del CA-011 de la 056 con el nombre del test: **`8f79668`**. **Frontend completo sobre `8f79668`: `TOTAL: 197 SUCCESS`.** `git worktree list`: solo el principal.
+- 10:28 · Paso 2: **`verificador-tdd` lanzado**, acotado a `a2e7d1f`, con `8f79668` · `TOTAL: 197 SUCCESS` · 197/197. Una instancia; no se toca ningún worktree ni se commitea hasta su reporte final.
+- 10:29 · Paso 3: **#21 cerrada** (completed), con un comentario que cita D-S6-03 (decisión del dueño del 11/11/2026), el #164 (merge `4b41dbb`) y la v1.1 de la 014.
+- 10:30 · **`verificador-tdd` de `a2e7d1f`: APTO** (reporte final). Ninguna de las 5 mutaciones sobrevive: las dos mías, el `Math.trunc` del precio, la de `confirmar()` con el propuesto y la de la ficha que pisa el precio (esta la mata el test de la ficha tardía). Aceptó 197/197 sobre `8f79668`. No bloqueante: el spec toma el precio por posición, porque `[name="precio0"]` dio `null` en el primer intento. Queda así. `git worktree list`: solo el principal. ESTADO al día.
