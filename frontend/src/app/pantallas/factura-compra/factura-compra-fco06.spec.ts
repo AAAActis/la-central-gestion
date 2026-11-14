@@ -303,6 +303,30 @@ describe('FacturaCompra · HU-FCO-06', () => {
     calculo.flush({ neto: 166.73, iva: 0, percepciones: 12.5, total: 179.23 });
   });
 
+  it('CA-011: el precio escrito a mano en la línea es el que se registra, no el costo propuesto', fakeAsync(() => {
+    cargarFactura();
+    fixture.detectChanges();
+    tick();
+    // Segunda entrada de la fila: cantidad, precio unitario, descuentos.
+    const precio = raiz().querySelectorAll<HTMLInputElement>('table.lineas tbody tr')[0].querySelectorAll('input')[1];
+    expect(precio.value).toBe('100');
+    precio.value = '137.5';
+    precio.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+
+    c.registrar();
+    const calculo = servidor.expectOne('/api/facturas-compra/calculo');
+    expect(calculo.request.body.lineas[0].precioUnitario).toBe(137.5);
+    calculo.flush({ neto: 166.73, iva: 0, percepciones: 12.5, total: 179.23 });
+    fixture.detectChanges();
+
+    c.confirmar();
+    const registro = servidor.expectOne('/api/facturas-compra');
+    expect(registro.request.body.lineas[0].precioUnitario).toBe(137.5);
+    registro.flush({ id: 9 });
+    servidor.expectOne('/api/articulos/1').flush(ficha(1, 85.5));
+  }));
+
   it('CA-015: si cambio algo después de ver el total, hay que volver a calcularlo', () => {
     cargarFactura();
     c.registrar();
