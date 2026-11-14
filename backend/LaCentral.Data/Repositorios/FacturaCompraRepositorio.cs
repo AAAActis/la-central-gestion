@@ -103,4 +103,10 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
 
         return Result<int>.Success(fila.Id);
     }
+
+    public Task<FacturaCompraParaAnular?> ObtenerParaAnularAsync(int id, CancellationToken ct = default)
+        => Task.FromResult<FacturaCompraParaAnular?>(null);
+
+    public Task<Result> AnularConEfectosAsync(AnulacionFacturaCompra anulacion, CancellationToken ct = default)
+        => Task.FromResult(Result.Failure(TipoError.Invalido, "Sin implementar."));
 }
