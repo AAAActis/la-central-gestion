@@ -42,6 +42,8 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
             Numero = factura.Numero,
             FechaEmision = factura.FechaEmision,
             FechaVencimiento = factura.FechaVencimiento,
+            FechaImputacion = factura.FechaImputacion,
+            TipoComprobante = factura.TipoComprobante[0],
             PercepcionIva = factura.PercepcionIva,
             PercepcionIibb = factura.PercepcionIibb,
             PercepcionMunicipal = factura.PercepcionMunicipal,
@@ -56,7 +58,9 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
                 SucursalId = l.SucursalId,
                 Cantidad = l.Cantidad,
                 PrecioUnitario = l.PrecioUnitario,
-                DescuentoPorcentaje = l.DescuentoPorcentaje
+                DescuentoPorcentaje = l.DescuentoPorcentaje,
+                Descuento2Porcentaje = l.Descuento2Porcentaje,
+                Descuento3Porcentaje = l.Descuento3Porcentaje
             }).ToList()
         };
         _context.FacturaCompra.Add(fila);

@@ -10,4 +10,5 @@ public record ProveedorDetalleDto(
     bool Activo,
     string? MotivoBaja,
     IReadOnlyList<string> Telefonos,
-    IReadOnlyList<string> Direcciones);
+    IReadOnlyList<string> Direcciones,
+    string? TipoComprobanteHabitual = null);

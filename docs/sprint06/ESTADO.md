@@ -19,7 +19,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 
 | Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
-| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | Proforma escrita (`docs/historias/056-HU-FCO-06.md`). CA-007 aceptado (lo cumple la 025). Resto no empezado |
+| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend: PR #166.** **Frontend: PR #167.** #166: `verificador-tdd` y `auditor-persistencia` APTO contra `lacentral_test.public` (13/11). #166 **APROBADO por Javi** (14/11; deuda en #168). #167: cambios pedidos por Javi el 14/11 hechos; cuarta ronda (autorizada el 13/11) y su arreglo: **`verificador-tdd` APTO** sobre `4b624d3`, 196/196 frontend; re-review pedida a Javi. #169: artículo repetido por sucursal en la pantalla. Orden de merge: #164 → #165 (mergeados) → #166 y #167 juntos; el 09 en `lacentral` lo aplica Santi después del merge. Falta el recorrido en el navegador contra `lacentral_demo` (DoD 10, Santi o Lauti) |
 | #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | No empezada |
 | #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | No empezada |
 
@@ -30,7 +30,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 
 | # | Qué | Responsable | Bloquea | Estado al 13/11 |
 |---|---|---|---|---|
-| E56 | Esquema de la 056: `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `fecha_imputacion`, dos descuentos más por línea (script SQL + re-scaffold, en `lacentral_test` y `lacentral_demo`) | Santi | 056; la 029 y la 049 lo usan | Abierta. Es el único cambio de esquema del sprint |
+| E56 | Esquema de la 056: `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `fecha_imputacion`, dos descuentos más por línea (script SQL + re-scaffold, en `lacentral_test` y `lacentral_demo`) | Santi | 056; la 029 y la 049 lo usan | **Script 09 escrito y aplicado en `lacentral_demo`** (13/11) con re-scaffold. **CERRADA 13/11:** Santi aplicó el 09 a `lacentral_test.public` con el superusuario (`09: TODO OK`). La suite corre contra `public`, sin `LA_CENTRAL_TEST_SCHEMA`. La plantilla `fco06_fuente` se borró el 13/11 |
 | C7 | Facturas reales de varios proveedores, para decidir parser por reglas o interpretación asistida (nota de la 029) | Lauti | 029 | Abierta |
 
 C2, C5, C6 y C1 pasaron al Sprint 7 con el comparador (D-PL-05). La P6 se cerró el 11/11.
@@ -104,6 +104,33 @@ Sergio no es la del archivo, por eso va la columna «Preg.».
 4. ~~El 99 o 999, ¿del proveedor o del tipo de comprobante?~~ Del tipo; el 999 no se usa: D-S6-10.
 5. ~~¿Número del código de barras o escanearlo?~~ Escanearlo: D-S6-12.
 
+## Recorrido en el navegador contra lacentral_demo (DoD 10)
+
+Armada el 14/11/2026 para la 056 (#163, PR #166 y #167). **La completa Javi cuando lo haga con
+Sergio.** Se recorre en la pantalla «Factura de compra», contra `lacentral_demo`, después del
+merge y con el script 09 aplicado. Cada fila: quién, cuándo, con qué datos (proveedor, artículos,
+número de comprobante) y qué pasó; si no pasó lo esperado, el número de issue.
+
+| CA | Qué se prueba a mano | Quién | Cuándo | Con qué datos | Qué pasó |
+|----|----------------------|-------|--------|---------------|----------|
+| CA-001 | Escribir parte del nombre de un proveedor y buscar: aparece. Escribir su CUIT: no lo encuentra por CUIT | | | | |
+| CA-002 | Escribir el código completo de un proveedor y Enter: queda elegido sin abrir la lista | | | | |
+| CA-003 | Proveedor con código con ceros a la izquierda (p. ej. 00035): escribir 35 y Enter lo elige. Si hay dos que coinciden sin ceros (035 y 00035), Enter muestra la lista y no elige | | | | |
+| CA-004 | Elegir un proveedor con comprobante habitual cargado: se propone ese tipo; cambiarlo a mano funciona. Cargar o cambiar el comprobante habitual desde la ficha del proveedor | | | | |
+| CA-005 | Tipo B: el número arranca con «99-» y se completa el resto. Tipo A: no se precarga nada y se copia el número tal cual. Un B con «999-» se rechaza | | | | |
+| CA-006 | Cargar emisión, vencimiento e imputación distintas; registrar y comprobar que quedan las tres | | | | |
+| CA-007 | Cargar las cuatro percepciones (IVA, IIBB, municipal, ganancias) y comprobar que quedan registradas | | | | |
+| CA-008 | En el artículo, con tres caracteres o más aparecen coincidencias aproximadas mientras se escribe (probar con un error de tipeo) | | | | |
+| CA-009 | Código exacto de un artículo y Enter: se agrega la línea sin lista | | | | |
+| CA-010 | «Reemplazar» en una línea con cantidad cargada: cambia el artículo, conserva cantidad, destino y descuentos | | | | |
+| CA-011 | El precio propuesto es el costo vigente; sin costo no propone nada (nunca cero). Escribir otro precio y comprobar que se registra el escrito | | | | |
+| CA-012 | Tres descuentos en una línea: se registran los tres y el costo es el neto sucesivo | | | | |
+| CA-013 | Cambiar la sucursal de la cabecera: las líneas nuevas la heredan, las ya cargadas no cambian; una línea a otra sucursal | | | | |
+| CA-014 | Misma factura como A y como B: el A suma el 21 % de IVA, el B no | | | | |
+| CA-015 | Antes de confirmar se ve el total con percepciones e IVA, sin registrar nada; cambiar algo borra el total y hay que recalcularlo | | | | |
+
+---
+
 ## Fuera del Sprint 6
 
 Sprint 7 (comparador completo, scrapes incluidos, + lo que falta de compra) y Sprint 8 (venta,
@@ -141,6 +168,55 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 ---
 
 ## PRÓXIMA SESIÓN
+
+**14/11 · Revisión de Javi sobre #166 y #167, y cuarta ronda del #167.**
+- **#166: APROBADO por Javi (14/11). No se le pushea nada.** Sus dos observaciones quedan como
+  deuda en la **#168** (sin milestone): `ModificarProveedorUseCase` pisa
+  `TipoComprobanteHabitual` con null si el request no lo trae; el mensaje del tipo B tiene que
+  mostrar el ejemplo `99-00001234`.
+- **#169** (milestone Sprint 6, observación de Javi del 14/11): la pantalla no deja cargar el
+  mismo artículo dos veces aunque vaya a sucursales distintas; el backend lo permite (D9). Ya
+  pasaba antes del #167.
+- **#167, REQUEST CHANGES de Javi (14/11):** `enterProveedor()` con dos coincidencias exactas sin
+  ceros (035 y 00035) ahora lista en lugar de elegir (rojo `4dd89a1`, código `8a331f1`, solo
+  frontend); columna Prueba de la 056 completa (CA-011 sin test que mande al servidor un precio
+  escrito distinto del propuesto); sección DoD 10 armada arriba, para Javi.
+- **Cuarta ronda autorizada por el equipo el 13/11.** Specs de las 5 mutaciones de la ronda 3 en
+  `7b36e8d` (solo tests). Ronda 4 del `verificador-tdd`: **NO APTO** (sobrevivían 2 mutaciones en
+  `terceros.ts:144`); arreglo `4b624d3` (solo spec), verificación acotada al arreglo: **APTO**
+  (14/11). Frontend completo sobre `4b624d3`: 196/196. Backend sin cambios (560/560 sobre
+  `772e934`), no se corrió. Se saca el «NO MERGEAR» de los dos PR; se pide de nuevo la revisión.
+- **Corrección sobre la ronda 1 del #167 (13/11):** se actuó sobre un aviso temprano del
+  verificador como si fuera su reporte, se sacó su worktree mientras corría y se lanzó la ronda 2
+  con la 1 viva, contra la regla R1. Por eso se publicó un APTO inválido (push `443e38b`), que se
+  corrigió en `69b4356`.
+- **El script 09 todavía no está aplicado en `lacentral`:** lo aplica Santi después del merge.
+- Orden de merge, sin cambios: #164 y #165 (ya mergeados el 14/11), y #166 con #167 juntos.
+
+**13/11 noche (cierre) · #167 parado en tres rondas sin APTO.** #166 verificado (`verificador-tdd` y
+`auditor-persistencia` APTO contra `public`). #167: ronda 1 NO APTO (M02, M05, M10, M14), cortada
+porque se le sacó el worktree por error; ronda 2 APTO solo para `9ad0497`; ronda 3 NO APTO: los
+specs de `f0e5588` matan lo de la ronda 1, pero sobreviven `factura-compra.ts:277`, `:303`, `:351`,
+`nucleo/api.ts:165` (sobrevive con la suite entera) y `terceros.ts:144`. Son specs faltantes, sin
+cambios de producción. Frontend 190/190 sobre `f0e5588`; backend 560/560 sobre `772e934`.
+**Decide el equipo:** autorizar una cuarta ronda (los 5 specs) o mergear con los huecos declarados.
+Hasta entonces, «NO MERGEAR» en el #167, y el #166 va junto. Orden de merge, cuando toque: #164 →
+#165 → #166 y #167 juntos. Siguen de personas: esa decisión, el merge (Javi) y el recorrido en el
+navegador contra `lacentral_demo`, DoD 10 (Santi o Lauti). `fco06_fuente` borrado.
+
+**13/11 noche · E56 cerrada, verificación contra el esquema real.** Santi aplicó el 09 a
+`lacentral_test.public`. Suites completas contra `public` (sin `fco06_fuente`): #166 560/560 sobre
+`d92f395`. El `verificador-tdd` del #166 contra `public` dio NO APTO en ronda 1 (3 mutaciones en
+`CalcularTotales` y en la escala del tercer descuento); arreglado con tests en `3efa04d`. Siguen:
+ronda 2 del verificador acotada a `3efa04d`, `auditor-persistencia` del #166, merge a
+`feature/163-frontend` con su suite y `verificador-tdd` del #167. Después, borrar `fco06_fuente`.
+Detalle en la bitácora.
+
+**13/11 tarde · 056 esquema + backend.** Script `09_Factura_Compra_Mecanica.sql` aplicado en
+`lacentral_demo` y re-scaffold. **Pendiente de Santi: aplicar el 09 a `lacentral_test`** (con el
+superusuario, como el 08); mientras tanto la suite corre con `LA_CENTRAL_TEST_SCHEMA=fco06_fuente`.
+Backend en su PR; el frontend de la 056 va en otro PR encima. El backend exige `tipoComprobante`:
+**los dos PR se mergean juntos** (si entra solo el backend, la pantalla actual no puede registrar).
 
 **13/11 · D-PL-05 y respuestas de Sergio (D-S6-08 a 12).** El Sprint 6 es factura de compra
 (056 + 029 + 049); el comparador (053, 054, 055) pasó al Sprint 7. Proforma de la 056 escrita,

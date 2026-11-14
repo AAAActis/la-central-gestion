@@ -19,6 +19,7 @@ public class ObtenerProveedorDetalleUseCase
             return Result<ProveedorDetalleDto>.Failure(TipoError.NoEncontrado, "El proveedor indicado no existe.");
 
         return Result<ProveedorDetalleDto>.Success(new ProveedorDetalleDto(
-            p.Id, p.Codigo, p.RazonSocial, p.Cuit, p.UrlReferencia, p.Activo, p.MotivoBaja, p.Telefonos, p.Direcciones));
+            p.Id, p.Codigo, p.RazonSocial, p.Cuit, p.UrlReferencia, p.Activo, p.MotivoBaja, p.Telefonos, p.Direcciones,
+            p.TipoComprobanteHabitual));
     }
 }

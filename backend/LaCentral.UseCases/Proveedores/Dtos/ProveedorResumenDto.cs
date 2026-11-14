@@ -7,5 +7,6 @@ public record ProveedorResumenDto(
     string RazonSocial,
     string? Cuit,
     string? UrlReferencia,
-    bool Activo
+    bool Activo,
+    string? TipoComprobanteHabitual = null
 );

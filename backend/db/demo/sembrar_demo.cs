@@ -148,6 +148,8 @@ foreach (var (fecha, p, m) in compras.OrderBy(c => c.Fecha))
     {
         proveedorId = idProveedor[p],
         numero = $"0001-{(m + 1) * 1000 + p + 1:D8}",
+        // HU-FCO-06: el tipo es obligatorio. Las de la demo son A (el número no lleva 99).
+        tipoComprobante = "A",
         fechaEmision = fecha,
         lineas,
     });
