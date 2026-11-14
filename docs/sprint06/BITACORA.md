@@ -600,7 +600,7 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 4. ESTADO: 029 (#13) y 049 (#51) sin arrancar, C7 abierta, con fecha.
 5. Suite de frontend una vez, PR contra develop (depende del #167), `verificador-tdd` acotado.
 
-**Estado:** en curso
+**Estado:** terminada (lo abierto, al final del bloque)
 - 10:33 · Paso 1: CA-011 cerrado y re-revisión del #167 pedida (bloque de las 10:27). `git fetch`: sin novedades en `origin/feature/163-frontend` ni diferencias de contenido con `origin/develop`. Rama **`feature/169-articulo-por-sucursal`** creada desde `84bb4d4`.
 - 10:45 · Pasos 2 y 3:
   - **Rojo `4ccf0fa`:** «#169: el mismo artículo con otro destino se agrega como línea nueva» da `1 FAILED, 31 SUCCESS`, por aserción (`Expected 'FIL-0712 ya está en la factura: corregí su línea.' to be null`). El primer intento caía en el `expectOne` del helper; se reordenó para que fallen primero las aserciones. «… con el mismo destino avisa y no agrega» ya pasaba, porque es la regla que se conserva.
@@ -614,3 +614,8 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 - 10:36 · Corrección: las dos líneas de arriba dicen «10:45», pero son de las 10:36 según `date`.
 - 10:36 · Paso 5: **frontend completo sobre `ca0707d`: `TOTAL: 201 SUCCESS`** (197 + 4 specs de la #169). `backend/` no cambia. `git worktree list`: solo el principal. **`verificador-tdd` lanzado**, acotado a `84bb4d4..ca0707d` (`4ccf0fa`, `31cf9d3`, `c4be707`; `ca0707d` es solo docs), con `ca0707d` · `TOTAL: 201 SUCCESS` · 201/201. Una instancia; no se toca ningún worktree ni se commitea hasta su reporte final.
 - 10:39 · **`verificador-tdd` de la #169 (`84bb4d4..ca0707d`): APTO** (reporte final). Rojo de `4ccf0fa` reproducido, por aserción. Ninguna de las 9 mutaciones sobre las líneas 305 y 306 sobrevive. Aceptó 201/201 sobre `ca0707d`. No bloqueante: si después se cambia el destino de una línea con su `<select>`, se pueden armar dos líneas con el mismo artículo y la misma sucursal sin aviso en pantalla. Ese caso lo rechaza el backend (`MismoArticuloYSucursalEnDosLineas_Invalido`); queda declarado en el PR. `git worktree list`: solo el principal.
+- 10:39 · Push de `3c39cb3` y **PR #170** contra `develop`, milestone Sprint 6, `Closes #169`. El cuerpo dice que depende del #167 y se mergea después de él. ESTADO con el número del PR.
+- **Queda abierto:**
+  - el merge del #166 y el #167 (Javi); después, `git merge origin/develop` en esta rama y el merge del #170;
+  - el aviso en pantalla cuando se cambia el destino de una línea a mano (lo decide el equipo);
+  - la C7, que mantiene la 029 y la 049 sin arrancar.
