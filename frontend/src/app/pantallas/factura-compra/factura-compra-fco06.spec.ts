@@ -145,6 +145,19 @@ describe('FacturaCompra · HU-FCO-06', () => {
     expect(raiz().querySelectorAll('button.opcion').length).toBe(1);
   }));
 
+  it('CA-008 y CA-009: Enter busca también aproximado; el botón Buscar, no', () => {
+    c.textoArticulo = 'fil';
+    c.enterArticulo();
+    const enter = servidor.expectOne(r => r.url === '/api/articulos');
+    expect(enter.request.params.get('aproximada')).toBe('true');
+    enter.flush(pagina());
+
+    c.buscarArticulo();
+    const boton = servidor.expectOne(r => r.url === '/api/articulos');
+    expect(boton.request.params.has('aproximada')).toBeFalse();
+    boton.flush(pagina());
+  });
+
   it('CA-009: Enter sobre el código exacto agrega la línea sin listar', () => {
     agregar(1, 'FIL-0712');
 
@@ -167,6 +180,22 @@ describe('FacturaCompra · HU-FCO-06', () => {
 
     expect(c.lineas.length).toBe(1);
     expect(c.lineas[0].articulo.id).toBe(2);
+    expect(c.lineas[0].cantidad).toBe(4);
+  });
+
+  it('CA-010: reemplazar una línea por su mismo artículo no la rechaza como repetida', () => {
+    agregar(1, 'FIL-0712');
+    c.lineas[0].cantidad = 4;
+
+    c.reemplazar(0);
+    c.textoArticulo = 'FIL-0712';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(1, 'FIL-0712')));
+
+    expect(c.errorArticulo()).toBeNull();
+    expect(c.reemplazando()).toBeNull();
+    servidor.expectOne('/api/articulos/1').flush(ficha(1, null));
+    expect(c.lineas.length).toBe(1);
     expect(c.lineas[0].cantidad).toBe(4);
   });
 
@@ -260,6 +289,18 @@ describe('FacturaCompra · HU-FCO-06', () => {
       { precioUnitario: 100, descuentoPorcentaje: 10, descuento2Porcentaje: 5, descuento3Porcentaje: 2.5, sucursalId: 1 }));
     registro.flush({ id: 9 });
     servidor.expectOne('/api/articulos/1').flush(ficha(1, 85.5));
+  });
+
+  it('CA-012: sin vencimiento ni imputación cargados, se mandan como null y no como texto vacío', () => {
+    cargarFactura();
+    c.fechaVencimiento = '';
+    c.fechaImputacion = '';
+
+    c.registrar();
+    const calculo = servidor.expectOne('/api/facturas-compra/calculo');
+    expect(calculo.request.body.fechaVencimiento).toBeNull();
+    expect(calculo.request.body.fechaImputacion).toBeNull();
+    calculo.flush({ neto: 166.73, iva: 0, percepciones: 12.5, total: 179.23 });
   });
 
   it('CA-015: si cambio algo después de ver el total, hay que volver a calcularlo', () => {

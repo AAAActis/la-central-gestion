@@ -283,6 +283,8 @@ describe('Proveedores (045)', () => {
     abrirFicha({ ...FICHA, tipoComprobanteHabitual: 'B' });
     expect(h.raiz().textContent).toContain('Comprobante habitual');
     expect(h.raiz().textContent).toContain('B');
+    const dt = Array.from(h.raiz().querySelectorAll('dt')).find(d => d.textContent?.trim() === 'Comprobante habitual')!;
+    expect(dt.nextElementSibling?.textContent?.trim()).toBe('B');
     h.boton('Modificar').click();
     h.fixture.detectChanges();
     h.escribir(h.control('Comprobante habitual'), 'A');
