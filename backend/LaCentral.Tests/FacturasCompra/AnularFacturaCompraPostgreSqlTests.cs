@@ -187,7 +187,58 @@ public class AnularFacturaCompraPostgreSqlTests
         var segunda = await AnularAsync(e, e.F2);
 
         Assert.Equal(TipoError.Conflicto, segunda.Tipo);
+        Assert.Contains("ya está anulada", segunda.Error);
         Assert.Equal(5m, (await FotografiarAsync(e)).StockXS1);
+    }
+
+    // Verificador ronda 1 (M12, M13): dos anulaciones simultáneas. Las dos pasaron la lectura
+    // del caso de uso; la segunda llega al repositorio con la factura ya ANULADA y no resta otra vez.
+    [PostgreSqlFact]
+    public async Task DosAnulacionesSimultaneas_LaQueLlegaSegundaEsConflictoYNoRestaOtraVez()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        Assert.True((await AnularAsync(e, e.F2)).IsSuccess);
+
+        Result segunda;
+        await using (var contexto = fixture.CrearContexto())
+            segunda = await new UnidadDeTrabajo(contexto).EjecutarAsync(token => new FacturaCompraRepositorio(contexto)
+                .AnularConEfectosAsync(new AnulacionFacturaCompra(e.F2, "Otra vez", e.Operador, e.Jefa, DateTime.UtcNow), token));
+
+        Assert.Equal(TipoError.Conflicto, segunda.Tipo);
+        var foto = await FotografiarAsync(e);
+        Assert.Equal(("Cargada dos veces", 5m, 2), (foto.Motivo, foto.StockXS1, foto.HistorialAnulado));
+    }
+
+    // Verificador ronda 1 (M14): la resta no entra en stock.cantidad (NUMERIC(12,3)); es Invalido y no queda nada.
+    [PostgreSqlFact]
+    public async Task Anular_SiElStockRevertidoNoEntraEnSuColumna_InvalidoYNoQuedaNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        await using (var c = fixture.CrearContexto())
+            await c.Stock.Where(s => s.ArticuloId == e.Y && s.SucursalId == e.S2).ExecuteUpdateAsync(s => s.SetProperty(x => x.Cantidad, -999_999_999m));
+        var antes = await FotografiarAsync(e);
+
+        var resultado = await AnularAsync(e, e.F2);
+
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+        Assert.Contains("no se puede revertir", resultado.Error);
+        Assert.Equal(antes, await FotografiarAsync(e));
+    }
+
+    // Verificador ronda 1 (M16): con dos registros válidos, vuelve al MÁS RECIENTE (F2, 200), no al primero (F1, 100).
+    [PostgreSqlFact]
+    public async Task Anular_ConVariosRegistrosValidos_VuelveAlMasReciente()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        var f3 = await RegistrarAsync(e, e.P1, "A-0003-00000003", new LineaFacturaCompraRequest(e.X, e.S1, 1m, 120m, 0m));
+
+        Assert.True((await AnularAsync(e, f3)).IsSuccess);
+
+        var foto = await FotografiarAsync(e);
+        Assert.Equal((200m, e.P2), (foto.CostoX, foto.ProveedorX));
     }
 
     // CA-005: el motor falla en cada punto de escritura (en la SEGUNDA fila cuando hay dos)
