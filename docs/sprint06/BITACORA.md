@@ -585,6 +585,7 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 - Rojo `5901221`, por aserción: `Expected: BadRequest, Actual: NoContent`. Código `dd4e411`. Al filtrar por `Proveedor` cayó `CicloCompletoIntegracionTests` (un PUT sin la clave, ahora 400): se le agregó la clave en `null`, y quedó 8/8 junto con `ProveedorDetalleApiPostgreSqlTests`.
 - Mensaje del B: ya traía `99-00001234` desde `1060bb0` (#166). Test `cf79afb`, que pasó en verde de entrada. Sacar el ejemplo del mensaje lo pone en rojo (1 con error, 5 superados).
 
-**Estado:** en curso
+**Estado:** terminada. Queda abierto: el merge del #166 y el #167, y después `git merge origin/develop` en esta rama y la suite completa.
 - 13:02 · `verificador-tdd` ronda 1 (`84bb4d4..e076966`): **NO APTO**. Sobrevivieron M6 a M9: el `init` que no asigna, el tipo pasado en `null`, y `UrlReferencia` y `Direcciones` en `null` en el mapeo. Arreglo `c8a8ae0`: `Modificar_ConTodosLosCampos_LosEscribeEnLaFila` (PUT con "A" sobre un "B" y todos los campos, relectura con un contexto nuevo y la ficha), en verde de entrada.
 - 13:21 · `verificador-tdd` ronda 2 (`e076966..c8a8ae0`): **APTO**; murieron M6 a M9. `auditor-persistencia` sobre `84bb4d4..c8a8ae0`: **APTO**. Suite completa sobre `c8a8ae0`: `Correctas! - Con error: 0, Superado: 564, Omitido: 0, Total: 564`. Nota del auditor, fuera del alcance y sin auditar: `proveedor_baja_coherente` en `base_completa.sql` parecería contradecir la D10.
+- 13:22 · Push de `7d4da66` y **PR #171** contra `develop`, sin milestone, igual que la #168. El cuerpo dice que depende del #166 y el #167.
