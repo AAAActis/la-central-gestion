@@ -22,4 +22,22 @@ public class FacturaCompraDetalleTests
 
         Assert.Equal((decimal)esperado, linea.CostoUnitario);
     }
+
+    // HU-FCO-06: los tres descuentos son sucesivos y se redondea una sola vez, al final.
+    [Theory]
+    [InlineData(100, 10, 5, 0, 85.5)]
+    [InlineData(100, 10, 10, 10, 72.9)]
+    [InlineData(200, 0, 0, 50, 100)]
+    [InlineData(1.05, 0, 50, 0, 0.53)]
+    [InlineData(99.99, 33.33, 33.33, 33.33, 29.63)]   // 29,6311… → 29,63
+    public void CostoUnitario_ConTresDescuentosSucesivos(double precio, double d1, double d2, double d3, double esperado)
+    {
+        var linea = new FacturaCompraDetalle
+        {
+            PrecioUnitario = (decimal)precio, DescuentoPorcentaje = (decimal)d1,
+            Descuento2Porcentaje = (decimal)d2, Descuento3Porcentaje = (decimal)d3
+        };
+
+        Assert.Equal((decimal)esperado, linea.CostoUnitario);
+    }
 }

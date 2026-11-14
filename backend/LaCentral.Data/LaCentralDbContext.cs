@@ -459,6 +459,9 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("estado");
             entity.Property(e => e.FechaAnulacion).HasColumnName("fecha_anulacion");
             entity.Property(e => e.FechaEmision).HasColumnName("fecha_emision");
+            entity.Property(e => e.FechaImputacion)
+                .HasComment("Fecha a la que se imputa la compra, aparte de la emisión y el vencimiento (HU-FCO-06). Dato del comprobante, sin lógica financiera.")
+                .HasColumnName("fecha_imputacion");
             entity.Property(e => e.FechaRegistro)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("fecha_registro");
@@ -492,6 +495,10 @@ public partial class LaCentralDbContext : DbContext
                 .HasComment("Percepción municipal. Dato transcripto.")
                 .HasColumnName("percepcion_municipal");
             entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
+            entity.Property(e => e.TipoComprobante)
+                .HasMaxLength(1)
+                .HasComment("Tipo de ESTA factura (A o B). El A suma 21 % de IVA y se copia su número tal cual; el B no suma IVA y lleva 99 en el primer tramo del número (Sergio, 13/11/2026). NULL solo en facturas anteriores al script 09.")
+                .HasColumnName("tipo_comprobante");
             entity.Property(e => e.UsuarioAnulacionId).HasColumnName("usuario_anulacion_id");
             entity.Property(e => e.UsuarioAutorizacionId)
                 .HasComment("Quién AUTORIZÓ la anulación. Mismo criterio que en factura_venta: la condición de rol ADMINISTRADOR se valida en el caso de uso, no acá. Alimenta R-08.")
@@ -533,6 +540,14 @@ public partial class LaCentralDbContext : DbContext
             entity.Property(e => e.Cantidad)
                 .HasPrecision(12, 3)
                 .HasColumnName("cantidad");
+            entity.Property(e => e.Descuento2Porcentaje)
+                .HasPrecision(6, 2)
+                .HasComment("Segundo descuento de la línea, sucesivo: se aplica sobre el neto del primero (HU-FCO-06; supuesto a confirmar con Sergio).")
+                .HasColumnName("descuento_2_porcentaje");
+            entity.Property(e => e.Descuento3Porcentaje)
+                .HasPrecision(6, 2)
+                .HasComment("Tercer descuento de la línea, sucesivo: se aplica sobre el neto del segundo.")
+                .HasColumnName("descuento_3_porcentaje");
             entity.Property(e => e.DescuentoPorcentaje)
                 .HasPrecision(6, 2)
                 .HasColumnName("descuento_porcentaje");
@@ -725,6 +740,10 @@ public partial class LaCentralDbContext : DbContext
                 .HasMaxLength(120)
                 .UseCollation("es-AR-x-icu")
                 .HasColumnName("razon_social");
+            entity.Property(e => e.TipoComprobanteHabitual)
+                .HasMaxLength(1)
+                .HasComment("Tipo de comprobante que el proveedor suele emitir (A o B). Solo el valor por defecto de la cabecera de una factura de compra: un proveedor puede emitir A y B indistintamente (Sergio, 13/11/2026). NULL = sin dato.")
+                .HasColumnName("tipo_comprobante_habitual");
             entity.Property(e => e.UrlReferencia)
                 .HasMaxLength(300)
                 .HasComment("Página de precios del proveedor, usada por el comparador (HU-CMP-05). Ningún proveedor la tiene cargada en el sistema de origen: hay que relevarla.")

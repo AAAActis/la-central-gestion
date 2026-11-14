@@ -44,7 +44,8 @@ public class ProveedoresController : ControllerBase
             request.UrlReferencia,
             // El núcleo espera listas, no null.
             request.Telefonos ?? new List<string>(),
-            request.Direcciones ?? new List<string>());
+            request.Direcciones ?? new List<string>(),
+            request.TipoComprobanteHabitual);
 
         var resultado = await _crearProveedor.EjecutarAsync(entrada, cancellationToken);
 
@@ -64,9 +65,10 @@ public class ProveedoresController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Consultar(
         [FromQuery] string texto, [FromQuery] bool incluirInactivos, CancellationToken cancellationToken,
-        [FromQuery] int pagina = 1, [FromQuery] int tamanoPagina = 20)
+        [FromQuery] int pagina = 1, [FromQuery] int tamanoPagina = 20, [FromQuery] bool porCuit = true)
     {
-        var resultado = await _consultarProveedores.EjecutarAsync(texto, incluirInactivos, pagina, tamanoPagina, cancellationToken);
+        // HU-FCO-06 CA-001: la factura de compra busca solo por código y nombre (porCuit=false).
+        var resultado = await _consultarProveedores.EjecutarAsync(texto, incluirInactivos, pagina, tamanoPagina, cancellationToken, porCuit);
 
         return this.AResultadoHttp(resultado);
     }

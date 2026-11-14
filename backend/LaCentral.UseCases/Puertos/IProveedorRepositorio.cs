@@ -23,5 +23,5 @@ public interface IProveedorRepositorio
     /// </summary>
     /// #147: una página (1 en adelante) y el total de coincidencias, en un orden estable.
     Task<(IReadOnlyList<Proveedor> Items, int Total)> BuscarAsync(
-        string texto, bool incluirInactivos, int pagina, int tamanoPagina, CancellationToken ct = default);
+        string texto, bool incluirInactivos, int pagina, int tamanoPagina, bool porCuit, CancellationToken ct = default);
 }

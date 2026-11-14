@@ -32,6 +32,11 @@ public partial class Proveedor
 
     public DateTime FechaAlta { get; set; }
 
+    /// <summary>
+    /// Tipo de comprobante que el proveedor suele emitir (A o B). Solo el valor por defecto de la cabecera de una factura de compra: un proveedor puede emitir A y B indistintamente (Sergio, 13/11/2026). NULL = sin dato.
+    /// </summary>
+    public char? TipoComprobanteHabitual { get; set; }
+
     public virtual ICollection<Articulo> Articulo { get; set; } = new List<Articulo>();
 
     public virtual ICollection<ArticuloCodigoAlternativo> ArticuloCodigoAlternativo { get; set; } = new List<ArticuloCodigoAlternativo>();
