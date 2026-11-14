@@ -170,4 +170,112 @@ describe('ComprasRegistradas · HU-FCO-02', () => {
     expect([pedido.request.params.get('pagina'), pedido.request.params.get('numero')]).toEqual(['2', 'A-1']);
     pedido.flush(pagina([factura(2, 'A-2')], 25, 2));
   });
+  // ── HU-FCO-04 (028) parte 2: la anulación desde la consulta ─────────────────────────────
+  const dialogo = () => raiz().querySelector<HTMLDialogElement>('dialog[open]');
+  const botonEn = (dentro: ParentNode, texto: string) =>
+    Array.from(dentro.querySelectorAll<HTMLButtonElement>('button')).find(b => b.textContent?.includes(texto));
+  const campo = (etiqueta: string) =>
+    Array.from(dialogo()!.querySelectorAll('label')).find(l => l.textContent?.trim() === etiqueta)?.control as HTMLInputElement;
+  const escribir = (control: HTMLInputElement, valor: string) => {
+    control.value = valor;
+    control.dispatchEvent(new Event('input'));
+  };
+  function listar(items: FacturaCompraResumen[], total = items.length, numero = 1) {
+    c.numero = 'A-1';
+    buscar();
+    servidor.expectOne(r => r.url === '/api/facturas-compra').flush(pagina(items, total, numero));
+    fixture.detectChanges();
+  }
+  function abrirAnulacion(fila: number) {
+    const anular = botonEn(raiz().querySelectorAll('tbody tr')[fila], 'Anular');
+    expect(anular).withContext('botón «Anular» de la fila').toBeDefined();
+    anular?.click();
+    fixture.detectChanges();
+    expect(dialogo()).withContext('diálogo de anulación').not.toBeNull();
+  }
+  function completarYConfirmar(motivo: string, usuario: string, contrasena: string) {
+    escribir(campo('Motivo'), motivo);
+    escribir(campo('Usuario de quien autoriza'), usuario);
+    escribir(campo('Contraseña de quien autoriza'), contrasena);
+    fixture.detectChanges();
+    botonEn(dialogo()!, 'Anular')!.click();
+    fixture.detectChanges();
+  }
+
+  it('028 CA-005: una factura anulada no ofrece «Anular»; una activa, sí', () => {
+    listar([factura(1, 'A-1'), factura(2, 'A-2', true)]);
+
+    const [activa, anulada] = Array.from(raiz().querySelectorAll('tbody tr'));
+    expect(botonEn(activa, 'Anular')).toBeDefined();
+    expect(botonEn(anulada, 'Anular')).toBeUndefined();
+  });
+
+  it('028 CA-001, CA-006: anula con motivo y la autorización de otra persona, y la consulta la muestra anulada', () => {
+    listar([factura(21, 'A-21'), factura(22, 'A-22')], 25, 2);
+    abrirAnulacion(0);
+    expect(campo('Contraseña de quien autoriza').type).toBe('password');
+    // El navegador no completa con la clave de quien está en la sesión.
+    expect([campo('Usuario de quien autoriza').autocomplete, campo('Contraseña de quien autoriza').autocomplete]).toEqual(['off', 'new-password']);
+
+    completarYConfirmar('Cargada dos veces', 'jefa', 'clave-jefa');
+
+    const anulacion = servidor.expectOne('/api/facturas-compra/21/anulacion');
+    expect(anulacion.request.method).toBe('POST');
+    expect(anulacion.request.body).toEqual({ motivo: 'Cargada dos veces', usuarioAutoriza: 'jefa', contrasenaAutoriza: 'clave-jefa' });
+    expect(botonEn(dialogo()!, 'Anular')?.disabled).withContext('confirmar deshabilitado mientras envía').toBeTrue();
+    anulacion.flush(null);
+    fixture.detectChanges();
+
+    expect(dialogo()).withContext('el diálogo se cierra').toBeNull();
+    const recarga = servidor.expectOne(r => r.url === '/api/facturas-compra');
+    expect([recarga.request.params.get('pagina'), recarga.request.params.get('numero')]).withContext('recarga la misma página').toEqual(['2', 'A-1']);
+    recarga.flush(pagina([factura(21, 'A-21', true), factura(22, 'A-22')], 25, 2));
+    fixture.detectChanges();
+    expect(raiz().querySelector('tbody tr')!.textContent).toContain('Anulada');
+    expect(raiz().querySelector('[role="status"]')?.textContent).toContain('Factura A-21 anulada.');
+
+    // La siguiente anulación arranca con el botón habilitado.
+    abrirAnulacion(1);
+    expect(botonEn(dialogo()!, 'Anular')?.disabled).toBeFalse();
+    botonEn(dialogo()!, 'Cancelar')!.click();
+    fixture.detectChanges();
+
+    // Una búsqueda nueva borra el aviso.
+    buscar();
+    fixture.detectChanges();
+    expect(raiz().querySelector('[role="status"]')).toBeNull();
+    servidor.expectOne(r => r.url === '/api/facturas-compra').flush(pagina([]));
+  });
+
+  it('028 CA-006: si la API rechaza la autorización, muestra su mensaje en el diálogo y no recarga', () => {
+    listar([factura(1, 'A-1')]);
+    abrirAnulacion(0);
+    completarYConfirmar('Error de carga', 'jefa', 'mal');
+
+    servidor.expectOne('/api/facturas-compra/1/anulacion').flush(
+      { detail: 'La autorización no es válida: revisá el usuario y la contraseña de quien autoriza.' },
+      { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+
+    expect(dialogo()?.querySelector('[role="alert"]')?.textContent).toContain('La autorización no es válida');
+    expect(botonEn(dialogo()!, 'Anular')?.disabled).withContext('se puede reintentar').toBeFalse();
+    servidor.expectNone(r => r.url === '/api/facturas-compra');
+  });
+
+  it('028: al abrir la anulación de otra factura, el diálogo no arrastra la contraseña, el motivo ni el error anteriores', () => {
+    listar([factura(1, 'A-1'), factura(2, 'A-2')]);
+    abrirAnulacion(0);
+    completarYConfirmar('Error de carga', 'jefa', 'mal');
+    servidor.expectOne('/api/facturas-compra/1/anulacion')
+      .flush({ detail: 'La autorización no es válida.' }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+    botonEn(dialogo()!, 'Cancelar')!.click();
+    fixture.detectChanges();
+    expect(dialogo()).withContext('Cancelar cierra').toBeNull();
+
+    abrirAnulacion(1);
+    expect(dialogo()!.querySelector('h2')?.textContent).toContain('A-2');
+    expect([campo('Motivo').value, campo('Usuario de quien autoriza').value, campo('Contraseña de quien autoriza').value]).toEqual(['', '', '']);
+    expect(dialogo()!.querySelector('[role="alert"]')).toBeNull();
+  });
 });
