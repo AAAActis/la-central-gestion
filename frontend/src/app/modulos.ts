@@ -1,5 +1,6 @@
 import { Modulo } from './nucleo/acceso';
 import { Articulos } from './pantallas/articulos/articulos';
+import { ComprasRegistradas } from './pantallas/compras-registradas/compras-registradas';
 import { FacturaCompra } from './pantallas/factura-compra/factura-compra';
 import { Clientes, Proveedores } from './pantallas/terceros/terceros';
 
@@ -18,5 +19,9 @@ export const MODULOS_DEL_SISTEMA: readonly Modulo[] = [
   {
     ruta: 'factura-compra', titulo: 'Factura de compra', bajada: 'Cargá el comprobante y asigná una sucursal de destino a cada artículo.',
     roles: ['ADMINISTRADOR', 'OPERADOR'], componente: FacturaCompra,
+  },
+  {
+    ruta: 'compras-registradas', titulo: 'Compras registradas', bajada: 'Consultá las facturas de compra por proveedor, número o fechas.',
+    roles: ['ADMINISTRADOR', 'OPERADOR'], componente: ComprasRegistradas,
   },
 ];

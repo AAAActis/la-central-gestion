@@ -238,7 +238,10 @@ export class ApiLaCentral {
 
   /** HU-FCO-02: solo viajan los criterios que tienen valor. */
   facturasCompra(filtro: FiltroFacturasCompra, pagina: number, tamanoPagina: number): Observable<Pagina<FacturaCompraResumen>> {
-    return this.http.get<Pagina<FacturaCompraResumen>>('/api/facturas-compra', { params: new HttpParams() });
+    let params = new HttpParams().set('pagina', pagina).set('tamanoPagina', tamanoPagina);
+    for (const [clave, valor] of Object.entries(filtro))
+      if (valor !== null && valor !== undefined && String(valor).trim() !== '') params = params.set(clave, String(valor).trim());
+    return this.http.get<Pagina<FacturaCompraResumen>>('/api/facturas-compra', { params });
   }
 
   registrarFacturaCompra(factura: FacturaCompraNueva): Observable<{ id: number }> {
