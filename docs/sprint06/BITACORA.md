@@ -574,3 +574,43 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
   - que Santi aplique el 09 en `lacentral`;
   - el recorrido DoD 10;
   - #168 y #169.
+
+## 14/11/2026 14:19 · Sprint 7 adelantado: 028 (#9), 026 (#33) y 027 (#34)
+
+**Instrucción recibida (verbatim):**
+> Mientras Javi revisa, adelantá lo que queda de factura de compra en el Sprint 7: la 028
+> (#9), la 026 (#33) y la 027 (#34). No tienen compuerta abierta. Empezá por la 028, que es
+> la que destraba la 016 (#23). Leé sus proformas antes de arrancar.
+>
+> - Una HU por rama y por PR, todas desde feature/163-frontend, que tiene el esquema y el
+>   código de la 056. En el cuerpo de cada PR: depende del #166 y del #167. Cuando esos
+>   entren a develop, git merge origin/develop en cada rama, nunca rebase.
+> - PR chicos: si una HU pasa los 8 SP, partila en dos PR con sentido propio.
+> - TDD, suite completa antes de abrir cada PR, y los verificadores que correspondan, una
+>   instancia por vez.
+> - Quedan en el milestone del Sprint 7: no los muevas.
+>
+> Sobre lo que marcó el auditor de proveedor_baja_coherente: no es contradicción. El script
+> 01_Ajustes_Sprint3 ya reemplaza los cuatro CHECK por la forma de la D10, y la base se
+> arma con base_completa.sql y después los scripts de rescaffold/ en orden. Anotalo así en
+> la bitácora y cerralo.
+>
+> La 029 y la 049 siguen sin arrancar: la C7 está abierta.
+
+**Plan:**
+1. Leer las proformas de la 028, la 026 y la 027 (y la 016, que la 028 cita como precondición).
+2. 028 en `feature/9-anulacion-factura-compra`: TDD de caso de uso (Moq) y de persistencia/atomicidad (PostgreSQL real), endpoint, pantalla; suite completa; `verificador-tdd` y `auditor-persistencia`; PR.
+3. 026 y 027, cada una en su rama desde `feature/163-frontend`, igual.
+4. Cuando entren el #166 y el #167: `git merge origin/develop` en cada rama.
+
+- 14:19 · **Nota del auditor sobre `proveedor_baja_coherente`, cerrada:** no hay contradicción con la D10. `backend/db/rescaffold/01_Ajustes_Sprint3.sql` (líneas 166 a 177) borra los CHECK `*_baja_coherente` de `base_completa.sql` y los vuelve a crear con la forma de la D10 (`activo OR (motivo_baja IS NOT NULL AND fecha_baja IS NOT NULL)`). La base se arma con `base_completa.sql` y después con los scripts de `rescaffold/` en orden. Lo aclaró Santi el 14/11.
+- 14:19 · Proformas leídas: 028 v1.0 (8 SP, riesgo alto, 5 CA), 026 v1.0 (3 SP, 5 CA), 027 v1.0 (2 SP, 4 CA), 016 v1.0 (5 SP). Ninguna pasa los 8 SP. El esquema ya tiene lo de la anulación: `estado`, `motivo_anulacion`, `fecha_anulacion`, `usuario_anulacion_id` y el índice único parcial `ux_factura_compra_numero_activa`, que libera el número (CA-004).
+- 14:19 · **Regla que falta en la 028:** `07_Normalizacion_3FN_y_Reportes.sql` B.4 agrega `factura_compra.usuario_autorizacion_id`, que es la doble certificación pedida por la Dirección el 02/11/2026: anular necesita dos personas, y la que autoriza tiene que ser ADMINISTRADOR. La proforma v1.0 de la 028 (19/08) no la menciona, y ningún documento de `docs/` la recoge. Tampoco dice qué rol puede anular.
+
+**BLOQUEADO EN:** la 028 necesita una decisión del equipo (Santi): si la anulación pide la doble certificación de B.4 y qué rol anula. La 026 y la 027 no dependen de esto.
+
+**Estado:** en curso
+- 14:52 · Respuesta de Santi: la 028 incluye la doble certificación, y la anulación la piden ADMINISTRADOR y OPERADOR, con la autorización de otro usuario ADMINISTRADOR. La identidad de quien autoriza se prueba con su usuario y su contraseña, nunca con un Id del cuerpo. Las dos decisiones quedan como CA-006 y CA-007 de la 028 v1.1.
+- **028 partida en dos PR** (con la doble certificación pasa los 8 SP): este, solo backend (caso de uso, repositorio y endpoint), y otro con la pantalla de anulación, que necesita el listado de la 026 para elegir la factura.
+- Esqueleto `bb8a1f8`, rojo `b53c5c3` (Moq 16 con error y 1 superado; PostgreSQL 9 con error, por aserción), código `bc313e2` (26/26), rojo HTTP, endpoint `acaaec5` (FacturasCompraApiPostgreSqlTests 17/17).
+- **Interpretación pendiente de confirmación (CA-002):** «conserva su precio de costo previo» se lee como que el costo no se toca, porque no hay registro del costo anterior a la factura. Queda anotado en la proforma y en el PR.
