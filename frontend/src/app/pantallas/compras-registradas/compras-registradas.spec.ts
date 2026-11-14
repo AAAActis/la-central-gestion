@@ -278,4 +278,28 @@ describe('ComprasRegistradas · HU-FCO-02', () => {
     expect([campo('Motivo').value, campo('Usuario de quien autoriza').value, campo('Contraseña de quien autoriza').value]).toEqual(['', '', '']);
     expect(dialogo()!.querySelector('[role="alert"]')).toBeNull();
   });
+
+  // Verificador ronda 1: la anulación pega al id de la fila elegida, no a la primera.
+  it('028: anular la segunda fila manda el id de esa factura', () => {
+    listar([factura(1, 'A-1'), factura(2, 'A-2')]);
+    abrirAnulacion(1);
+    completarYConfirmar('Error de carga', 'jefa', 'clave-jefa');
+
+    servidor.expectOne('/api/facturas-compra/2/anulacion').flush(null);
+    servidor.expectOne(r => r.url === '/api/facturas-compra').flush(pagina([factura(1, 'A-1'), factura(2, 'A-2', true)]));
+  });
+
+  // Verificador ronda 1: los tres datos son obligatorios (CA-006); con uno vacío no se manda nada.
+  for (const vacio of ['Motivo', 'Usuario de quien autoriza', 'Contraseña de quien autoriza']) {
+    it(`028 CA-006: sin «${vacio}» no manda la anulación`, () => {
+      listar([factura(1, 'A-1')]);
+      abrirAnulacion(0);
+      const valores: Record<string, string> = { 'Motivo': 'Error de carga', 'Usuario de quien autoriza': 'jefa', 'Contraseña de quien autoriza': 'clave-jefa' };
+      valores[vacio] = '';
+      completarYConfirmar(valores['Motivo'], valores['Usuario de quien autoriza'], valores['Contraseña de quien autoriza']);
+
+      servidor.expectNone(r => r.url.endsWith('/anulacion'));
+      expect(dialogo()).withContext('el diálogo sigue abierto').not.toBeNull();
+    });
+  }
 });
