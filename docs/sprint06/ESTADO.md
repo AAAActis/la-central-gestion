@@ -169,6 +169,18 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
+**14/11 · 028 (#9) parte 2, la pantalla de anulación. Rama `feature/9-anulacion-pantalla`**: sale de la
+026 (`feature/33-consulta-facturas-compra`) con la parte 1 mergeada (`4b59b94`). Depende del #166, el #167,
+el #173 y el #174. Agrega «Anular» en cada fila activa de «Compras registradas»: pide motivo, usuario y
+contraseña de quien autoriza, y después recarga la misma página. Verificación: `verificador-tdd` NO APTO en
+la ronda 1 (4 mutaciones vivas, arregladas en `db36dd2`), APTO en la ronda 2. `auditor-persistencia`: no
+aplica, porque el diff de la HU es solo de frontend. Frontend 214/214 sobre `db36dd2`; backend 608/608 sobre
+`070027b`. **Es el último PR hasta que Javi revise los que esperan** (instrucción de Santi del 14/11).
+- **027 (#34): no se arranca.** La pregunta P7-01 para Sergio («ubicación de ingreso») está en
+  `docs/sprint07/ESTADO.md`.
+- **Cuando entren el #166 y el #167:** `git merge origin/develop` (nunca rebase) en cada rama abierta, y
+  la suite que corresponda sobre cada una.
+
 **14/11 · Sprint 7 adelantado (028, 026 y 027), pedido de Santi.** Siguen en el milestone del
 Sprint 7. Cada HU tiene su rama, que sale de `feature/163-frontend`, y su PR depende del #166 y del #167.
 - **028 (#9), parte 1, backend:** rama `feature/9-anulacion-factura-compra`. Decisiones de Santi
