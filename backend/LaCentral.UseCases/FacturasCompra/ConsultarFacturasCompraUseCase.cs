@@ -11,8 +11,21 @@ public class ConsultarFacturasCompraUseCase
 
     public ConsultarFacturasCompraUseCase(IFacturaCompraRepositorio facturas) => _facturas = facturas;
 
-    public Task<Result<PaginaDto<FacturaCompraResumen>>> EjecutarAsync(
+    public async Task<Result<PaginaDto<FacturaCompraResumen>>> EjecutarAsync(
         FiltroFacturasCompra filtro, int pagina = 1, int tamanoPagina = 20, CancellationToken ct = default)
-        => Task.FromResult(Result<PaginaDto<FacturaCompraResumen>>.Success(
-            new PaginaDto<FacturaCompraResumen>(new List<FacturaCompraResumen>(), 0, pagina, tamanoPagina)));
+    {
+        if (pagina < 1 || tamanoPagina is < 1 or > 100 || (long)(pagina - 1) * tamanoPagina > int.MaxValue)
+            return Fallo("La página o su tamaño no son válidos.");
+        if (filtro.EmisionDesde > filtro.EmisionHasta)
+            return Fallo("El rango de emisión empieza después de terminar.");
+        if (filtro.VencimientoDesde > filtro.VencimientoHasta)
+            return Fallo("El rango de vencimiento empieza después de terminar.");
+
+        var numero = string.IsNullOrWhiteSpace(filtro.Numero) ? null : filtro.Numero.Trim();
+        var (items, total) = await _facturas.BuscarAsync(filtro with { Numero = numero }, pagina, tamanoPagina, ct);
+        return Result<PaginaDto<FacturaCompraResumen>>.Success(new PaginaDto<FacturaCompraResumen>(items, total, pagina, tamanoPagina));
+    }
+
+    private static Result<PaginaDto<FacturaCompraResumen>> Fallo(string mensaje)
+        => Result<PaginaDto<FacturaCompraResumen>>.Failure(TipoError.Invalido, mensaje);
 }

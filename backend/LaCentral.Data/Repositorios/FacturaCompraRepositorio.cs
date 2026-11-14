@@ -104,7 +104,25 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
         return Result<int>.Success(fila.Id);
     }
 
-    public Task<(IReadOnlyList<FacturaCompraResumen> Items, int Total)> BuscarAsync(
+    public async Task<(IReadOnlyList<FacturaCompraResumen> Items, int Total)> BuscarAsync(
         FiltroFacturasCompra filtro, int pagina, int tamanoPagina, CancellationToken ct = default)
-        => Task.FromResult<(IReadOnlyList<FacturaCompraResumen>, int)>((Array.Empty<FacturaCompraResumen>(), 0));
+    {
+        var consulta = _context.FacturaCompra.AsNoTracking();
+        if (filtro.ProveedorId is { } proveedor) consulta = consulta.Where(f => f.ProveedorId == proveedor);
+        if (filtro.Numero is { } numero) consulta = consulta.Where(f => f.Numero == numero);
+        if (filtro.EmisionDesde is { } emisionDesde) consulta = consulta.Where(f => f.FechaEmision >= emisionDesde);
+        if (filtro.EmisionHasta is { } emisionHasta) consulta = consulta.Where(f => f.FechaEmision <= emisionHasta);
+        if (filtro.VencimientoDesde is { } vencimientoDesde) consulta = consulta.Where(f => f.FechaVencimiento >= vencimientoDesde);
+        if (filtro.VencimientoHasta is { } vencimientoHasta) consulta = consulta.Where(f => f.FechaVencimiento <= vencimientoHasta);
+
+        var total = await consulta.CountAsync(ct);
+        var items = await consulta
+            .OrderByDescending(f => f.FechaEmision).ThenByDescending(f => f.Id)
+            .Skip((pagina - 1) * tamanoPagina).Take(tamanoPagina)
+            .Select(f => new FacturaCompraResumen(f.Id, f.ProveedorId, f.Proveedor.RazonSocial, f.Numero,
+                f.TipoComprobante.HasValue ? f.TipoComprobante.Value.ToString() : "", f.FechaEmision, f.FechaVencimiento,
+                f.Estado != EstadoActiva))
+            .ToListAsync(ct);
+        return (items, total);
+    }
 }
