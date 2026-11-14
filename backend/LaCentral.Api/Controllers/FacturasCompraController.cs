@@ -14,8 +14,25 @@ namespace LaCentral.Api.Controllers;
 public class FacturasCompraController : ControllerBase
 {
     private readonly RegistrarFacturaCompraUseCase _registrar;
+    private readonly AnularFacturaCompraUseCase _anular;
 
-    public FacturasCompraController(RegistrarFacturaCompraUseCase registrar) => _registrar = registrar;
+    public FacturasCompraController(RegistrarFacturaCompraUseCase registrar, AnularFacturaCompraUseCase anular)
+        => (_registrar, _anular) = (registrar, anular);
+
+    /// <summary>
+    /// HU-FCO-04 (028). Anula quien está en la sesión; la autoriza otro usuario ADMINISTRADOR
+    /// con su usuario y contraseña (doble certificación). 204; 400 sin motivo o sin
+    /// autorización válida; 404 si no existe; 409 si ya estaba anulada.
+    /// </summary>
+    [HttpPost("{id}/anulacion")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Anular(int id, [FromBody] DtosNucleo.AnularFacturaCompraRequest request, CancellationToken ct)
+        => this.AResultadoHttp(await _anular.EjecutarAsync(id, request, ct));
 
     /// <summary>
     /// Registro manual de factura de compra. HU-FCO-01. En una sola operación: factura,
