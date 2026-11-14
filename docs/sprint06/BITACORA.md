@@ -658,7 +658,10 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 
 - 12:02 · `git fetch`: `origin/develop` trae los merges del #164 y el #165, que esta rama ya contiene (`git diff --name-only HEAD...origin/develop` vacío). El #167 sigue con la revisión de Javi de las 05:00 UTC, sin respuesta nueva.
 
-**Estado:** en curso
+**Estado:** terminada
 - 12:05 · #170: rojo `492f4af`, por aserción (`Expected null to contain 'FIL-0712 ya está en la factura'`); el spec del destino libre ya pasaba y queda como resguardo. Código `65e1370`: `cambiarDestino()` avisa con el mismo mensaje de la #169 y devuelve el `<select>` al destino anterior. Frontend completo sobre `65e1370`: `TOTAL: 203 SUCCESS`. El script `mutar.sh` apunta a un worktree viejo y no corrió: las mutaciones quedan para el verificador.
 - 12:08 · Verificador ronda 1 sobre `3e3c590..65e1370`: **NO APTO**. De 9 mutaciones sobrevivieron dos: M1, sacar `j !== i` (inalcanzable), y M9, `emitViewToModelChange: true` (equivalente, no bloquea). Arreglo `b7973d6`: se borra la guarda (regla de CLAUDE.md: si no es alcanzable, se borra), y la demostración queda en el spec #170 `:319`. Frontend completo sobre `b7973d6`: `TOTAL: 203 SUCCESS`.
 - 12:10 · Verificador ronda 2 sobre `65e1370..b7973d6`: **APTO**. Cuerpo del #170 actualizado; ESTADO con la fila y la decisión del 14/11.
+- 13:23 · Punto 2: **PR #171** (rama `feature/168-deuda-proveedor`). El detalle está en el bloque de continuación de esa rama. Suite completa 564/564 sobre `c8a8ae0`; `verificador-tdd` APTO en la ronda 2; `auditor-persistencia` APTO.
+- 13:23 · Punto 3: **PR #172** (rama `docs/d1-precios-vigentes`, desde develop). D1 alineada con D12, D13 y D14, leídas en `docs/sprint04/ESTADO.md`, `docs/sprint03/informe-cierre-sprint3.md` §3 y `docs/PLAN-SPRINTS-6-7-8.md`.
+- **Queda abierto:** el merge del #166 y el #167 (Javi); después, `git merge origin/develop` en las ramas del #170 y del #171, nunca rebase: el #170 con la suite de frontend y el #171 con la completa. La C7, que mantiene la 029 y la 049 sin arrancar.
