@@ -175,7 +175,7 @@ Sprint 7. Cada HU tiene su rama, que sale de `feature/163-frontend`, y su PR dep
   del 14/11: hay **doble certificación**, porque la autoriza otro usuario ADMINISTRADOR con su
   contraseña (B.4 del 07), y la anulación la piden ADMINISTRADOR y OPERADOR. Quedaron como CA-006
   y CA-007 de la proforma v1.1. Interpretación pendiente en el CA-002: el costo no se toca. La
-  parte 2, la pantalla, va después de la 026.
+  parte 2, la pantalla, va después de la 026. **PR #173** (14/11), milestone Sprint 7: verificador APTO en la ronda 2, auditor APTO, 591/591 sobre `57142f0`.
 - Nota del auditor sobre `proveedor_baja_coherente`: **cerrada, no es contradicción.** El 01
   reemplaza los CHECK de `base_completa.sql` por la forma de la D10.
 
