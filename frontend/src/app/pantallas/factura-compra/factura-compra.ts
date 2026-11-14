@@ -241,13 +241,14 @@ export class FacturaCompra {
     });
   }
 
-  /** CA-002 y CA-003: Enter sobre un código exacto (sin ceros a la izquierda) lo elige sin listar. */
+  /** CA-002 y CA-003: Enter sobre un código exacto (sin ceros a la izquierda) lo elige sin listar.
+   *  Si hay más de uno (035 y 00035), lista: elegir uno solo sería adivinar. */
   enterProveedor() {
     const codigo = sinCeros(this.textoProveedor);
     this.buscarProveedor(p => {
-      const exacto = p.find(x => sinCeros(x.codigo) === codigo);
-      if (exacto) this.elegirProveedor(exacto);
-      return !!exacto;
+      const exactos = p.filter(x => sinCeros(x.codigo) === codigo);
+      if (exactos.length === 1) this.elegirProveedor(exactos[0]);
+      return exactos.length === 1;
     });
   }
 
