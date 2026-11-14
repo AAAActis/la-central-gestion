@@ -33,7 +33,7 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 026 | HU-FCO-02 | Consulta de facturas de compra | Alto | 3 | Sprint 5 | 5 | [`026-HU-FCO-02.md`](./026-HU-FCO-02.md) | #33 | Sprint 7 | Pendiente |
 | 027 | HU-FCO-03 | Modificación acotada de factura de compra | Bajo | 2 | Sprint 7 | 4 | [`027-HU-FCO-03.md`](./027-HU-FCO-03.md) | #34 | Sprint 7 | Pendiente |
 | 028 | HU-FCO-04 | Anulación de factura de compra | Medio | 8 | Sprint 5 | 5 | [`028-HU-FCO-04.md`](./028-HU-FCO-04.md) | #9 | Sprint 7 | Pendiente |
-| 029 | HU-FCO-05 | Carga automatizada de factura desde PDF | Alto | 13 | Sprint 7 | 6 | [`029-HU-FCO-05.md`](./029-HU-FCO-05.md) | #13 | Sprint 7 | Pendiente (pasó del 6 al 7, D-PL-04) |
+| 029 | HU-FCO-05 | Carga automatizada de factura desde PDF | Alto | 13 | Sprint 7 | 6 | [`029-HU-FCO-05.md`](./029-HU-FCO-05.md) | #13 | Sprint 6 | Pendiente · volvió al 6 (D-PL-05, 13/11/2026), después de la 056 |
 | 030 | HU-CMP-01 | Búsqueda comparativa por nombre | Alto | 5 | Sprint 8 | 5 | [`030-HU-CMP-01.md`](./030-HU-CMP-01.md) | #16 | Sprint 7 | Pendiente |
 | 031 | HU-CMP-02 | Consulta en vivo a sitios de proveedores | Alto | 13 | Sprint 8 | 6 | [`031-HU-CMP-02.md`](./031-HU-CMP-02.md) | #18 | Sprint 7 | Pendiente · completa, no prueba de concepto (D-PL-02) |
 | 032 | HU-CMP-03 | Vista Compra del comparador | Alto | 3 | Sprint 8 | 4 | [`032-HU-CMP-03.md`](./032-HU-CMP-03.md) | #19 | Sprint 7 | Pendiente |
@@ -53,18 +53,20 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 046 | HU-UI-08 | Pantalla de Artículos | Alto | 5 | Sprint 7 | 4 | [`046-HU-UI-08.md`](./046-HU-UI-08.md) | #47 | Sprint 8 | Pendiente · la pantalla existe; espera C4 |
 | 047 | HU-UI-09 | Pantalla de Stock y transferencias | Medio | 3 | Sprint 7 | 4 | [`047-HU-UI-09.md`](./047-HU-UI-09.md) | #49 | Sprint 8 | Pendiente |
 | 048 | HU-UI-10 | Pantallas de Facturas | Alto | 5 | Sprint 7 | 5 | [`048-HU-UI-10.md`](./048-HU-UI-10.md) | #50 | Sprint 8 | Pendiente |
-| 049 | HU-UI-11 | Pantalla de carga de factura desde PDF | Alto | 8 | Sprint 8 | 5 | [`049-HU-UI-11.md`](./049-HU-UI-11.md) | #51 | Sprint 7 | Pendiente (pasó del 6 al 7, D-PL-04) |
+| 049 | HU-UI-11 | Pantalla de carga de factura desde PDF | Alto | 8 | Sprint 8 | 5 | [`049-HU-UI-11.md`](./049-HU-UI-11.md) | #51 | Sprint 6 | Pendiente · volvió al 6 (D-PL-05, 13/11/2026) |
 | 050 | HU-UI-12 | Pantalla del comparador de precios | Alto | 8 | Sprint 8 | 5 | [`050-HU-UI-12.md`](./050-HU-UI-12.md) | #52 | Sprint 7 | Pendiente · no se parte: todos sus CA son del comparador |
 | 051 | HU-UI-13 | Manejo global de errores y avisos | Medio | 2 | Sprint 8 | 3 | [`051-HU-UI-13.md`](./051-HU-UI-13.md) | #53 | Sprint 8 | Pendiente |
 | 052 | HU-UI-14 | Comprensión y documentación del frontend | Alto | 5 | Sprint 8 | 4 | [`052-HU-UI-14.md`](./052-HU-UI-14.md) | #54 | Sprint 8 | Pendiente |
+| 056 | HU-FCO-06 | Carga de factura de compra con la mecánica del negocio | Alto | 13 | Sprint 6 | 15 | [`056-HU-FCO-06.md`](./056-HU-FCO-06.md) | #163 | Sprint 6 | Pendiente · CA-007 aceptado (lo cumple la 025); proforma del 13/11/2026 |
 
-**Total: 52 historias.**
+**Total: 53 historias con proforma** (las 52 del Excel y la 056).
 
 El `Sprint` de esta tabla es el de la planificación original del 19/08/2026 y no se toca.
 **`Sprint vigente` y `Estado`** (09/11/2026) dicen lo mismo que el milestone y el estado de la
 issue en GitHub y que el `ESTADO.md` de cada sprint; si uno cambia, los otros cambian en el mismo
 push. Las HU 053, 054 y 055 no tienen proforma todavía (C5): figuran en
-`docs/PLAN-SPRINTS-6-7-8.md`. La 045, la paginación (#147) y es-AR (#148) están terminadas: sus
+`docs/PLAN-SPRINTS-6-7-8.md`, en el Sprint 7 desde el 13/11/2026 (D-PL-05). La 056 no viene del
+Excel: su proforma se escribió el 13/11/2026 desde la issue #163; su `Sprint` es el de esa fecha. La 045, la paginación (#147) y es-AR (#148) están terminadas: sus
 issues se cierran a mano cuando el release del Sprint 5 entra a `main`.
 La 004, la 007 y la 018 se construyeron con PR (el primer PR mergeado es el #55, del 27/08/2026),
 pero esos PR no se enlazaron a la issue: el PR de cada una sale del historial de git (09/11/2026).
