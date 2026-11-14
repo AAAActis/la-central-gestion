@@ -269,6 +269,33 @@ describe('FacturaCompra · HU-FCO-06', () => {
     expect(c.errorArticulo()).toContain('ya está en la factura');
   });
 
+  it('#169: otro artículo con el mismo destino se agrega', () => {
+    agregar(1, 'FIL-0712');
+    c.textoArticulo = 'PAS-0100';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(2, 'PAS-0100')));
+
+    expect(c.errorArticulo()).toBeNull();
+    expect(c.lineas.map(l => [l.articulo.id, l.sucursalId])).toEqual([[1, 1], [2, 1]]);
+    servidor.expectOne('/api/articulos/2').flush(ficha(2, null));
+  });
+
+  it('#169: al reemplazar, cuenta el destino de la línea reemplazada, no el de la cabecera', () => {
+    agregar(1, 'FIL-0712');
+    c.sucursalCabecera = 2;
+    agregar(2, 'PAS-0100');
+
+    // La línea 0 va a Fragueiro (1); PAS-0100 está solo en San Vicente (2): no se repite.
+    c.reemplazar(0);
+    c.textoArticulo = 'PAS-0100';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(2, 'PAS-0100')));
+
+    expect(c.errorArticulo()).toBeNull();
+    expect(c.lineas.map(l => [l.articulo.id, l.sucursalId])).toEqual([[2, 1], [2, 2]]);
+    servidor.expectOne('/api/articulos/2').flush(ficha(2, null));
+  });
+
   // ---- CA-012, CA-014 y CA-015 · total antes de confirmar ----
 
   function cargarFactura() {
