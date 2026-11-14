@@ -120,6 +120,55 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
         Assert.Equal(40m, await relectura.Articulo.Where(a => a.Id == s.ArticuloId).Select(a => a.PrecioCosto).SingleAsync());
     }
 
+    // HU-FCO-04 (028): anula quien está en el token; autoriza otro usuario ADMINISTRADOR con su contraseña.
+    [PostgreSqlFact]
+    public async Task PostAnulacion_Valida_204_YLaFacturaQuedaAnuladaConElUsuarioDelTokenYElQueAutorizo()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        int jefa;
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var admin = new Usuario
+            {
+                NombreUsuario = "jefa.api", HashContrasena = new ServicioHash().HashearClave("clave-jefa"),
+                RolId = await contexto.Rol.Where(r => r.Nombre == "ADMINISTRADOR").Select(r => r.Id).SingleAsync(),
+                SucursalId = s.SucursalId, Activo = true
+            };
+            contexto.Usuario.Add(admin);
+            await contexto.SaveChangesAsync();
+            jefa = admin.Id;
+        }
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        var alta = await cliente.PostAsJsonAsync("/api/facturas-compra", Cuerpo(s));
+        var id = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+
+        var respuesta = await cliente.PostAsJsonAsync($"/api/facturas-compra/{id}/anulacion",
+            new { motivo = "Cargada dos veces", usuarioAutoriza = "jefa.api", contrasenaAutoriza = "clave-jefa" });
+
+        Assert.Equal(HttpStatusCode.NoContent, respuesta.StatusCode);
+        await using var relectura = fixture.CrearContexto();
+        var factura = await relectura.FacturaCompra.AsNoTracking().SingleAsync(f => f.Id == id);
+        Assert.Equal(("ANULADA", "Cargada dos veces", (int?)s.UsuarioId, (int?)jefa),
+            (factura.Estado, factura.MotivoAnulacion, factura.UsuarioAnulacionId, factura.UsuarioAutorizacionId));
+        Assert.Equal(1m, await relectura.Stock.Where(x => x.ArticuloId == s.ArticuloId && x.SucursalId == s.SucursalId)
+            .Select(x => x.Cantidad).SingleAsync());
+    }
+
+    [PostgreSqlFact]
+    public async Task PostAnulacion_DeUnaFacturaInexistente_404ConMensaje()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra/999999/anulacion",
+            new { motivo = "Error", usuarioAutoriza = "x", contrasenaAutoriza = "y" });
+
+        Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
+        Assert.Contains("La factura de compra indicada no existe.", await respuesta.Content.ReadAsStringAsync());
+    }
+
     [PostgreSqlFact]
     public async Task Post_SinLineas_400YNoEscribe()
     {
