@@ -1338,3 +1338,192 @@ vale esta.)
 - 2 · 004, 007 y 018: **ni antes de los PR ni sin hacer.** El primer PR mergeado es el #55 (27/08/2026). La 004 entró con el #93 (22/09, junto con la 005: `DarDeBajaClienteUseCase`, commit `b61ff85`), la 007 con el #95 (23/09, `ConsultarProveedoresUseCase`, `83830dc`) y la 018 con el #119 (16/10, dentro de la 025: el stock por línea de `FacturaCompraRepositorio`, `97cdbea`). Esos PR no se enlazaron a su issue. El INDICE lo dice así.
 - 3 · #13 y #51 asignadas a `AAAActis` (verificado con `gh`); ESTADO del Sprint 6 con la asignación: Santi 37 SP, Javi 5.
 **BLOQUEADO EN:** el merge de #161 y #162 (Santi o Javi). Después: etiqueta `sprint-5`, cerrar #148, #147 y #46, y anotar en el ESTADO quién los mergeó, cuándo y con qué motivo.
+
+## 11/11/2026 17:45 · estado real de #161/#162, respuestas de Sergio, por dónde arrancar el Sprint 6
+
+**Instrucción recibida (verbatim):**
+> Soy Lauti. Leé CLAUDE.md y docs/sprint05/ESTADO.md antes de nada, pero ojo: el ESTADO
+> está desactualizado en un punto importante, así que verificá contra Git y GitHub, no
+> contra lo que diga el archivo.
+>
+> ESTADO REAL AL 11/11/2026, verificado hoy contra la API de GitHub:
+>
+> - Los PR #161 y #162 SIGUEN ABIERTOS. Santi creyó haberlos mergeado con bypass el 9/11
+>   y no quedaron mergeados. Los dos están en "blocked" con CERO reviews; la rama exige
+>   una aprobación y no hay ningún check de CI configurado.
+> - El Sprint 5 NO llegó a main. El #162 son 299 commits y 324 archivos.
+> - Por eso siguen abiertas la #148, la #147 y la #46.
+> - Orden de merge: primero el #161 (docs/sprint05-cierre-release -> develop), después el
+>   #162 (develop -> main). Al revés, el cierre documental queda fuera de main.
+> - La cuenta AAAActis es la de Santi y la mía, así que no podemos aprobar nuestros
+>   propios PR: hace falta Javi (Jotelsooon).
+>
+> RESPUESTAS DE SERGIO (11/11). Anotalas como decisiones con fecha:
+>
+> 1. Listas de precios: solo Sur Piezas | GM manda lista, por WhatsApp y casi nunca. La
+>    fuente del comparador son los scrapes web. NO construir importador de planillas.
+> 2. Condición fiscal: opcional, se completa después. Obligatorios: documento (CUIL, CUIT
+>    o DNI), teléfono y domicilio. Email y el resto, opcionales.
+> 3. Baja de artículo con stock: primero se corrige la existencia, después se da de baja.
+>    Esto invalida la issue #160, que hay que cerrar.
+> 4. Márgenes: 50% sobre la lista, 40% sobre la segunda lista, 0% sobre el costo, iguales
+>    para todos los artículos y rubros.
+> 5. Precio manual: es habitual ajustarlo a mano, sobre todo para redondear. Ese precio se
+>    mantiene y NO se recalcula con las compras siguientes.
+> 6. Códigos originales: los 2644 artículos deberían tener el código original, que según
+>    Sergio se obtiene del código de barras. La marca sale de la información del proveedor.
+> 7. Provincia: dato necesario, sin uso operativo hoy. Confirma que la normalización está
+>    bien y no hay más trabajo ahí.
+>
+> CUATRO PREGUNTAS QUE QUEDARON ABIERTAS Y VUELVEN A SERGIO:
+> - Qué es exactamente "la segunda lista" y cuánto va para Tarjeta 3 y Tarjeta 6. La
+>   respuesta 4 contradice en parte la D1 (Efectivo = lista x 0,90 = costo x 1,35, no 1,40)
+>   y no define las tasas de tarjeta, que siguen SIN DEFINIR.
+> - Si alcanza con informar uno solo de los tres documentos (CUIL, CUIT o DNI).
+> - Quién puede modificar el precio a mano.
+> - Si el 99 o 999 del número de factura depende del proveedor o del tipo de comprobante.
+>
+> DOS RIESGOS QUE HAY QUE MIRAR ANTES DE CODEAR:
+> - Respuesta 2: antes de hacer obligatorios teléfono y domicilio, contar cuántos de los
+>   2108 clientes importados no los tienen. Si son muchos, la regla no puede ir en la base
+>   sin romper los datos existentes y solo aplica a los clientes nuevos.
+> - Respuesta 6: el código de barras (EAN) no es lo mismo que el código original del
+>   fabricante. Puede que Sergio hable de escanear para encontrar el artículo, no de que
+>   el número del barcode sea el código original. Si se toma literal y son distintos, se
+>   rompe la D2.
+>
+> CORRECCIONES DE JAVI A LA CARGA DE FACTURA DE COMPRA. No son bugs: es alcance nuevo
+> sobre HU-FCO-01, que ya se entregó y se aceptó. Va como historia propia con sus propios
+> criterios, no parcheada dentro de lo que esté abierto.
+>
+> Solo pantalla, sin tocar la base:
+> - Buscar proveedor por código y/o nombre, no por nombre y CUIT.
+> - Enter sobre el código exacto selecciona sin abrir la pantalla de búsqueda.
+> - Ignorar ceros a la izquierda: escribir 35 encuentra el 00035.
+> - Buscar artículos por código o nombre con coincidencias aproximadas mientras se escribe
+>   (pg_trgm ya está).
+> - Enter sobre el código exacto selecciona el artículo.
+> - Botón para modificar o reemplazar el artículo seleccionado.
+> - Heredar la sucursal de la cabecera en cada línea, pudiendo cambiarla por artículo.
+> - Mostrar el total final, con percepciones e IVA, antes de confirmar.
+>
+> Exigen cambiar el esquema (Database First: script SQL en backend/db/ más re-scaffold,
+> nunca migraciones):
+> - Un campo en proveedor que diga si opera en blanco o en negro. De ahí salen el tipo A/B
+>   automático y el 21% de IVA automático.
+> - Tres fechas separadas en factura_compra: emisión, vencimiento e imputación.
+> - Precio editable y hasta tres descuentos por línea en factura_compra_detalle.
+>
+> Las percepciones y la sucursal por línea ya están en el esquema (D8 y D9): eso es solo
+> pantalla.
+>
+> MIS ISSUES DEL SPRINT 6 bajo AAAActis: #126 y #127 (comparador), #51 (HU-UI-11) y #13
+> (factura en PDF). La #128 es de Javi.
+>
+> QUÉ QUIERO HACER AHORA: decime vos por dónde arrancamos, pero antes de codear el
+> comparador hay que revisar los criterios de la #126, #127 y #128 a la luz de la
+> respuesta 1 de Sergio.
+
+**Plan:**
+1. `git fetch`, comparar con `origin/develop`; verificar contra GitHub #161, #162, #148, #147, #46, #160 y los issues del Sprint 6.
+2. Leer los CA de #126, #127 y #128 (y sus historias en `docs/historias/`) contra la respuesta 1.
+3. Riesgo de la respuesta 2: contar clientes sin teléfono o domicilio (solo lectura, la base que se pueda leer sin violar la regla de seguridad).
+4. Rama de docs: decisiones de Sergio con fecha y las cuatro preguntas abiertas en el ESTADO, corrección del estado de #161/#162.
+5. Recomendación de por dónde arrancar. No se codea nada.
+
+**Estado:** en curso
+- 17:46 · Paso 1: `git fetch --all --prune`; `HEAD..origin/develop` vacío (`develop` en `a00c772`). API pública de GitHub: **#161 open, merged=false, 3 commits, 6 archivos, 0 reviews; #162 open, merged=false, 299 commits, 324 archivos, 0 reviews.** #148, #147, #46, #160 abiertas; #126, #127, #13, #51 asignadas a `AAAActis` (Sprint 6); #128 a `Jotelsooon`. `gh` no está instalado y sacar el token de git lo bloqueó el clasificador: todo por la API sin autenticar (solo lectura).
+- 17:50 · El #161 reescribe `docs/sprint06/ESTADO.md`, `docs/sprint05/ESTADO.md` y esta bitácora: rama `docs/sergio-11-11-y-revision-comparador` **desde `origin/docs/sprint05-cierre-release`**, no desde `develop`, para no chocar. El bloque se movió acá.
+- 17:55 · Paso 2: CA de #126, #127 y #128 leídos (cuerpos de las issues; la 053, 054 y 055 no tienen archivo en `docs/historias/`). Resultado en `docs/sprint06/ESTADO.md`, «Revisión de la 053, 054 y 055»: la 055 no se construye como está escrita, pero sus CA2, CA4, CA5 y CA6 sirven para incorporar scrapes; la 053 vale y se queda sin fuente de datos; la 054 vale, con CA4 dependiente de que el scrape traiga existencia y **CA3 contradictorio con D2** (no tiene que ver con la respuesta 1).
+- 17:58 · La primera de las cuatro preguntas que vuelven a Sergio **ya está respondida**: D12 y D13 del ESTADO del Sprint 4 (16/10/2026: Tarjeta 3/6 fuera; L1 +50 %, L2 +40 %, L3 0 %) y respuestas de Alfredo del 17/10 en el ESTADO del Sprint 3. La respuesta 4 confirma D13; lo viejo es la D1 de `CLAUDE.md`. No se tocó `CLAUDE.md`: lo decide el equipo.
+- 18:00 · Paso 3: R1 **sin contar**. `Test-NetConnection 100.125.169.91 -Port 5432` → `False`. No hay `psql` ni driver de Python. La consulta de solo lectura quedó escrita en el ESTADO del Sprint 6.
+- 18:05 · Paso 4: decisiones D-S6-01 a 07 con fecha, lo que vuelve a Sergio, R1 y R2, la revisión y la HU nueva de Javi en `docs/sprint06/ESTADO.md`; nota del 11/11 sobre #161/#162 en `docs/sprint05/ESTADO.md`; puntero en `PREGUNTAS-SERGIO.md`. No se tocó código.
+
+**BLOQUEADO EN:** (1) aprobar #161 y después #162: Javi (`Jotelsooon`); (2) abrir el PR de esta rama y cerrar #160 con comentario: necesita `gh` o un token, Lauti; (3) contar R1: que la base responda; (4) qué entrega un scrape, opción (a)/(b) del plan, CA3 de la 054 contra D2 y la D1 de `CLAUDE.md`: el equipo.
+
+
+## 12/11/2026 15:20 · decisiones del 11 y 12/11: CA-003 de la 014 anulado, 056 al Sprint 6, PDF al Sprint 7, cierre real del Sprint 5
+
+**Instrucción recibida (verbatim):**
+> Trabajo de documentación sobre la rama docs/sergio-11-11-y-revision-comparador, que ya
+> está abierta y pusheada. NO te cambies de rama y NO toques código: esta tarea es solo
+> documentación.
+>
+> Antes de la primera acción: leé CLAUDE.md y el último bloque de docs/sprint05/BITACORA.md
+> con Estado: en curso, y abrí un bloque nuevo con esta instrucción verbatim, como manda la
+> regla de bitácora. Después hacé git fetch --all --prune y fijate si origin/develop trae
+> commits que esta rama no tenga.
+>
+> Hay una línea sin commitear en docs/sprint05/BITACORA.md, de la sesión del 11/11 que se
+> cortó por vencimiento de sesión. Miralá, commiteala en esta rama y seguí. No la descartes.
+>
+> Contexto de las decisiones que hay que registrar, todas del 11 y 12/11/2026:
+>
+> A · Sergio respondió las siete preguntas el 11/11. Eso ya está commiteado en esta rama.
+>
+> B · Por la respuesta 3 (para dar de baja un artículo con existencia, primero se corrige la
+> existencia), se anuló el CA-003 de HU-ART-04 y se cerró la issue #160 sin trabajo.
+>
+> C · La rehecha de la carga de factura de compra (HU-FCO-06, ID 056) entra en el Sprint 6,
+> montada sobre el cambio de esquema que ese sprint ya tiene previsto al arrancar (compuertas
+> C1 y C2). La carga de factura desde PDF (029 #13 y 049 #51) se mueve al Sprint 7, para
+> construirse una sola vez contra el esquema ya rehecho y con la tabla de vinculación hecha.
+>
+> TAREAS
+>
+> 1 · docs/historias/014-HU-ART-04.md. La proforma no se sobreescribe, se versiona.
+> Reemplazá la fila del CA-003 de la tabla de criterios por esta, exacta:
+>
+> | **CA-003** | ~~Dado que el artículo tiene existencia y el usuario declara que se trata de un error de actualización de stock~~ **ANULADO en v1.1** | — | Sergio definió el 11/11/2026 que primero se corrige la existencia y recién después se da de baja. La regla vigente es la del CA-002. | — | No aplica |
+>
+> Cambiá la línea de abajo por:
+>
+> **Cantidad de criterios: 5 · vigentes 4** (CA-003 anulado en v1.1).
+>
+> Y completá la fila v1.1 del control de cambios con:
+>
+> | v1.1 | 12/11/2026 | Billarroel Lautaro | CA-003 anulado por decisión del dueño del 11/11/2026: no se declara error de stock, primero se corrige la existencia. Quedan 4 criterios vigentes. | Sergio Bossio | Vigente |
+>
+> 2 · docs/PLAN-SPRINTS-6-7-8.md:
+> - En la tabla del Sprint 6, sacá las filas de la #13 (029 · HU-FCO-05) y de la #51
+>   (049 · HU-UI-11) y agregá en su lugar la de la 056 (HU-FCO-06 · rehecha de la carga de
+>   factura de compra). Estimá sus SP y marcalos como estimación, igual que se hizo con la
+>   053 y la 054.
+> - Pasá esas dos filas a la tabla del Sprint 7.
+> - Recalculá el total de SP de los dos sprints a partir de las tablas y corregí los
+>   encabezados.
+> - Reescribí el texto del entregable del Sprint 6: hoy habla del PDF, y el PDF ya no está
+>   ahí. El entregable nuevo son los catálogos vinculados más la carga de factura de compra
+>   con la mecánica que pidió Javi.
+> - Revisá la sección de compuertas: la C2 sigue en el Sprint 6, y el cambio de esquema de
+>   ese sprint ahora incluye también los tres de la 056 (campo en proveedor para blanco o
+>   negro, tres fechas en factura_compra, precio editable y tres descuentos en
+>   factura_compra_detalle).
+> - Agregá una decisión D-PL-04 con fecha 12/11/2026, autor Lauti, con este motivo: la
+>   rehecha aprovecha el cambio de esquema ya previsto en el Sprint 6; el PDF necesita ese
+>   esquema terminado y la tabla de vinculación, así que se construye después y una sola vez.
+>
+> 3 · Actualizá docs/sprint05/ESTADO.md con el cierre real: PR #161 y #162 mergeados por Javi
+> el 12/11, main en f0187d37, etiqueta sprint-5 creada, issues #148 y #160 cerradas. Dejá
+> anotado que siguen abiertas las dos condiciones del entregable.
+>
+> 4 · Abrí el PR contra develop. En el cuerpo: qué decisiones registra, que es solo
+> documentación, que no hay corrida de suite porque no se tocó código, y que el
+> auditor-persistencia no aplica.
+>
+> Es un PR de documentación: no corras la suite. Si vas a dejar constancia como en el #157,
+> una sola invocación del verificador-tdd al final, acotada a los commits de esta rama.
+>
+> Cuando termines, pasame el número del PR.
+
+**Plan:**
+1. Línea sin commitear de la sesión del 11/11; `fetch` y comparación con `origin/develop`.
+2. `014-HU-ART-04.md`: fila del CA-003, cantidad de criterios y fila v1.1.
+3. `PLAN-SPRINTS-6-7-8.md`: 056 al Sprint 6, 029 y 049 al 7, totales, entregable, compuertas, D-PL-04.
+4. `docs/sprint05/ESTADO.md`: cierre real.
+5. Commit, push y PR a `develop`.
+
+**Estado:** terminada
+- 15:20 · Paso 1: `git status` limpio al arrancar: **no hay línea sin commitear.** La de la sesión del 11/11 ya está en `0481754` («cierre del bloque de bitácora de la sesión del 11/11»), pusheado (rama al día con `origin`). No se descartó nada. `git fetch --all --prune`: `origin/develop` trae solo `db1f8c4` (merge del #161), sin archivos distintos de esta rama (`git diff --name-only HEAD...origin/develop` vacío): se mergea. Verificado por API: #161 y #162 mergeados el 12/11 (#162 por `Jotelsooon`, 16:38 UTC); `sprint-5` → `f0187d3` = `origin/main`; #148, #160, #147 y #46 cerradas el 12/11.
+- 15:35 · Paso 2: `014-HU-ART-04.md` con la fila del CA-003 exacta, «Cantidad de criterios: 5 · vigentes 4» y la fila v1.1. Paso 3: `PLAN-SPRINTS-6-7-8.md` · 056 en el Sprint 6 con **13 SP estimados** (8 cambios de pantalla + 3 de esquema, del orden de la 029), #13 y #51 al 7, fila de la #160 fuera del 8; totales de las tablas: **6 = 34, 7 = 67, 8 = 53, total 154**; entregables del 6 y del 7 reescritos; compuerta del esquema de la 056 junto a C2 y C1; D-PL-04. Paso 4: `docs/sprint05/ESTADO.md` con el cierre real. Fuera de lo pedido, porque el plan exige que digan lo mismo en el mismo push: `docs/sprint06/ESTADO.md` (entregable, tablero, 34 SP, nota del 12/11) e `INDICE.md` (014, 029 y 049). **No movido:** el milestone de #13 y #51 en GitHub sigue en «Sprint 6» (sin `gh` ni token).
+- 15:45 · Paso 5: commit `62443d7` pusheado; **PR #164** a `develop` (solo `docs/`, sin suite, auditor no aplica, verificador no invocado: no hay código). **Queda abierto:** mover el milestone de #13 y #51 a «Sprint 7»; proforma e issue de la 056; las dos condiciones del entregable del Sprint 5.

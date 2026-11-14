@@ -19,6 +19,9 @@ historia o issue depende; y qué hace hoy el sistema mientras no hay respuesta.
 
 ---
 
+> **11/11/2026 · respondidas.** Las respuestas de Sergio y las decisiones que salen (D-S6-01 a
+> D-S6-07), con lo que vuelve a preguntarse, están en `docs/sprint06/ESTADO.md`.
+
 ## 1 · ¿La condición fiscal del cliente es obligatoria?
 
 **La pregunta:** cuando dan de alta un cliente, ¿siempre saben si es responsable inscripto,

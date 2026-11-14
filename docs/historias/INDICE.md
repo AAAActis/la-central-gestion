@@ -18,7 +18,7 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 011 | HU-ART-01 | Alta de artículo con códigos por proveedor | Alto | 8 | Sprint 3 | 6 | [`011-HU-ART-01.md`](./011-HU-ART-01.md) | #14 | Sprint 3 | Terminada · PR #117 |
 | 012 | HU-ART-02 | Búsqueda de artículo por nombre o código | Alto | 5 | Sprint 3 | 5 | [`012-HU-ART-02.md`](./012-HU-ART-02.md) | #15 | Sprint 8 | Abierta · CA2, CA4 y CA5 sin test desde el Sprint 3 |
 | 013 | HU-ART-03 | Modificación de artículo y sus códigos | Alto | 5 | Sprint 3 | 5 | [`013-HU-ART-03.md`](./013-HU-ART-03.md) | #17 | Sprint 3 | Terminada · PR #122, #123 |
-| 014 | HU-ART-04 | Baja lógica de artículo | Medio | 3 | Sprint 6 | 5 | [`014-HU-ART-04.md`](./014-HU-ART-04.md) | #21 | Sprint 5 | Abierta · PR #153; CA-003 bloqueado por esquema (#160, Sprint 8) |
+| 014 | HU-ART-04 | Baja lógica de artículo | Medio | 3 | Sprint 6 | 5 | [`014-HU-ART-04.md`](./014-HU-ART-04.md) | #21 | Sprint 5 | Abierta · PR #153; CA-003 anulado en v1.1 (12/11/2026, respuesta 3 de Sergio; #160 cerrada sin trabajo) |
 | 015 | HU-ART-05 | Precio de venta estimado por márgenes | Alto | 5 | Sprint 6 | 4 | [`015-HU-ART-05.md`](./015-HU-ART-05.md) | #22 | Sprint 3 | Terminada · PR #121 |
 | 016 | HU-ART-06 | Historial de compras del artículo | Alto | 5 | Sprint 4 | 5 | [`016-HU-ART-06.md`](./016-HU-ART-06.md) | #23 | Sprint 5 | Abierta · PR #152; CA-003 y CA-004 PARCIAL, dependen de la 028 (#9, Sprint 7) |
 | 017 | HU-STK-01 | Consulta de existencias por ubicación | Alto | 3 | Sprint 4 | 3 | [`017-HU-STK-01.md`](./017-HU-STK-01.md) | #24 | Sprint 4 | Terminada · PR #131 |
@@ -33,7 +33,7 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 026 | HU-FCO-02 | Consulta de facturas de compra | Alto | 3 | Sprint 5 | 5 | [`026-HU-FCO-02.md`](./026-HU-FCO-02.md) | #33 | Sprint 7 | Pendiente |
 | 027 | HU-FCO-03 | Modificación acotada de factura de compra | Bajo | 2 | Sprint 7 | 4 | [`027-HU-FCO-03.md`](./027-HU-FCO-03.md) | #34 | Sprint 7 | Pendiente |
 | 028 | HU-FCO-04 | Anulación de factura de compra | Medio | 8 | Sprint 5 | 5 | [`028-HU-FCO-04.md`](./028-HU-FCO-04.md) | #9 | Sprint 7 | Pendiente |
-| 029 | HU-FCO-05 | Carga automatizada de factura desde PDF | Alto | 13 | Sprint 7 | 6 | [`029-HU-FCO-05.md`](./029-HU-FCO-05.md) | #13 | Sprint 6 | Pendiente |
+| 029 | HU-FCO-05 | Carga automatizada de factura desde PDF | Alto | 13 | Sprint 7 | 6 | [`029-HU-FCO-05.md`](./029-HU-FCO-05.md) | #13 | Sprint 7 | Pendiente (pasó del 6 al 7, D-PL-04) |
 | 030 | HU-CMP-01 | Búsqueda comparativa por nombre | Alto | 5 | Sprint 8 | 5 | [`030-HU-CMP-01.md`](./030-HU-CMP-01.md) | #16 | Sprint 7 | Pendiente |
 | 031 | HU-CMP-02 | Consulta en vivo a sitios de proveedores | Alto | 13 | Sprint 8 | 6 | [`031-HU-CMP-02.md`](./031-HU-CMP-02.md) | #18 | Sprint 7 | Pendiente · completa, no prueba de concepto (D-PL-02) |
 | 032 | HU-CMP-03 | Vista Compra del comparador | Alto | 3 | Sprint 8 | 4 | [`032-HU-CMP-03.md`](./032-HU-CMP-03.md) | #19 | Sprint 7 | Pendiente |
@@ -53,7 +53,7 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 046 | HU-UI-08 | Pantalla de Artículos | Alto | 5 | Sprint 7 | 4 | [`046-HU-UI-08.md`](./046-HU-UI-08.md) | #47 | Sprint 8 | Pendiente · la pantalla existe; espera C4 |
 | 047 | HU-UI-09 | Pantalla de Stock y transferencias | Medio | 3 | Sprint 7 | 4 | [`047-HU-UI-09.md`](./047-HU-UI-09.md) | #49 | Sprint 8 | Pendiente |
 | 048 | HU-UI-10 | Pantallas de Facturas | Alto | 5 | Sprint 7 | 5 | [`048-HU-UI-10.md`](./048-HU-UI-10.md) | #50 | Sprint 8 | Pendiente |
-| 049 | HU-UI-11 | Pantalla de carga de factura desde PDF | Alto | 8 | Sprint 8 | 5 | [`049-HU-UI-11.md`](./049-HU-UI-11.md) | #51 | Sprint 6 | Pendiente |
+| 049 | HU-UI-11 | Pantalla de carga de factura desde PDF | Alto | 8 | Sprint 8 | 5 | [`049-HU-UI-11.md`](./049-HU-UI-11.md) | #51 | Sprint 7 | Pendiente (pasó del 6 al 7, D-PL-04) |
 | 050 | HU-UI-12 | Pantalla del comparador de precios | Alto | 8 | Sprint 8 | 5 | [`050-HU-UI-12.md`](./050-HU-UI-12.md) | #52 | Sprint 7 | Pendiente · no se parte: todos sus CA son del comparador |
 | 051 | HU-UI-13 | Manejo global de errores y avisos | Medio | 2 | Sprint 8 | 3 | [`051-HU-UI-13.md`](./051-HU-UI-13.md) | #53 | Sprint 8 | Pendiente |
 | 052 | HU-UI-14 | Comprensión y documentación del frontend | Alto | 5 | Sprint 8 | 4 | [`052-HU-UI-14.md`](./052-HU-UI-14.md) | #54 | Sprint 8 | Pendiente |

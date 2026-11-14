@@ -18,41 +18,48 @@ archivo; si uno cambia, los otros cambian en el mismo push.
 
 | Sprint | Fechas **estimadas** | Contenido | SP |
 |---|---|---|---|
-| 6 | 16/11/2026 → 04/12/2026 | Vinculación de catálogos + factura por PDF | 42 |
-| 7 | 07/12/2026 → 25/12/2026 | Comparador completo + lo que falta de factura de compra | 46 |
+| 6 | 16/11/2026 → 04/12/2026 | Vinculación de catálogos + rehecha de la carga de factura de compra | 34 |
+| 7 | 07/12/2026 → 25/12/2026 | Comparador completo + lo que falta de factura de compra + factura por PDF | 67 |
 | 8 | 28/12/2026 → 15/01/2027 | Factura de venta + stock + UI y artículos | 53 + ítems sin SP |
 
-**Total: 141 SP** con SP conocidos, contra unos 34 SP por sprint de dos semanas (velocidad del
+**Total: 154 SP** con SP conocidos o estimados (141 hasta el 12/11; la 056 suma 13 estimados, D-PL-04), contra unos 34 SP por sprint de dos semanas (velocidad del
 Sprint 3: 3,4 SP/día con tres personas). El Sprint 5 entregó unos 19. Por eso se estiran a tres
 semanas en lugar de recortar (decisión D-PL-01).
 
-### Sprint 6 · vinculación de catálogos + factura por PDF · 42 SP
+### Sprint 6 · vinculación de catálogos + rehecha de la carga de factura de compra · 34 SP
 
 **Entregable:** al cerrar este sprint, una persona puede entrar al sistema, cargar la lista de
 precios de un proveedor, vincular sus renglones con los artículos propios a partir de las
-propuestas del sistema, y cargar una factura de compra subiendo el PDF del proveedor y
-revisándola antes de confirmar, sobre `lacentral_demo`.
+propuestas del sistema, y cargar una factura de compra con la mecánica que pidió Javi: buscar
+proveedor y artículos por código o nombre (Enter sobre el código exacto selecciona, sin ceros a la
+izquierda), tipo A/B e IVA automáticos según el proveedor opere en blanco o en negro, fechas de
+emisión, vencimiento e imputación, precio editable y hasta tres descuentos por línea, sucursal
+heredada de la cabecera, y el total final con percepciones e IVA antes de confirmar, sobre
+`lacentral_demo`.
 
 | Issue | HU | SP | Área |
 |---|---|---|---|
 | #128 | 055 · HU-CMP-08 · lista de precios de un proveedor desde archivo | 5 | Vinculación |
 | #126 | 053 · HU-CMP-06 · candidatos por aproximación entre catálogos | 8 | Vinculación |
 | #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | Vinculación |
-| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | PDF |
-| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | PDF |
+| — (sin issue) | 056 · HU-FCO-06 · rehecha de la carga de factura de compra | 13 | Compra |
 
 - **La pantalla de vinculación entra en las proformas de la 053 y la 054**, cuando se escriban
   en C5. La 050 no tiene ningún CA de vinculación. Los 16 SP de la 053 y la 054 son estimaciones
   hasta que existan sus proformas.
-- El PDF va con la vinculación porque el cotejo de códigos (CA-004 de la 029) usa la tabla de C2:
-  un solo cambio de esquema para todo.
+- **La 056 es alcance nuevo sobre la 025 (HU-FCO-01), ya entregada y aceptada**: va como historia
+  propia, con sus criterios, no parcheada sobre la 025. Sus **13 SP son estimación** hasta que
+  exista su proforma y su issue.
+- La 056 va en el Sprint 6 porque se monta sobre el cambio de esquema que el sprint ya tiene al
+  arrancar (C1 y C2): un solo cambio de esquema para todo (D-PL-04).
 
-### Sprint 7 · comparador + lo que falta de compra · 46 SP
+### Sprint 7 · comparador + lo que falta de compra + factura por PDF · 67 SP
 
 **Entregable:** al cerrar este sprint, una persona puede entrar al sistema, buscar un repuesto y
 ver los precios de todos sus proveedores ordenados (consultados en vivo, o el último conocido con
 su fecha), alternar entre la vista de compra y la de venta, abrir el sitio del proveedor, y
-consultar, corregir y anular facturas de compra, sobre `lacentral_demo`.
+consultar, corregir y anular facturas de compra, y cargar una factura de compra subiendo el PDF
+del proveedor y revisándola antes de confirmar, sobre `lacentral_demo`.
 
 | Issue | HU | SP | Área |
 |---|---|---|---|
@@ -65,11 +72,16 @@ consultar, corregir y anular facturas de compra, sobre `lacentral_demo`.
 | #33 | 026 · HU-FCO-02 · consulta de facturas de compra | 3 | Compra |
 | #34 | 027 · HU-FCO-03 · modificación acotada de factura de compra | 2 | Compra |
 | #9 | 028 · HU-FCO-04 · anulación de factura de compra | 8 | Compra |
+| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | PDF |
+| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | PDF |
 
 - **La 050 no se parte:** su CA-002 y su CA-003 necesitan la 031.
 - **La 031 entra completa**, no como prueba de concepto (D-PL-02). Armar los scrapes de cada sitio
   lo hacen a mano Javi, Lauti y Santi en paralelo, **fuera del conteo de SP**.
 - La 028 cierra el CA-003 y el CA-004 de la 016 (#23) y destraba la 048 para el Sprint 8.
+- **El PDF (029 y 049) viene del Sprint 6 (D-PL-04):** se construye una sola vez, contra el
+  esquema de factura de compra ya rehecho por la 056 y con la tabla de vinculación de C2 hecha
+  (el cotejo de códigos del CA-004 de la 029 la usa).
 
 ### Sprint 8 · venta + stock + UI y artículos · 53 SP + ítems sin SP
 
@@ -92,13 +104,15 @@ sucursales, y cargar artículos con su código original y su marca, sobre `lacen
 | #53 | 051 · HU-UI-13 · manejo global de errores y avisos | 2 | UI |
 | #54 | 052 · HU-UI-14 · documentación del frontend | 5 | UI |
 | #15 | 012 · HU-ART-02 · CA2, CA4 y CA5 sin test desde el Sprint 3 | — | Artículos |
-| #160 | CA-003 de la 014 · columna para la baja por error de stock | — | Artículos |
 
 **Ítems sin SP**, que esperan una respuesta de Sergio (`docs/sprint05/PREGUNTAS-SERGIO.md`) o su
 proforma: C4 (código original y marca, reabre la 011 y la 013; pregunta 5), precio «caso
-especial» (HU sin escribir; pregunta 4), CA-003 de la 014 (#160; pregunta 2), provincia en las
+especial» (HU sin escribir; pregunta 4), provincia en las
 direcciones (D-S5-02; pregunta 7), validar la condición fiscal (pregunta 1), y el bug de la
 compra que suma stock a un artículo dado de baja. Cada uno lleva SP cuando tenga su regla.
+El CA-003 de la 014 (#160) salió de la lista el 12/11/2026: Sergio respondió el 11/11 que primero
+se corrige la existencia y después se da de baja; el CA quedó anulado (014 v1.1) y la #160 cerrada
+sin trabajo.
 
 **Fuera del plan, por ser mantenimiento:** #137 (Deuda27) y lo que queda de la fase 2 visual.
 
@@ -107,13 +121,17 @@ compra que suma stock a un artículo dado de baja. Cada uno lleva SP cuando teng
 | Compuerta | Bloquea | Se cierra |
 |---|---|---|
 | **Pregunta 6 a Sergio** (de dónde sale «el archivo») | 055 | **Antes del 16/11.** La lleva Santi esta semana |
-| C2 · tabla `proveedor_articulo` y vinculaciones aprendidas | 055, 053, 054 y el cotejo de la 029 | Sprint 6, al arrancar |
+| C2 · tabla `proveedor_articulo` y vinculaciones aprendidas | 055, 053, 054 y el cotejo de la 029 (Sprint 7) | Sprint 6, al arrancar |
+| Esquema de la 056 · proveedor en blanco o en negro; fechas de emisión, vencimiento e imputación en `factura_compra`; precio editable y hasta tres descuentos por línea en `factura_compra_detalle` | 056; la 029 y la 049 (Sprint 7) la usan | Sprint 6, al arrancar, en el mismo cambio de esquema que C2 y C1 |
 | C5 · escribir las proformas de la 053 y la 054 (con la pantalla de vinculación) | 053, 054 | Sprint 6, al arrancar |
 | C6 · medición sobre 50 artículos | 053 | Sprint 6, al arrancar |
 | C1 · modalidad L2 y retiro de Tarjeta3/6 | 032, 033 y el CA-004 de la 050 | Sprint 6, en el mismo cambio de esquema que C2; se usa en el 7 |
 | C4 · código original y marca | 046; reabre la 011 y la 013 | Sprint 8, cuando Sergio responda |
 
 Una HU no se empieza hasta que su compuerta esté cerrada, aunque esté en el milestone.
+
+**El cambio de esquema del Sprint 6 es uno solo** (script en `backend/db/` + re-scaffold, nunca
+migraciones): C2, C1 y los tres de la 056.
 
 ## Decisiones
 
@@ -122,3 +140,4 @@ Una HU no se empieza hasta que su compuerta esté cerrada, aunque esté en el mi
 | D-PL-01 | No se recorta nada: los sprints se estiran a tres semanas estimadas. | 09/11/2026 | Santi | El sprint cierra por entregable, no por fecha (§1 de `CLAUDE.md`). 141 SP contra unos 102. |
 | D-PL-02 | **La 031 entra completa, no como prueba de concepto. Reemplaza la D16** (18/10/2026: «la ingesta automatizada es etapa 2, con un proveedor como prueba de concepto»). | 09/11/2026 | Santi | No queda trabajo futuro: todo lo abierto entra en los sprints 6, 7 y 8. Los scrapes los arman a mano Javi, Lauti y Santi en paralelo, fuera del conteo de SP. |
 | D-PL-03 | La 050 no se parte; la pantalla de vinculación va en las proformas de la 053 y la 054. | 09/11/2026 | Santi | Todos los CA de la 050 son del comparador. |
+| D-PL-04 | La 056 (HU-FCO-06, rehecha de la carga de factura de compra) entra en el Sprint 6; la factura desde PDF (029 #13 y 049 #51) pasa al Sprint 7. | 12/11/2026 | Lauti | La rehecha aprovecha el cambio de esquema ya previsto en el Sprint 6; el PDF necesita ese esquema terminado y la tabla de vinculación, así que se construye después y una sola vez. |
