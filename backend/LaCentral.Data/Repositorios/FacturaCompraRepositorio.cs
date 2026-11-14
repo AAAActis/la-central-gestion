@@ -103,4 +103,8 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
 
         return Result<int>.Success(fila.Id);
     }
+
+    public Task<(IReadOnlyList<FacturaCompraResumen> Items, int Total)> BuscarAsync(
+        FiltroFacturasCompra filtro, int pagina, int tamanoPagina, CancellationToken ct = default)
+        => Task.FromResult<(IReadOnlyList<FacturaCompraResumen>, int)>((Array.Empty<FacturaCompraResumen>(), 0));
 }
