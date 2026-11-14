@@ -169,6 +169,11 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
+**14/11 · 026 (#33), rama `feature/33-consulta-facturas-compra`** (sale de `feature/163-frontend`;
+depende del #166 y del #167): `GET /api/facturas-compra` con proveedor, número y rangos de emisión
+y de vencimiento, y la pantalla «Compras registradas», que es un módulo nuevo en el menú. Las
+anuladas se muestran marcadas. La 028 parte 2, la pantalla de anulación, se monta sobre esta.
+
 **14/11 · Revisión de Javi sobre #166 y #167, y cuarta ronda del #167.**
 - **#166: APROBADO por Javi (14/11). No se le pushea nada.** Sus dos observaciones quedan como
   deuda en la **#168** (sin milestone): `ModificarProveedorUseCase` pisa

@@ -574,3 +574,16 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
   - que Santi aplique el 09 en `lacentral`;
   - el recorrido DoD 10;
   - #168 y #169.
+
+## 14/11/2026 16:39 · 026 (#33), continuación del bloque de las 14:19 (en la rama de la 028)
+
+**Instrucción recibida (verbatim):** la del bloque de las 14:19. Ese bloque está en `feature/9-anulacion-factura-compra`; esta rama sale de `feature/163-frontend` y no lo tiene.
+
+**Plan:** backend de la consulta (caso de uso, repositorio y `GET /api/facturas-compra`), pantalla «Compras registradas», suite completa, `verificador-tdd` y `auditor-persistencia`, PR.
+
+- Backend: esqueleto, rojo de Moq (7 con error y 1 superado) y de PostgreSQL (5 con error y 1 superado), código (14/14), rojo HTTP (`MethodNotAllowed`) y endpoint (FacturasCompraApiPostgreSqlTests 17/17).
+- Frontend: esqueleto, rojo (9 FAILED: 6 por TypeError, porque el esqueleto no tiene formulario, y 3 por expectOne; acceso.spec, por aserción), código. Los dos specs del menú de `app.spec.ts` se actualizaron por el módulo nuevo. Frontend completo: `TOTAL: 205 SUCCESS`.
+- **Interpretación:** el CA-001 dice «exactamente una». Con número y proveedor puede haber una activa y además anuladas con el mismo número (CA-004 de la 028); se muestran todas, y las anuladas van marcadas (CA-005).
+- Un `git stash` con una ruta sin seguimiento falló y no tocó nada: el stash del usuario (`stash@{0}`) sigue intacto y no se aplicó.
+
+**Estado:** en curso
