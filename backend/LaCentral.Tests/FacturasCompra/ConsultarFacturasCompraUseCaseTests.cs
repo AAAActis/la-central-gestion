@@ -49,6 +49,8 @@ public class ConsultarFacturasCompraUseCaseTests
     [InlineData(0, 20)]
     [InlineData(1, 0)]
     [InlineData(1, 101)]
+    // Verificador ronda 1: (pagina - 1) × tamaño desbordaría el int del Skip.
+    [InlineData(30_000_000, 100)]
     public async Task PaginaInvalida_Invalido(int pagina, int tamano)
     {
         var resultado = await Caso().EjecutarAsync(new FiltroFacturasCompra(), pagina, tamano);

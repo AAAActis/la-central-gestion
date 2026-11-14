@@ -125,12 +125,31 @@ describe('ComprasRegistradas · HU-FCO-02', () => {
 
   it('el error del servidor se muestra y no deja la tabla anterior', () => {
     buscar();
+    servidor.expectOne(r => r.url === '/api/facturas-compra').flush(pagina([factura(1, 'A-1')]));
+    fixture.detectChanges();
+    expect(raiz().querySelector('tbody')).not.toBeNull();
+
+    buscar();
     servidor.expectOne(r => r.url === '/api/facturas-compra')
       .flush({ detail: 'El rango de emisión empieza después de terminar.' }, { status: 400, statusText: 'Bad Request' });
     fixture.detectChanges();
 
     expect(raiz().querySelector('[role="alert"]')?.textContent).toContain('El rango de emisión empieza después de terminar.');
     expect(raiz().querySelector('tbody')).toBeNull();
+  });
+
+  // Verificador ronda 1: los extremos de la paginación.
+  it('pagina: en la primera no se puede ir atrás y en la última no se puede ir adelante', () => {
+    const boton = (texto: string) => Array.from(raiz().querySelectorAll<HTMLButtonElement>('button')).find(b => b.textContent?.includes(texto))!;
+    buscar();
+    servidor.expectOne(r => r.url === '/api/facturas-compra').flush(pagina([factura(1, 'A-1')], 21));
+    fixture.detectChanges();
+    expect([boton('Anterior').disabled, boton('Siguiente').disabled]).toEqual([true, false]);
+
+    boton('Siguiente').click();
+    servidor.expectOne(r => r.url === '/api/facturas-compra').flush(pagina([factura(2, 'A-2')], 21, 2));
+    fixture.detectChanges();
+    expect([boton('Anterior').disabled, boton('Siguiente').disabled]).toEqual([false, true]);
   });
 
   it('pagina: «Siguiente» pide la página 2 con los mismos criterios', () => {
