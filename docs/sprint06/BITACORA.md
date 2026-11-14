@@ -496,7 +496,7 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 8. ESTADO con fecha (ronda 1, autorización del 13/11, issues, deuda, script 09). Push.
 9. Según dictamen: comentario a Javi, re-review, sacar el cartel; o arreglo acotado.
 
-**Estado:** en curso
+**Estado:** terminada (lo abierto, al final del bloque)
 - 09:25 · Paso 2: issues **#168** (deuda del #166, sin milestone) y **#169** (artículo repetido por sucursal, milestone Sprint 6).
 - 09:40 · Paso 3 (punto 1): rojo **`4dd89a1`** (spec «Enter con dos códigos exactos sin ceros (035 y 00035) lista los dos y no elige ninguno»: `1 FAILED, 25 SUCCESS`, por aserción: `Expected Object({ id: 7, codigo: '035', … }) to be null`). Código **`8a331f1`**: `enterProveedor()` elige solo si hay exactamente una coincidencia exacta. `factura-compra*`: `26 SUCCESS`. Solo frontend; no hizo falta backend.
 - 10:05 · Paso 4 (punto 5, ronda 4): **`7b36e8d`**, solo specs (producción sin cambios). Sobre producción, `factura-compra*` + `articulos*` + `terceros*`: `TOTAL: 65 SUCCESS`. Cada mutación puesta de a una (los números de línea son los de `9f6cf1c`), siempre en rojo por aserción, y en verde al sacarla:
@@ -515,3 +515,13 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 - 11:27 · **`verificador-tdd`, verificación del arreglo, lanzada**, acotada a `4b624d3`, con `4b624d3` · `TOTAL: 196 SUCCESS` · 196/196. Una instancia; no se toca ningún worktree hasta su reporte final.
 - 11:45 · **`verificador-tdd`, verificación de `4b624d3`: APTO** (reporte final). 10c (`<dd>B</dd>`) y 11 (`?? ''`) mueren por aserción en «056 · sin comprobante habitual, la ficha muestra la raya». Aceptó 196/196 sobre `4b624d3` sin repetirla. `git worktree list`: solo el principal.
 - 11:50 · Paso 8: ESTADO con fecha (ronda 1 del 13/11, autorización de la cuarta ronda, #168, #169, deuda del #166, 09 sin aplicar en `lacentral`), tablero y PRÓXIMA SESIÓN. Sigue: push del #167, cuerpo, comentario a Javi, re-review y carteles.
+- 12:00 · Paso 9: push de `ce9aacf` al #167. Los cuerpos del #166 y del #167 ya no tienen el «NO MERGEAR»: se editó el cuerpo del #166, sin pushearle nada (sigue APPROVED, head `bd300e5`). En el cuerpo del #167 quedaron la revisión de Javi, la ronda 4, el arreglo y 196/196. Comenté en el #167 qué cambió por cada punto, y está pedida de nuevo la revisión de Javi.
+- `origin/develop` trae solo los merges de #164 y #165, sin diferencia de contenido (`git diff HEAD...origin/develop` vacío), así que no se mergeó en la rama.
+- **Queda abierto (lo tienen que hacer personas):**
+  - la re-review de Javi del #167;
+  - el merge del #166 junto con el #167;
+  - que Santi aplique el 09 en `lacentral` después del merge;
+  - el recorrido DoD 10 (Javi con Sergio, en la sección del ESTADO);
+  - la suite completa después del merge a `develop`;
+  - #168 y #169;
+  - el CA-011, que no tiene test de un precio escrito que llegue al servidor.
