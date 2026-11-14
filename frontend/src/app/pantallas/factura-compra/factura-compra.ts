@@ -301,7 +301,9 @@ export class FacturaCompra {
   elegirArticulo(articulo: ArticuloResultado) {
     this.articulos.set([]);
     const reemplazo = this.reemplazando();
-    if (this.lineas.some((l, i) => l.articulo.id === articulo.id && i !== reemplazo)) {
+    // #169 (D9): repetido es el mismo artículo en el mismo destino; a otra sucursal es otra línea.
+    const destino = reemplazo !== null ? this.lineas[reemplazo].sucursalId : this.sucursalCabecera;
+    if (this.lineas.some((l, i) => l.articulo.id === articulo.id && l.sucursalId === destino && i !== reemplazo)) {
       this.errorArticulo.set(`${articulo.codigoInterno} ya está en la factura: corregí su línea.`);
       return;
     }
