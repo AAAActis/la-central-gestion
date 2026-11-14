@@ -81,6 +81,17 @@ describe('FacturaCompra · HU-FCO-06', () => {
     expect(raiz().querySelectorAll('button.opcion').length).toBe(1);
   });
 
+  it('CA-002 y CA-003: Enter con dos códigos exactos sin ceros (035 y 00035) lista los dos y no elige ninguno', () => {
+    c.textoProveedor = '35';
+    c.enterProveedor();
+    servidor.expectOne(r => r.url === '/api/proveedores')
+      .flush({ items: [proveedor('035'), proveedor('00035', null, 8)], total: 2, pagina: 1, tamanoPagina: 20 });
+    fixture.detectChanges();
+
+    expect(c.proveedor()).toBeNull();
+    expect(raiz().querySelectorAll('button.opcion').length).toBe(2);
+  });
+
   // ---- CA-004 y CA-005 · tipo de comprobante y número ----
 
   it('CA-004 y CA-005: el proveedor que suele emitir B propone B y precarga 99 en el número', () => {
