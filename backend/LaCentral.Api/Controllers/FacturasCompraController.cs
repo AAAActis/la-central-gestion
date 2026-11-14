@@ -15,9 +15,11 @@ public class FacturasCompraController : ControllerBase
 {
     private readonly RegistrarFacturaCompraUseCase _registrar;
     private readonly ConsultarFacturasCompraUseCase _consultar;
+    private readonly AnularFacturaCompraUseCase _anular;
 
-    public FacturasCompraController(RegistrarFacturaCompraUseCase registrar, ConsultarFacturasCompraUseCase consultar)
-        => (_registrar, _consultar) = (registrar, consultar);
+    public FacturasCompraController(RegistrarFacturaCompraUseCase registrar, ConsultarFacturasCompraUseCase consultar,
+        AnularFacturaCompraUseCase anular)
+        => (_registrar, _consultar, _anular) = (registrar, consultar, anular);
 
     /// <summary>
     /// HU-FCO-02 (026). Consulta por proveedor, número y rangos de emisión y de vencimiento;
@@ -34,6 +36,21 @@ public class FacturasCompraController : ControllerBase
         CancellationToken ct, [FromQuery] int pagina = 1, [FromQuery] int tamanoPagina = 20)
         => this.AResultadoHttp(await _consultar.EjecutarAsync(new DtosNucleo.FiltroFacturasCompra(
             proveedorId, numero, emisionDesde, emisionHasta, vencimientoDesde, vencimientoHasta), pagina, tamanoPagina, ct));
+
+    /// <summary>
+    /// HU-FCO-04 (028). Anula quien está en la sesión; la autoriza otro usuario ADMINISTRADOR
+    /// con su usuario y contraseña (doble certificación). 204; 400 sin motivo o sin
+    /// autorización válida; 404 si no existe; 409 si ya estaba anulada.
+    /// </summary>
+    [HttpPost("{id}/anulacion")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Anular(int id, [FromBody] DtosNucleo.AnularFacturaCompraRequest request, CancellationToken ct)
+        => this.AResultadoHttp(await _anular.EjecutarAsync(id, request, ct));
 
     /// <summary>
     /// Registro manual de factura de compra. HU-FCO-01. En una sola operación: factura,

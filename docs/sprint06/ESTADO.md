@@ -169,6 +169,16 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
+**14/11 · Sprint 7 adelantado (028, 026 y 027), pedido de Santi.** Siguen en el milestone del
+Sprint 7. Cada HU tiene su rama, que sale de `feature/163-frontend`, y su PR depende del #166 y del #167.
+- **028 (#9), parte 1, backend:** rama `feature/9-anulacion-factura-compra`. Decisiones de Santi
+  del 14/11: hay **doble certificación**, porque la autoriza otro usuario ADMINISTRADOR con su
+  contraseña (B.4 del 07), y la anulación la piden ADMINISTRADOR y OPERADOR. Quedaron como CA-006
+  y CA-007 de la proforma v1.1. Interpretación pendiente en el CA-002: el costo no se toca. La
+  parte 2, la pantalla, va después de la 026. **PR #173** (14/11), milestone Sprint 7: verificador APTO en la ronda 2, auditor APTO, 591/591 sobre `57142f0`.
+- Nota del auditor sobre `proveedor_baja_coherente`: **cerrada, no es contradicción.** El 01
+  reemplaza los CHECK de `base_completa.sql` por la forma de la D10.
+
 **14/11 · 026 (#33), rama `feature/33-consulta-facturas-compra`** (sale de `feature/163-frontend`;
 depende del #166 y del #167): `GET /api/facturas-compra` con proveedor, número y rangos de emisión
 y de vencimiento, y la pantalla «Compras registradas», que es un módulo nuevo en el menú. Las

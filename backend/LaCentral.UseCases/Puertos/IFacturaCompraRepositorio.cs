@@ -32,4 +32,15 @@ public interface IFacturaCompraRepositorio
     /// </summary>
     Task<(IReadOnlyList<FacturaCompraResumen> Items, int Total)> BuscarAsync(
         FiltroFacturasCompra filtro, int pagina, int tamanoPagina, CancellationToken ct = default);
+
+    /// <summary>HU-FCO-04: la factura con su estado y los artículos de su detalle, o null.</summary>
+    Task<FacturaCompraParaAnular?> ObtenerParaAnularAsync(int id, CancellationToken ct = default);
+
+    /// <summary>
+    /// HU-FCO-04: marca la factura ANULADA, resta del stock del destino de cada línea (puede
+    /// quedar negativo, CA-003), anula sus registros de historial y devuelve a cada artículo
+    /// el costo y el proveedor de su último registro válido; sin registro válido queda sin
+    /// último proveedor y con el costo que tenía (CA-002). Se llama dentro de IUnidadDeTrabajo.
+    /// </summary>
+    Task<Result> AnularConEfectosAsync(AnulacionFacturaCompra anulacion, CancellationToken ct = default);
 }

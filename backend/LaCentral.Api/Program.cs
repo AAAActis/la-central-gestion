@@ -68,6 +68,7 @@ builder.Services.AddScoped<ReactivarArticuloUseCase>();
 builder.Services.AddScoped<CalcularPreciosArticuloUseCase>();
 builder.Services.AddScoped<RegistrarFacturaCompraUseCase>();
 builder.Services.AddScoped<ConsultarFacturasCompraUseCase>();
+builder.Services.AddScoped<AnularFacturaCompraUseCase>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
