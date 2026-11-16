@@ -58,6 +58,13 @@ describe('Articulos · listado', () => {
     expect(raiz().textContent).toContain('Mostrando 1–2 de 25 artículos');
   });
 
+  it('HU-FCO-06 CA-008: la búsqueda del listado no pide coincidencias aproximadas', () => {
+    buscar('buj');
+    const pedido = servidor.expectOne(r => r.url === '/api/articulos');
+    expect(pedido.request.params.has('aproximada')).toBeFalse();
+    pedido.flush(PAGINA);
+  });
+
   it('«Ver ficha» abre la ficha de ese artículo', () => {
     buscar('buj');
     servidor.expectOne(r => r.url === '/api/articulos').flush(PAGINA);

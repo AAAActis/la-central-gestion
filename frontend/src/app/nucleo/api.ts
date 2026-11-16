@@ -85,6 +85,8 @@ export interface ProveedorResumen {
   razonSocial: string;
   cuit: string | null;
   activo: boolean;
+  /** HU-FCO-06: lo que el proveedor suele emitir. Solo un valor por defecto. */
+  tipoComprobanteHabitual?: 'A' | 'B' | null;
 }
 
 /** 045 · clientes y proveedores comparten pantalla: lo que difiere lo pone la configuración. */
@@ -109,6 +111,7 @@ export interface FichaTercero {
   condicionFiscal?: string | null;
   condicionPago?: string | null;
   urlReferencia?: string | null;
+  tipoComprobanteHabitual?: 'A' | 'B' | null;
   motivoBaja?: string | null;
 }
 
@@ -118,18 +121,30 @@ export interface LineaFacturaCompra {
   cantidad: number;
   precioUnitario: number;
   descuentoPorcentaje: number;
+  descuento2Porcentaje: number;
+  descuento3Porcentaje: number;
 }
 
 export interface FacturaCompraNueva {
   proveedorId: number;
   numero: string;
+  tipoComprobante: string;
   fechaEmision: string;
   fechaVencimiento: string | null;
+  fechaImputacion: string | null;
   percepcionIva: number;
   percepcionIibb: number;
   percepcionMunicipal: number;
   percepcionGanancias: number;
   lineas: LineaFacturaCompra[];
+}
+
+/** HU-FCO-06 CA-015: lo que devuelve POST /api/facturas-compra/calculo. El IVA lo decide la API. */
+export interface TotalesFacturaCompra {
+  neto: number;
+  iva: number;
+  percepciones: number;
+  total: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -140,12 +155,14 @@ export class ApiLaCentral {
     return this.http.post<Sesion>('/api/acceso/login', { nombreUsuario, contrasena });
   }
 
-  buscar(texto: string, incluirInactivos: boolean, pagina: number, tamanoPagina: number): Observable<PaginaArticulos> {
-    const params = new HttpParams()
+  buscar(texto: string, incluirInactivos: boolean, pagina: number, tamanoPagina: number, aproximada = false): Observable<PaginaArticulos> {
+    let params = new HttpParams()
       .set('texto', texto)
       .set('incluirInactivos', incluirInactivos)
       .set('pagina', pagina)
       .set('tamanoPagina', tamanoPagina);
+    // HU-FCO-06 CA-008: solo la factura de compra pide coincidencias aproximadas.
+    if (aproximada) params = params.set('aproximada', true);
     return this.http.get<PaginaArticulos>('/api/articulos', { params });
   }
 
@@ -184,9 +201,12 @@ export class ApiLaCentral {
     return this.http.post<void>(`/api/articulos/${id}/reactivacion`, null);
   }
 
-  /** Solo activos: a un proveedor inactivo no se le registran compras. La primera página (#147). */
+  /**
+   * Solo activos: a un proveedor inactivo no se le registran compras. La primera página (#147).
+   * HU-FCO-06 CA-001: por código o nombre, sin CUIT.
+   */
   proveedores(texto: string): Observable<ProveedorResumen[]> {
-    const params = new HttpParams().set('texto', texto).set('incluirInactivos', false);
+    const params = new HttpParams().set('texto', texto).set('incluirInactivos', false).set('porCuit', false);
     return this.http.get<{ items: ProveedorResumen[] }>('/api/proveedores', { params }).pipe(map(p => p.items));
   }
 
@@ -218,6 +238,10 @@ export class ApiLaCentral {
 
   registrarFacturaCompra(factura: FacturaCompraNueva): Observable<{ id: number }> {
     return this.http.post<{ id: number }>('/api/facturas-compra', factura);
+  }
+
+  calcularFacturaCompra(factura: FacturaCompraNueva): Observable<TotalesFacturaCompra> {
+    return this.http.post<TotalesFacturaCompra>('/api/facturas-compra/calculo', factura);
   }
 }
 
