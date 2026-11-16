@@ -680,3 +680,46 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 - 13:02 · `verificador-tdd` ronda 1 (`84bb4d4..e076966`): **NO APTO**. Sobrevivieron M6 a M9: el `init` que no asigna, el tipo pasado en `null`, y `UrlReferencia` y `Direcciones` en `null` en el mapeo. Arreglo `c8a8ae0`: `Modificar_ConTodosLosCampos_LosEscribeEnLaFila` (PUT con "A" sobre un "B" y todos los campos, relectura con un contexto nuevo y la ficha), en verde de entrada.
 - 13:21 · `verificador-tdd` ronda 2 (`e076966..c8a8ae0`): **APTO**; murieron M6 a M9. `auditor-persistencia` sobre `84bb4d4..c8a8ae0`: **APTO**. Suite completa sobre `c8a8ae0`: `Correctas! - Con error: 0, Superado: 564, Omitido: 0, Total: 564`. Nota del auditor, fuera del alcance y sin auditar: `proveedor_baja_coherente` en `base_completa.sql` parecería contradecir la D10.
 - 13:22 · Push de `7d4da66` y **PR #171** contra `develop`, sin milestone, igual que la #168. El cuerpo dice que depende del #166 y el #167.
+
+## 14/11/2026 14:19 · Sprint 7 adelantado: 028 (#9), 026 (#33) y 027 (#34)
+
+**Instrucción recibida (verbatim):**
+> Mientras Javi revisa, adelantá lo que queda de factura de compra en el Sprint 7: la 028
+> (#9), la 026 (#33) y la 027 (#34). No tienen compuerta abierta. Empezá por la 028, que es
+> la que destraba la 016 (#23). Leé sus proformas antes de arrancar.
+>
+> - Una HU por rama y por PR, todas desde feature/163-frontend, que tiene el esquema y el
+>   código de la 056. En el cuerpo de cada PR: depende del #166 y del #167. Cuando esos
+>   entren a develop, git merge origin/develop en cada rama, nunca rebase.
+> - PR chicos: si una HU pasa los 8 SP, partila en dos PR con sentido propio.
+> - TDD, suite completa antes de abrir cada PR, y los verificadores que correspondan, una
+>   instancia por vez.
+> - Quedan en el milestone del Sprint 7: no los muevas.
+>
+> Sobre lo que marcó el auditor de proveedor_baja_coherente: no es contradicción. El script
+> 01_Ajustes_Sprint3 ya reemplaza los cuatro CHECK por la forma de la D10, y la base se
+> arma con base_completa.sql y después los scripts de rescaffold/ en orden. Anotalo así en
+> la bitácora y cerralo.
+>
+> La 029 y la 049 siguen sin arrancar: la C7 está abierta.
+
+**Plan:**
+1. Leer las proformas de la 028, la 026 y la 027 (y la 016, que la 028 cita como precondición).
+2. 028 en `feature/9-anulacion-factura-compra`: TDD de caso de uso (Moq) y de persistencia/atomicidad (PostgreSQL real), endpoint, pantalla; suite completa; `verificador-tdd` y `auditor-persistencia`; PR.
+3. 026 y 027, cada una en su rama desde `feature/163-frontend`, igual.
+4. Cuando entren el #166 y el #167: `git merge origin/develop` en cada rama.
+
+- 14:19 · **Nota del auditor sobre `proveedor_baja_coherente`, cerrada:** no hay contradicción con la D10. `backend/db/rescaffold/01_Ajustes_Sprint3.sql` (líneas 166 a 177) borra los CHECK `*_baja_coherente` de `base_completa.sql` y los vuelve a crear con la forma de la D10 (`activo OR (motivo_baja IS NOT NULL AND fecha_baja IS NOT NULL)`). La base se arma con `base_completa.sql` y después con los scripts de `rescaffold/` en orden. Lo aclaró Santi el 14/11.
+- 14:19 · Proformas leídas: 028 v1.0 (8 SP, riesgo alto, 5 CA), 026 v1.0 (3 SP, 5 CA), 027 v1.0 (2 SP, 4 CA), 016 v1.0 (5 SP). Ninguna pasa los 8 SP. El esquema ya tiene lo de la anulación: `estado`, `motivo_anulacion`, `fecha_anulacion`, `usuario_anulacion_id` y el índice único parcial `ux_factura_compra_numero_activa`, que libera el número (CA-004).
+- 14:19 · **Regla que falta en la 028:** `07_Normalizacion_3FN_y_Reportes.sql` B.4 agrega `factura_compra.usuario_autorizacion_id`, que es la doble certificación pedida por la Dirección el 02/11/2026: anular necesita dos personas, y la que autoriza tiene que ser ADMINISTRADOR. La proforma v1.0 de la 028 (19/08) no la menciona, y ningún documento de `docs/` la recoge. Tampoco dice qué rol puede anular.
+
+**BLOQUEADO EN:** la 028 necesita una decisión del equipo (Santi): si la anulación pide la doble certificación de B.4 y qué rol anula. La 026 y la 027 no dependen de esto.
+
+**Estado:** en curso
+- 14:52 · Respuesta de Santi: la 028 incluye la doble certificación, y la anulación la piden ADMINISTRADOR y OPERADOR, con la autorización de otro usuario ADMINISTRADOR. La identidad de quien autoriza se prueba con su usuario y su contraseña, nunca con un Id del cuerpo. Las dos decisiones quedan como CA-006 y CA-007 de la 028 v1.1.
+- **028 partida en dos PR** (con la doble certificación pasa los 8 SP): este, solo backend (caso de uso, repositorio y endpoint), y otro con la pantalla de anulación, que necesita el listado de la 026 para elegir la factura.
+- Esqueleto `bb8a1f8`, rojo `b53c5c3` (Moq 16 con error y 1 superado; PostgreSQL 9 con error, por aserción), código `bc313e2` (26/26), rojo HTTP, endpoint `acaaec5` (FacturasCompraApiPostgreSqlTests 17/17).
+- **Interpretación pendiente de confirmación (CA-002):** «conserva su precio de costo previo» se lee como que el costo no se toca, porque no hay registro del costo anterior a la factura. Queda anotado en la proforma y en el PR.
+- 15:40 · `verificador-tdd` ronda 1 (`84bb4d4..01171bf`): **NO APTO**. Sobrevivieron M12 y M13, la guarda de la cabecera ACTIVA contra dos anulaciones simultáneas; M14, el stock revertido fuera de la columna; y M16, el orden del último registro válido. No bloqueante: el rojo de `AnulaUnOperador…` cae por NullReferenceException, no por aserción. Arreglo `57142f0`: tres tests por caminos reales (la segunda anulación llega al repositorio con la factura ya ANULADA; stock en -999.999.999; tres facturas y se anula la última), más el mensaje en `AnularDosVeces`. 12/12 PG.
+- 16:23 · `verificador-tdd` ronda 2 (`01171bf..57142f0`): **APTO**, murieron las 5. `auditor-persistencia` (`84bb4d4..57142f0`): **APTO**. Observaciones no bloqueantes: la «carrera» del test es secuencial; no hay un caso de anulación con el mismo artículo en dos sucursales; y una pregunta para el equipo: anular una factura vieja pisa un costo cargado a mano después, que no queda en el historial. Suite completa sobre `57142f0`: 591/591. La corrida anterior dio 1 fallo ajeno (`ArticulosApiPostgreSqlTests.Post_Alta_201ConIdYLocation`), que filtrado pasó en verde. Probablemente vino de una corrida del verificador que seguía en segundo plano.
+- 16:24 · Push de `e795879` y **PR #173** (028 parte 1, `Refs #9`, milestone Sprint 7). Sigue la 026 (#33).
