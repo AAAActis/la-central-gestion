@@ -26,6 +26,13 @@ public interface IFacturaCompraRepositorio
     /// </summary>
     Task<Result<int>> RegistrarConEfectosAsync(FacturaCompra factura, CancellationToken ct = default);
 
+    /// <summary>
+    /// HU-FCO-02: las facturas que cumplen el filtro (activas y anuladas), de la emisión más
+    /// reciente a la más antigua, una página.
+    /// </summary>
+    Task<(IReadOnlyList<FacturaCompraResumen> Items, int Total)> BuscarAsync(
+        FiltroFacturasCompra filtro, int pagina, int tamanoPagina, CancellationToken ct = default);
+
     /// <summary>HU-FCO-04: la factura con su estado y los artículos de su detalle, o null.</summary>
     Task<FacturaCompraParaAnular?> ObtenerParaAnularAsync(int id, CancellationToken ct = default);
 

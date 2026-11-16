@@ -723,3 +723,55 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 - 15:40 · `verificador-tdd` ronda 1 (`84bb4d4..01171bf`): **NO APTO**. Sobrevivieron M12 y M13, la guarda de la cabecera ACTIVA contra dos anulaciones simultáneas; M14, el stock revertido fuera de la columna; y M16, el orden del último registro válido. No bloqueante: el rojo de `AnulaUnOperador…` cae por NullReferenceException, no por aserción. Arreglo `57142f0`: tres tests por caminos reales (la segunda anulación llega al repositorio con la factura ya ANULADA; stock en -999.999.999; tres facturas y se anula la última), más el mensaje en `AnularDosVeces`. 12/12 PG.
 - 16:23 · `verificador-tdd` ronda 2 (`01171bf..57142f0`): **APTO**, murieron las 5. `auditor-persistencia` (`84bb4d4..57142f0`): **APTO**. Observaciones no bloqueantes: la «carrera» del test es secuencial; no hay un caso de anulación con el mismo artículo en dos sucursales; y una pregunta para el equipo: anular una factura vieja pisa un costo cargado a mano después, que no queda en el historial. Suite completa sobre `57142f0`: 591/591. La corrida anterior dio 1 fallo ajeno (`ArticulosApiPostgreSqlTests.Post_Alta_201ConIdYLocation`), que filtrado pasó en verde. Probablemente vino de una corrida del verificador que seguía en segundo plano.
 - 16:24 · Push de `e795879` y **PR #173** (028 parte 1, `Refs #9`, milestone Sprint 7). Sigue la 026 (#33).
+
+## 14/11/2026 16:39 · 026 (#33), continuación del bloque de las 14:19 (en la rama de la 028)
+
+**Instrucción recibida (verbatim):** la del bloque de las 14:19. Ese bloque está en `feature/9-anulacion-factura-compra`; esta rama sale de `feature/163-frontend` y no lo tiene.
+
+**Plan:** backend de la consulta (caso de uso, repositorio y `GET /api/facturas-compra`), pantalla «Compras registradas», suite completa, `verificador-tdd` y `auditor-persistencia`, PR.
+
+- Backend: esqueleto, rojo de Moq (7 con error y 1 superado) y de PostgreSQL (5 con error y 1 superado), código (14/14), rojo HTTP (`MethodNotAllowed`) y endpoint (FacturasCompraApiPostgreSqlTests 17/17).
+- Frontend: esqueleto, rojo (9 FAILED: 6 por TypeError, porque el esqueleto no tiene formulario, y 3 por expectOne; acceso.spec, por aserción), código. Los dos specs del menú de `app.spec.ts` se actualizaron por el módulo nuevo. Frontend completo: `TOTAL: 205 SUCCESS`.
+- **Interpretación:** el CA-001 dice «exactamente una». Con número y proveedor puede haber una activa y además anuladas con el mismo número (CA-004 de la 028); se muestran todas, y las anuladas van marcadas (CA-005).
+- Un `git stash` con una ruta sin seguimiento falló y no tocó nada: el stash del usuario (`stash@{0}`) sigue intacto y no se aplicó.
+
+**Estado:** terminada
+- 17:32 · `verificador-tdd` ronda 1 (`84bb4d4..32a9755`): **NO APTO**. Sobrevivieron tres mutaciones: el desborde de `(pagina - 1) × tamaño`, el error que no borra la tabla anterior y el `[disabled]` de «Siguiente». **Corrección:** el rojo de la pantalla fueron **5** TypeError y 3 `expectOne`, no 6 como dicen el commit `30e6c87` y la línea de arriba. Tampoco se había declarado que `UnNumeroEnBlanco_NoFiltraPorNumero` cayó por NullReferenceException. Arreglo `b3d96bb`: `InlineData(30_000_000, 100)`, el spec del error ahora tiene una tabla anterior, y un spec nuevo para los extremos de la paginación. Moq 9/9, pantalla 9/9.
+- 17:46 · `verificador-tdd` ronda 2 (`32a9755..b3d96bb`): **NO APTO**. Morían tres de las cuatro mutaciones; sobrevivía la de `this.resultado.set(null)`, porque la plantilla esconde la tabla mientras hay error. La línea de la ronda 1 que decía «el spec del error ahora tiene una tabla anterior» no alcanzaba para matarla. Arreglo `ac6f619`: el spec busca de nuevo y afirma que no hay tbody mientras el pedido está en vuelo. Con la mutación: 1 FAILED, 8 SUCCESS; con producción: 9/9.
+- 17:47 · `verificador-tdd` ronda 3 (`b3d96bb..ac6f619`): **APTO**. La mutación de `this.resultado.set(null)` muere: 1 FAILED, 8 SUCCESS, en `compras-registradas.spec.ts:143`.
+- auditor-persistencia: **APTO**. Observación menor: el desempate `ThenByDescending(Id)` con la misma emisión no tiene test. Develop: #164 y #165 ya estaban contenidos (el diff `HEAD...origin/develop` dio vacío). #166 y #167 siguen abiertos. Push y PR.
+- **Queda abierto:** la 028 parte 2 (la pantalla de anulación sobre esta), la 027 (#34) y el merge de develop cuando entren el #166 y el #167.
+- 17:50 · PR #174 abierto (milestone Sprint 7). El número quedó anotado en el ESTADO.
+
+## 14/11/2026 19:51 · 028 parte 2 (pantalla de anulación), pregunta de la 027 para Sergio y merges de develop
+
+**Instrucción recibida (verbatim):**
+> Terminá la 028 parte 2 (la pantalla de anulación), con su PR y sus verificadores, igual
+> que la parte 1. Después NO abras más PR: hay siete esperando la revisión de Javi y todos
+> dependen del #166 y el #167. Agregarle más le suma trabajo a una sola persona.
+>
+> La 027 (#34) no se arranca: la duda sobre «ubicación de ingreso» es de negocio. Dejala
+> escrita en el ESTADO del Sprint 7 como pregunta para Sergio, con la frase textual de la
+> proforma y qué interpretaciones ves, y pasámela a mí.
+>
+> Cuando Javi mergee el #166 y el #167: git merge origin/develop en cada rama abierta,
+> nunca rebase, y la suite que corresponda sobre cada una.
+
+**Plan:**
+1. Rama `feature/9-anulacion-pantalla` desde `feature/33-consulta-facturas-compra` (la 026, para elegir la factura) con `git merge feature/9-anulacion-factura-compra` (el endpoint de la parte 1).
+2. TDD de la pantalla de anulación: acción «Anular» en «Compras registradas», con motivo, usuario y contraseña de quien autoriza.
+3. Suite completa, `verificador-tdd` (y `auditor-persistencia` solo si toco backend), PR. Es el último PR.
+4. 027: pregunta para Sergio en el ESTADO del Sprint 7, sin arrancarla.
+5. Cuando entren #166 y #167: `git merge origin/develop` en cada rama abierta y su suite.
+
+**Estado:** en curso
+- Paso 1: rama creada y merge de la parte 1. Conflictos solo por agregados de los dos lados (puerto, repositorio, controlador, Program, test HTTP, bitácora y ESTADO): se conservaron los dos. Build 0 errores; filtrado `FacturasCompra|FacturaCompra`: 168/168.
+- 19:57 · Paso 2: rojo `d0697a5` (solo spec: 4 FAILED, 9 SUCCESS; la primera falla de cada uno es la aserción «botón Anular de la fila», después cae un TypeError porque no hay diálogo). Código `070027b`: 13/13 en `compras-registradas`. Mutaciones mías antes del verificador, todas muertas (1 FAILED cada una): recarga en la página 1 en vez de la actual, el aviso que no se borra, `enviando` que no vuelve a false, autocomplete de la contraseña y Cancelar que no cierra. Los `trim` del motivo y el usuario no se pusieron: los hace el caso de uso.
+- 19:57 · Frontend completo sobre `070027b`: `TOTAL: 210 SUCCESS`. Backend completo en curso.
+- 20:09 · Backend completo sobre `070027b`: `Correctas! - Con error: 0, Superado: 608, Omitido: 0, Total: 608`. Paso 3: `verificador-tdd` lanzado, acotado a `4b59b94..070027b`; el auditor no aplica (el diff de la HU no toca backend ni esquema).
+- 19:57 · Paso 4: P7-01 en `docs/sprint07/ESTADO.md` (nuevo: no existía; el entregable del Sprint 7 queda sin escribir, lo define el equipo). La 027 no se arranca.
+- 20:13 · `verificador-tdd` ronda 1 (`4b59b94..070027b`): **NO APTO**. Sobrevivieron M2, M3 y M6, las marcas de `obligatorio` de motivo, usuario y contraseña (ningún test confirmaba con un campo vacío), y M14, `f.id` cambiado por `items[0].id` (los tests anulaban siempre la fila 0). Rojo y orden test → producción: validados. Arreglo `db36dd2`, solo test: anular la segunda fila pega a `/2/anulacion`, y con cada uno de los tres campos vacío no sale el POST. Con cada mutación, 1 FAILED, 16 SUCCESS; con producción, 17/17. Frontend completo sobre `db36dd2`: `TOTAL: 214 SUCCESS`. Backend sin cambios desde `070027b` (608/608).
+- 20:14 · `verificador-tdd` ronda 2 (`070027b..db36dd2`): **APTO**, murieron las 4. ESTADO al día. #166 y #167 siguen abiertos; develop no trae nada nuevo (#164 y #165 ya estaban). Push y PR.
+- 20:15 · Push de `525b57f` y **PR #175** (028 parte 2, `Refs #9`, milestone Sprint 7). Es el último PR: no se abren más hasta que Javi revise los que esperan (#166, #167, #170 a #175).
+
+**BLOQUEADO EN:** paso 5. Hace falta que Javi mergee el #166 y el #167 en develop. Después: `git merge origin/develop` en cada rama abierta y la suite de cada una. La P7-01 (027) espera la respuesta de Sergio, vía Santi.

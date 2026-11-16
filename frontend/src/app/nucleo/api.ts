@@ -236,6 +236,19 @@ export class ApiLaCentral {
     return this.http.post<void>(`/api/${base}/${id}/reactivacion`, null);
   }
 
+  /** HU-FCO-02: solo viajan los criterios que tienen valor. */
+  facturasCompra(filtro: FiltroFacturasCompra, pagina: number, tamanoPagina: number): Observable<Pagina<FacturaCompraResumen>> {
+    let params = new HttpParams().set('pagina', pagina).set('tamanoPagina', tamanoPagina);
+    for (const [clave, valor] of Object.entries(filtro))
+      if (valor !== null && valor !== undefined && String(valor).trim() !== '') params = params.set(clave, String(valor).trim());
+    return this.http.get<Pagina<FacturaCompraResumen>>('/api/facturas-compra', { params });
+  }
+
+  /** HU-FCO-04 (028): quien anula sale de la sesión; autoriza otro ADMINISTRADOR con su usuario y contraseña. */
+  anularFacturaCompra(id: number, anulacion: AnulacionFacturaCompra): Observable<void> {
+    return this.http.post<void>(`/api/facturas-compra/${id}/anulacion`, anulacion);
+  }
+
   registrarFacturaCompra(factura: FacturaCompraNueva): Observable<{ id: number }> {
     return this.http.post<{ id: number }>('/api/facturas-compra', factura);
   }
@@ -243,6 +256,34 @@ export class ApiLaCentral {
   calcularFacturaCompra(factura: FacturaCompraNueva): Observable<TotalesFacturaCompra> {
     return this.http.post<TotalesFacturaCompra>('/api/facturas-compra/calculo', factura);
   }
+}
+
+/** HU-FCO-04 (028): el cuerpo de `POST /api/facturas-compra/{id}/anulacion`. */
+export interface AnulacionFacturaCompra {
+  motivo: string;
+  usuarioAutoriza: string;
+  contrasenaAutoriza: string;
+}
+
+/** HU-FCO-02 (026): criterios de `GET /api/facturas-compra`; las fechas en ISO (aaaa-mm-dd). */
+export interface FiltroFacturasCompra {
+  proveedorId?: number | null;
+  numero?: string;
+  emisionDesde?: string;
+  emisionHasta?: string;
+  vencimientoDesde?: string;
+  vencimientoHasta?: string;
+}
+
+export interface FacturaCompraResumen {
+  id: number;
+  proveedorId: number;
+  proveedor: string;
+  numero: string;
+  tipoComprobante: string;
+  fechaEmision: string;
+  fechaVencimiento: string | null;
+  anulada: boolean;
 }
 
 /** El detalle de un ProblemDetails, o un texto genérico según el código. */

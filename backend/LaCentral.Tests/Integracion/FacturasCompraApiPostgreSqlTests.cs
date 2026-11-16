@@ -120,6 +120,39 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
         Assert.Equal(40m, await relectura.Articulo.Where(a => a.Id == s.ArticuloId).Select(a => a.PrecioCosto).SingleAsync());
     }
 
+    // HU-FCO-02 (026): la consulta por HTTP, con los filtros en la query.
+    [PostgreSqlFact]
+    public async Task Get_PorProveedorYRangoDeEmision_200ConLaPagina()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        Assert.Equal(HttpStatusCode.Created, (await cliente.PostAsJsonAsync("/api/facturas-compra", Cuerpo(s))).StatusCode);
+
+        var respuesta = await cliente.GetAsync(
+            $"/api/facturas-compra?proveedorId={s.ProveedorId}&numero=B-0002-00000045&emisionDesde=2026-10-01&emisionHasta=2026-10-01&pagina=1&tamanoPagina=10");
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        var pagina = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(1, pagina.GetProperty("total").GetInt32());
+        var fila = Assert.Single(pagina.GetProperty("items").EnumerateArray());
+        Assert.Equal(("B-0002-00000045", "Proveedor API", false),
+            (fila.GetProperty("numero").GetString(), fila.GetProperty("proveedor").GetString(), fila.GetProperty("anulada").GetBoolean()));
+    }
+
+    [PostgreSqlFact]
+    public async Task Get_ConElRangoInvertido_400ConMensaje()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+
+        var respuesta = await cliente.GetAsync("/api/facturas-compra?vencimientoDesde=2026-10-31&vencimientoHasta=2026-10-01");
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Contains("El rango de vencimiento empieza después de terminar.", await respuesta.Content.ReadAsStringAsync());
+    }
+
     // HU-FCO-04 (028): anula quien está en el token; autoriza otro usuario ADMINISTRADOR con su contraseña.
     [PostgreSqlFact]
     public async Task PostAnulacion_Valida_204_YLaFacturaQuedaAnuladaConElUsuarioDelTokenYElQueAutorizo()
