@@ -1,5 +1,6 @@
 using LaCentral.Api.Dtos;
 using LaCentral.Api.Middleware;
+using LaCentral.UseCases.Comun;
 using LaCentral.UseCases.Proveedores;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -91,9 +92,16 @@ public class ProveedoresController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Modificar(
-        int id, [FromBody] DtosNucleo.ModificarProveedorRequest request, CancellationToken ct)
+        int id, [FromBody] ModificarProveedorRequest request, CancellationToken ct)
     {
-        var resultado = await _modificarProveedor.EjecutarAsync(id, request, ct);
+        // #168: sin la clave, el reemplazo lo borraría en silencio.
+        if (!request.TraeTipoComprobanteHabitual)
+            return this.AResultadoHttp(Result.Failure(TipoError.Invalido,
+                "Falta el tipo de comprobante habitual: A, B o null para dejarlo vacío."));
+
+        var resultado = await _modificarProveedor.EjecutarAsync(id, new DtosNucleo.ModificarProveedorRequest(
+            request.RazonSocial, request.Cuit, request.UrlReferencia, request.Telefonos, request.Direcciones,
+            request.TipoComprobanteHabitual), ct);
         return this.AResultadoHttp(resultado);
     }
 

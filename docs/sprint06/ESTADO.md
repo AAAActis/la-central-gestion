@@ -20,8 +20,9 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
 | #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend: PR #166.** **Frontend: PR #167.** #166: `verificador-tdd` y `auditor-persistencia` APTO contra `lacentral_test.public` (13/11). #166 **APROBADO por Javi** (14/11; deuda en #168). #167: cambios pedidos por Javi el 14/11 hechos; cuarta ronda (autorizada el 13/11) y su arreglo: **`verificador-tdd` APTO** sobre `4b624d3`, 196/196 frontend; re-review pedida a Javi. #169: artículo repetido por sucursal en la pantalla. Orden de merge: #164 → #165 (mergeados) → #166 y #167 juntos; el 09 en `lacentral` lo aplica Santi después del merge. Falta el recorrido en el navegador contra `lacentral_demo` (DoD 10, Santi o Lauti) |
-| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | No empezada |
-| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | No empezada |
+| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | **No se arranca (14/11/2026):** la compuerta C7 sigue abierta hasta que lleguen facturas reales de varios proveedores |
+| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | **No se arranca (14/11/2026):** depende de la 029, que espera la C7 |
+| #169 | Factura de compra: el mismo artículo a sucursales distintas (D9), observación de Javi del 14/11 | sin estimar | Santi | el #167 | **PR #170** (14/11), contra `develop`; se mergea después del #167. `verificador-tdd` APTO, frontend 201/201 sobre `ca0707d`. **14/11:** también avisa y no acepta el cambio de destino de una línea que la repite (rojo `492f4af`, código `65e1370`, guarda inalcanzable borrada `b7973d6`); `verificador-tdd` NO APTO en la ronda 1 (M1) y APTO en la 2; frontend 203/203 sobre `b7973d6` |
 
 **34 SP** (13 + 13 + 8). Salieron al Sprint 7 la #126, la #127 y la #128 (21 SP); entraron la
 #13 y la #51 (21 SP). Es un intercambio: el total no cambia.
@@ -98,7 +99,7 @@ Sergio no es la del archivo, por eso va la columna «Preg.».
 
 1. ~~Qué es «la segunda lista» y cuánto va para Tarjeta 3 y Tarjeta 6.~~ Ya respondido (D12 y
    D13, 16/10/2026). La D1 de `CLAUDE.md` («tasas SIN DEFINIR») sigue desactualizada: **para
-   corregir por el equipo**.
+   corregir por el equipo**. **14/11/2026:** alineada con D12, D13 y D14 en un PR de documentación aparte (pedido de Santi del 14/11).
 2. ~~¿Alcanza con informar uno de los tres documentos?~~ Sí: D-S6-08.
 3. ~~¿Quién puede modificar el precio a mano?~~ Cualquiera, con registro de quién: D-S6-09.
 4. ~~El 99 o 999, ¿del proveedor o del tipo de comprobante?~~ Del tipo; el 999 no se usa: D-S6-10.
@@ -184,6 +185,7 @@ Sprint 7. Cada HU tiene su rama, que sale de `feature/163-frontend`, y su PR dep
   deuda en la **#168** (sin milestone): `ModificarProveedorUseCase` pisa
   `TipoComprobanteHabitual` con null si el request no lo trae; el mensaje del tipo B tiene que
   mostrar el ejemplo `99-00001234`.
+- **14/11 · #168 en curso** (pedido de Santi del 14/11), rama `feature/168-deuda-proveedor` desde `feature/163-frontend`; PR contra `develop` que depende del #166 y el #167. Un PUT de proveedor **sin** la clave `tipoComprobanteHabitual` es 400 con mensaje en español y la fila no cambia; con la clave en `null` lo sigue vaciando, que es lo que manda la pantalla. El mensaje del B ya traía `99-00001234` desde el #166: queda un test que lo fija. Rojo `5901221`, código `dd4e411`, test del mensaje `cf79afb`. `CicloCompletoIntegracionTests` ahora manda la clave. `verificador-tdd`: NO APTO en la ronda 1 (M6 a M9, el mapeo sin un PUT completo releído) y APTO en la ronda 2 sobre `c8a8ae0`. `auditor-persistencia`: APTO. Suite completa sobre `c8a8ae0`: 564/564. **PR #171.**
 - **#169** (milestone Sprint 6, observación de Javi del 14/11): la pantalla no deja cargar el
   mismo artículo dos veces aunque vaya a sucursales distintas; el backend lo permite (D9). Ya
   pasaba antes del #167.
@@ -202,6 +204,9 @@ Sprint 7. Cada HU tiene su rama, que sale de `feature/163-frontend`, y su PR dep
   corrigió en `69b4356`.
 - **El script 09 todavía no está aplicado en `lacentral`:** lo aplica Santi después del merge.
 - Orden de merge, sin cambios: #164 y #165 (ya mergeados el 14/11), y #166 con #167 juntos.
+- **14/11 · #169 → PR #170** (`verificador-tdd` APTO, 201/201 sobre `ca0707d`), en `feature/169-articulo-por-sucursal`, rama desde `feature/163-frontend`. Repetido = mismo artículo **en la misma sucursal**. PR contra `develop`, que se mergea después del #167; cuando entren el #166 y el #167, `git merge origin/develop`, nunca rebase.
+- **14/11 · #170, cambio de destino a mano:** el hueco declarado en el PR se cierra (pedido de Santi del 14/11: es la misma regla de la #169). Cambiar el destino de una línea a uno donde ya está el mismo artículo avisa y el `<select>` vuelve al anterior. `verificador-tdd` APTO en la ronda 2 sobre `b7973d6`; 203/203 frontend.
+- **14/11 · la 029 (#13) y la 049 (#51) no se arrancan:** la compuerta C7 sigue abierta hasta que lleguen facturas reales de varios proveedores.
 - **14/11 · CA-011 con prueba:** spec `a2e7d1f` (solo test; producción ya lo cumplía, sin rojo por la
   rama real, discrimina por mutación); `verificador-tdd` acotado a `a2e7d1f`: **APTO** (5 mutaciones,
   ninguna sobrevive). Frontend completo sobre `8f79668`: 197/197. **#21 cerrada** (CA-003 anulado

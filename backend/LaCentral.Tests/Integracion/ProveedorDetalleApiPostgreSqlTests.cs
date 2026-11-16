@@ -89,6 +89,76 @@ public class ProveedorDetalleApiPostgreSqlTests : IClassFixture<WebApplicationFa
         Assert.Equal("Dejó de operar", dadoDeBaja.GetProperty("motivoBaja").GetString());
     }
 
+    // #168 (deuda del #166): un PUT sin el tipo de comprobante habitual no lo borra en silencio.
+    [PostgreSqlFact]
+    public async Task Modificar_SinTipoHabitualEnElCuerpo_Es400YLaFilaLoConserva()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var id = await CrearConTipoAsync(fixture, "PRV-168");
+        using var http = Cliente(fixture, "OPERADOR", await fixture.CrearUsuarioAsync());
+
+        var respuesta = await http.PutAsJsonAsync($"/api/proveedores/{id}",
+            new { razonSocial = "Otro nombre", cuit = "30-12345678-9", telefonos = new string[0], direcciones = new string[0] });
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Contains("tipo de comprobante habitual", await respuesta.Content.ReadAsStringAsync());
+        await using var relectura = fixture.CrearContexto();
+        var fila = await relectura.Proveedor.AsNoTracking().SingleAsync(p => p.Id == id);
+        Assert.Equal('B', fila.TipoComprobanteHabitual);
+        Assert.Equal("Proveedor B", fila.RazonSocial);
+    }
+
+    // #168: mandarlo en null sigue siendo la forma de dejarlo vacío (así lo manda la pantalla).
+    [PostgreSqlFact]
+    public async Task Modificar_ConTipoHabitualNull_LoVacia()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var id = await CrearConTipoAsync(fixture, "PRV-169");
+        using var http = Cliente(fixture, "OPERADOR", await fixture.CrearUsuarioAsync());
+
+        var respuesta = await http.PutAsJsonAsync($"/api/proveedores/{id}",
+            new { razonSocial = "Proveedor B", cuit = "30-12345678-9", telefonos = new string[0], direcciones = new string[0], tipoComprobanteHabitual = (string?)null });
+
+        Assert.True(respuesta.IsSuccessStatusCode, await respuesta.Content.ReadAsStringAsync());
+        await using var relectura = fixture.CrearContexto();
+        Assert.Null((await relectura.Proveedor.AsNoTracking().SingleAsync(p => p.Id == id)).TipoComprobanteHabitual);
+    }
+
+    // #168, verificador ronda 1 (M6 a M9): el mapeo del DTO de la Api al del núcleo pasa cada campo.
+    [PostgreSqlFact]
+    public async Task Modificar_ConTodosLosCampos_LosEscribeEnLaFila()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var id = await CrearConTipoAsync(fixture, "PRV-170");
+        using var http = Cliente(fixture, "OPERADOR", await fixture.CrearUsuarioAsync());
+
+        var respuesta = await http.PutAsJsonAsync($"/api/proveedores/{id}", new
+        {
+            razonSocial = "Proveedor A", cuit = "30-87654321-0", urlReferencia = "https://proveedor.example/a",
+            telefonos = new[] { "351 333-3333" }, direcciones = new[] { "Av. Vélez Sársfield 300" }, tipoComprobanteHabitual = "A",
+        });
+
+        Assert.True(respuesta.IsSuccessStatusCode, await respuesta.Content.ReadAsStringAsync());
+        await using var relectura = fixture.CrearContexto();
+        var fila = await relectura.Proveedor.AsNoTracking().SingleAsync(p => p.Id == id);
+        Assert.Equal('A', fila.TipoComprobanteHabitual);
+        Assert.Equal("Proveedor A", fila.RazonSocial);
+        Assert.Equal("30-87654321-0", fila.Cuit);
+        Assert.Equal("https://proveedor.example/a", fila.UrlReferencia);
+        var ficha = await http.GetFromJsonAsync<JsonElement>($"/api/proveedores/{id}");
+        Assert.Equal(new[] { "351 333-3333" }, ficha.GetProperty("telefonos").EnumerateArray().Select(t => t.GetString()));
+        Assert.Equal(new[] { "Av. Vélez Sársfield 300" }, ficha.GetProperty("direcciones").EnumerateArray().Select(d => d.GetString()));
+    }
+
+    private static async Task<int> CrearConTipoAsync(PostgreSqlPruebas fixture, string codigo)
+    {
+        await using (var contexto = fixture.CrearContexto())
+            Assert.True((await new CrearProveedorUseCase(new ProveedorRepositorio(contexto)).EjecutarAsync(
+                new CrearProveedorRequest(codigo, "Proveedor B", "30-12345678-9", null, null, null, "B"))).IsSuccess);
+        await using var lectura = fixture.CrearContexto();
+        return (await lectura.Proveedor.AsNoTracking().SingleAsync(p => p.Codigo == codigo)).Id;
+    }
+
     // No bloqueante del verificador: el endpoint nuevo exige sesión (hereda el [Authorize] de la clase).
     [PostgreSqlFact]
     public async Task Detalle_SinSesion_Es401()
