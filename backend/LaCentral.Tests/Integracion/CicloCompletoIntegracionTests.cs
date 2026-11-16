@@ -284,7 +284,9 @@ public class CicloCompletoIntegracionTests : IClassFixture<WebApplicationFactory
             Cuit = "30-99999999-9",
             UrlReferencia = "https://proveedor-integracion.example.com",
             Telefonos = new List<string> { "3512222222", "3513333333" },
-            Direcciones = new List<string> { "Av. Colon 1000" }
+            Direcciones = new List<string> { "Av. Colon 1000" },
+            // #168: el PUT reemplaza todo; sin la clave es 400.
+            TipoComprobanteHabitual = (string?)null
         };
         var respuestaModificar = await http.PutAsJsonAsync($"/api/proveedores/{idProveedor}", modificarRequest);
         Assert.Equal(HttpStatusCode.NoContent, respuestaModificar.StatusCode);

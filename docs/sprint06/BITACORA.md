@@ -665,3 +665,18 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 - 13:23 · Punto 2: **PR #171** (rama `feature/168-deuda-proveedor`). El detalle está en el bloque de continuación de esa rama. Suite completa 564/564 sobre `c8a8ae0`; `verificador-tdd` APTO en la ronda 2; `auditor-persistencia` APTO.
 - 13:23 · Punto 3: **PR #172** (rama `docs/d1-precios-vigentes`, desde develop). D1 alineada con D12, D13 y D14, leídas en `docs/sprint04/ESTADO.md`, `docs/sprint03/informe-cierre-sprint3.md` §3 y `docs/PLAN-SPRINTS-6-7-8.md`.
 - **Queda abierto:** el merge del #166 y el #167 (Javi); después, `git merge origin/develop` en las ramas del #170 y del #171, nunca rebase: el #170 con la suite de frontend y el #171 con la completa. La C7, que mantiene la 029 y la 049 sin arrancar.
+
+## 14/11/2026 12:24 · #168, continuación del bloque de las 12:02 (en la rama del #170)
+
+**Instrucción recibida (verbatim):** la del bloque de las 12:02, punto 2. Ese bloque está en `feature/169-articulo-por-sucursal`; esta rama sale de `feature/163-frontend` y no lo tiene.
+
+**Plan:** rojo HTTP contra PostgreSQL; DTO de la Api que distingue «no vino» de «vino null»; test del mensaje del B; suite completa; `verificador-tdd` y después `auditor-persistencia`; PR.
+
+- Solución elegida: el PUT reemplaza todo, así que sin la clave es 400 en español; `null` sigue vaciando. Se descartó «`null` conserva y `""` vacía»: obliga a cambiar el frontend, que manda `null` para vacío, y vuelve ambiguo el contrato.
+- Rojo `5901221`, por aserción: `Expected: BadRequest, Actual: NoContent`. Código `dd4e411`. Al filtrar por `Proveedor` cayó `CicloCompletoIntegracionTests` (un PUT sin la clave, ahora 400): se le agregó la clave en `null`, y quedó 8/8 junto con `ProveedorDetalleApiPostgreSqlTests`.
+- Mensaje del B: ya traía `99-00001234` desde `1060bb0` (#166). Test `cf79afb`, que pasó en verde de entrada. Sacar el ejemplo del mensaje lo pone en rojo (1 con error, 5 superados).
+
+**Estado:** terminada. Queda abierto: el merge del #166 y el #167, y después `git merge origin/develop` en esta rama y la suite completa.
+- 13:02 · `verificador-tdd` ronda 1 (`84bb4d4..e076966`): **NO APTO**. Sobrevivieron M6 a M9: el `init` que no asigna, el tipo pasado en `null`, y `UrlReferencia` y `Direcciones` en `null` en el mapeo. Arreglo `c8a8ae0`: `Modificar_ConTodosLosCampos_LosEscribeEnLaFila` (PUT con "A" sobre un "B" y todos los campos, relectura con un contexto nuevo y la ficha), en verde de entrada.
+- 13:21 · `verificador-tdd` ronda 2 (`e076966..c8a8ae0`): **APTO**; murieron M6 a M9. `auditor-persistencia` sobre `84bb4d4..c8a8ae0`: **APTO**. Suite completa sobre `c8a8ae0`: `Correctas! - Con error: 0, Superado: 564, Omitido: 0, Total: 564`. Nota del auditor, fuera del alcance y sin auditar: `proveedor_baja_coherente` en `base_completa.sql` parecería contradecir la D10.
+- 13:22 · Push de `7d4da66` y **PR #171** contra `develop`, sin milestone, igual que la #168. El cuerpo dice que depende del #166 y el #167.
