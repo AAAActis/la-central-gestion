@@ -245,6 +245,93 @@ describe('FacturaCompra · HU-FCO-06', () => {
     expect(c.lineas.map(l => l.sucursalId)).toEqual([1, 2]);
   });
 
+  // #169 (D9): repetido es el mismo artículo en la misma sucursal, no el mismo artículo a secas.
+  it('#169: el mismo artículo con otro destino se agrega como línea nueva', () => {
+    agregar(1, 'FIL-0712');
+    c.sucursalCabecera = 2;
+    c.textoArticulo = 'FIL-0712';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(1, 'FIL-0712')));
+
+    expect(c.errorArticulo()).toBeNull();
+    expect(c.lineas.map(l => [l.articulo.id, l.sucursalId])).toEqual([[1, 1], [1, 2]]);
+    servidor.expectOne('/api/articulos/1').flush(ficha(1, null));
+  });
+
+  it('#169: el mismo artículo con el mismo destino avisa y no agrega la línea', () => {
+    agregar(1, 'FIL-0712');
+    c.textoArticulo = 'FIL-0712';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(1, 'FIL-0712')));
+    fixture.detectChanges();
+
+    expect(c.lineas.length).toBe(1);
+    expect(c.errorArticulo()).toContain('ya está en la factura');
+  });
+
+  it('#169: otro artículo con el mismo destino se agrega', () => {
+    agregar(1, 'FIL-0712');
+    c.textoArticulo = 'PAS-0100';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(2, 'PAS-0100')));
+
+    expect(c.errorArticulo()).toBeNull();
+    expect(c.lineas.map(l => [l.articulo.id, l.sucursalId])).toEqual([[1, 1], [2, 1]]);
+    servidor.expectOne('/api/articulos/2').flush(ficha(2, null));
+  });
+
+  it('#169: al reemplazar, cuenta el destino de la línea reemplazada, no el de la cabecera', () => {
+    agregar(1, 'FIL-0712');
+    c.sucursalCabecera = 2;
+    agregar(2, 'PAS-0100');
+
+    // La línea 0 va a Fragueiro (1); PAS-0100 está solo en San Vicente (2): no se repite.
+    c.reemplazar(0);
+    c.textoArticulo = 'PAS-0100';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(2, 'PAS-0100')));
+
+    expect(c.errorArticulo()).toBeNull();
+    expect(c.lineas.map(l => [l.articulo.id, l.sucursalId])).toEqual([[2, 1], [2, 2]]);
+    servidor.expectOne('/api/articulos/2').flush(ficha(2, null));
+  });
+
+  // #170: la regla de la #169 vale también cuando se cambia el destino de una línea a mano.
+  function cambiarDestino(fila: number, sucursal: string) {
+    const destino = raiz().querySelectorAll<HTMLSelectElement>('table.lineas tbody select')[fila];
+    destino.selectedIndex = Array.from(destino.options).findIndex(o => o.text.trim() === sucursal);
+    destino.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    return destino;
+  }
+
+  it('#170: cambiar el destino a uno donde ya está el mismo artículo avisa y no acepta el cambio', async () => {
+    agregar(1, 'FIL-0712');
+    c.sucursalCabecera = 2;
+    agregar(1, 'FIL-0712');
+    await fixture.whenStable();
+
+    const destino = cambiarDestino(1, 'Fragueiro');
+    await fixture.whenStable();
+
+    expect(c.errorArticulo()).toContain('FIL-0712 ya está en la factura');
+    expect(c.lineas.map(l => [l.articulo.id, l.sucursalId])).toEqual([[1, 1], [1, 2]]);
+    expect(destino.options[destino.selectedIndex].text.trim()).toBe('San Vicente');
+  });
+
+  it('#170: cambiar el destino a uno libre para ese artículo se acepta', async () => {
+    agregar(1, 'FIL-0712');
+    c.sucursalCabecera = 2;
+    agregar(2, 'PAS-0100');
+    await fixture.whenStable();
+
+    cambiarDestino(1, 'Fragueiro');
+    await fixture.whenStable();
+
+    expect(c.errorArticulo()).toBeNull();
+    expect(c.lineas.map(l => [l.articulo.id, l.sucursalId])).toEqual([[1, 1], [2, 1]]);
+  });
+
   // ---- CA-012, CA-014 y CA-015 · total antes de confirmar ----
 
   function cargarFactura() {

@@ -1,7 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { Subject, catchError, debounceTime, filter, forkJoin, map, of, switchMap } from 'rxjs';
 import {
   ApiLaCentral, ArticuloResultado, FacturaCompraNueva, FichaArticulo, ProveedorResumen, TotalesFacturaCompra, mensajeDeError,
@@ -113,7 +113,7 @@ interface Sucursal { id: number; nombre: string; }
                   <tr [class.elegido]="reemplazando() === i">
                     <td><span class="mono">{{ l.articulo.codigoInterno }}</span> {{ l.articulo.nombre }}</td>
                     <td>
-                      <select [name]="'destino' + i" [(ngModel)]="l.sucursalId" required>
+                      <select [name]="'destino' + i" [ngModel]="l.sucursalId" #destino="ngModel" (ngModelChange)="cambiarDestino(i, $event, destino)" required>
                         <option [ngValue]="null" disabled>Elegí</option>
                         @for (s of sucursales(); track s.id) { <option [ngValue]="s.id">{{ s.nombre }}</option> }
                       </select>
@@ -301,7 +301,9 @@ export class FacturaCompra {
   elegirArticulo(articulo: ArticuloResultado) {
     this.articulos.set([]);
     const reemplazo = this.reemplazando();
-    if (this.lineas.some((l, i) => l.articulo.id === articulo.id && i !== reemplazo)) {
+    // #169 (D9): repetido es el mismo artículo en el mismo destino; a otra sucursal es otra línea.
+    const destino = reemplazo !== null ? this.lineas[reemplazo].sucursalId : this.sucursalCabecera;
+    if (this.lineas.some((l, i) => l.articulo.id === articulo.id && l.sucursalId === destino && i !== reemplazo)) {
       this.errorArticulo.set(`${articulo.codigoInterno} ya está en la factura: corregí su línea.`);
       return;
     }
@@ -321,6 +323,18 @@ export class FacturaCompra {
       // CA-011: se propone el costo vigente; sin costo no se propone nada (nunca cero, D1).
       if (linea.precioUnitario === null && linea.articulo.id === articulo.id) linea.precioUnitario = f.costoVigente;
     });
+  }
+
+  // #170: la regla de la #169 también al cambiar el destino a mano; si repite, el select vuelve al anterior.
+  cambiarDestino(i: number, sucursalId: number, control: NgModel) {
+    const linea = this.lineas[i];
+    // Sin excluir la propia línea: nunca llega su mismo destino (reelegir la opción no dispara change y el rechazo deja el select igual al modelo).
+    if (this.lineas.some(l => l.articulo.id === linea.articulo.id && l.sucursalId === sucursalId)) {
+      this.errorArticulo.set(`${linea.articulo.codigoInterno} ya está en la factura: corregí su línea.`);
+      control.control.setValue(linea.sucursalId, { emitViewToModelChange: false });
+      return;
+    }
+    linea.sucursalId = sucursalId;
   }
 
   reemplazar(i: number) {
