@@ -574,3 +574,94 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
   - que Santi aplique el 09 en `lacentral`;
   - el recorrido DoD 10;
   - #168 y #169.
+
+## 14/11/2026 10:33 · #169: mismo artículo en sucursales distintas en la factura de compra
+
+**Instrucción recibida (verbatim):**
+> Cuando el CA-011 esté cerrado y Javi tenga pedida la re-revisión, seguí con la #169
+> (Sprint 6): la pantalla de factura de compra no deja cargar el mismo artículo dos veces
+> aunque vaya a sucursales distintas, y el backend sí lo permite por la D9.
+>
+> - Rama nueva desde feature/163-frontend, que tiene todo lo de la 056. No esperes el merge
+>   del #166 y el #167. Cuando entren a develop, git merge origin/develop, nunca rebase.
+> - Lo que cuenta como repetido es el mismo artículo en la misma sucursal, no el mismo
+>   artículo a secas. Si se repite artículo y sucursal, se avisa en lugar de agregar la línea.
+> - TDD: el spec en rojo primero, en su propio commit. Después el código.
+> - PR propio contra develop. En el cuerpo: depende del #167 y se mergea después de él.
+> - Suite de frontend una vez antes de abrir el PR, y un verificador-tdd acotado a la HU.
+>
+> La 029 (#13) y la 049 (#51) NO se arrancan: la compuerta C7 sigue abierta hasta que
+> lleguen facturas reales de varios proveedores. Dejalo así en el ESTADO, con fecha.
+
+**Plan:**
+1. Rama `feature/169-articulo-por-sucursal` desde `feature/163-frontend` (`84bb4d4`).
+2. Spec en rojo: el mismo artículo con otra sucursal de cabecera se agrega; con la misma, se avisa y no se agrega. Commit propio.
+3. Código: el repetido es artículo + sucursal (en el reemplazo, la sucursal de la línea reemplazada).
+4. ESTADO: 029 (#13) y 049 (#51) sin arrancar, C7 abierta, con fecha.
+5. Suite de frontend una vez, PR contra develop (depende del #167), `verificador-tdd` acotado.
+
+**Estado:** terminada (lo abierto, al final del bloque)
+- 10:33 · Paso 1: CA-011 cerrado y re-revisión del #167 pedida (bloque de las 10:27). `git fetch`: sin novedades en `origin/feature/163-frontend` ni diferencias de contenido con `origin/develop`. Rama **`feature/169-articulo-por-sucursal`** creada desde `84bb4d4`.
+- 10:45 · Pasos 2 y 3:
+  - **Rojo `4ccf0fa`:** «#169: el mismo artículo con otro destino se agrega como línea nueva» da `1 FAILED, 31 SUCCESS`, por aserción (`Expected 'FIL-0712 ya está en la factura: corregí su línea.' to be null`). El primer intento caía en el `expectOne` del helper; se reordenó para que fallen primero las aserciones. «… con el mismo destino avisa y no agrega» ya pasaba, porque es la regla que se conserva.
+  - **Código `31cf9d3`:** cuenta como repetido el artículo en el destino de la línea nueva, que en un reemplazo es el de la línea reemplazada. `factura-compra*`: 32/32.
+  - **Specs `c4be707`** para las ramas que el rojo no alcanzaba: el reemplazo usa el destino de su línea; otro artículo en el mismo destino se agrega. Mutaciones, cada una en rojo por aserción:
+    - destino siempre la cabecera: `1 FAILED`;
+    - sin comparar la sucursal: `2 FAILED`;
+    - sin comparar el artículo: `2 FAILED`.
+  - `factura-compra*`: 34/34.
+- 10:45 · Paso 4: ESTADO. El tablero suma la fila de la #169. La 029 (#13) y la 049 (#51) quedan «No se arranca (14/11/2026)», con la C7 abierta. PRÓXIMA SESIÓN actualizada.
+- 10:36 · Corrección: las dos líneas de arriba dicen «10:45», pero son de las 10:36 según `date`.
+- 10:36 · Paso 5: **frontend completo sobre `ca0707d`: `TOTAL: 201 SUCCESS`** (197 + 4 specs de la #169). `backend/` no cambia. `git worktree list`: solo el principal. **`verificador-tdd` lanzado**, acotado a `84bb4d4..ca0707d` (`4ccf0fa`, `31cf9d3`, `c4be707`; `ca0707d` es solo docs), con `ca0707d` · `TOTAL: 201 SUCCESS` · 201/201. Una instancia; no se toca ningún worktree ni se commitea hasta su reporte final.
+- 10:39 · **`verificador-tdd` de la #169 (`84bb4d4..ca0707d`): APTO** (reporte final). Rojo de `4ccf0fa` reproducido, por aserción. Ninguna de las 9 mutaciones sobre las líneas 305 y 306 sobrevive. Aceptó 201/201 sobre `ca0707d`. No bloqueante: si después se cambia el destino de una línea con su `<select>`, se pueden armar dos líneas con el mismo artículo y la misma sucursal sin aviso en pantalla. Ese caso lo rechaza el backend (`MismoArticuloYSucursalEnDosLineas_Invalido`); queda declarado en el PR. `git worktree list`: solo el principal.
+- 10:39 · Push de `3c39cb3` y **PR #170** contra `develop`, milestone Sprint 6, `Closes #169`. El cuerpo dice que depende del #167 y se mergea después de él. ESTADO con el número del PR.
+- **Queda abierto:**
+  - el merge del #166 y el #167 (Javi); después, `git merge origin/develop` en esta rama y el merge del #170;
+  - el aviso en pantalla cuando se cambia el destino de una línea a mano (lo decide el equipo);
+  - la C7, que mantiene la 029 y la 049 sin arrancar.
+
+## 14/11/2026 12:02 · #170 cambio de destino, #168 deuda del #166, D1 de CLAUDE.md
+
+**Instrucción recibida (verbatim):**
+> Mientras Javi revisa el #167, tres cosas. La 029 y la 049 siguen sin arrancar: la C7 está
+> abierta.
+>
+> 1 · #170: cerrá el hueco que declaraste. Si después de agregar una línea se le cambia la
+>     sucursal a mano y queda igual a otra línea (mismo artículo y misma sucursal), la
+>     pantalla tiene que avisar y no aceptar el cambio, igual que al agregarla. No lo dejes
+>     para que lo decida el equipo: es la misma regla de la #169, aplicada en otro momento.
+>     TDD, spec en rojo en su propio commit. Suite de frontend y verificador acotado.
+>
+> 2 · #168, la deuda del #166, en rama nueva desde feature/163-frontend y PR propio contra
+>     develop (depende del #166 y el #167, decilo en el cuerpo):
+>     - ModificarProveedorUseCase no puede borrar en silencio el tipo de comprobante
+>       habitual cuando el request no lo trae. Elegí la solución más simple que lo evite y
+>       justificala en el PR.
+>     - El mensaje de error del tipo B tiene que mostrar el ejemplo 99-00001234.
+>     TDD, suite completa antes del PR, verificador-tdd y auditor-persistencia.
+>
+> 3 · La D1 de CLAUDE.md está desactualizada: sigue diciendo «Tarjeta3/6: tasas SIN
+>     DEFINIR». Alineala con las decisiones que ya están tomadas: D12 (16/10/2026, Tarjeta 3
+>     y 6 salen del sistema, confirmado por Alfredo el 17/10; el retiro del esquema va en la
+>     compuerta C1 del Sprint 7), D13 (L2 = costo × 1,40) y D14 (Efectivo = L1 − 10 %).
+>     Leé esas decisiones en los documentos antes de escribir, no las resumas de memoria.
+>     PR de documentación aparte.
+>
+> Cuando Javi mergee el #166 y el #167: git merge origin/develop en las ramas del #170 y del
+> #168, nunca rebase, y la suite que corresponda sobre cada una.
+
+**Plan:**
+1. #170, en `feature/169-articulo-por-sucursal`: spec en rojo en su propio commit (cambiar el destino de una línea a uno que la duplica avisa y deja el destino anterior); después el código en el cambio del `<select>`; suite de frontend; verificador acotado a esos commits; push y ESTADO.
+2. #168, en rama `feature/168-deuda-proveedor` desde `feature/163-frontend`: rojo del caso de uso (modificar sin el tipo conserva el habitual) y del mensaje del tipo B; código; suite completa; verificador-tdd y después auditor-persistencia, uno por vez; PR contra develop.
+3. D1: leer D12, D13 y D14 en los documentos; rama de docs desde develop; PR aparte.
+4. Cuando entren el #166 y el #167: `git merge origin/develop` en las ramas del #170 y del #168, y la suite que corresponda.
+
+- 12:02 · `git fetch`: `origin/develop` trae los merges del #164 y el #165, que esta rama ya contiene (`git diff --name-only HEAD...origin/develop` vacío). El #167 sigue con la revisión de Javi de las 05:00 UTC, sin respuesta nueva.
+
+**Estado:** terminada
+- 12:05 · #170: rojo `492f4af`, por aserción (`Expected null to contain 'FIL-0712 ya está en la factura'`); el spec del destino libre ya pasaba y queda como resguardo. Código `65e1370`: `cambiarDestino()` avisa con el mismo mensaje de la #169 y devuelve el `<select>` al destino anterior. Frontend completo sobre `65e1370`: `TOTAL: 203 SUCCESS`. El script `mutar.sh` apunta a un worktree viejo y no corrió: las mutaciones quedan para el verificador.
+- 12:08 · Verificador ronda 1 sobre `3e3c590..65e1370`: **NO APTO**. De 9 mutaciones sobrevivieron dos: M1, sacar `j !== i` (inalcanzable), y M9, `emitViewToModelChange: true` (equivalente, no bloquea). Arreglo `b7973d6`: se borra la guarda (regla de CLAUDE.md: si no es alcanzable, se borra), y la demostración queda en el spec #170 `:319`. Frontend completo sobre `b7973d6`: `TOTAL: 203 SUCCESS`.
+- 12:10 · Verificador ronda 2 sobre `65e1370..b7973d6`: **APTO**. Cuerpo del #170 actualizado; ESTADO con la fila y la decisión del 14/11.
+- 13:23 · Punto 2: **PR #171** (rama `feature/168-deuda-proveedor`). El detalle está en el bloque de continuación de esa rama. Suite completa 564/564 sobre `c8a8ae0`; `verificador-tdd` APTO en la ronda 2; `auditor-persistencia` APTO.
+- 13:23 · Punto 3: **PR #172** (rama `docs/d1-precios-vigentes`, desde develop). D1 alineada con D12, D13 y D14, leídas en `docs/sprint04/ESTADO.md`, `docs/sprint03/informe-cierre-sprint3.md` §3 y `docs/PLAN-SPRINTS-6-7-8.md`.
+- **Queda abierto:** el merge del #166 y el #167 (Javi); después, `git merge origin/develop` en las ramas del #170 y del #171, nunca rebase: el #170 con la suite de frontend y el #171 con la completa. La C7, que mantiene la 029 y la 049 sin arrancar.
