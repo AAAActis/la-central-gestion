@@ -90,6 +90,7 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
         percepcionIibb = 3m,
         percepcionMunicipal = 0.5m,
         percepcionGanancias = 0m,
+        tipoComprobante = "A",
         lineas = conLineas
             ? new[] { new { articuloId = s.ArticuloId, sucursalId = s.SucursalId, cantidad = 4m, precioUnitario = 50m, descuentoPorcentaje = 20m } }
             : Array.Empty<object>()
@@ -273,5 +274,100 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
         var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra", Cuerpo(s));
 
         Assert.Equal(HttpStatusCode.Forbidden, respuesta.StatusCode);
+    }
+
+    // ---- HU-FCO-06 (056) ----
+
+    private static object CuerpoFco06(Sembrado s, string tipo, string numero) => new
+    {
+        proveedorId = s.ProveedorId,
+        numero,
+        tipoComprobante = tipo,
+        fechaEmision = "2026-10-01",
+        fechaVencimiento = "2026-10-31",
+        fechaImputacion = "2026-11-03",
+        percepcionIva = 10m,
+        percepcionIibb = 2.5m,
+        percepcionMunicipal = 0m,
+        percepcionGanancias = 0m,
+        lineas = new[]
+        {
+            new
+            {
+                articuloId = s.ArticuloId, sucursalId = s.SucursalId, cantidad = 2m, precioUnitario = 100m,
+                descuentoPorcentaje = 10m, descuento2Porcentaje = 10m, descuento3Porcentaje = 0m
+            }
+        }
+    };
+
+    [PostgreSqlFact]
+    public async Task Fco06_PostComprobanteB_201_YQuedanTipoImputacionYDescuentos()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra", CuerpoFco06(s, "B", "99-00000777"));
+
+        Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
+        var id = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        await using var relectura = fixture.CrearContexto();
+        var factura = await relectura.FacturaCompra.AsNoTracking().SingleAsync(f => f.Id == id);
+        Assert.Equal(('B', "99-00000777", new DateOnly(2026, 11, 3)), (factura.TipoComprobante!.Value, factura.Numero, factura.FechaImputacion));
+        var linea = await relectura.FacturaCompraDetalle.AsNoTracking().SingleAsync(d => d.FacturaCompraId == id);
+        Assert.Equal((10m, 10m, 0m), (linea.DescuentoPorcentaje, linea.Descuento2Porcentaje, linea.Descuento3Porcentaje));
+        Assert.Equal(81m, await relectura.Articulo.Where(a => a.Id == s.ArticuloId).Select(a => a.PrecioCosto).SingleAsync());
+    }
+
+    [PostgreSqlFact]
+    public async Task Fco06_PostComprobanteBConNovecientosNoventaYNueve_400YNoEscribe()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra", CuerpoFco06(s, "B", "999-00000777"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        await using var relectura = fixture.CrearContexto();
+        Assert.False(await relectura.FacturaCompra.AnyAsync());
+    }
+
+    // CA-014 y CA-015: el total antes de confirmar, sin escribir nada.
+    [PostgreSqlFact]
+    public Task Fco06_PostCalculoComprobanteA_SumaIva_YNoEscribe() => CalculoAsync("A", "0001-00000001", 162m, 34.02m, 208.52m);
+
+    [PostgreSqlFact]
+    public Task Fco06_PostCalculoComprobanteB_SinIva_YNoEscribe() => CalculoAsync("B", "99-00000001", 162m, 0m, 174.5m);
+
+    private async Task CalculoAsync(string tipo, string numero, decimal neto, decimal iva, decimal total)
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra/calculo", CuerpoFco06(s, tipo, numero));
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        var cuerpo = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal((neto, iva, 12.5m, total),
+            (cuerpo.GetProperty("neto").GetDecimal(), cuerpo.GetProperty("iva").GetDecimal(),
+             cuerpo.GetProperty("percepciones").GetDecimal(), cuerpo.GetProperty("total").GetDecimal()));
+        await using var relectura = fixture.CrearContexto();
+        Assert.False(await relectura.FacturaCompra.AnyAsync());
+        Assert.Equal(1m, await relectura.Stock.Where(x => x.ArticuloId == s.ArticuloId).Select(x => x.Cantidad).SingleAsync());
+    }
+
+    // Hallazgo no bloqueante de la ronda 1: /calculo pide sesión, como el registro.
+    [PostgreSqlFact]
+    public async Task Fco06_PostCalculoSinToken_401()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, rol: null);
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra/calculo", CuerpoFco06(s, "A", "0001-1"));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, respuesta.StatusCode);
     }
 }

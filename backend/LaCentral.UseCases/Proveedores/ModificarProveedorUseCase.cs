@@ -1,6 +1,7 @@
 using LaCentral.UseCases.Proveedores.Dtos;
 using LaCentral.UseCases.Puertos;
 using LaCentral.UseCases.Comun;
+using LaCentral.UseCases.Entidades;
 
 namespace LaCentral.UseCases.Proveedores;
 
@@ -37,6 +38,11 @@ public class ModificarProveedorUseCase
             return Result.Failure(TipoError.Invalido, "La URL de referencia no tiene un formato válido. Debe incluir http:// o https://");
         }
 
+        if (!Proveedor.NormalizarTipoComprobante(request.TipoComprobanteHabitual, out var tipoHabitual))
+        {
+            return Result.Failure(TipoError.Invalido, "El tipo de comprobante habitual es A, B o vacío.");
+        }
+
         // CA-002: CUIT duplicado de otro proveedor
         if (!string.IsNullOrWhiteSpace(request.Cuit) && request.Cuit != proveedor.Cuit)
         {
@@ -50,6 +56,7 @@ public class ModificarProveedorUseCase
         proveedor.RazonSocial = request.RazonSocial.Trim();
         proveedor.Cuit = request.Cuit.Trim();
         proveedor.UrlReferencia = request.UrlReferencia?.Trim();
+        proveedor.TipoComprobanteHabitual = tipoHabitual;
         proveedor.Telefonos = (request.Telefonos ?? new List<string>()).Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
         // Una dirección sin calle viaja como "": se conserva para no borrar su localidad.
         proveedor.Direcciones = (request.Direcciones ?? new List<string>()).Select(d => d?.Trim() ?? string.Empty).ToList();

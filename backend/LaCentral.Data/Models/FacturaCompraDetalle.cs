@@ -20,6 +20,16 @@ public partial class FacturaCompraDetalle
     /// </summary>
     public short SucursalId { get; set; }
 
+    /// <summary>
+    /// Segundo descuento de la línea, sucesivo: se aplica sobre el neto del primero (HU-FCO-06; supuesto a confirmar con Sergio).
+    /// </summary>
+    public decimal Descuento2Porcentaje { get; set; }
+
+    /// <summary>
+    /// Tercer descuento de la línea, sucesivo: se aplica sobre el neto del segundo.
+    /// </summary>
+    public decimal Descuento3Porcentaje { get; set; }
+
     public virtual Articulo Articulo { get; set; } = null!;
 
     public virtual FacturaCompra FacturaCompra { get; set; } = null!;

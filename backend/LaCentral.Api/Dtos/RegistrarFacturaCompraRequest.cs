@@ -21,6 +21,12 @@ public record RegistrarFacturaCompraRequest
 
     public DateOnly? FechaVencimiento { get; init; }
 
+    /// <summary>HU-FCO-06 CA-006. Si no viene, es la emisión.</summary>
+    public DateOnly? FechaImputacion { get; init; }
+
+    /// <summary>HU-FCO-06: "A" o "B", de esta factura. Lo valida el caso de uso.</summary>
+    public string? TipoComprobante { get; init; }
+
     public decimal PercepcionIva { get; init; }
     public decimal PercepcionIibb { get; init; }
     public decimal PercepcionMunicipal { get; init; }
@@ -37,4 +43,6 @@ public record LineaFacturaCompraRequest
     public decimal Cantidad { get; init; }
     public decimal PrecioUnitario { get; init; }
     public decimal DescuentoPorcentaje { get; init; }
+    public decimal Descuento2Porcentaje { get; init; }
+    public decimal Descuento3Porcentaje { get; init; }
 }

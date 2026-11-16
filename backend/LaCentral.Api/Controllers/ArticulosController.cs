@@ -41,10 +41,12 @@ public class ArticulosController : ControllerBase
         [FromQuery] bool incluirInactivos = false,
         [FromQuery] int pagina = 1,
         [FromQuery] int tamanoPagina = 20,
+        [FromQuery] bool aproximada = false,
         CancellationToken cancellationToken = default)
     {
         // Texto ausente es lo mismo que vacío: lo rechaza el caso de uso con su mensaje.
-        var consulta = new DtosNucleo.ConsultaArticulos(texto ?? string.Empty, incluirInactivos, pagina, tamanoPagina);
+        // HU-FCO-06 CA-008: aproximada suma coincidencias por similitud (pg_trgm).
+        var consulta = new DtosNucleo.ConsultaArticulos(texto ?? string.Empty, incluirInactivos, pagina, tamanoPagina, aproximada);
         var resultado = await _consultarArticulos.EjecutarAsync(consulta, cancellationToken);
         return this.AResultadoHttp(resultado);
     }

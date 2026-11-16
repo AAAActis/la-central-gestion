@@ -27,6 +27,11 @@ public class CrearProveedorUseCase
             return Result<CrearProveedorResponse>.Failure(TipoError.Invalido, "La URL de referencia no tiene un formato válido. Debe incluir http:// o https://");
         }
 
+        if (!Proveedor.NormalizarTipoComprobante(request.TipoComprobanteHabitual, out var tipoHabitual))
+        {
+            return Result<CrearProveedorResponse>.Failure(TipoError.Invalido, "El tipo de comprobante habitual es A, B o vacío.");
+        }
+
         // ALTO 5: el código es la clave de negocio. Se informa a quién pertenece;
         // ante dos altas simultáneas, el índice proveedor_codigo_key decide.
         var duenioDelCodigo = await _proveedorRepositorio.ObtenerPorCodigoAsync(request.Codigo.Trim(), ct);
@@ -54,6 +59,7 @@ public class CrearProveedorUseCase
             RazonSocial = request.RazonSocial.Trim(),
             Cuit = string.IsNullOrWhiteSpace(request.Cuit) ? null : request.Cuit.Trim(),
             UrlReferencia = request.UrlReferencia?.Trim(),
+            TipoComprobanteHabitual = tipoHabitual,
             Activo = true,
             Telefonos = (request.Telefonos ?? new List<string>()).Where(t => !string.IsNullOrWhiteSpace(t)).ToList(),
             Direcciones = (request.Direcciones ?? new List<string>()).Where(d => !string.IsNullOrWhiteSpace(d)).ToList()

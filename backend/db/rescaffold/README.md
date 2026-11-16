@@ -16,6 +16,7 @@ de EF se regenera desde la base. **Prohibido `dotnet ef migrations`.**
 | — | **06 reservado para C2** (`proveedor_articulo`). |
 | `07_Normalizacion_3FN_y_Reportes.sql` | Normalización a 3FN (N-3, N-5, N-7, N-9, N-11; N-6 salió) y columnas de reportes. Llegó como 05. |
 | `08_Ubicacion_Deposito_60.sql` | `stock.ubicacion_deposito` de 30 a 60. |
+| `09_Factura_Compra_Mecanica.sql` | HU-FCO-06 (056): tipo de comprobante habitual del proveedor, tipo de comprobante y fecha de imputación de la factura, segundo y tercer descuento por línea. Idempotente. |
 
 Cada script corre en una transacción y no es idempotente. Se aplica a mano: primero
 en `lacentral_test`, se verifica, después en `lacentral`.

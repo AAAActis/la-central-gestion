@@ -29,7 +29,7 @@ public class ConsultarProveedoresUseCaseTests
             new Proveedor { Id = 2, Codigo = "PROV002", RazonSocial = "REPUESTOS CORDOBA", Activo = true }
         };
 
-        _mockRepo.Setup(r => r.BuscarAsync("REPUESTOS CORDOBA", true, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _mockRepo.Setup(r => r.BuscarAsync("REPUESTOS CORDOBA", true, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                  .ReturnsAsync((proveedoresSimulados, proveedoresSimulados.Count));
 
         // Act
@@ -51,7 +51,7 @@ public class ConsultarProveedoresUseCaseTests
             new Proveedor { Id = 10, Codigo = "PROV010", RazonSocial = "REPUESTOS DEL SUR", Cuit = cuitBuscado, Activo = true }
         };
 
-        _mockRepo.Setup(r => r.BuscarAsync(cuitBuscado, false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _mockRepo.Setup(r => r.BuscarAsync(cuitBuscado, false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                  .ReturnsAsync((proveedoresSimulados, proveedoresSimulados.Count));
 
         // Act
@@ -76,7 +76,7 @@ public class ConsultarProveedoresUseCaseTests
         Assert.True(resultado.IsFailure);
         Assert.Equal(TipoError.Invalido, resultado.Tipo);
         _mockRepo.Verify(
-            r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -85,7 +85,7 @@ public class ConsultarProveedoresUseCaseTests
     public async Task Ejecutar_SinCoincidencias_DevuelvePaginaVaciaConLaMismaEnvoltura()
     {
         // CA-003 v1.1 (#147, 05/11/2026): una búsqueda sin coincidencias es una consulta exitosa.
-        _mockRepo.Setup(r => r.BuscarAsync("ASDXYZ", false, 1, 20, It.IsAny<CancellationToken>()))
+        _mockRepo.Setup(r => r.BuscarAsync("ASDXYZ", false, 1, 20, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                  .ReturnsAsync(((IReadOnlyList<Proveedor>)new List<Proveedor>(), 0));
 
         var resultado = await _consultarUseCase.EjecutarAsync("ASDXYZ", incluirInactivos: false);
@@ -107,13 +107,13 @@ public class ConsultarProveedoresUseCaseTests
         // B3 del verificador-tdd (05/11/2026): sin este Setup, el mock devuelve (null, 0). Sin la guarda,
         // el caso de uso reventaba con NullReferenceException antes de llegar a las aserciones. Con una
         // página vacía, el test falla por lo que afirma: que no se consulte.
-        _mockRepo.Setup(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _mockRepo.Setup(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                  .ReturnsAsync(((IReadOnlyList<Proveedor>)new List<Proveedor>(), 0));
 
         var resultado = await _consultarUseCase.EjecutarAsync("filtro", false, pagina, tamanoPagina);
 
         Assert.Equal(TipoError.Invalido, resultado.Tipo);
-        _mockRepo.Verify(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockRepo.Verify(r => r.BuscarAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // CA-004: el filtro de activos/inactivos se delega en el repositorio, no se resuelve en memoria
@@ -121,13 +121,13 @@ public class ConsultarProveedoresUseCaseTests
     public async Task Ejecutar_SinIncluirInactivos_LlamaAlRepositorioConBanderaEnFalse()
     {
         // Arrange
-        _mockRepo.Setup(r => r.BuscarAsync(It.IsAny<string>(), false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _mockRepo.Setup(r => r.BuscarAsync(It.IsAny<string>(), false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                  .ReturnsAsync(((IReadOnlyList<Proveedor>)new List<Proveedor>(), 0));
 
         // Act
         await _consultarUseCase.EjecutarAsync("filtro", incluirInactivos: false);
 
         // Assert
-        _mockRepo.Verify(r => r.BuscarAsync("filtro", false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockRepo.Verify(r => r.BuscarAsync("filtro", false, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

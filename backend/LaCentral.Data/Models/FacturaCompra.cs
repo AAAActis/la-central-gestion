@@ -62,6 +62,16 @@ public partial class FacturaCompra
     /// </summary>
     public bool ConComprobanteFiscal { get; set; }
 
+    /// <summary>
+    /// Tipo de ESTA factura (A o B). El A suma 21 % de IVA y se copia su número tal cual; el B no suma IVA y lleva 99 en el primer tramo del número (Sergio, 13/11/2026). NULL solo en facturas anteriores al script 09.
+    /// </summary>
+    public char? TipoComprobante { get; set; }
+
+    /// <summary>
+    /// Fecha a la que se imputa la compra, aparte de la emisión y el vencimiento (HU-FCO-06). Dato del comprobante, sin lógica financiera.
+    /// </summary>
+    public DateOnly FechaImputacion { get; set; }
+
     public virtual ICollection<ArticuloHistorialCompra> ArticuloHistorialCompraFacturaCompra { get; set; } = new List<ArticuloHistorialCompra>();
 
     public virtual ICollection<ArticuloHistorialCompra> ArticuloHistorialCompraFacturaCompraNavigation { get; set; } = new List<ArticuloHistorialCompra>();
