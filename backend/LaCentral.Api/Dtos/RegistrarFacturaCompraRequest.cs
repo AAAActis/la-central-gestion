@@ -48,4 +48,6 @@ public record LineaFacturaCompraRequest
     public decimal DescuentoPorcentaje { get; init; }
     public decimal Descuento2Porcentaje { get; init; }
     public decimal Descuento3Porcentaje { get; init; }
+    /// <summary>D-S6-15: el externo por marca o por artículo.</summary>
+    public decimal Descuento4Porcentaje { get; init; }
 }
