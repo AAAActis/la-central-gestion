@@ -2,7 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule, NgModel } from '@angular/forms';
-import { Subject, catchError, debounceTime, filter, forkJoin, map, of, switchMap } from 'rxjs';
+import { Subject, catchError, debounceTime, defaultIfEmpty, filter, forkJoin, map, of, switchMap } from 'rxjs';
 import {
   ApiLaCentral, ArticuloResultado, FacturaCompraNueva, FichaArticulo, LineaPdfInterpretada, ProveedorResumen, TotalesFacturaCompra,
   mensajeDeError,
@@ -59,10 +59,19 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
       <form (ngSubmit)="registrar()" (input)="invalidarTotales()" (change)="invalidarTotales()">
         <section class="tarjeta">
           <h2>Factura de compra</h2>
+          <label>Cargar desde el PDF del proveedor
+            <input type="file" accept="application/pdf" (change)="elegirPdf($event)" [disabled]="leyendoPdf()" />
+          </label>
+          <p class="ayuda">Se precarga este mismo formulario: revisá lo señalado antes de confirmar. Nada se guarda hasta confirmar.</p>
+          @if (leyendoPdf()) { <p class="aviso info" role="status">Leyendo el PDF…</p> }
+          @if (errorPdf()) { <p class="error" role="alert">{{ errorPdf() }}</p> }
           @if (proveedor(); as p) {
             <p>Proveedor: <strong>{{ p.razonSocial }}</strong> <span class="tenue mono">({{ p.codigo }})</span>
               <button type="button" class="secundario" (click)="proveedor.set(null)">Cambiar</button></p>
           } @else {
+            @if (revisar('proveedorId')) {
+              <p><span class="etiqueta revisar">Revisar</span> El PDF no trae un proveedor activo que el sistema reconozca: buscalo.</p>
+            }
             <div class="fila">
               <input name="textoProveedor" [(ngModel)]="textoProveedor" placeholder="Código o nombre del proveedor"
                 aria-label="Código o nombre del proveedor" (keydown.enter)="$event.preventDefault(); enterProveedor()" />
@@ -75,15 +84,18 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
           }
 
           <div class="campos">
-            <label>Tipo
-              <select name="tipo" [ngModel]="tipoComprobante" (ngModelChange)="cambiarTipo($event)" required>
+            <label>Tipo @if (revisar('tipoComprobante')) { <span class="etiqueta revisar">Revisar</span> }
+              <select name="tipo" [ngModel]="tipoComprobante" (ngModelChange)="cambiarTipo($event)" required
+                [attr.aria-invalid]="revisar('tipoComprobante') || null">
                 <option value="" disabled>Elegí</option>
                 <option value="A">A · suma 21 % de IVA</option>
                 <option value="B">B · sin IVA</option>
               </select>
             </label>
-            <label>Número <input name="numero" [(ngModel)]="numero" maxlength="30" required class="mono" /></label>
-            <label>Emisión <input type="date" name="emision" [(ngModel)]="fechaEmision" required /></label>
+            <label>Número @if (revisar('numero')) { <span class="etiqueta revisar">Revisar</span> }
+              <input name="numero" [(ngModel)]="numero" maxlength="30" required class="mono" [attr.aria-invalid]="revisar('numero') || null" /></label>
+            <label>Emisión @if (revisar('fechaEmision')) { <span class="etiqueta revisar">Revisar</span> }
+              <input type="date" name="emision" [(ngModel)]="fechaEmision" required [attr.aria-invalid]="revisar('fechaEmision') || null" /></label>
             <label>Vencimiento <input type="date" name="vencimiento" [(ngModel)]="fechaVencimiento" /></label>
             <label>Imputación <input type="date" name="imputacion" [(ngModel)]="fechaImputacion" /></label>
           </div>
@@ -117,7 +129,8 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
               <tbody>
                 @for (l of lineas; track $index; let i = $index) {
                   <tr [class.elegido]="reemplazando() === i">
-                    <td><span class="mono">{{ l.articulo.codigoInterno }}</span> {{ l.articulo.nombre }}</td>
+                    <td>@if (l.revisar) { <span class="etiqueta revisar">Revisar</span> }
+                      <span class="mono">{{ l.articulo.codigoInterno }}</span> {{ l.articulo.nombre }}</td>
                     <td>
                       <select [name]="'destino' + i" [ngModel]="l.sucursalId" #destino="ngModel" (ngModelChange)="cambiarDestino(i, $event, destino)" required>
                         <option [ngValue]="null" disabled>Elegí</option>
@@ -140,6 +153,35 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
             </div>
           }
 
+          @if (sinResolver.length > 0) {
+            <div data-sin-resolver>
+              <p class="aviso alerta" role="status">{{ faltan() }}: elegí el artículo de cada una, dalo de alta o quitala. El sistema no crea artículos.</p>
+              <div class="tabla-caja">
+              <table class="sin-seleccion">
+                <thead><tr><th>Código del proveedor</th><th>Descripción</th><th>Cantidad</th><th>Precio unitario</th><th></th></tr></thead>
+                <tbody>
+                  @for (p of sinResolver; track $index; let i = $index) {
+                    <tr [class.elegido]="resolviendo() === i">
+                      <td><span class="mono">{{ p.codigoProveedor }}</span></td>
+                      <td>{{ p.descripcion }}</td>
+                      <td>{{ p.cantidad }}</td>
+                      <td>$ {{ p.precioUnitario | number: '1.2-2' }}</td>
+                      <td class="fila">
+                        <button type="button" class="secundario" (click)="resolver(i)" [attr.aria-pressed]="resolviendo() === i">Elegir artículo</button>
+                        <a href="/articulos" target="_blank" rel="noopener">Dar de alta el artículo</a>
+                        <button type="button" class="secundario" (click)="quitarSinResolver(i)">Quitar</button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              </div>
+            </div>
+          }
+          @if (resolviendo() !== null) {
+            <p class="aviso info" role="status">Elegí el artículo para el código {{ sinResolver[resolviendo()!].codigoProveedor }} del proveedor.
+              <button type="button" class="secundario" (click)="resolviendo.set(null)">No elegir</button></p>
+          }
           @if (reemplazando() !== null) {
             <p class="aviso info" role="status">Elegí el artículo que reemplaza al de la línea {{ reemplazando()! + 1 }}.
               <button type="button" class="secundario" (click)="reemplazando.set(null)">No reemplazar</button></p>
@@ -169,13 +211,14 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
               </tbody>
             </table>
             <div class="fila">
-              <button type="button" (click)="confirmar()" [disabled]="registrando()">Confirmar y registrar</button>
+              <button type="button" (click)="confirmar()" [disabled]="registrando() || sinResolver.length > 0">Confirmar y registrar</button>
               <span class="tenue">Se suma el stock en el destino de cada línea y se actualiza el costo de cada artículo.</span>
             </div>
           </section>
         } @else {
           <div class="fila">
-            <button type="submit" [disabled]="registrando()">Ver total</button>
+            <button type="submit" [disabled]="registrando() || sinResolver.length > 0">Ver total</button>
+            @if (sinResolver.length > 0) { <span class="tenue">{{ faltan() }}.</span> }
             <span class="tenue">Antes de guardar, se muestra el total con IVA y percepciones.</span>
           </div>
         }
@@ -326,9 +369,14 @@ export class FacturaCompra {
     this.reemplazando.set(null);
     this.invalidarTotales();
     // CA-010: reemplazar cambia solo el artículo; cantidad, destino y descuentos quedan.
+    // 049 CA-003: si se está resolviendo una línea del PDF, la línea nueva lleva sus datos.
+    const i = this.resolviendo();
+    const p = i !== null ? this.sinResolver.splice(i, 1)[0] : null;
+    this.resolviendo.set(null);
     const linea: LineaEnCarga = reemplazo !== null ? this.lineas[reemplazo] : {
-      articulo, sucursalId: this.sucursalCabecera, cantidad: null, precioUnitario: null,
-      descuentoPorcentaje: 0, descuento2Porcentaje: 0, descuento3Porcentaje: 0,
+      articulo, sucursalId: this.sucursalCabecera, cantidad: p?.cantidad ?? null, precioUnitario: p?.precioUnitario ?? null,
+      descuentoPorcentaje: p?.descuentoPorcentaje ?? 0, descuento2Porcentaje: p?.descuento2Porcentaje ?? 0,
+      descuento3Porcentaje: p?.descuento3Porcentaje ?? 0, revisar: p?.revisar,
     };
     linea.articulo = articulo;
     if (reemplazo === null) this.lineas.push(linea);
@@ -353,7 +401,25 @@ export class FacturaCompra {
   }
 
   reemplazar(i: number) {
+    this.resolviendo.set(null);
     this.reemplazando.set(this.reemplazando() === i ? null : i);
+  }
+
+  resolver(i: number) {
+    this.reemplazando.set(null);
+    this.resolviendo.set(this.resolviendo() === i ? null : i);
+  }
+
+  quitarSinResolver(i: number) {
+    this.sinResolver.splice(i, 1);
+    this.resolviendo.set(null);
+    this.invalidarTotales();
+  }
+
+  /** 049 CA-004: cuántas líneas del PDF faltan resolver. */
+  faltan() {
+    const n = this.sinResolver.length;
+    return n === 1 ? 'Falta resolver 1 línea' : `Faltan resolver ${n} líneas`;
   }
 
   quitarLinea(i: number) {
@@ -370,6 +436,10 @@ export class FacturaCompra {
     const proveedor = this.proveedor();
     if (!proveedor) {
       this.errorRegistro.set('Elegí el proveedor de la factura.');
+      return null;
+    }
+    if (this.sinResolver.length > 0) {
+      this.errorRegistro.set(`${this.faltan()}.`);
       return null;
     }
     return {
@@ -392,6 +462,7 @@ export class FacturaCompra {
         descuento2Porcentaje: Number(l.descuento2Porcentaje) || 0,
         descuento3Porcentaje: Number(l.descuento3Porcentaje) || 0,
       })),
+      ...(this.desdePdf ? { desdePdf: true } : {}),
     };
   }
 
@@ -433,12 +504,71 @@ export class FacturaCompra {
     });
   }
 
-  elegirPdf(evento: Event) {}
+  elegirPdf(evento: Event) {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    // Vaciarlo permite volver a elegir el mismo archivo.
+    entrada.value = '';
+    if (archivo) this.cargarPdf(archivo);
+  }
 
-  cargarPdf(archivo: File) {}
+  /** 049 CA-001 y CA-005: interpreta el PDF (029) y precarga el formulario; nada se guarda. */
+  cargarPdf(archivo: File) {
+    this.errorPdf.set(null);
+    this.leyendoPdf.set(true);
+    this.api.interpretarFacturaPdf(archivo).pipe(
+      switchMap(f => forkJoin({
+        f: of(f),
+        proveedor: f.proveedorId === null ? of(null) : this.api.fichaTercero('proveedores', f.proveedorId),
+        fichas: forkJoin(f.lineas.filter(l => l.articuloId !== null).map(l => this.api.ficha(l.articuloId!))).pipe(defaultIfEmpty([])),
+      })),
+    ).subscribe({
+      next: ({ f, proveedor, fichas }) => {
+        this.nueva();
+        if (proveedor) this.proveedor.set({
+          id: f.proveedorId!, codigo: proveedor.codigo, razonSocial: proveedor.razonSocial, cuit: proveedor.cuit,
+          activo: proveedor.activo, tipoComprobanteHabitual: proveedor.tipoComprobanteHabitual ?? null,
+        });
+        // El tipo es el del comprobante, no el habitual del proveedor; un B sin número propone el 99.
+        this.numero = f.numero ?? '';
+        this.cambiarTipo(f.tipoComprobante ?? '');
+        this.fechaEmision = f.fechaEmision ?? '';
+        this.fechaVencimiento = f.fechaVencimiento ?? '';
+        this.percepciones = {
+          iva: f.percepcionIva ?? 0, iibb: f.percepcionIibb ?? 0,
+          municipal: f.percepcionMunicipal ?? 0, ganancias: f.percepcionGanancias ?? 0,
+        };
+        if (fichas.length > 0 && this.sucursales().length === 0)
+          this.sucursales.set(fichas[0].existencias.map(e => ({ id: e.sucursalId, nombre: e.sucursal })));
+        const porId = new Map(fichas.map(x => [x.id, x]));
+        f.lineas.forEach(({ articuloId, ...l }, i) => {
+          const revisar = f.paraRevisar.includes(`lineas[${i}]`);
+          const ficha = articuloId === null ? undefined : porId.get(articuloId);
+          if (!ficha) {
+            this.sinResolver.push({ ...l, revisar });
+            return;
+          }
+          this.lineas.push({
+            articulo: { id: ficha.id, codigoInterno: ficha.codigoInterno, nombre: ficha.nombre, activo: ficha.activo, codigosProveedor: [] },
+            sucursalId: this.sucursalCabecera, cantidad: l.cantidad, precioUnitario: l.precioUnitario,
+            descuentoPorcentaje: l.descuentoPorcentaje, descuento2Porcentaje: l.descuento2Porcentaje,
+            descuento3Porcentaje: l.descuento3Porcentaje, revisar,
+          });
+        });
+        this.paraRevisar.set(f.paraRevisar);
+        this.desdePdf = true;
+        this.leyendoPdf.set(false);
+      },
+      error: e => {
+        this.leyendoPdf.set(false);
+        this.errorPdf.set(mensajeDeError(e));
+      },
+    });
+  }
 
+  /** 049 CA-002: el campo que el PDF no pudo afirmar. */
   revisar(campo: string) {
-    return false;
+    return this.paraRevisar().includes(campo);
   }
 
   stockEn(ficha: FichaArticulo, sucursalId: number) {
@@ -457,6 +587,11 @@ export class FacturaCompra {
     this.percepciones = { iva: 0, iibb: 0, municipal: 0, ganancias: 0 };
     this.lineas = [];
     this.totales.set(null);
+    this.sinResolver = [];
+    this.resolviendo.set(null);
+    this.paraRevisar.set([]);
+    this.desdePdf = false;
+    this.errorPdf.set(null);
   }
 }
 

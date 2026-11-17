@@ -198,6 +198,8 @@ fieldset { border: 1px solid var(--linea); border-radius: var(--radio-tarjeta); 
   background: var(--deshab-fondo); color: var(--deshab-texto);
 }
 .etiqueta.activa { background: var(--ok-fondo); color: var(--ok-texto); }
+/* 049: un dato que el PDF no pudo afirmar. Alerta (§ tokens --aviso-*), siempre con el texto «Revisar». */
+.etiqueta.revisar { background: var(--aviso-chip); color: var(--aviso-texto); }
 
 /* Tabla: la caja desplaza a lo ancho, nunca la página. */
 .tabla-caja { overflow: auto; max-width: 100%; }
