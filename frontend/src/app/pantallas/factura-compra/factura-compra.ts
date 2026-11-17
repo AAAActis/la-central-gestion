@@ -17,14 +17,18 @@ interface LineaEnCarga {
   descuentoPorcentaje: number;
   descuento2Porcentaje: number;
   descuento3Porcentaje: number;
+  /** D-S6-15: el externo por marca o por artículo (el 5 % de pago contado de ETMAN). */
+  descuento4Porcentaje: number;
   /** HU-UI-11 (049) CA-002: el PDF no la pudo afirmar. */
   revisar?: boolean;
+  /** 049 CA-002: el cuarto descuento lo propuso el PDF sin traerlo. */
+  revisarDescuento4?: boolean;
 }
 
 interface Sucursal { id: number; nombre: string; }
 
 /** HU-UI-11 (049) CA-003: una línea del PDF cuyo código no tiene artículo. No se registra hasta resolverla. */
-interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { revisar: boolean; }
+interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { revisar: boolean; revisarDescuento4: boolean; }
 
 /**
  * HU-FCO-01 · carga manual de la factura de compra. La pantalla no calcula costos ni
@@ -129,7 +133,7 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
           } @else {
             <div class="tabla-caja">
             <table class="sin-seleccion lineas">
-              <thead><tr><th>Artículo</th><th>Destino</th><th>Cantidad</th><th>Precio unitario</th><th>Desc. 1 %</th><th>Desc. 2 %</th><th>Desc. 3 %</th><th></th></tr></thead>
+              <thead><tr><th>Artículo</th><th>Destino</th><th>Cantidad</th><th>Precio unitario</th><th>Desc. 1 %</th><th>Desc. 2 %</th><th>Desc. 3 %</th><th>Desc. 4 %</th><th></th></tr></thead>
               <tbody>
                 @for (l of lineas; track $index; let i = $index) {
                   <tr [class.elegido]="reemplazando() === i">
@@ -146,6 +150,9 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
                     <td><input type="number" min="0" max="100" step="0.01" class="corto" [name]="'descuento' + i" [(ngModel)]="l.descuentoPorcentaje" /></td>
                     <td><input type="number" min="0" max="100" step="0.01" class="corto" [name]="'descuento2' + i" [(ngModel)]="l.descuento2Porcentaje" /></td>
                     <td><input type="number" min="0" max="100" step="0.01" class="corto" [name]="'descuento3' + i" [(ngModel)]="l.descuento3Porcentaje" /></td>
+                    <td>@if (l.revisarDescuento4) { <span class="etiqueta revisar">Revisar</span> }
+                      <input type="number" min="0" max="100" step="0.01" class="corto" [name]="'descuento4' + i" [(ngModel)]="l.descuento4Porcentaje"
+                        [attr.aria-invalid]="l.revisarDescuento4 || null" /></td>
                     <td class="fila">
                       <button type="button" class="secundario" (click)="reemplazar(i)" [attr.aria-pressed]="reemplazando() === i">Reemplazar</button>
                       <button type="button" class="secundario" (click)="quitarLinea(i)">Quitar</button>
@@ -344,14 +351,14 @@ export class FacturaCompra {
         if (fichas.length > 0 && this.sucursales().length === 0)
           this.sucursales.set(fichas[0].existencias.map(e => ({ id: e.sucursalId, nombre: e.sucursal })));
         const porId = new Map(fichas.map(x => [x.id, x]));
-        this.sinResolver = this.sinResolver.filter(({ revisar, ...l }) => {
+        this.sinResolver = this.sinResolver.filter(({ revisar, revisarDescuento4, ...l }) => {
           const ficha = porId.get(halladas.get(l.codigoProveedor)!);
           if (!ficha) return true;
           this.lineas.push({
             articulo: { id: ficha.id, codigoInterno: ficha.codigoInterno, nombre: ficha.nombre, activo: ficha.activo, codigosProveedor: [] },
             sucursalId: this.sucursalCabecera, cantidad: l.cantidad, precioUnitario: l.precioUnitario,
             descuentoPorcentaje: l.descuentoPorcentaje, descuento2Porcentaje: l.descuento2Porcentaje,
-            descuento3Porcentaje: l.descuento3Porcentaje, revisar,
+            descuento3Porcentaje: l.descuento3Porcentaje, descuento4Porcentaje: l.descuento4Porcentaje, revisar, revisarDescuento4,
           });
           return false;
         });
@@ -420,7 +427,8 @@ export class FacturaCompra {
     const linea: LineaEnCarga = reemplazo !== null ? this.lineas[reemplazo] : {
       articulo, sucursalId: this.sucursalCabecera, cantidad: p?.cantidad ?? null, precioUnitario: p?.precioUnitario ?? null,
       descuentoPorcentaje: p?.descuentoPorcentaje ?? 0, descuento2Porcentaje: p?.descuento2Porcentaje ?? 0,
-      descuento3Porcentaje: p?.descuento3Porcentaje ?? 0, revisar: p?.revisar,
+      descuento3Porcentaje: p?.descuento3Porcentaje ?? 0, descuento4Porcentaje: p?.descuento4Porcentaje ?? 0,
+      revisar: p?.revisar, revisarDescuento4: p?.revisarDescuento4,
     };
     linea.articulo = articulo;
     if (reemplazo === null) this.lineas.push(linea);
@@ -505,6 +513,7 @@ export class FacturaCompra {
         descuentoPorcentaje: Number(l.descuentoPorcentaje) || 0,
         descuento2Porcentaje: Number(l.descuento2Porcentaje) || 0,
         descuento3Porcentaje: Number(l.descuento3Porcentaje) || 0,
+        descuento4Porcentaje: Number(l.descuento4Porcentaje) || 0,
       })),
       ...(this.desdePdf ? { desdePdf: true } : {}),
     };
@@ -588,16 +597,17 @@ export class FacturaCompra {
         const porId = new Map(fichas.map(x => [x.id, x]));
         f.lineas.forEach(({ articuloId, ...l }, i) => {
           const revisar = f.paraRevisar.includes(`lineas[${i}]`);
+          const revisarDescuento4 = f.paraRevisar.includes(`lineas[${i}].descuento4`);
           const ficha = articuloId === null ? undefined : porId.get(articuloId);
           if (!ficha) {
-            this.sinResolver.push({ ...l, revisar });
+            this.sinResolver.push({ ...l, revisar, revisarDescuento4 });
             return;
           }
           this.lineas.push({
             articulo: { id: ficha.id, codigoInterno: ficha.codigoInterno, nombre: ficha.nombre, activo: ficha.activo, codigosProveedor: [] },
             sucursalId: this.sucursalCabecera, cantidad: l.cantidad, precioUnitario: l.precioUnitario,
             descuentoPorcentaje: l.descuentoPorcentaje, descuento2Porcentaje: l.descuento2Porcentaje,
-            descuento3Porcentaje: l.descuento3Porcentaje, revisar,
+            descuento3Porcentaje: l.descuento3Porcentaje, descuento4Porcentaje: l.descuento4Porcentaje, revisar, revisarDescuento4,
           });
         });
         this.paraRevisar.set(f.paraRevisar);

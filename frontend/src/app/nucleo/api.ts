@@ -123,6 +123,8 @@ export interface LineaFacturaCompra {
   descuentoPorcentaje: number;
   descuento2Porcentaje: number;
   descuento3Porcentaje: number;
+  /** D-S6-15: el externo por marca o por artículo. */
+  descuento4Porcentaje: number;
 }
 
 export interface FacturaCompraNueva {
@@ -151,6 +153,8 @@ export interface LineaPdfInterpretada {
   descuentoPorcentaje: number;
   descuento2Porcentaje: number;
   descuento3Porcentaje: number;
+  /** D-S6-15: el externo por marca o por artículo. */
+  descuento4Porcentaje: number;
 }
 
 /** HU-FCO-05 (029): lo que devuelve `POST /api/facturas-compra/pdf`. Nada quedó guardado. */
