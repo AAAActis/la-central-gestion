@@ -99,6 +99,18 @@ public class LecturaPdfTests
         Assert.Equal(["lineas[0]"], leido.ParaRevisar);
     }
 
+    [Theory]
+    [InlineData("", "2,000.25", "percepcionIibb")]
+    [InlineData("1,000.50", "", "percepcionIva")]
+    [InlineData("1.000,50", "2,000.25", "percepcionIibb")]
+    public void Etman_UnaPercepcionDelBloqueQueNoSePuedeLeer_QuedaNull_YSeMarcaParaRevisar(string iibb, string iva, string campo)
+    {
+        var leido = Leer(PdfSintetico.FacturaEtman(percepcionIibb: iibb, percepcionIva: iva));
+
+        Assert.Null(campo == "percepcionIibb" ? leido.PercepcionIibb : leido.PercepcionIva);
+        Assert.Equal([campo], leido.ParaRevisar);
+    }
+
     [Fact]
     public void Fazio_LeeElPresupuesto_ConLosNumerosEnFormatoArgentino_YElDescuentoPorPartes()
     {
