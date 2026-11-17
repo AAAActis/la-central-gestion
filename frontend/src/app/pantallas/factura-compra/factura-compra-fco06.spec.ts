@@ -341,7 +341,7 @@ describe('FacturaCompra · HU-FCO-06', () => {
     c.fechaImputacion = '2026-11-12';
     c.percepciones = { iva: 10, iibb: 2.5, municipal: 0, ganancias: 0 };
     agregar(1, 'FIL-0712', 100);
-    Object.assign(c.lineas[0], { cantidad: 2, descuentoPorcentaje: 10, descuento2Porcentaje: 5, descuento3Porcentaje: 2.5 });
+    Object.assign(c.lineas[0], { cantidad: 2, descuentoPorcentaje: 10, descuento2Porcentaje: 5, descuento3Porcentaje: 2.5, descuento4Porcentaje: 5 });
   }
 
   it('CA-015: antes de guardar pide el total, lo muestra y no registra nada', () => {
@@ -351,7 +351,7 @@ describe('FacturaCompra · HU-FCO-06', () => {
     const calculo = servidor.expectOne('/api/facturas-compra/calculo');
     expect(calculo.request.body).toEqual(jasmine.objectContaining({ tipoComprobante: 'B', fechaImputacion: '2026-11-12' }));
     expect(calculo.request.body.lineas[0]).toEqual(jasmine.objectContaining(
-      { descuentoPorcentaje: 10, descuento2Porcentaje: 5, descuento3Porcentaje: 2.5 }));
+      { descuentoPorcentaje: 10, descuento2Porcentaje: 5, descuento3Porcentaje: 2.5, descuento4Porcentaje: 5 }));
     calculo.flush({ neto: 166.73, iva: 0, percepciones: 12.5, total: 179.23 });
     fixture.detectChanges();
 
@@ -362,7 +362,7 @@ describe('FacturaCompra · HU-FCO-06', () => {
     expect(totales.textContent).toContain('12,50');
   });
 
-  it('CA-012 y CA-014: confirmar registra con el tipo, la imputación y los tres descuentos', () => {
+  it('CA-012 y CA-014: confirmar registra con el tipo, la imputación y los cuatro descuentos (D-S6-15)', () => {
     cargarFactura();
     c.registrar();
     servidor.expectOne('/api/facturas-compra/calculo').flush({ neto: 166.73, iva: 0, percepciones: 12.5, total: 179.23 });
@@ -373,9 +373,24 @@ describe('FacturaCompra · HU-FCO-06', () => {
     expect(registro.request.method).toBe('POST');
     expect(registro.request.body).toEqual(jasmine.objectContaining({ tipoComprobante: 'B', numero: '99-00001234', fechaImputacion: '2026-11-12' }));
     expect(registro.request.body.lineas[0]).toEqual(jasmine.objectContaining(
-      { precioUnitario: 100, descuentoPorcentaje: 10, descuento2Porcentaje: 5, descuento3Porcentaje: 2.5, sucursalId: 1 }));
+      { precioUnitario: 100, descuentoPorcentaje: 10, descuento2Porcentaje: 5, descuento3Porcentaje: 2.5, descuento4Porcentaje: 5, sucursalId: 1 }));
     registro.flush({ id: 9 });
     servidor.expectOne('/api/articulos/1').flush(ficha(1, 85.5));
+  });
+
+  it('CA-012: cada línea tiene un cuarto descuento editable, que arranca en 0 (D-S6-15)', async () => {
+    cargarFactura();
+    Object.assign(c.lineas[0], { descuento4Porcentaje: 0 });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(raiz().querySelector('th:nth-child(8)')?.textContent).toContain('Desc. 4');
+    const cuarto = raiz().querySelectorAll('table.lineas tbody tr')[0].querySelectorAll<HTMLInputElement>('input')[5];
+    expect(cuarto?.valueAsNumber).toBe(0);
+    expect(cuarto?.disabled).toBeFalse();
+    agregar(2, 'FIL-0713', 50);
+    c.registrar();
+    expect(servidor.expectOne('/api/facturas-compra/calculo').request.body.lineas[1].descuento4Porcentaje).toBe(0);
   });
 
   it('CA-012: sin vencimiento ni imputación cargados, se mandan como null y no como texto vacío', () => {

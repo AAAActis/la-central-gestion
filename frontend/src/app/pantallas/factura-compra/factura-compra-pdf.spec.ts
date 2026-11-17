@@ -19,7 +19,7 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
   });
   const linea = (codigo: string, articuloId: number | null, cantidad = 2, precio = 4000) => ({
     codigoProveedor: codigo, descripcion: `Descripción ${codigo}`, articuloId, cantidad, precioUnitario: precio,
-    descuentoPorcentaje: 0, descuento2Porcentaje: 5, descuento3Porcentaje: 20,
+    descuentoPorcentaje: 0, descuento2Porcentaje: 5, descuento3Porcentaje: 20, descuento4Porcentaje: 0,
   });
   const interpretada = (cambios: Partial<FacturaPdfInterpretada> = {}): FacturaPdfInterpretada => ({
     proveedorId: 7, tipoComprobante: 'A', numero: '0042-00001234', fechaEmision: '2027-02-03', fechaVencimiento: '2027-03-10',
@@ -95,9 +95,9 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
     expect(campo('pIibb').valueAsNumber).toBe(1000.5);
     expect(campo('pMunicipal').valueAsNumber).toBe(0);
     expect(c.lineas.length).toBe(1);
-    // Entradas de la fila: cantidad, precio, tres descuentos. El precio es el del comprobante, no el costo de la ficha.
+    // Entradas de la fila: cantidad, precio, cuatro descuentos. El precio es el del comprobante, no el costo de la ficha.
     const fila = Array.from(raiz().querySelectorAll<HTMLInputElement>('table.lineas tbody tr')[0].querySelectorAll('input'));
-    expect(fila.map(i => i.valueAsNumber)).toEqual([2, 4000, 0, 5, 20]);
+    expect(fila.map(i => i.valueAsNumber)).toEqual([2, 4000, 0, 5, 20, 0]);
     expect(fila.some(i => i.disabled) || campo('numero').disabled).toBeFalse();
     expect(c.lineas[0].sucursalId).toBe(1);
   });
@@ -258,6 +258,55 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
 
     expect(c.lineas).toEqual([]);
     expect(c.sinResolver).toEqual([]);
+  });
+
+  const conCuarto = (codigo: string, articuloId: number | null) => ({ ...linea(codigo, articuloId), descuento4Porcentaje: 5 });
+  // Cantidad, precio y los cuatro descuentos: el cuarto es el sexto campo de la fila.
+  const cuartoDescuento = (fila = 0) =>
+    raiz().querySelectorAll('table.lineas tbody tr')[fila]?.querySelectorAll<HTMLInputElement>('input')[5];
+
+  it('CA-001 y CA-002: precarga el cuarto descuento propuesto y lo señala en su celda, no en toda la línea (D-S6-15)', async () => {
+    cargar(interpretada({ lineas: [conCuarto('AB-100', 50)], paraRevisar: ['lineas[0].descuento4'] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const cuarto = cuartoDescuento();
+    expect(cuarto?.valueAsNumber).toBe(5);
+    expect(cuarto?.getAttribute('aria-invalid')).toBe('true');
+    expect(cuarto?.closest('td')?.querySelector('.etiqueta.revisar')).toBeTruthy();
+    // La línea en sí no se marca: solo el cuarto descuento.
+    expect(raiz().querySelector('table.lineas tbody tr td:first-child .etiqueta.revisar')).toBeNull();
+    expect(raiz().querySelectorAll('table.lineas tbody tr')[0].querySelectorAll('[aria-invalid]').length).toBe(1);
+  });
+
+  it('CA-003: resolver una línea a mano conserva su cuarto descuento y su señal', () => {
+    cargar(interpretada({ lineas: [conCuarto('ZZ9', null)], paraRevisar: ['lineas[0].descuento4'] }));
+    c.resolviendo.set(0);
+    c.textoArticulo = 'A60';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush({
+      articulos: [{ id: 60, codigoInterno: 'A60', nombre: 'Artículo 60', activo: true, codigosProveedor: [] }],
+      total: 1, pagina: 1, tamanoPagina: 10, conflictos: [],
+    });
+    servidor.expectOne('/api/articulos/60').flush(ficha(60));
+    fixture.detectChanges();
+
+    expect(cuartoDescuento()?.getAttribute('aria-invalid')).toBe('true');
+    c.registrar();
+    expect(servidor.expectOne('/api/facturas-compra/calculo').request.body.lineas[0].descuento4Porcentaje).toBe(5);
+  });
+
+  it('CA-003: resolver con el proveedor elegido conserva el cuarto descuento y su señal', () => {
+    cargar(interpretada({ proveedorId: null, lineas: [conCuarto('QQ1', null)], paraRevisar: ['proveedorId', 'lineas[0].descuento4'] }));
+    c.elegirProveedor({ id: 7, codigo: 'PRV-7', razonSocial: 'R', cuit: null, activo: true, tipoComprobanteHabitual: null });
+    servidor.expectOne('/api/facturas-compra/pdf').flush(interpretada({ lineas: [conCuarto('QQ1', 51)] }));
+    servidor.expectOne('/api/articulos/51').flush(ficha(51));
+    fixture.detectChanges();
+
+    expect(cuartoDescuento()?.getAttribute('aria-invalid')).toBe('true');
+    c.registrar();
+    expect(servidor.expectOne('/api/facturas-compra/calculo').request.body.lineas[0].descuento4Porcentaje).toBe(5);
   });
 
   it('CA-003: la línea sin artículo queda sin resolver, con su código y el enlace al alta', () => {
