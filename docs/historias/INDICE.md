@@ -20,7 +20,7 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 013 | HU-ART-03 | Modificación de artículo y sus códigos | Alto | 5 | Sprint 3 | 5 | [`013-HU-ART-03.md`](./013-HU-ART-03.md) | #17 | Sprint 3 | Terminada · PR #122, #123 |
 | 014 | HU-ART-04 | Baja lógica de artículo | Medio | 3 | Sprint 6 | 5 | [`014-HU-ART-04.md`](./014-HU-ART-04.md) | #21 | Sprint 5 | Abierta · PR #153; CA-003 anulado en v1.1 (12/11/2026, respuesta 3 de Sergio; #160 cerrada sin trabajo) |
 | 015 | HU-ART-05 | Precio de venta estimado por márgenes | Alto | 5 | Sprint 6 | 4 | [`015-HU-ART-05.md`](./015-HU-ART-05.md) | #22 | Sprint 3 | Terminada · PR #121 |
-| 016 | HU-ART-06 | Historial de compras del artículo | Alto | 5 | Sprint 4 | 5 | [`016-HU-ART-06.md`](./016-HU-ART-06.md) | #23 | Sprint 5 | Abierta · PR #152; CA-003 y CA-004 PARCIAL, dependen de la 028 (#9, Sprint 7) |
+| 016 | HU-ART-06 | Historial de compras del artículo | Alto | 5 | Sprint 4 | 5 | [`016-HU-ART-06.md`](./016-HU-ART-06.md) | #23 | Sprint 5 | Abierta · PR #152. CA-003 **cerrado por la 028** (PR #173, mergeado 16/11/2026: `Anular_RevierteStockCostoYProveedor_…` y `Anular_ConVariosRegistrosValidos_VuelveAlMasReciente`). CA-004 cubierto por el mismo test que el CA-002 de la 028, con su interpretación pendiente de Sergio («conserva su precio de costo previo» = el costo no se toca) |
 | 017 | HU-STK-01 | Consulta de existencias por ubicación | Alto | 3 | Sprint 4 | 3 | [`017-HU-STK-01.md`](./017-HU-STK-01.md) | #24 | Sprint 4 | Terminada · PR #131 |
 | 018 | HU-STK-02 | Incremento de stock por factura de compra | Alto | 3 | Sprint 4 | 3 | [`018-HU-STK-02.md`](./018-HU-STK-02.md) | #25 | Sprint 3 | Terminada · PR #119 (16/10/2026, dentro de la 025 (HU-FCO-01)). Se construyó con PR; el PR no quedó enlazado a la issue |
 | 019 | HU-STK-03 | Descuento de stock por factura de venta | Alto | 5 | Sprint 4 | 5 | [`019-HU-STK-03.md`](./019-HU-STK-03.md) | #26 | Sprint 8 | Pendiente |
@@ -30,9 +30,9 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 023 | HU-FVE-03 | Modificación acotada de factura de venta | Bajo | 2 | Sprint 7 | 4 | [`023-HU-FVE-03.md`](./023-HU-FVE-03.md) | #30 | Sprint 8 | Pendiente |
 | 024 | HU-FVE-04 | Anulación de factura de venta | Medio | 5 | Sprint 6 | 5 | [`024-HU-FVE-04.md`](./024-HU-FVE-04.md) | #31 | Sprint 8 | Pendiente |
 | 025 | HU-FCO-01 | Registro manual de factura de compra | Alto | 8 | Sprint 5 | 5 | [`025-HU-FCO-01.md`](./025-HU-FCO-01.md) | #32 | Sprint 3 | Terminada · PR #119, #121 |
-| 026 | HU-FCO-02 | Consulta de facturas de compra | Alto | 3 | Sprint 5 | 5 | [`026-HU-FCO-02.md`](./026-HU-FCO-02.md) | #33 | Sprint 7 | Pendiente |
+| 026 | HU-FCO-02 | Consulta de facturas de compra | Alto | 3 | Sprint 5 | 5 | [`026-HU-FCO-02.md`](./026-HU-FCO-02.md) | #33 | Sprint 7 | Terminada · PR #174 (mergeado 16/11/2026), adelantada del Sprint 7 |
 | 027 | HU-FCO-03 | Modificación acotada de factura de compra | Bajo | 2 | Sprint 7 | 4 | [`027-HU-FCO-03.md`](./027-HU-FCO-03.md) | #34 | Sprint 7 | Pendiente |
-| 028 | HU-FCO-04 | Anulación de factura de compra | Medio | 8 | Sprint 5 | 5 | [`028-HU-FCO-04.md`](./028-HU-FCO-04.md) | #9 | Sprint 7 | Pendiente |
+| 028 | HU-FCO-04 | Anulación de factura de compra | Medio | 8 | Sprint 5 | 5 | [`028-HU-FCO-04.md`](./028-HU-FCO-04.md) | #9 | Sprint 7 | Construida, adelantada del Sprint 7 · PR #173 (backend) y #175 (pantalla), mergeados 16/11/2026. Abierta: el CA-002 tiene una interpretación pendiente de Sergio (el costo no se toca) |
 | 029 | HU-FCO-05 | Carga automatizada de factura desde PDF | Alto | 13 | Sprint 7 | 6 | [`029-HU-FCO-05.md`](./029-HU-FCO-05.md) | #13 | Sprint 6 | Pendiente · volvió al 6 (D-PL-05, 13/11/2026), después de la 056 |
 | 030 | HU-CMP-01 | Búsqueda comparativa por nombre | Alto | 5 | Sprint 8 | 5 | [`030-HU-CMP-01.md`](./030-HU-CMP-01.md) | #16 | Sprint 7 | Pendiente |
 | 031 | HU-CMP-02 | Consulta en vivo a sitios de proveedores | Alto | 13 | Sprint 8 | 6 | [`031-HU-CMP-02.md`](./031-HU-CMP-02.md) | #18 | Sprint 7 | Pendiente · completa, no prueba de concepto (D-PL-02) |
@@ -57,7 +57,7 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 050 | HU-UI-12 | Pantalla del comparador de precios | Alto | 8 | Sprint 8 | 5 | [`050-HU-UI-12.md`](./050-HU-UI-12.md) | #52 | Sprint 7 | Pendiente · no se parte: todos sus CA son del comparador |
 | 051 | HU-UI-13 | Manejo global de errores y avisos | Medio | 2 | Sprint 8 | 3 | [`051-HU-UI-13.md`](./051-HU-UI-13.md) | #53 | Sprint 8 | Pendiente |
 | 052 | HU-UI-14 | Comprensión y documentación del frontend | Alto | 5 | Sprint 8 | 4 | [`052-HU-UI-14.md`](./052-HU-UI-14.md) | #54 | Sprint 8 | Pendiente |
-| 056 | HU-FCO-06 | Carga de factura de compra con la mecánica del negocio | Alto | 13 | Sprint 6 | 15 | [`056-HU-FCO-06.md`](./056-HU-FCO-06.md) | #163 | Sprint 6 | Pendiente · CA-007 aceptado (lo cumple la 025); proforma del 13/11/2026 |
+| 056 | HU-FCO-06 | Carga de factura de compra con la mecánica del negocio | Alto | 13 | Sprint 6 | 15 | [`056-HU-FCO-06.md`](./056-HU-FCO-06.md) | #163 | Sprint 6 | Construida · PR #166 (esquema y backend) y #167 (frontend), mergeados 16/11/2026, más el #170 (#169). Abierta: falta el recorrido DoD 10 contra `lacentral_demo` (Javi con Sergio) |
 
 **Total: 53 historias con proforma** (las 52 del Excel y la 056).
 

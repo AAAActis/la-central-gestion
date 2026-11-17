@@ -19,10 +19,10 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 
 | Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
-| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | E56 (esquema) | En curso. Proforma escrita; CA-007 aceptado (lo cumple la 025). **Esquema y backend: PR #166.** **Frontend: PR #167.** #166: `verificador-tdd` y `auditor-persistencia` APTO contra `lacentral_test.public` (13/11). #166 **APROBADO por Javi** (14/11; deuda en #168). #167: cambios pedidos por Javi el 14/11 hechos; cuarta ronda (autorizada el 13/11) y su arreglo: **`verificador-tdd` APTO** sobre `4b624d3`, 196/196 frontend; re-review pedida a Javi. #169: artículo repetido por sucursal en la pantalla. Orden de merge: #164 → #165 (mergeados) → #166 y #167 juntos; el 09 en `lacentral` lo aplica Santi después del merge. Falta el recorrido en el navegador contra `lacentral_demo` (DoD 10, Santi o Lauti) |
-| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | **No se arranca (14/11/2026):** la compuerta C7 sigue abierta hasta que lleguen facturas reales de varios proveedores |
-| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | **No se arranca (14/11/2026):** depende de la 029, que espera la C7 |
-| #169 | Factura de compra: el mismo artículo a sucursales distintas (D9), observación de Javi del 14/11 | sin estimar | Santi | el #167 | **PR #170** (14/11), contra `develop`; se mergea después del #167. `verificador-tdd` APTO, frontend 201/201 sobre `ca0707d`. **14/11:** también avisa y no acepta el cambio de destino de una línea que la repite (rojo `492f4af`, código `65e1370`, guarda inalcanzable borrada `b7973d6`); `verificador-tdd` NO APTO en la ronda 1 (M1) y APTO en la 2; frontend 203/203 sobre `b7973d6` |
+| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | — | **Construida y mergeada.** PR #166 (esquema y backend) y #167 (frontend), aprobados y mergeados por Javi el 16/11/2026, con `verificador-tdd` y `auditor-persistencia` APTO (ver la historia abajo). **Issue abierta:** falta el recorrido DoD 10 contra `lacentral_demo`, que hace Javi con Sergio (tabla armada abajo). El 09 en `lacentral`: lo aplica Santi (bitácora, bloque «PARA SANTI» del 17/11) |
+| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | **Se arranca (17/11/2026).** C7 cerrada parcial (ver Compuertas): parser por reglas, un lector por layout. Lo que depende de Sergio (número del presupuesto en negro) se marca «para revisar» |
+| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | Después de la 029. Reutiliza la pantalla de la 056: el PDF precarga el mismo formulario |
+| #169 | Factura de compra: el mismo artículo a sucursales distintas (D9), observación de Javi del 14/11 | sin estimar | Santi | — | **Hecha:** PR #170, mergeado por Javi el 16/11/2026 (`verificador-tdd` APTO, 203/203 frontend sobre `b7973d6`). Issue cerrada el 17/11 con referencia al #170 |
 
 **34 SP** (13 + 13 + 8). Salieron al Sprint 7 la #126, la #127 y la #128 (21 SP); entraron la
 #13 y la #51 (21 SP). Es un intercambio: el total no cambia.
@@ -32,9 +32,99 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | # | Qué | Responsable | Bloquea | Estado al 13/11 |
 |---|---|---|---|---|
 | E56 | Esquema de la 056: `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `fecha_imputacion`, dos descuentos más por línea (script SQL + re-scaffold, en `lacentral_test` y `lacentral_demo`) | Santi | 056; la 029 y la 049 lo usan | **Script 09 escrito y aplicado en `lacentral_demo`** (13/11) con re-scaffold. **CERRADA 13/11:** Santi aplicó el 09 a `lacentral_test.public` con el superusuario (`09: TODO OK`). La suite corre contra `public`, sin `LA_CENTRAL_TEST_SCHEMA`. La plantilla `fco06_fuente` se borró el 13/11 |
-| C7 | Facturas reales de varios proveedores, para decidir parser por reglas o interpretación asistida (nota de la 029) | Lauti | 029 | Abierta |
+| C7 | Facturas reales de varios proveedores, para decidir parser por reglas o interpretación asistida (nota de la 029) | Lauti | 029 | **CERRADA PARCIAL (17/11/2026)**, ver «Compuerta C7» abajo: alcanza para decidir y construir; falta una **factura** de Expoyer (la que llegó es una nota de crédito) y una de Autocor |
 
 C2, C5, C6 y C1 pasaron al Sprint 7 con el comparador (D-PL-05). La P6 se cerró el 11/11.
+
+## Lo mergeado el 16/11/2026 · Javi revisó, aprobó y mergeó todos los PR abiertos
+
+El Sprint 5 está cerrado (etiqueta `sprint-5`). `develop` en `b920a89`.
+
+| PR | Qué | Issue | Verificación con la que entró | Issue |
+|---|---|---|---|---|
+| #166 | 056 · esquema (script 09) y backend | #163 | `verificador-tdd` APTO (ronda 2), `auditor-persistencia` APTO, 560/560 | abierta: falta DoD 10 |
+| #167 | 056 · frontend | #163 | `verificador-tdd` APTO (ronda 4 autorizada), 197/197 | abierta: falta DoD 10 |
+| #170 | #169 · mismo artículo a sucursales distintas | #169 | `verificador-tdd` APTO, 203/203 | **cerrada 17/11** |
+| #171 | #168 · el PUT de proveedor no borra el tipo habitual | #168 | `verificador-tdd` APTO (ronda 2), auditor APTO, 564/564 | **cerrada 17/11** |
+| #172 | docs: D1 de `CLAUDE.md` alineada con D12, D13 y D14 | — | solo docs | — |
+| #173 | 028 parte 1 · anulación, backend con doble certificación | #9 | `verificador-tdd` APTO (ronda 2), auditor APTO, 591/591 | abierta (ver abajo) |
+| #174 | 026 · consulta de facturas de compra | #33 | `verificador-tdd` APTO (ronda 3), auditor APTO, 577/577 backend, 206/206 frontend | **cerrada 17/11** |
+| #175 | 028 parte 2 · pantalla de anulación | #9 | `verificador-tdd` APTO (ronda 2), 608/608 backend, 214/214 frontend | abierta (ver abajo) |
+
+**La 028 y la 026 son del Sprint 7, construidas antes de tiempo.** Su estado vive en
+`docs/sprint07/ESTADO.md` y salen de la cuenta de SP del Sprint 7 (`docs/PLAN-SPRINTS-6-7-8.md`,
+67 → 56). La #9 queda **abierta**: el CA-002 tiene una interpretación pendiente de Sergio («conserva su
+precio de costo previo» = el costo no se toca).
+
+**La 016 (#23):** la 028 **cierra el CA-003** (marca el registro de historial como anulado y vuelve
+al registro válido anterior: `Anular_RevierteStockCostoYProveedor_…` y
+`Anular_ConVariosRegistrosValidos_VuelveAlMasReciente`). El **CA-004** queda cubierto por el mismo
+test que el CA-002 de la 028, con la misma interpretación pendiente: la #23 sigue abierta hasta que
+Sergio la confirme.
+
+## Compuerta C7 · facturas reales · 17/11/2026
+
+Llegaron tres PDF, **fuera del repo** (`~/dev/TESIS/facturas-reales/`; el repo es público, nunca
+entran ni ellos ni sus datos; `docs/facturas/` va al `.gitignore`):
+
+| Proveedor | Qué es | Texto | Números | Línea |
+|---|---|---|---|---|
+| ETMAN (Multioriginal Parts S.A.) | **Factura A** | extraíble (PScript + Ghostscript) | formato EE. UU. (`20,184.21`) | código, descripción (a veces en dos o tres renglones), marca, cantidad, precio, tres descuentos (Bonif., Bonif., Dto., con signo menos), total. Percepción de IIBB y de IVA aparte; IVA 21 % |
+| Fazio (Badaloni) | **Presupuesto**, compra en negro | extraíble | formato argentino (`27.396,12`) | orden, código de fábrica, descripción, cantidad, remito, precio de lista, descuento combinado `43,84 (28+22)`, precio final, total. **El texto no trae el número del presupuesto** (solo el nombre del archivo) **ni el CUIT del emisor** |
+| Expoyer S.A. | **Nota de crédito A** por bonificación | extraíble | formato EE. UU. | no es una factura de compra |
+
+**Hechos que salen de los PDF:**
+- **Los descuentos son sucesivos, confirmado con dos proveedores.** ETMAN: 20.184,21 × 0,95 × 0,64 =
+  12.272,00 (el total de la línea). Fazio: 28 + 22 → 43,84 %. Era el supuesto de la 056 que faltaba
+  confirmar: **queda confirmado** y se saca de «Supuestos de la 056».
+- **Cada proveedor usa un formato de número distinto**: el lector no puede asumir uno. Cada layout
+  declara el suyo.
+
+**Decisión C7 (17/11/2026): se cierra PARCIAL.** Con dos layouts de compra distintos y texto
+extraíble en los tres alcanza para decidir el enfoque (abajo) y construir los lectores de ETMAN y
+de Fazio. **Queda abierto:** una **factura** de Expoyer y una de Autocor (Lauti); cada una suma su
+lector cuando llegue. Mientras tanto, un PDF de un layout que el sistema no conoce se rechaza y se
+indica la carga manual (como el CA-002 de la 029).
+
+**Decisión de la 029 (17/11/2026): parser por reglas, un lector por layout.** No interpretación
+asistida. Por qué:
+1. Los tres PDF traen **texto extraíble**: no hace falta OCR, que era donde la IA aportaba.
+2. Los layouts son **estables por proveedor** (los genera su sistema de facturación) y **pocos**:
+   cuatro proveedores habituales. Un lector por layout es determinístico, se prueba con PDF
+   sintéticos y da siempre el mismo resultado; una interpretación asistida no.
+3. **Privacidad:** una interpretación asistida manda las facturas reales de la empresa a un servicio
+   externo. Con reglas, no sale nada del servidor, y no hay clave que custodiar.
+4. **Certeza explícita:** cada lector sabe qué campo encontró y cuál no; lo que no reconoce con
+   certeza (el número del presupuesto de Fazio, un proveedor sin CUIT en el texto, un código sin
+   artículo) se devuelve marcado para revisar, nunca adivinado.
+
+**Cuánto cuesta un proveedor nuevo con esta opción:** una clase de lector (reconoce el layout por su
+encabezado de columnas, declara su formato de número y parte las líneas; del orden de 100 líneas),
+un generador de su PDF sintético en los tests con datos inventados, y sus tests. Sin cambios de
+esquema, de API ni de pantalla. Unas horas por layout, más el PDF real para mirar.
+
+**Biblioteca:** PdfPig (`UglyToad.PdfPig`, Apache 2.0, .NET puro, sin binarios nativos), solo en
+`LaCentral.Api` detrás de un puerto; `LaCentral.UseCases` sigue sin paquetes. La misma biblioteca
+escribe PDF, y con eso los tests generan los sintéticos: **ningún test usa los PDF reales ni depende
+de que exista `~/dev/TESIS/facturas-reales/`.** Los reales son para analizar el layout y para el
+recorrido a mano de la DoD 10.
+
+## Lo que vuelve a Sergio · 17/11/2026
+
+Sin respuesta, la 029 sigue con lo que no depende de esto: lo que falta se marca «para revisar».
+
+1. **Presupuesto en negro (Fazio, Badaloni).** ¿Se carga como comprobante **B** con el prefijo
+   **99** (D-S6-10)? ¿Qué número lleva: el del presupuesto (48437)? Mientras tanto, el lector propone
+   tipo B y deja el número **vacío y marcado para revisar** (el texto del PDF no lo trae).
+2. **Notas de crédito de proveedor** (como la de Expoyer, bonificación sobre facturas ya cargadas),
+   ¿se cargan en el sistema? El Mandato deja las notas de crédito fuera de alcance: confirmarlo. Hasta
+   entonces, el sistema no reconoce ese layout y pide la carga manual.
+3. **Pago contado / pronto pago (ETMAN):** informa «Pago Contado 5 %» y vencimientos con descuento.
+   ¿El sistema lo ignora (el costo es el de la línea) o tiene que registrarlo? Hasta entonces se
+   ignora: el costo es el de la línea, y el vencimiento que se propone es el del neto.
+4. **CA-002 de la 028 y CA-004 de la 016** (abierta desde el 14/11): «conserva su precio de costo
+   previo», ¿significa que el costo no se toca al anular, porque no hay registro del costo anterior?
+
 
 **Una HU no se empieza hasta que su compuerta esté cerrada**, aunque esté en el milestone.
 
@@ -52,8 +142,8 @@ Llegaron el 13/11 (vía Santi). Responden «Lo que vuelve a Sergio» del 11/11.
 
 ### Supuestos de la 056 para confirmar con Sergio
 
-- Los tres descuentos de una línea son **sucesivos** (10 + 5 = 14,5 %). Escrito en la proforma;
-  con un solo descuento el costo no cambia respecto de la 025.
+- ~~Los tres descuentos de una línea son **sucesivos** (10 + 5 = 14,5 %).~~ **Confirmado el
+  17/11/2026 con las facturas reales de ETMAN y Fazio** (ver «Compuerta C7»).
 
 ### Riesgos
 
@@ -134,6 +224,11 @@ número de comprobante) y qué pasó; si no pasó lo esperado, el número de iss
 
 ## Fuera del Sprint 6
 
+**Scrapes de proveedores (Sprint 7, D-PL-02):** los de **Expoyer, Autocor, Nafazio (Fazio) y ETMAN
+(Link3)** arrancaron el **17/11/2026**, a mano, en n8n, por Javi, Lauti y Santi, fuera de la cuenta de
+SP. Las credenciales de los portales van en el almacén de credenciales de n8n (RNF-007), nunca en el
+repo. **El destino de sus datos es la compuerta C2 del Sprint 7** (`proveedor_articulo`).
+
 Sprint 7 (comparador completo, scrapes incluidos, + lo que falta de compra) y Sprint 8 (venta,
 stock, UI y artículos): ver `docs/PLAN-SPRINTS-6-7-8.md`. La 031 entra completa en el 7 (D-PL-02,
 reemplaza la D16). La revisión de abajo queda acá como historia y es la entrada de C5.
@@ -169,6 +264,13 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 ---
 
 ## PRÓXIMA SESIÓN
+
+**17/11 · Sprint 6 en serio (prompt de Santi del 17/11).** Javi mergeó todo el 16/11 (tabla «Lo
+mergeado»). Fase A, este PR de docs: tablero, índice, plan (Sprint 7 en 56 SP), issues #169, #168 y #33
+cerradas, #9, #23 y #163 abiertas con el motivo comentado, `docs/facturas/` en el `.gitignore`.
+C7 cerrada parcial, parser por reglas con PdfPig. Sigue: **029 (#13)**, rama `feature/13-factura-pdf`,
+y después **049 (#51)**. Para Santi: backup de `lacentral` y scripts 07 a 09 (bitácora, «PARA SANTI»,
+17/11). Para Javi con Sergio: DoD 10 de la 056. Para Sergio: las cuatro preguntas del 17/11.
 
 **14/11 · 028 (#9) parte 2, la pantalla de anulación: PR #175. Rama `feature/9-anulacion-pantalla`**: sale de la
 026 (`feature/33-consulta-facturas-compra`) con la parte 1 mergeada (`4b59b94`). Depende del #166, el #167,

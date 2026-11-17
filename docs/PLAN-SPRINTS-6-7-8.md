@@ -19,10 +19,10 @@ archivo; si uno cambia, los otros cambian en el mismo push.
 | Sprint | Fechas **estimadas** | Contenido | SP |
 |---|---|---|---|
 | 6 | 16/11/2026 → 04/12/2026 | Factura de compra: carga con la mecánica del negocio, a mano o desde el PDF | 34 |
-| 7 | 07/12/2026 → 25/12/2026 | Comparador completo (scrapes, vinculación de catálogos y comparación) + lo que falta de factura de compra | 67 |
+| 7 | 07/12/2026 → 25/12/2026 | Comparador completo (scrapes, vinculación de catálogos y comparación) + lo que falta de factura de compra | 56 (eran 67: la 028 y la 026 ya están, 17/11/2026) |
 | 8 | 28/12/2026 → 15/01/2027 | Factura de venta + stock + UI y artículos | 53 + ítems sin SP |
 
-**Total: 154 SP** con SP conocidos o estimados (141 hasta el 12/11; la 056 suma 13 estimados, D-PL-04; D-PL-05 intercambia 21 SP entre el 6 y el 7 y el total no cambia), contra unos 34 SP por sprint de dos semanas (velocidad del
+**Total: 154 SP** con SP conocidos o estimados (141 hasta el 12/11; la 056 suma 13 estimados, D-PL-04; D-PL-05 intercambia 21 SP entre el 6 y el 7 y el total no cambia; 11 de esos 154 —la 028 y la 026— ya se entregaron el 16/11, por eso el Sprint 7 queda en 56), contra unos 34 SP por sprint de dos semanas (velocidad del
 Sprint 3: 3,4 SP/día con tres personas). El Sprint 5 entregó unos 19. Por eso se estiran a tres
 semanas en lugar de recortar (decisión D-PL-01).
 
@@ -52,7 +52,7 @@ el total final con percepciones e IVA antes de confirmar.
   comparador: si al escribir el cotejo hace falta, lo decide el equipo.
 - El cambio de esquema del Sprint 6 es solo el de la 056. C2 y C1 se van con el comparador.
 
-### Sprint 7 · comparador completo + lo que falta de compra · 67 SP
+### Sprint 7 · comparador completo + lo que falta de compra · 56 SP
 
 **Entregable:** al cerrar este sprint, una persona puede entrar al sistema, incorporar el
 catálogo de un proveedor desde su scrape, vincular sus renglones con los artículos propios a
@@ -72,11 +72,13 @@ facturas de compra, sobre `lacentral_demo`.
 | #20 | 033 · HU-CMP-04 · vista Venta | 3 | Comparador |
 | #35 | 034 · HU-CMP-05 · redirección al sitio del proveedor | 1 | Comparador |
 | #52 | 050 · HU-UI-12 · pantalla del comparador | 8 | Comparador |
-| #33 | 026 · HU-FCO-02 · consulta de facturas de compra | 3 | Compra |
+| ~~#33~~ | ~~026 · HU-FCO-02 · consulta de facturas de compra~~ · **hecha:** PR #174, mergeado 16/11/2026 | ~~3~~ | Compra |
 | #34 | 027 · HU-FCO-03 · modificación acotada de factura de compra | 2 | Compra |
-| #9 | 028 · HU-FCO-04 · anulación de factura de compra | 8 | Compra |
+| ~~#9~~ | ~~028 · HU-FCO-04 · anulación de factura de compra~~ · **construida:** PR #173 y #175, mergeados 16/11/2026 (queda la interpretación del CA-002 para Sergio) | ~~8~~ | Compra |
 
-**67 SP** (5 + 8 + 8 + 5 + 13 + 3 + 3 + 1 + 8 + 3 + 2 + 8).
+**56 SP** (5 + 8 + 8 + 5 + 13 + 3 + 3 + 1 + 8 + 2). Eran 67: la 028 (8) y la 026 (3) se construyeron
+adelantadas el 14/11 y se mergearon el 16/11/2026, así que salen de la cuenta (17/11/2026). La 026 sale
+por la misma razón que la 028: ya está hecha.
 
 - **La 050 no se parte:** su CA-002 y su CA-003 necesitan la 031.
 - **La 031 entra completa**, no como prueba de concepto (D-PL-02). Armar los scrapes de cada sitio
@@ -84,7 +86,8 @@ facturas de compra, sobre `lacentral_demo`.
 - **La vinculación (053, 054, 055) viene del Sprint 6 (D-PL-05):** necesita filas de catálogo, y
   la única fuente son los scrapes de la 031. La pantalla de vinculación entra en las proformas de
   la 053 y la 054 (C5); sus 16 SP son estimación hasta que existan.
-- La 028 cierra el CA-003 y el CA-004 de la 016 (#23) y destraba la 048 para el Sprint 8.
+- La 028 cierra el CA-003 de la 016 (#23) y cubre el CA-004 con la misma interpretación pendiente
+  que su CA-002 (17/11/2026). Destraba la 048 para el Sprint 8.
 
 ### Sprint 8 · venta + stock + UI y artículos · 53 SP + ítems sin SP
 
