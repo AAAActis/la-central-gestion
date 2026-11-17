@@ -117,11 +117,9 @@ public static class LayoutsPdf
     private static void Revisar(List<string> revisar, params (string Campo, object? Valor)[] campos)
         => revisar.AddRange(campos.Where(c => c.Valor is null).Select(c => c.Campo));
 
-    // Primero los de la cabecera, en el orden del formulario; después las líneas.
+    // Primero los de la cabecera (cada layout los agrega en el orden del formulario); después las líneas.
     private static string[] Ordenar(List<string> revisar)
-        => [.. revisar.Where(c => !c.StartsWith("lineas")).OrderBy(c => Array.IndexOf(OrdenCabecera, c)), .. revisar.Where(c => c.StartsWith("lineas"))];
-
-    private static readonly string[] OrdenCabecera = ["tipoComprobante", "numero", "fechaEmision"];
+        => [.. revisar.Where(c => !c.StartsWith("lineas")), .. revisar.Where(c => c.StartsWith("lineas"))];
 
     private static int Indice(IReadOnlyList<string> renglones, Func<string, bool> condicion)
         => renglones.Select((r, i) => (r, i)).FirstOrDefault(x => condicion(x.r), (r: "", i: -1)).i;
