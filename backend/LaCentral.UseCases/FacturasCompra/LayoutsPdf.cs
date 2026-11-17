@@ -46,6 +46,9 @@ public static class LayoutsPdf
         // El vencimiento es el del neto; el del pago contado tiene descuento y no se usa.
         var vencimiento = renglones.Where(r => r.StartsWith("Vencimiento")).Select(PrimeraFecha).FirstOrDefault(f => f is not null);
 
+        // D-S6-15: el descuento de pago contado («Pago Contado 5%») no viene en las líneas; depende
+        // de la forma de pago, así que va como cuarto descuento propuesto y marcado para revisar.
+        var pagoContado = Monto(texto, @"Pago Contado (\d+(?:\.\d+)?)%", Eeuu);
         var lineas = new List<LineaLeida>();
         foreach (var renglon in renglones.Skip(encabezado + 1))
         {
@@ -53,8 +56,10 @@ public static class LayoutsPdf
             if (!m.Success)
                 continue;
             var linea = new LineaLeida(m.Groups[1].Value, m.Groups[2].Value, Eeuu(m.Groups[3].Value), Eeuu(m.Groups[4].Value),
-                Math.Abs(Eeuu(m.Groups[5].Value)), Math.Abs(Eeuu(m.Groups[6].Value)), Math.Abs(Eeuu(m.Groups[7].Value)));
+                Math.Abs(Eeuu(m.Groups[5].Value)), Math.Abs(Eeuu(m.Groups[6].Value)), Math.Abs(Eeuu(m.Groups[7].Value)), pagoContado ?? 0m);
             Agregar(lineas, linea, Eeuu(m.Groups[8].Value), afirmable: true, revisar);
+            if (pagoContado is not null)
+                revisar.Add($"lineas[{lineas.Count - 1}].descuento4");
         }
 
         // El bloque de totales de ETMAN siempre trae las dos percepciones: la que no se puede leer
@@ -116,7 +121,8 @@ public static class LayoutsPdf
     {
         var calculado = linea.Cantidad * linea.PrecioUnitario
             * (1 - linea.Descuento1 / 100) * (1 - linea.Descuento2 / 100) * (1 - linea.Descuento3 / 100);
-        // El proveedor redondea el precio unitario a centavos antes de multiplicar.
+        // El proveedor redondea el precio unitario a centavos antes de multiplicar. El cuarto
+        // descuento no está en el comprobante (D-S6-15): no entra en el total del PDF.
         if (!afirmable || Math.Abs(calculado - total) > 0.01m + 0.005m * linea.Cantidad)
             revisar.Add($"lineas[{lineas.Count}]");
         lineas.Add(linea);

@@ -101,7 +101,8 @@ public class RegistrarFacturaCompraUseCase
                 PrecioUnitario = l.PrecioUnitario,
                 DescuentoPorcentaje = l.DescuentoPorcentaje,
                 Descuento2Porcentaje = l.Descuento2Porcentaje,
-                Descuento3Porcentaje = l.Descuento3Porcentaje
+                Descuento3Porcentaje = l.Descuento3Porcentaje,
+                Descuento4Porcentaje = l.Descuento4Porcentaje
             }).ToList()
         };
 
@@ -135,7 +136,8 @@ public class RegistrarFacturaCompraUseCase
         var neto = request.Lineas!.Sum(l => Math.Round(l.Cantidad * new FacturaCompraDetalle
         {
             PrecioUnitario = l.PrecioUnitario, DescuentoPorcentaje = l.DescuentoPorcentaje,
-            Descuento2Porcentaje = l.Descuento2Porcentaje, Descuento3Porcentaje = l.Descuento3Porcentaje
+            Descuento2Porcentaje = l.Descuento2Porcentaje, Descuento3Porcentaje = l.Descuento3Porcentaje,
+            Descuento4Porcentaje = l.Descuento4Porcentaje
         }.CostoUnitario, 2, MidpointRounding.AwayFromZero));
         // CA-014: el IVA sale del tipo de ESTA factura, no del proveedor (D-S6-11).
         var iva = TipoNormalizado(request.TipoComprobante) == "A"
@@ -187,13 +189,13 @@ public class RegistrarFacturaCompraUseCase
                 return Result.Failure(TipoError.Invalido, $"La cantidad del artículo {linea.ArticuloId} tiene que ser mayor que cero.");
             if (linea.PrecioUnitario < 0)
                 return Result.Failure(TipoError.Invalido, $"El precio unitario del artículo {linea.ArticuloId} no puede ser negativo.");
-            if (new[] { linea.DescuentoPorcentaje, linea.Descuento2Porcentaje, linea.Descuento3Porcentaje }.Any(d => d < 0 || d > 100))
+            if (new[] { linea.DescuentoPorcentaje, linea.Descuento2Porcentaje, linea.Descuento3Porcentaje, linea.Descuento4Porcentaje }.Any(d => d < 0 || d > 100))
                 return Result.Failure(TipoError.Invalido, $"Los descuentos del artículo {linea.ArticuloId} tienen que estar entre 0 y 100.");
             if (!EntraEnColumna(linea.Cantidad, Cantidad))
                 return Result.Failure(TipoError.Invalido, $"La cantidad del artículo {linea.ArticuloId} admite hasta 3 decimales y 9 dígitos enteros.");
             if (!EntraEnColumna(linea.PrecioUnitario, Importe))
                 return Result.Failure(TipoError.Invalido, $"El precio unitario del artículo {linea.ArticuloId} admite hasta 2 decimales y 12 dígitos enteros.");
-            if (!new[] { linea.DescuentoPorcentaje, linea.Descuento2Porcentaje, linea.Descuento3Porcentaje }.All(d => EntraEnColumna(d, Descuento)))
+            if (!new[] { linea.DescuentoPorcentaje, linea.Descuento2Porcentaje, linea.Descuento3Porcentaje, linea.Descuento4Porcentaje }.All(d => EntraEnColumna(d, Descuento)))
                 return Result.Failure(TipoError.Invalido, $"Los descuentos del artículo {linea.ArticuloId} admiten hasta 2 decimales.");
         }
         // Una línea por artículo y sucursal: es la clave primaria del detalle (07). El mismo
