@@ -489,6 +489,32 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
     }
 
     [PostgreSqlFact]
+    public async Task PostPdf_ConElProveedorElegido_ResuelveSusCodigos_YElNumeroSaleDelNombreDelArchivo()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        await using (var c = fixture.CrearContexto())
+        {
+            c.ArticuloCodigoAlternativo.Add(new ArticuloCodigoAlternativo { ArticuloId = s.ArticuloId, ProveedorId = s.ProveedorId, Codigo = "QQ123" });
+            await c.SaveChangesAsync();
+        }
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        using var formulario = new MultipartFormDataContent
+        {
+            { new ByteArrayContent(FacturasCompra.PdfSintetico.PresupuestoFazio()), "archivo", "Presupuesto_12345.pdf" },
+            { new StringContent(s.ProveedorId.ToString()), "proveedorId" }
+        };
+
+        var respuesta = await cliente.PostAsync("/api/facturas-compra/pdf", formulario);
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        var cuerpo = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(s.ProveedorId.ToString(), cuerpo.GetProperty("proveedorId").GetRawText());
+        Assert.Equal("99-12345", cuerpo.GetProperty("numero").GetString());
+        Assert.Equal(s.ArticuloId, cuerpo.GetProperty("lineas")[0].GetProperty("articuloId").GetInt32());
+    }
+
+    [PostgreSqlFact]
     public async Task PostPdf_UnArchivoQueNoEsPdf_400ConElPedidoDeCargaManual()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);

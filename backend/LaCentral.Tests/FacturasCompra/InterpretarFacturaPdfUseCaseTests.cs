@@ -121,6 +121,55 @@ public class InterpretarFacturaPdfUseCaseTests
         var resultado = await CasoDeUso().EjecutarAsync([1]);
 
         Assert.True(resultado.IsSuccess, resultado.Error);
-        Assert.Equal(["tipoComprobante", "numero", "proveedorId"], resultado.Value.ParaRevisar);
+        Assert.Equal(["numero", "proveedorId"], resultado.Value.ParaRevisar);
+    }
+
+    [Fact]
+    public async Task ElNombreDelArchivoLlegaAlLayout()
+    {
+        ElPdfDice(PdfSintetico.PresupuestoFazio());
+
+        var resultado = await CasoDeUso().EjecutarAsync([1], "Presupuesto_555.pdf");
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal("99-555", resultado.Value.Numero);
+    }
+
+    [Fact]
+    public async Task ConUnProveedorElegido_LosCodigosSeBuscanEnEse_AunqueElCuitDelPdfSeaDeOtro()
+    {
+        ElPdfDice(PdfSintetico.FacturaEtman());
+        ElProveedorDelCuitEs(new Proveedor { Id = 3, Activo = true });
+        _proveedores.Setup(p => p.ObtenerDetallePorIdAsync(7, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Proveedor { Id = 7, RazonSocial = "Elegido", Activo = true });
+        _facturas.Setup(f => f.ObtenerArticulosPorCodigoProveedorAsync(3, It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, int> { ["ZZ9"] = 99 });
+        _facturas.Setup(f => f.ObtenerArticulosPorCodigoProveedorAsync(7,
+                It.Is<IReadOnlyCollection<string>>(c => c.SequenceEqual(new[] { "AB-100", "ZZ9" })), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, int> { ["ZZ9"] = 51 });
+
+        var resultado = await CasoDeUso().EjecutarAsync([1], proveedorElegido: 7);
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(7, resultado.Value.ProveedorId);
+        Assert.Equal([null, (int?)51], resultado.Value.Lineas.Select(l => l.ArticuloId));
+        Assert.DoesNotContain("proveedorId", resultado.Value.ParaRevisar);
+        _facturas.Verify(f => f.ObtenerArticulosPorCodigoProveedorAsync(3, It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ConUnProveedorElegidoQueNoExisteOEstaInactivo_Invalido_SinBuscarCodigos(bool existe)
+    {
+        ElPdfDice(PdfSintetico.PresupuestoFazio());
+        _proveedores.Setup(p => p.ObtenerDetallePorIdAsync(7, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existe ? new Proveedor { Id = 7, RazonSocial = "Dado de baja", Activo = false } : null);
+
+        var resultado = await CasoDeUso().EjecutarAsync([1], proveedorElegido: 7);
+
+        Assert.False(resultado.IsSuccess);
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+        _facturas.VerifyNoOtherCalls();
     }
 }

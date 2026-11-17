@@ -18,8 +18,8 @@ public class LecturaPdfTests
         return leido.Value;
     }
 
-    private static ComprobanteLeido Leer(byte[] pdf)
-        => LayoutsPdf.Leer(Renglones(pdf)) ?? throw new Xunit.Sdk.XunitException("El layout no se reconoció.");
+    private static ComprobanteLeido Leer(byte[] pdf, string? nombreArchivo = null)
+        => LayoutsPdf.Leer(Renglones(pdf), nombreArchivo) ?? throw new Xunit.Sdk.XunitException("El layout no se reconoció.");
 
     [Fact]
     public void Lector_DevuelveLosRenglonesDeArribaHaciaAbajo_YLasPalabrasDeIzquierdaADerecha()
@@ -123,14 +123,29 @@ public class LecturaPdfTests
         Assert.Equal([new LineaLeida("QQ123", "Campana ficticia", 2m, 10000m, 28m, 22m, 0m)], leido.Lineas);
     }
 
-    [Fact]
-    public void Fazio_ElPresupuestoNoTraeNumero_ProponeBPeroDejaTipoYNumeroParaRevisar()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("factura.pdf")]
+    [InlineData("Presupuesto_.pdf")]
+    public void Fazio_SinElNumeroEnElNombreDelArchivo_EsB_YElNumeroQuedaParaRevisar(string? nombreArchivo)
     {
-        var leido = Leer(PdfSintetico.PresupuestoFazio());
+        var leido = Leer(PdfSintetico.PresupuestoFazio(), nombreArchivo);
 
+        // D-S6-13: lo comprado en negro es B; ya no es una suposición que haya que revisar.
         Assert.Equal("B", leido.TipoComprobante);
         Assert.Null(leido.Numero);
-        Assert.Equal(["tipoComprobante", "numero"], leido.ParaRevisar);
+        Assert.Equal(["numero"], leido.ParaRevisar);
+    }
+
+    [Theory]
+    [InlineData("Presupuesto_12345.pdf", "99-12345")]
+    [InlineData("presupuesto_00777.PDF", "99-00777")]
+    public void Fazio_ElNumeroSaleDelNombreDelArchivo_ConPrefijo99_YQuedaParaRevisar(string nombreArchivo, string numero)
+    {
+        var leido = Leer(PdfSintetico.PresupuestoFazio(), nombreArchivo);
+
+        Assert.Equal(("B", numero), (leido.TipoComprobante, leido.Numero));
+        Assert.Equal(["numero"], leido.ParaRevisar);
     }
 
     [Fact]
