@@ -1,5 +1,5 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { appConfig } from '../../app.config';
 import { FacturaPdfInterpretada } from '../../nucleo/api';
 import { SesionActual } from '../../nucleo/sesion';
@@ -79,10 +79,12 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
     servidor.expectOne('/api/facturas-compra/pdf').flush({}, { status: 400, statusText: 'Bad Request' });
   });
 
-  it('CA-001: precarga el mismo formulario con lo que leyó, todo editable', fakeAsync(() => {
+  it('CA-001: precarga el mismo formulario con lo que leyó, todo editable', async () => {
     cargar(interpretada());
-    tick();
+    // ngModel escribe en el DOM en una tarea posterior.
+    await fixture.whenStable();
     fixture.detectChanges();
+    await fixture.whenStable();
 
     expect(raiz().textContent).toContain('Repuestos Ficticios');
     expect(c.tipoComprobante).toBe('A'); // el del PDF, no el habitual del proveedor (B)
@@ -93,12 +95,12 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
     expect(campo('pIibb').valueAsNumber).toBe(1000.5);
     expect(campo('pMunicipal').valueAsNumber).toBe(0);
     expect(c.lineas.length).toBe(1);
-    // El precio y los descuentos son los del comprobante, no el costo vigente de la ficha.
-    expect(campo('precio0').valueAsNumber).toBe(4000);
-    expect([campo('cantidad0').valueAsNumber, campo('descuento20').valueAsNumber, campo('descuento30').valueAsNumber]).toEqual([2, 5, 20]);
+    // Entradas de la fila: cantidad, precio, tres descuentos. El precio es el del comprobante, no el costo de la ficha.
+    const fila = Array.from(raiz().querySelectorAll<HTMLInputElement>('table.lineas tbody tr')[0].querySelectorAll('input'));
+    expect(fila.map(i => i.valueAsNumber)).toEqual([2, 4000, 0, 5, 20]);
+    expect(fila.some(i => i.disabled) || campo('numero').disabled).toBeFalse();
     expect(c.lineas[0].sucursalId).toBe(1);
-    expect(campo('numero').disabled || campo('precio0').disabled).toBeFalse();
-  }));
+  });
 
   it('CA-001: un rechazo del servidor se muestra y el formulario queda como estaba', () => {
     c.numero = 'escrito a mano';
