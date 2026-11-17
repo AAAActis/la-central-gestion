@@ -948,3 +948,4 @@ ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral -v ON_E
 ```
 
 Después, repetí el paso 2: tienen que dar los tres `t`. El 08 y el 09 son idempotentes; el 07 **no**: no lo corras si el paso 2 dio `s07 = t`.
+- 14:30 · Fase A: PR #176 (`d7a4020`, solo docs). 029: rama `feature/13-factura-pdf` desde `docs/sprint06-fase-a`. Esqueleto `40a122a` (PdfPig 0.1.16 en `LaCentral.Api`; `LaCentral.UseCases` sigue sin paquetes). Rojo en el commit siguiente: 22 con error por aserción (HTTP: 404, sin endpoint), 2 superados porque el esqueleto ya devuelve lo pedido (PDF sin texto → vacío; texto desconocido → null). Las fuentes estándar de PdfPig no escriben «ó»: los PDF sintéticos van sin tildes.
