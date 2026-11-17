@@ -22,6 +22,8 @@ public class FacturaCompra
     public decimal PercepcionGanancias { get; set; }
     public int UsuarioId { get; set; }
     public DateTime FechaRegistro { get; set; }
+    /// <summary>HU-FCO-05 (029) CA-006: se cargó desde el PDF del proveedor (`origen = 'PDF'`).</summary>
+    public bool DesdePdf { get; set; }
     public List<FacturaCompraDetalle> Lineas { get; set; } = new();
 }
 

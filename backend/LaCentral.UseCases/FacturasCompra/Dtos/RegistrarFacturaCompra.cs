@@ -13,6 +13,7 @@ public sealed record LineaFacturaCompraRequest(
 /// comprobante; si no se informan, son cero, como el DEFAULT de la columna.
 /// HU-FCO-06: el tipo de comprobante (A o B) es de esta factura; la imputación, si no se
 /// informa, es la emisión.
+/// HU-FCO-05 (029) CA-006: DesdePdf deja constancia de que se cargó desde el PDF del proveedor.
 /// </summary>
 public sealed record RegistrarFacturaCompraRequest(
     int ProveedorId,
@@ -25,7 +26,8 @@ public sealed record RegistrarFacturaCompraRequest(
     decimal PercepcionGanancias,
     IReadOnlyList<LineaFacturaCompraRequest>? Lineas,
     string? TipoComprobante = null,
-    DateOnly? FechaImputacion = null);
+    DateOnly? FechaImputacion = null,
+    bool DesdePdf = false);
 
 public sealed record RegistrarFacturaCompraResponse(int Id);
 
