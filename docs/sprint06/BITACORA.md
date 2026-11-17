@@ -1017,3 +1017,46 @@ Después, repetí el paso 2: tienen que dar los tres `t`. El 08 y el 09 son idem
 **Decisión (17/11):** el PR del cuarto descuento se apila sobre la 049 (toca su precarga y la pantalla de la 056), y el de Expoyer sobre el del cuarto descuento. Orden de merge: #176 → #177 → #178 → #179 → cuarto descuento → Expoyer.
 
 **Estado:** en curso
+- Corrección de la línea del esqueleto del punto 2 (más arriba): el commit es `b251416`, no `c8d9d2c`.
+- Script 10 escrito: `a3650ed` en `feature/163-cuarto-descuento` (rama nueva, apilada sobre `feature/51-pantalla-pdf`), pusheada sin PR. **No se ejecutó en ninguna base**: no hay Postgres local en esta máquina (ni `psql` ni daemon de Docker), así que tampoco se probó su sintaxis contra un servidor. La primera corrida es la de Santi en `lacentral_test`, en una transacción con `ON_ERROR_STOP=1`.
+
+### PARA SANTI · 17/11/2026 · backup y script 10 (cuarto descuento, D-S6-15)
+
+Desde fish, en tu máquina, parado en la raíz del repo. El script se lee de la rama pusheada con `git show`: no hace falta cambiar de rama ni tener el repo en la Arch. **Requisito:** el 09 aplicado en cada base (el paso 2 lo muestra; si una da `s09 = 0`, primero el bloque «PARA SANTI» anterior).
+
+1 · Backup de las tres bases, a tu máquina. Cada `.dump` tiene que pesar más de 0 bytes; si uno da error o pesa 0, no sigas:
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+mkdir -p ~/backups-lacentral
+set -l marca (date +%Y%m%d-%H%M)
+for base in lacentral_test lacentral_demo lacentral
+    ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc $base > ~/backups-lacentral/$base-$marca.dump
+    or begin; echo "FALLÓ el backup de $base: no sigas"; break; end
+end
+ls -l ~/backups-lacentral/*-$marca.dump
+```
+
+2 · Estado de cada base, solo lectura. `s09 = 1` es el 09 aplicado; `s10 = 0` es el 10 pendiente:
+
+```fish
+for base in lacentral_test lacentral_demo lacentral
+    echo "SELECT current_database() AS base, count(*) FILTER (WHERE column_name = 'descuento_3_porcentaje') AS s09, count(*) FILTER (WHERE column_name = 'descuento_4_porcentaje') AS s10 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'factura_compra_detalle';" | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d $base
+end
+```
+
+3 · El 10, **primero solo en `lacentral_test`**. Tiene que terminar con `NOTICE: 10: TODO OK.` y `COMMIT`. El `WARNING` del `ROLLBACK` inicial es esperado (no hay transacción abierta):
+
+```fish
+git fetch origin
+git show origin/feature/163-cuarto-descuento:backend/db/rescaffold/10_Cuarto_Descuento.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+4 · Si el 3 dio `TODO OK`, avisame: con eso sigo con el re-scaffold y las pruebas contra PostgreSQL. Después, el mismo comando en `lacentral_demo` y en `lacentral`, de a una, y repetí el paso 2: las tres con `s10 = 1`. El script es idempotente: correrlo dos veces en la misma base no cambia nada.
+
+```fish
+git show origin/feature/163-cuarto-descuento:backend/db/rescaffold/10_Cuarto_Descuento.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_demo -v ON_ERROR_STOP=1
+git show origin/feature/163-cuarto-descuento:backend/db/rescaffold/10_Cuarto_Descuento.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral -v ON_ERROR_STOP=1
+```
+
+Para volver atrás una base (solo si hiciera falta): `ssh atiz@arch docker exec -i lacentral_db pg_restore -U lacentral -d <base> --clean --if-exists < ~/backups-lacentral/<base>-<marca>.dump`.
