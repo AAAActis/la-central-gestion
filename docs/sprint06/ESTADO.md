@@ -20,8 +20,8 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
 | #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | — | **Construida y mergeada.** PR #166 (esquema y backend) y #167 (frontend), aprobados y mergeados por Javi el 16/11/2026, con `verificador-tdd` y `auditor-persistencia` APTO (ver la historia abajo). **Issue abierta:** falta el recorrido DoD 10 contra `lacentral_demo`, que hace Javi con Sergio (tabla armada abajo). El 09 en `lacentral`: lo aplica Santi (bitácora, bloque «PARA SANTI» del 17/11) |
-| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | **Se arranca (17/11/2026).** C7 cerrada parcial (ver Compuertas): parser por reglas, un lector por layout. Lo que depende de Sergio (número del presupuesto en negro) se marca «para revisar» |
-| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | Después de la 029. Reutiliza la pantalla de la 056: el PDF precarga el mismo formulario |
+| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | **En curso (17/11/2026).** Partida en dos PR (pasa de 500 líneas). **Parte 1, interpretación (CA-001 a CA-004): PR abierto**, rama `feature/13-factura-pdf`: `verificador-tdd` NO APTO en las rondas 1 y 2, APTO en la 3; `auditor-persistencia` APTO; backend 637/637 sobre `87456be`. **Parte 2, `origen = 'PDF'` (CA-006):** rama `feature/13-factura-pdf-registro`, construida, falta su suite y sus verificadores. CA-005 lo cumple la 049 (el backend ya rechaza una línea sin artículo) |
+| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | **Construida (17/11/2026)**, rama `feature/51-pantalla-pdf` apilada sobre la parte 2 de la 029: el PDF precarga el formulario de la 056. Frontend 233/233 sobre `bbb196c`. Falta `verificador-tdd` y su PR |
 | #169 | Factura de compra: el mismo artículo a sucursales distintas (D9), observación de Javi del 14/11 | sin estimar | Santi | — | **Hecha:** PR #170, mergeado por Javi el 16/11/2026 (`verificador-tdd` APTO, 203/203 frontend sobre `b7973d6`). Issue cerrada el 17/11 con referencia al #170 |
 
 **34 SP** (13 + 13 + 8). Salieron al Sprint 7 la #126, la #127 y la #128 (21 SP); entraron la
@@ -264,6 +264,14 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 ---
 
 ## PRÓXIMA SESIÓN
+
+**17/11 noche · 029 parte 1 con PR.** Interpretación del PDF por reglas (ETMAN y Fazio, PdfPig), sin guardar
+nada. Rondas del `verificador-tdd`: 1 NO APTO (el orden por X del lector sin test → test del renglón torcido
+`8b9edf0`), 2 NO APTO (la partición de `Ordenar` sin test → se borró, `f5b0ebd`), 3 APTO. Auditor APTO.
+Siguen, en este orden y sin arrancar nada del Sprint 7: la **parte 2** (`feature/13-factura-pdf-registro`:
+suite completa, los dos verificadores, PR) y la **049** (`feature/51-pantalla-pdf`: `verificador-tdd`, el
+auditor no aplica, PR). Las ramas están apiladas: cuando una se actualiza, `git merge` en la siguiente.
+La base compartida está lenta: cada suite completa tarda unos 45 minutos.
 
 **17/11 · Sprint 6 en serio (prompt de Santi del 17/11).** Javi mergeó todo el 16/11 (tabla «Lo
 mergeado»). Fase A, este PR de docs: tablero, índice, plan (Sprint 7 en 56 SP), issues #169, #168 y #33

@@ -60,7 +60,7 @@ public static class LayoutsPdf
         Revisar(revisar, ("tipoComprobante", tipo), ("numero", numero), ("fechaEmision", emision));
         return new ComprobanteLeido(Cuits(texto), tipo, numero, emision, vencimiento,
             Monto(texto, @"Percepcion de IVA ([\d,]+\.\d{2})", Eeuu), Monto(texto, @"Percepcion IIBB: ([\d,]+\.\d{2})", Eeuu),
-            null, null, lineas, Ordenar(revisar));
+            null, null, lineas, revisar);
     }
 
     // Fazio (Badaloni): presupuesto, compra en negro; números en formato argentino (27.396,12);
@@ -97,7 +97,7 @@ public static class LayoutsPdf
         // Si va como B con el 99 y qué número lleva es una pregunta abierta a Sergio (17/11/2026).
         revisar.Add("tipoComprobante");
         Revisar(revisar, ("numero", null), ("fechaEmision", emision));
-        return new ComprobanteLeido(Cuits(texto), "B", null, emision, null, null, null, null, null, lineas, Ordenar(revisar));
+        return new ComprobanteLeido(Cuits(texto), "B", null, emision, null, null, null, null, null, lineas, revisar);
     }
 
     /// <summary>
@@ -116,10 +116,6 @@ public static class LayoutsPdf
 
     private static void Revisar(List<string> revisar, params (string Campo, object? Valor)[] campos)
         => revisar.AddRange(campos.Where(c => c.Valor is null).Select(c => c.Campo));
-
-    // Primero los de la cabecera (cada layout los agrega en el orden del formulario); después las líneas.
-    private static string[] Ordenar(List<string> revisar)
-        => [.. revisar.Where(c => !c.StartsWith("lineas")), .. revisar.Where(c => c.StartsWith("lineas"))];
 
     private static int Indice(IReadOnlyList<string> renglones, Func<string, bool> condicion)
         => renglones.Select((r, i) => (r, i)).FirstOrDefault(x => condicion(x.r), (r: "", i: -1)).i;

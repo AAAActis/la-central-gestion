@@ -6,7 +6,7 @@ public sealed record LineaLeida(
     decimal Descuento1, decimal Descuento2, decimal Descuento3);
 
 /// <summary>
-/// Lo que un layout reconoció del texto del PDF, sin tocar la base. <c>ParaRevisar</c>: los
+/// Lo que un layout reconoció del texto del PDF, sin tocar la base. <c>ParaRevisar</c> (sin orden que importe): los
 /// campos que el layout no encontró o no puede afirmar con certeza (nombres del formulario).
 /// </summary>
 public sealed record ComprobanteLeido(
