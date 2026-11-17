@@ -62,7 +62,8 @@ public static class PdfSintetico
     /// Factura con el layout de ETMAN: números en formato EE. UU., tres descuentos con signo
     /// menos y la descripción a veces en dos renglones.
     /// </summary>
-    public static byte[] FacturaEtman(string codigoAfip = "01", string totalPrimeraLinea = "6,080.00") => Generar(
+    public static byte[] FacturaEtman(string codigoAfip = "01", string totalPrimeraLinea = "6,080.00",
+        string percepcionIibb = "1,000.50", string percepcionIva = "2,000.25") => Generar(
         R((20, "REPUESTOS FICTICIOS S.A."), (300, "FACTURA")),
         R((300, $"Codigo Nro.: {codigoAfip} 0042- 00001234")),
         R((20, "Inicio de Actividades: 01/01/2001"), (300, $"C.U.I.T.: {CuitProveedor}")),
@@ -77,10 +78,19 @@ public static class PdfSintetico
         R((20, "ZZ9"), (60, "FILTRO FICTICIO"), (200, "MARCAY"), (250, "1"), (300, "1,250.50"),
           (350, "-10.00"), (390, "0.00"), (430, "0.00"), (480, "1,125.45")),
         R((60, "CONTINUACION DE LA DESCRIPCION")),
+        // El bloque de percepciones imita el texto que PdfPig saca de la factura real: el detalle
+        // por jurisdicción («Cordoba : …», sin separador de miles) lejos del total, y los totales
+        // de las percepciones en el mismo renglón que el código de barras.
+        R((20, "Percepciones IIBB"), (150, "NVT000-000001")),
+        R((20, "Quincena + 35 dias"), (200, "VENCIMIENTOS Y DESCUENTOS VIGENTES")),
+        R((20, "Cordoba : 1000.50")),
         R((20, "Pago Contado 5%"), (150, "$"), (200, "6,845.68"), (300, "Vto. 01/03/2027")),
         R((20, "Vencimiento QNA+35 Neto $"), (200, "7,205.45"), (300, "Vto. 10/03/2027")),
-        R((300, "Percepcion IIBB: 1,000.50")),
-        R((300, "Percepcion de IVA 2,000.25")),
+        R((300, "Subtotal : 4,264.51")),
+        R((300, "I.V.A (21%) 895.55")),
+        R((20, "0A1B2C3D4E5F60718293A4B5C6D7E8F9"), (300, $"Percepcion IIBB: {percepcionIibb}")),
+        R((20, "F9E8D7C6B5A4938271605F4E3D2C1B0A"), (300, $"Percepcion de IVA {percepcionIva}")),
+        R((300, "Total : 7,205.45")),
         R((300, "C.A.E.: 11111111111111 Fecha Vencimiento: 13/02/2027")));
 
     /// <summary>
