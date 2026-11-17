@@ -334,9 +334,7 @@ export class FacturaCompra {
     this.api.interpretarFacturaPdf(archivo, proveedorId).pipe(
       filter(() => version === this.version),
       switchMap(f => {
-        const pendientes = new Set(this.sinResolver.map(l => l.codigoProveedor));
-        const halladas = new Map(f.lineas.filter(l => l.articuloId !== null && pendientes.has(l.codigoProveedor))
-          .map(l => [l.codigoProveedor, l.articuloId!]));
+        const halladas = new Map(f.lineas.filter(l => l.articuloId !== null).map(l => [l.codigoProveedor, l.articuloId!]));
         return forkJoin([...new Set(halladas.values())].map(id => this.api.ficha(id))).pipe(
           defaultIfEmpty([]), map(fichas => ({ halladas, fichas })));
       }),
