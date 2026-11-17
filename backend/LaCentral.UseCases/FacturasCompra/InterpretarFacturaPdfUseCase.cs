@@ -30,12 +30,19 @@ public class InterpretarFacturaPdfUseCase
             return Fallo($"El archivo no es un PDF. {CargaManual}");
         if (texto.Value.Count == 0)
             return Fallo($"El PDF está escaneado, sin texto: el sistema no lo puede leer. {CargaManual}");
-        if (LayoutsPdf.Leer(texto.Value) is not { } leido)
+        if (LayoutsPdf.Leer(texto.Value, nombreArchivo) is not { } leido)
             return Fallo($"El sistema no reconoce el formato de este comprobante. {CargaManual}");
 
-        // El proveedor es el dueño de uno de los CUIT del texto (el otro es el de la empresa).
+        // Un proveedor elegido a mano manda: el PDF no trae uno reconocible (Fazio no trae CUIT).
         int? proveedorId = null;
-        foreach (var cuit in leido.Cuits)
+        if (proveedorElegido is { } elegido)
+        {
+            if (await _proveedores.ObtenerDetallePorIdAsync(elegido, ct) is not { Activo: true } proveedor)
+                return Fallo($"El proveedor {elegido} no existe o está dado de baja.");
+            proveedorId = proveedor.Id;
+        }
+        // Si no, es el dueño de uno de los CUIT del texto (el otro es el de la empresa).
+        else foreach (var cuit in leido.Cuits)
             if (await _proveedores.ObtenerPorCuitAsync(cuit, ct) is { Activo: true } proveedor)
             {
                 proveedorId = proveedor.Id;
