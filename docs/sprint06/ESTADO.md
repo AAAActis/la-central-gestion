@@ -20,8 +20,8 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
 | #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | — | **Construida y mergeada.** PR #166 (esquema y backend) y #167 (frontend), aprobados y mergeados por Javi el 16/11/2026, con `verificador-tdd` y `auditor-persistencia` APTO (ver la historia abajo). **Issue abierta:** falta el recorrido DoD 10 contra `lacentral_demo`, que hace Javi con Sergio (tabla armada abajo). El 09 en `lacentral`: lo aplica Santi (bitácora, bloque «PARA SANTI» del 17/11) |
-| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | **En curso (17/11/2026).** Partida en dos PR (pasa de 500 líneas). **Parte 1, interpretación (CA-001 a CA-004): PR abierto**, rama `feature/13-factura-pdf`: `verificador-tdd` NO APTO en las rondas 1 y 2, APTO en la 3; `auditor-persistencia` APTO; backend 637/637 sobre `87456be`. **Parte 2, `origen = 'PDF'` (CA-006):** rama `feature/13-factura-pdf-registro`, construida, falta su suite y sus verificadores. CA-005 lo cumple la 049 (el backend ya rechaza una línea sin artículo) |
-| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | **Construida (17/11/2026)**, rama `feature/51-pantalla-pdf` apilada sobre la parte 2 de la 029: el PDF precarga el formulario de la 056. Frontend 233/233 sobre `bbb196c`. Falta `verificador-tdd` y su PR |
+| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | **Construida (17/11/2026), en dos PR apilados.** **Parte 1, interpretación (CA-001 a CA-004): PR #177**: `verificador-tdd` NO APTO en las rondas 1 y 2 y APTO en la 3; `auditor-persistencia` APTO; 637/637 sobre `87456be`. **Parte 2, `origen = 'PDF'` (CA-006): PR abierto** en `feature/13-factura-pdf-registro`: `verificador-tdd` APTO en la ronda 1, auditor APTO, 640/640 sobre `61e4ebb`. CA-005: el backend rechaza una línea sin artículo y la pantalla la bloquea (049). Falta el DoD 10 con los PDF reales |
+| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | **Construida (17/11/2026), PR abierto** en `feature/51-pantalla-pdf`, apilado sobre el #178. El PDF precarga el formulario de la 056, sin pantalla nueva. `verificador-tdd`: NO APTO en las rondas 1 y 2, APTO en la 3; el auditor no aplica. Frontend 238/238 sobre `43edd66`. Falta el DoD 10 contra `lacentral_demo` con los PDF reales (Javi con Sergio) |
 | #169 | Factura de compra: el mismo artículo a sucursales distintas (D9), observación de Javi del 14/11 | sin estimar | Santi | — | **Hecha:** PR #170, mergeado por Javi el 16/11/2026 (`verificador-tdd` APTO, 203/203 frontend sobre `b7973d6`). Issue cerrada el 17/11 con referencia al #170 |
 
 **34 SP** (13 + 13 + 8). Salieron al Sprint 7 la #126, la #127 y la #128 (21 SP); entraron la
@@ -264,6 +264,16 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 ---
 
 ## PRÓXIMA SESIÓN
+
+**17/11, cierre de la sesión · la 029 y la 049 tienen PR y verificadores APTO.** Orden de merge: #176
+(docs) → #177 (029 parte 1) → #178 (029 parte 2) → el PR de la 049. Están apilados: cada uno apunta a
+la rama del anterior, y GitHub los pasa a `develop` cuando entra el de abajo. Lo que queda **no es del
+agente**:
+- **Javi:** revisar y mergear; DoD 10 de la 056 y de la 029/049 con Sergio, contra `lacentral_demo`, con
+  los PDF reales de `~/dev/TESIS/facturas-reales/` (fuera del repo).
+- **Santi:** backup de `lacentral` y scripts 07 a 09 (bitácora, «PARA SANTI», 17/11).
+- **Sergio:** las cuatro preguntas de «Lo que vuelve a Sergio · 17/11».
+- **Lauti:** facturas de Expoyer y Autocor (C7 parcial). Cada una suma un lector en `LayoutsPdf`.
 
 **17/11 noche · 029 parte 1 con PR.** Interpretación del PDF por reglas (ETMAN y Fazio, PdfPig), sin guardar
 nada. Rondas del `verificador-tdd`: 1 NO APTO (el orden por X del lector sin test → test del renglón torcido
