@@ -137,6 +137,36 @@ export interface FacturaCompraNueva {
   percepcionMunicipal: number;
   percepcionGanancias: number;
   lineas: LineaFacturaCompra[];
+  /** HU-FCO-05 (029) CA-006: se cargó desde el PDF del proveedor. */
+  desdePdf?: boolean;
+}
+
+/** HU-FCO-05 (029): una línea leída del PDF; sin `articuloId`, el código del proveedor no tiene artículo. */
+export interface LineaPdfInterpretada {
+  codigoProveedor: string;
+  descripcion: string;
+  articuloId: number | null;
+  cantidad: number;
+  precioUnitario: number;
+  descuentoPorcentaje: number;
+  descuento2Porcentaje: number;
+  descuento3Porcentaje: number;
+}
+
+/** HU-FCO-05 (029): lo que devuelve `POST /api/facturas-compra/pdf`. Nada quedó guardado. */
+export interface FacturaPdfInterpretada {
+  proveedorId: number | null;
+  tipoComprobante: 'A' | 'B' | null;
+  numero: string | null;
+  fechaEmision: string | null;
+  fechaVencimiento: string | null;
+  percepcionIva: number | null;
+  percepcionIibb: number | null;
+  percepcionMunicipal: number | null;
+  percepcionGanancias: number | null;
+  lineas: LineaPdfInterpretada[];
+  /** Campos que el sistema no pudo afirmar: `proveedorId`, `tipoComprobante`, `numero`, `fechaEmision`, `lineas[i]`. */
+  paraRevisar: string[];
 }
 
 /** HU-FCO-06 CA-015: lo que devuelve POST /api/facturas-compra/calculo. El IVA lo decide la API. */
@@ -251,6 +281,13 @@ export class ApiLaCentral {
 
   registrarFacturaCompra(factura: FacturaCompraNueva): Observable<{ id: number }> {
     return this.http.post<{ id: number }>('/api/facturas-compra', factura);
+  }
+
+  /** HU-FCO-05 (029): el PDF viaja como formulario, en el campo «archivo». */
+  interpretarFacturaPdf(archivo: File): Observable<FacturaPdfInterpretada> {
+    const formulario = new FormData();
+    formulario.append('archivo', archivo);
+    return this.http.post<FacturaPdfInterpretada>('/api/facturas-compra/pdf', formulario);
   }
 
   calcularFacturaCompra(factura: FacturaCompraNueva): Observable<TotalesFacturaCompra> {

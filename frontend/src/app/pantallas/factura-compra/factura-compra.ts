@@ -4,7 +4,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule, NgModel } from '@angular/forms';
 import { Subject, catchError, debounceTime, filter, forkJoin, map, of, switchMap } from 'rxjs';
 import {
-  ApiLaCentral, ArticuloResultado, FacturaCompraNueva, FichaArticulo, ProveedorResumen, TotalesFacturaCompra, mensajeDeError,
+  ApiLaCentral, ArticuloResultado, FacturaCompraNueva, FichaArticulo, LineaPdfInterpretada, ProveedorResumen, TotalesFacturaCompra,
+  mensajeDeError,
 } from '../../nucleo/api';
 import { SesionActual } from '../../nucleo/sesion';
 
@@ -16,9 +17,14 @@ interface LineaEnCarga {
   descuentoPorcentaje: number;
   descuento2Porcentaje: number;
   descuento3Porcentaje: number;
+  /** HU-UI-11 (049) CA-002: el PDF no la pudo afirmar. */
+  revisar?: boolean;
 }
 
 interface Sucursal { id: number; nombre: string; }
+
+/** HU-UI-11 (049) CA-003: una línea del PDF cuyo código no tiene artículo. No se registra hasta resolverla. */
+interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { revisar: boolean; }
 
 /**
  * HU-FCO-01 · carga manual de la factura de compra. La pantalla no calcula costos ni
@@ -209,6 +215,15 @@ export class FacturaCompra {
   readonly registrando = signal(false);
   readonly errorRegistro = signal<string | null>(null);
   readonly registrada = signal<{ numero: string; fichas: { ficha: FichaArticulo; sucursalId: number }[] } | null>(null);
+
+  /** HU-UI-11 (049): la carga desde el PDF precarga este mismo formulario. */
+  readonly leyendoPdf = signal(false);
+  readonly errorPdf = signal<string | null>(null);
+  readonly paraRevisar = signal<string[]>([]);
+  sinResolver: LineaSinResolver[] = [];
+  /** CA-003: la línea sin resolver a la que se le asigna el próximo artículo que se elija. */
+  readonly resolviendo = signal<number | null>(null);
+  private desdePdf = false;
 
   constructor() {
     // CA-008: con tres caracteres o más, coincidencias aproximadas mientras se escribe.
@@ -416,6 +431,14 @@ export class FacturaCompra {
         this.errorRegistro.set(mensajeDeError(e));
       },
     });
+  }
+
+  elegirPdf(evento: Event) {}
+
+  cargarPdf(archivo: File) {}
+
+  revisar(campo: string) {
+    return false;
   }
 
   stockEn(ficha: FichaArticulo, sucursalId: number) {
