@@ -30,6 +30,10 @@ public class LecturaPdfTests
     }
 
     [Fact]
+    public void Lector_PalabrasDelMismoRenglonConLineasDeBaseApenasDistintas_VanJuntasYDeIzquierdaADerecha()
+        => Assert.Equal(["izquierda derecha", "abajo"], Renglones(PdfSintetico.RenglonTorcido()));
+
+    [Fact]
     public void Lector_UnArchivoQueNoEsPdf_Invalido()
     {
         var leido = new LectorTextoPdf().LeerRenglones("no soy un PDF"u8.ToArray());
