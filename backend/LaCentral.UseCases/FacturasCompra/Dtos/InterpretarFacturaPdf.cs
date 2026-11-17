@@ -1,9 +1,12 @@
 namespace LaCentral.UseCases.FacturasCompra.Dtos;
 
-/// <summary>Una línea tal como la trae el comprobante. Los descuentos, en positivo y sucesivos.</summary>
+/// <summary>
+/// Una línea tal como la trae el comprobante. Los descuentos, en positivo y sucesivos. El
+/// cuarto (D-S6-15) no viene en el comprobante: el layout lo propone y lo marca para revisar.
+/// </summary>
 public sealed record LineaLeida(
     string CodigoProveedor, string Descripcion, decimal Cantidad, decimal PrecioUnitario,
-    decimal Descuento1, decimal Descuento2, decimal Descuento3);
+    decimal Descuento1, decimal Descuento2, decimal Descuento3, decimal Descuento4 = 0m);
 
 /// <summary>
 /// Lo que un layout reconoció del texto del PDF, sin tocar la base. <c>ParaRevisar</c> (sin orden que importe): los
@@ -28,7 +31,7 @@ public sealed record ComprobanteLeido(
 /// </summary>
 public sealed record LineaPdfInterpretada(
     string CodigoProveedor, string Descripcion, int? ArticuloId, decimal Cantidad, decimal PrecioUnitario,
-    decimal DescuentoPorcentaje, decimal Descuento2Porcentaje, decimal Descuento3Porcentaje);
+    decimal DescuentoPorcentaje, decimal Descuento2Porcentaje, decimal Descuento3Porcentaje, decimal Descuento4Porcentaje = 0m);
 
 /// <summary>
 /// HU-FCO-05 CA-001 y CA-003: la propuesta para el formulario editable. No se guardó nada.

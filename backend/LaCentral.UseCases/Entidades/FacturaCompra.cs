@@ -37,6 +37,8 @@ public class FacturaCompraDetalle
     public decimal DescuentoPorcentaje { get; set; }
     public decimal Descuento2Porcentaje { get; set; }
     public decimal Descuento3Porcentaje { get; set; }
+    /// <summary>D-S6-15: el externo por marca o por artículo (el 5 % de pago contado de ETMAN).</summary>
+    public decimal Descuento4Porcentaje { get; set; }
 
     /// <summary>
     /// El costo unitario que pasa a ser el costo vigente del artículo y queda en su
