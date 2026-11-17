@@ -110,10 +110,14 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
           <fieldset>
             <legend>Percepciones del comprobante</legend>
             <div class="campos">
-              <label>IVA <input type="number" min="0" step="0.01" name="pIva" [(ngModel)]="percepciones.iva" /></label>
-              <label>Ingresos Brutos <input type="number" min="0" step="0.01" name="pIibb" [(ngModel)]="percepciones.iibb" /></label>
-              <label>Municipal <input type="number" min="0" step="0.01" name="pMunicipal" [(ngModel)]="percepciones.municipal" /></label>
-              <label>Ganancias <input type="number" min="0" step="0.01" name="pGanancias" [(ngModel)]="percepciones.ganancias" /></label>
+              <label>IVA @if (revisar('percepcionIva')) { <span class="etiqueta revisar">Revisar</span> }
+                <input type="number" min="0" step="0.01" name="pIva" [(ngModel)]="percepciones.iva" [attr.aria-invalid]="revisar('percepcionIva') || null" /></label>
+              <label>Ingresos Brutos @if (revisar('percepcionIibb')) { <span class="etiqueta revisar">Revisar</span> }
+                <input type="number" min="0" step="0.01" name="pIibb" [(ngModel)]="percepciones.iibb" [attr.aria-invalid]="revisar('percepcionIibb') || null" /></label>
+              <label>Municipal @if (revisar('percepcionMunicipal')) { <span class="etiqueta revisar">Revisar</span> }
+                <input type="number" min="0" step="0.01" name="pMunicipal" [(ngModel)]="percepciones.municipal" [attr.aria-invalid]="revisar('percepcionMunicipal') || null" /></label>
+              <label>Ganancias @if (revisar('percepcionGanancias')) { <span class="etiqueta revisar">Revisar</span> }
+                <input type="number" min="0" step="0.01" name="pGanancias" [(ngModel)]="percepciones.ganancias" [attr.aria-invalid]="revisar('percepcionGanancias') || null" /></label>
             </div>
           </fieldset>
         </section>
@@ -267,6 +271,8 @@ export class FacturaCompra {
   /** CA-003: la línea sin resolver a la que se le asigna el próximo artículo que se elija. */
   readonly resolviendo = signal<number | null>(null);
   private desdePdf = false;
+  /** El PDF cargado: si el proveedor se elige a mano, se vuelve a leer con él para resolver códigos. */
+  private archivoPdf: File | null = null;
   /** Cada formulario nuevo cambia la versión: un total pedido para el anterior no se muestra. */
   private version = 0;
 
@@ -315,8 +321,50 @@ export class FacturaCompra {
   elegirProveedor(p: ProveedorResumen) {
     this.proveedor.set(p);
     this.proveedores.set([]);
-    // CA-004: solo una propuesta; el usuario la cambia cuando quiera.
-    this.cambiarTipo(p.tipoComprobanteHabitual ?? '');
+    // 049: con el formulario del PDF, el tipo es el del comprobante y no se propone el habitual.
+    if (!this.desdePdf) {
+      // CA-004: solo una propuesta; el usuario la cambia cuando quiera.
+      this.cambiarTipo(p.tipoComprobanteHabitual ?? '');
+      return;
+    }
+    if (this.sinResolver.length > 0 && this.archivoPdf) this.buscarCodigos(this.archivoPdf, p.id);
+  }
+
+  /** 049 CA-003: el PDF no trajo un proveedor reconocible; se buscan los códigos sin resolver en el elegido. */
+  private buscarCodigos(archivo: File, proveedorId: number) {
+    const version = this.version;
+    this.errorPdf.set(null);
+    this.api.interpretarFacturaPdf(archivo, proveedorId).pipe(
+      filter(() => version === this.version),
+      switchMap(f => {
+        const pendientes = new Set(this.sinResolver.map(l => l.codigoProveedor));
+        const halladas = new Map(f.lineas.filter(l => l.articuloId !== null && pendientes.has(l.codigoProveedor))
+          .map(l => [l.codigoProveedor, l.articuloId!]));
+        return forkJoin([...new Set(halladas.values())].map(id => this.api.ficha(id))).pipe(
+          defaultIfEmpty([]), map(fichas => ({ halladas, fichas })));
+      }),
+    ).subscribe({
+      next: ({ halladas, fichas }) => {
+        if (version !== this.version) return;
+        if (fichas.length > 0 && this.sucursales().length === 0)
+          this.sucursales.set(fichas[0].existencias.map(e => ({ id: e.sucursalId, nombre: e.sucursal })));
+        const porId = new Map(fichas.map(x => [x.id, x]));
+        this.sinResolver = this.sinResolver.filter(({ revisar, ...l }) => {
+          const ficha = porId.get(halladas.get(l.codigoProveedor)!);
+          if (!ficha) return true;
+          this.lineas.push({
+            articulo: { id: ficha.id, codigoInterno: ficha.codigoInterno, nombre: ficha.nombre, activo: ficha.activo, codigosProveedor: [] },
+            sucursalId: this.sucursalCabecera, cantidad: l.cantidad, precioUnitario: l.precioUnitario,
+            descuentoPorcentaje: l.descuentoPorcentaje, descuento2Porcentaje: l.descuento2Porcentaje,
+            descuento3Porcentaje: l.descuento3Porcentaje, revisar,
+          });
+          return false;
+        });
+        this.paraRevisar.update(r => r.filter(x => x !== 'proveedorId'));
+        this.invalidarTotales();
+      },
+      error: e => { if (version === this.version) this.errorPdf.set(mensajeDeError(e)); },
+    });
   }
 
   /** CA-005: el B lleva 99 en el primer tramo; el A se copia tal cual (no se precarga nada). */
@@ -560,6 +608,7 @@ export class FacturaCompra {
         });
         this.paraRevisar.set(f.paraRevisar);
         this.desdePdf = true;
+        this.archivoPdf = archivo;
         this.leyendoPdf.set(false);
       },
       error: e => {
@@ -594,6 +643,7 @@ export class FacturaCompra {
     this.resolviendo.set(null);
     this.paraRevisar.set([]);
     this.desdePdf = false;
+    this.archivoPdf = null;
     this.errorPdf.set(null);
     this.version++;
   }

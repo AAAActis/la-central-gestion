@@ -284,9 +284,11 @@ export class ApiLaCentral {
   }
 
   /** HU-FCO-05 (029): el PDF viaja como formulario, en el campo «archivo». */
-  interpretarFacturaPdf(archivo: File): Observable<FacturaPdfInterpretada> {
+  /** Con proveedorId, los códigos de las líneas se buscan en ese proveedor (uno elegido a mano). */
+  interpretarFacturaPdf(archivo: File, proveedorId?: number): Observable<FacturaPdfInterpretada> {
     const formulario = new FormData();
     formulario.append('archivo', archivo);
+    if (proveedorId !== undefined) formulario.append('proveedorId', String(proveedorId));
     return this.http.post<FacturaPdfInterpretada>('/api/facturas-compra/pdf', formulario);
   }
 
