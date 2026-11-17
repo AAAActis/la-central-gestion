@@ -102,6 +102,23 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
     expect(c.lineas[0].sucursalId).toBe(1);
   });
 
+  it('CA-005: al terminar de leer bien el PDF saca el avance y vuelve a habilitar el campo', () => {
+    cargar(interpretada());
+
+    expect(raiz().textContent).not.toContain('Leyendo el PDF');
+    expect((raiz().querySelector('input[type="file"]') as HTMLInputElement).disabled).toBeFalse();
+  });
+
+  it('CA-001: un segundo PDF reemplaza lo que dejó el primero, no se le suma', () => {
+    cargar(interpretada({ lineas: [linea('AB-100', 50), linea('X1', null)], paraRevisar: ['numero'] }));
+    cargar(interpretada({ numero: '0042-00009999', lineas: [linea('CC-3', 51)], paraRevisar: [] }));
+
+    expect(c.lineas.map(l => l.articulo.id)).toEqual([51]);
+    expect(c.sinResolver.length).toBe(0);
+    expect(c.paraRevisar()).toEqual([]);
+    expect(c.numero).toBe('0042-00009999');
+  });
+
   it('CA-001: un rechazo del servidor se muestra y el formulario queda como estaba', () => {
     c.numero = 'escrito a mano';
     c.cargarPdf(pdf());
