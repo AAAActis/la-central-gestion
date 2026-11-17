@@ -77,10 +77,10 @@ public static class PdfSintetico
         R((20, "Cliente: 9999 - CLIENTE DE PRUEBA S.A.S."), (400, "Fecha : 05/02/2027")),
         R((20, $"CUIT: {CuitCliente}")),
         R((20, "Ord."), (40, "Cod. de Fab."), (100, "Descrip."), (250, "Cant."), (280, "Remito"),
-          (330, "P. Lista"), (380, "% Desc."), (440, "P. Final"), (500, "Total")),
+          (330, "P. Lista"), (380, "% Desc."), (470, "P. Final"), (530, "Total")),
         R((20, "1"), (40, "QQ123"), (100, "Campana ficticia"), (250, "2"), (280, "900001 -"),
-          (330, "10.000,00"), (380, $"43,84 ({partes})"), (440, "5.616,00"), (500, "11.232,00")),
+          (330, "10.000,00"), (380, $"43,84 ({partes})"), (470, "5.616,00"), (530, "11.232,00")),
         R((280, "05/02/2027")),
         R((100, "Segunda linea de la descripcion")),
-        R((20, "Subtotal"), (250, "2"), (500, "11.232,00")));
+        R((20, "Subtotal"), (250, "2"), (530, "11.232,00")));
 }
