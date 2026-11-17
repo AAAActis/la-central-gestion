@@ -12,14 +12,14 @@ namespace LaCentral.UseCases.FacturasCompra;
 /// </summary>
 public static class LayoutsPdf
 {
-    private static readonly Func<IReadOnlyList<string>, ComprobanteLeido?>[] Layouts = [LeerEtman, LeerFazio];
+    private static readonly Func<IReadOnlyList<string>, string?, ComprobanteLeido?>[] Layouts = [LeerEtman, LeerFazio];
 
     private static readonly Regex Cuit = new(@"\b\d{2}-\d{8}-\d\b");
     private static readonly Regex Fecha = new(@"\b\d{2}/\d{2}/\d{4}\b");
 
     /// <summary>El comprobante leído por el primer layout que reconoce el texto, o null.</summary>
-    public static ComprobanteLeido? Leer(IReadOnlyList<string> renglones)
-        => Layouts.Select(leer => leer(renglones)).FirstOrDefault(c => c is not null);
+    public static ComprobanteLeido? Leer(IReadOnlyList<string> renglones, string? nombreArchivo = null)
+        => Layouts.Select(leer => leer(renglones, nombreArchivo)).FirstOrDefault(c => c is not null);
 
     // ETMAN (Multioriginal Parts): factura; números en formato de EE. UU. (20,184.21); tres
     // descuentos con signo menos; la descripción sigue a veces en otro renglón, que no es línea.
@@ -28,7 +28,7 @@ public static class LayoutsPdf
     private static readonly Regex LineaEtman = new(
         @"^(\S+) (.+) (\d+(?:\.\d+)?) ([\d,]+\.\d{2}) (-?\d+\.\d{2}) (-?\d+\.\d{2}) (-?\d+\.\d{2}) ([\d,]+\.\d{2})$");
 
-    private static ComprobanteLeido? LeerEtman(IReadOnlyList<string> renglones)
+    private static ComprobanteLeido? LeerEtman(IReadOnlyList<string> renglones, string? _)
     {
         var encabezado = Indice(renglones, r => r.Contains(EncabezadoEtman));
         if (encabezado < 0)
@@ -57,10 +57,14 @@ public static class LayoutsPdf
             Agregar(lineas, linea, Eeuu(m.Groups[8].Value), afirmable: true, revisar);
         }
 
-        Revisar(revisar, ("tipoComprobante", tipo), ("numero", numero), ("fechaEmision", emision));
+        // El bloque de totales de ETMAN siempre trae las dos percepciones: la que no se puede leer
+        // se marca para revisar, nunca queda en null en silencio.
+        var percepcionIva = Monto(texto, @"Percepcion de IVA ([\d,]+\.\d{2})(?!\S)", Eeuu);
+        var percepcionIibb = Monto(texto, @"Percepcion IIBB: ([\d,]+\.\d{2})(?!\S)", Eeuu);
+        Revisar(revisar, ("tipoComprobante", tipo), ("numero", numero), ("fechaEmision", emision),
+            ("percepcionIva", percepcionIva), ("percepcionIibb", percepcionIibb));
         return new ComprobanteLeido(Cuits(texto), tipo, numero, emision, vencimiento,
-            Monto(texto, @"Percepcion de IVA ([\d,]+\.\d{2})", Eeuu), Monto(texto, @"Percepcion IIBB: ([\d,]+\.\d{2})", Eeuu),
-            null, null, lineas, revisar);
+            percepcionIva, percepcionIibb, null, null, lineas, revisar);
     }
 
     // Fazio (Badaloni): presupuesto, compra en negro; números en formato argentino (27.396,12);
@@ -70,7 +74,7 @@ public static class LayoutsPdf
     private static readonly Regex LineaFazio = new(
         @"^\d+ (\S+) (.+) (\d+(?:,\d+)?) \S+ - ([\d.]+,\d{2}) ([\d.]+,\d{2}) \(([\d,]+(?:\+[\d,]+)*)\) [\d.]+,\d{2} ([\d.]+,\d{2})$");
 
-    private static ComprobanteLeido? LeerFazio(IReadOnlyList<string> renglones)
+    private static ComprobanteLeido? LeerFazio(IReadOnlyList<string> renglones, string? nombreArchivo)
     {
         var encabezado = Indice(renglones, r => r.Contains(EncabezadoFazio));
         if (encabezado < 0)
@@ -94,10 +98,14 @@ public static class LayoutsPdf
             Agregar(lineas, linea, Argentino(m.Groups[7].Value), afirmable: !masDeTres, revisar);
         }
 
-        // Si va como B con el 99 y qué número lleva es una pregunta abierta a Sergio (17/11/2026).
-        revisar.Add("tipoComprobante");
-        Revisar(revisar, ("numero", null), ("fechaEmision", emision));
-        return new ComprobanteLeido(Cuits(texto), "B", null, emision, null, null, null, null, null, lineas, revisar);
+        // D-S6-13 (Sergio, 17/11/2026): lo comprado en negro es B, con 99 y el número del
+        // presupuesto. El texto no lo trae; el nombre del archivo sí («Presupuesto_48437.pdf»).
+        // Un nombre puede cambiarse a mano: el número queda siempre para revisar.
+        var numero = Regex.Match(Path.GetFileName(nombreArchivo ?? ""), @"^presupuesto_(\d+)\.pdf$", RegexOptions.IgnoreCase)
+            is { Success: true } n ? $"99-{n.Groups[1].Value}" : null;
+        revisar.Add("numero");
+        Revisar(revisar, ("fechaEmision", emision));
+        return new ComprobanteLeido(Cuits(texto), "B", numero, emision, null, null, null, null, null, lineas, revisar);
     }
 
     /// <summary>

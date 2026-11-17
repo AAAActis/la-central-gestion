@@ -28,7 +28,8 @@ public class FacturasCompraController : ControllerBase
     /// <summary>
     /// HU-FCO-05 (029). Interpreta el PDF del proveedor (campo de formulario «archivo») y
     /// devuelve la factura propuesta para revisar, sin guardar nada. 200; 400 si no es un PDF
-    /// con texto o su formato no se reconoce: se pide la carga manual.
+    /// con texto o su formato no se reconoce: se pide la carga manual. Con «proveedorId» (un
+    /// proveedor elegido a mano), los códigos de las líneas se buscan en ese proveedor.
     /// </summary>
     [HttpPost("pdf")]
     [RequestSizeLimit(TamanoMaximoPdf)]
@@ -36,12 +37,12 @@ public class FacturasCompraController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> InterpretarPdf(IFormFile? archivo, CancellationToken ct)
+    public async Task<IActionResult> InterpretarPdf(IFormFile? archivo, [FromForm] int? proveedorId, CancellationToken ct)
     {
         using var contenido = new MemoryStream();
         if (archivo is not null)
             await archivo.CopyToAsync(contenido, ct);
-        return this.AResultadoHttp(await _interpretar.EjecutarAsync(contenido.ToArray(), ct));
+        return this.AResultadoHttp(await _interpretar.EjecutarAsync(contenido.ToArray(), archivo?.FileName, proveedorId, ct));
     }
 
     /// <summary>

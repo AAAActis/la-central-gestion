@@ -964,3 +964,107 @@ Después, repetí el paso 2: tienen que dar los tres `t`. El 08 y el 09 son idem
 - 23:50 · Parte 2: suite completa sobre `61e4ebb` `Correctas! - Con error: 0, Superado: 640, Omitido: 0, Total: 640, Duración: 40 m 43 s`. `verificador-tdd` (`ca9c29b`, `e56499a`, `5939547`): **APTO** en la ronda 1 (10 mutaciones muertas, rojo validado). `auditor-persistencia`: **APTO**, sin corridas propias; sugiere revisar, cuando la base esté menos cargada, que no queden esquemas `pr110_test_*` huérfanos. Push y PR de la parte 2 (base: la rama de la parte 1).
 - 23:55 · Parte 2: push y **PR #178** (base `feature/13-factura-pdf`). 049: merge de la parte 2 (conflicto solo en la bitácora, agregados de los dos lados: se conservaron los dos, en orden). ESTADO al día (fila #51 y PRÓXIMA SESIÓN). Push y PR de la 049 (base `feature/13-factura-pdf-registro`).
 - 00:05 · **PR #179** (049). Cierre: la 029 y la 049 tienen PR y verificadores APTO (#177, #178, #179; docs en #176). **Queda abierto, todo de personas:** Javi revisa y mergea en el orden #176 → #177 → #178 → #179 y hace el DoD 10 de la 056, la 029 y la 049 con Sergio, contra `lacentral_demo`, con los PDF reales; Santi corre el bloque «PARA SANTI» del 17/11 (backup y scripts 07 a 09 en `lacentral`); Sergio contesta las cuatro preguntas del 17/11 (presupuesto en negro, notas de crédito, pago contado, CA-002 de la 028); Lauti consigue una factura de Expoyer y una de Autocor (C7 parcial). Sin decidir y sin test: el error de un `/calculo` viejo sobre el formulario nuevo (observación no bloqueante del verificador, en el #179).
+
+## 17/11/2026 · Revisión de Santi de los PR #176 a #179: percepciones de ETMAN, proveedor elegido después del PDF, respuestas de Sergio y lector de Expoyer
+
+**Instrucción recibida (verbatim):**
+> Revisión de Santi de los PR #176 a #179 (17/11). Escribime los resúmenes en español.
+>
+> Arreglos antes de que Javi revise. Cada uno, como commit en la rama del PR que corresponda; después git merge hacia las ramas de arriba (nunca rebase). Al re-verificar, acotá el alcance a los commits del arreglo.
+>
+> 1. Percepciones de ETMAN (#177). El lector busca «Percepcion IIBB:» y «Percepcion de IVA», que solo existen en el PDF sintético. La factura real dice «Percepciones IIBB» y en otro renglón «Cordoba : 3920.23». Con el PDF real (~/dev/TESIS/facturas-reales/10713-VT-FA0137-25630.pdf, fuera del repo) la percepción IIBB tiene que dar 3.920,23. Corregí el lector según el texto que PdfPig saca del PDF real, y el sintético para que imite ese texto real, no uno inventado. Regla nueva: si el layout tiene bloque de percepciones y no puede leer un monto, el campo va a ParaRevisar; nunca queda en null en silencio. Rojo primero.
+>
+> 2. Proveedor sin CUIT en el PDF (Fazio). Hoy el operador elige el proveedor a mano y las 10 líneas quedan sin resolver. Cuando se elige el proveedor después de cargar un PDF, el sistema tiene que volver a buscar los códigos de las líneas sin resolver en articulo_codigo_alternativo de ese proveedor y pasar a líneas las que encuentre. El cómo lo decidís vos: backend en la rama de la 029 y pantalla en la de la 049.
+>
+> 3. Respuestas de Sergio, para el ESTADO:
+>    - D-S6-13: lo en negro se carga como comprobante B con prefijo 99 y el número del presupuesto. El texto del PDF de Fazio no trae el número, pero el nombre del archivo sí (Presupuesto_48437.pdf). Proponé 99-48437 a partir del nombre del archivo y dejalo marcado para revisar.
+>    - D-S6-14: las notas de crédito de proveedor SÍ se cargan. Choca con el Mandato v3.0, que las deja fuera de alcance, y no hay HU. No la construyas: anotala en el ESTADO como HU nueva pendiente de decisión del equipo, propuesta para el Sprint 8. Mientras tanto, el lector sigue rechazando la nota de crédito.
+>    - D-S6-15: el 5 % de pago contado no viene en la línea porque depende de la forma de pago; si se paga de contado, se carga como un descuento más en cada producto. Pendiente: dónde va si la línea ya usa los tres descuentos. Va a «Lo que vuelve a Sergio»; no lo resuelvas por tu cuenta.
+>    - Pregunta nueva para «Lo que vuelve a Sergio»: el presupuesto de Fazio suma IVA ($67.970,79; total $391.640,79). Si va como B sin IVA, el sistema registra $323.670. ¿Ese IVA se paga?
+>
+> 4. Lector de Expoyer. La factura está en ~/dev/TESIS/facturas-reales/FCA0012-00091771.pdf: factura A 0012-00091771 del 27/10/2026. Layout: dos columnas de artículos por hoja (Cant., Código, Descripción, P.Unit., Total, repetido a la derecha); descuento global en la cabecera («Descuento: 61.08%+15») con los precios de línea ya netos (el subtotal 98.506,97 es la suma de las líneas); códigos con espacios y guiones internos («C 115105 4- F»); números en formato de EE. UU.; IVA 21 %. Va en un PR propio, apilado arriba de #178, con su sintético que imite el texto real, sus tests y los verificadores. Probalo a mano con el real y anotá el resultado en la bitácora. En la C7 queda faltando solo la factura de Autocor.
+>
+> Cuando estén los cuatro: una sola suite completa sobre el HEAD de cada rama tocada, los verificadores acotados a los commits nuevos, y el ESTADO al día antes del push. Después parás y me pasás el resumen. El sprint no lo das por cerrado: falta el DoD 10 con Sergio.
+
+**Plan:**
+1. #177 (`feature/13-factura-pdf`): texto real de ETMAN con PdfPig; rojo y arreglo de las percepciones con la regla de ParaRevisar; D-S6-13 (número 99-<n> desde el nombre del archivo, para revisar); backend del punto 2 (buscar los códigos de un proveedor elegido a mano).
+2. Merge a #178 y #179. #179 (`feature/51-pantalla-pdf`): pantalla del punto 2.
+3. Expoyer: rama nueva desde `feature/13-factura-pdf-registro`, lector con su sintético, prueba a mano con el real, PR.
+4. ESTADO (D-S6-13 a 15, HU nueva de notas de crédito, preguntas a Sergio, C7).
+5. Suite completa por rama tocada, verificadores acotados, push, resumen. El sprint no se cierra.
+
+**Estado:** en curso
+- Arranque: `git fetch`; develop sin novedades; #176 a #179 abiertos sin revisión. El prompt del sprint, que estaba sin seguimiento en la copia local, se movió al scratchpad para poder cambiar de rama; vuelve al terminar.
+- Punto 1: el texto real de ETMAN (PdfPig, fuera del repo) sí trae «Percepcion IIBB: 3,920.23» y «Percepcion de IVA 2,940.17», en el mismo renglón que el código de barras; «Cordoba : 3920.23» es el detalle por jurisdicción. El lector ya daba 3.920,23 con el real. Lo que sí estaba mal: un monto ilegible quedaba null en silencio, y «1.000,50» se leía 1,00. `5f0e908` sintético con la forma del texto real (solo test, 21 verdes); `70fb2ac` rojo (3 con error por aserción); `8a9aca4` arreglo (24 verdes; real: IIBB 3.920,23, IVA 2.940,17, nada para revisar).
+- Punto 2 y D-S6-13, backend: esqueleto `c8d9d2c`… (ver git log de `feature/13-factura-pdf`): `POST /api/facturas-compra/pdf` acepta un `proveedorId` opcional y el caso de uso recibe el nombre del archivo. Sigue el rojo.
+
+## 17/11/2026 · Respuestas del 17/11: D-S6-15 (cuatro descuentos) y D-S6-16 (el IVA de lo comprado en negro no se paga)
+
+**Instrucción recibida (verbatim):**
+> Respuestas del 17/11 que cierran dos preguntas del ESTADO:
+>
+> - D-S6-15 (reemplaza la versión pendiente): la línea de la factura de compra pasa a tener CUATRO descuentos sucesivos, no tres. Tres es lo que traen habitualmente los proveedores; el cuarto es para los descuentos externos por marca o por artículo. Ejemplo ETMAN: siempre trae el 36 % y además un 5 % que no figura en la factura porque es por forma de pago; el operador lo carga en la línea.
+>   Impacto:
+>   - Cambia el CA-012 de la 056: actualizá la proforma con esta decisión y su fecha.
+>   - Hay cambio de esquema: un descuento más en factura_compra_detalle, con el mismo CHECK que los otros. Va por script SQL 10 en backend/db/rescaffold/ más re-scaffold, nunca migraciones.
+>   - Toca el cálculo del costo, el total, la pantalla de la 056 y la precarga de la 049.
+>   - El lector de ETMAN propone el 5 % en el cuarto descuento, marcado para revisar, porque el PDF no lo trae.
+>   Va en su propio PR, antes del de Expoyer.
+>   El script 10 no lo aplicás vos en lacentral_test ni en lacentral: dejá en la bitácora un bloque «PARA SANTI» con los comandos listos para fish (backup primero, ON_ERROR_STOP=1, contenedor lacentral_db, superusuario lacentral) para lacentral_test, lacentral_demo y lacentral. Mientras Santi no lo aplique en lacentral_test, lo que dependa del esquema queda frenado; seguí con lo que no dependa.
+>
+> - D-S6-16: lo comprado en negro es comprobante B y ese IVA no se paga. El IVA que muestra el presupuesto de Fazio se ignora: el total que se registra es 323.670,44, sin IVA. Sacá la pregunta de «Lo que vuelve a Sergio» y anotá la decisión.
+
+**Plan:**
+1. Script `10` en `backend/db/rescaffold/` (idempotente, con verificación) en una rama nueva `feature/163-cuarto-descuento`, apilada sobre `feature/51-pantalla-pdf`; push de la rama y bloque «PARA SANTI» con los comandos para fish (backup, `lacentral_test`, `lacentral_demo`, `lacentral`).
+2. Terminar los arreglos del bloque anterior en #177/#179 (punto 2, D-S6-13), que no dependen del esquema.
+3. D-S6-15, lo que no depende del esquema: proforma de la 056 (CA-012), entidad, cálculo y validación del cuarto descuento con Moq, DTO de la API, pantalla de la 056, precarga de la 049, lector de ETMAN con el 5 % para revisar. Frenado hasta que Santi aplique el 10 en `lacentral_test`: re-scaffold, mapeo del repositorio y pruebas contra PostgreSQL.
+4. D-S6-16 en el ESTADO; comprobar con el PDF real de Fazio que el total sin IVA da 323.670,44.
+5. Expoyer, en su PR, apilado arriba del de la D-S6-15 (va después de él).
+
+**Decisión (17/11):** el PR del cuarto descuento se apila sobre la 049 (toca su precarga y la pantalla de la 056), y el de Expoyer sobre el del cuarto descuento. Orden de merge: #176 → #177 → #178 → #179 → cuarto descuento → Expoyer.
+
+**Estado:** en curso
+- Corrección de la línea del esqueleto del punto 2 (más arriba): el commit es `b251416`, no `c8d9d2c`.
+- Script 10 escrito: `a3650ed` en `feature/163-cuarto-descuento` (rama nueva, apilada sobre `feature/51-pantalla-pdf`), pusheada sin PR. **No se ejecutó en ninguna base**: no hay Postgres local en esta máquina (ni `psql` ni daemon de Docker), así que tampoco se probó su sintaxis contra un servidor. La primera corrida es la de Santi en `lacentral_test`, en una transacción con `ON_ERROR_STOP=1`.
+
+### PARA SANTI · 17/11/2026 · backup y script 10 (cuarto descuento, D-S6-15)
+
+Desde fish, en tu máquina, parado en la raíz del repo. El script se lee de la rama pusheada con `git show`: no hace falta cambiar de rama ni tener el repo en la Arch. **Requisito:** el 09 aplicado en cada base (el paso 2 lo muestra; si una da `s09 = 0`, primero el bloque «PARA SANTI» anterior).
+
+1 · Backup de las tres bases, a tu máquina. Cada `.dump` tiene que pesar más de 0 bytes; si uno da error o pesa 0, no sigas:
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+mkdir -p ~/backups-lacentral
+set -l marca (date +%Y%m%d-%H%M)
+for base in lacentral_test lacentral_demo lacentral
+    ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc $base > ~/backups-lacentral/$base-$marca.dump
+    or begin; echo "FALLÓ el backup de $base: no sigas"; break; end
+end
+ls -l ~/backups-lacentral/*-$marca.dump
+```
+
+2 · Estado de cada base, solo lectura. `s09 = 1` es el 09 aplicado; `s10 = 0` es el 10 pendiente:
+
+```fish
+for base in lacentral_test lacentral_demo lacentral
+    echo "SELECT current_database() AS base, count(*) FILTER (WHERE column_name = 'descuento_3_porcentaje') AS s09, count(*) FILTER (WHERE column_name = 'descuento_4_porcentaje') AS s10 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'factura_compra_detalle';" | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d $base
+end
+```
+
+3 · El 10, **primero solo en `lacentral_test`**. Tiene que terminar con `NOTICE: 10: TODO OK.` y `COMMIT`. El `WARNING` del `ROLLBACK` inicial es esperado (no hay transacción abierta):
+
+```fish
+git fetch origin
+git show origin/feature/163-cuarto-descuento:backend/db/rescaffold/10_Cuarto_Descuento.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+4 · Si el 3 dio `TODO OK`, avisame: con eso sigo con el re-scaffold y las pruebas contra PostgreSQL. Después, el mismo comando en `lacentral_demo` y en `lacentral`, de a una, y repetí el paso 2: las tres con `s10 = 1`. El script es idempotente: correrlo dos veces en la misma base no cambia nada.
+
+```fish
+git show origin/feature/163-cuarto-descuento:backend/db/rescaffold/10_Cuarto_Descuento.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_demo -v ON_ERROR_STOP=1
+git show origin/feature/163-cuarto-descuento:backend/db/rescaffold/10_Cuarto_Descuento.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral -v ON_ERROR_STOP=1
+```
+
+Para volver atrás una base (solo si hiciera falta): `ssh atiz@arch docker exec -i lacentral_db pg_restore -U lacentral -d <base> --clean --if-exists < ~/backups-lacentral/<base>-<marca>.dump`.
+- Punto 2 y D-S6-13, backend: esqueleto `b251416`, rojo `6b2d65c` (12 con error por aserción; dos rojos que primero daban NRE y una excepción de JSON se reescribieron para que fallen por aserción antes de commitear), código `4668ba0`. Filtrado (lectura, caso de uso, `PostPdf_*`): 36/36. Real: Fazio `99-48437`, solo el número para revisar. **D-S6-16:** el neto de las 10 líneas del real de Fazio da **323.670,42**, no 323.670,44: el PDF redondea el precio unitario final («P. Final») y lo multiplica por la cantidad; el sistema aplica los descuentos al precio de lista y redondea la línea. Diferencia de 2 centavos, sin marcar (entra en la tolerancia de la línea). Va al ESTADO como pregunta, no lo resuelvo.
