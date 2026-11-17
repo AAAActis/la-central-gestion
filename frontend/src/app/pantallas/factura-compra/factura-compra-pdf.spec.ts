@@ -150,6 +150,84 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
     expect(raiz().querySelector('.etiqueta.revisar')?.textContent).toContain('Revisar');
   });
 
+  it('CA-002: una percepción que el PDF no pudo leer se señala; las demás, no', () => {
+    cargar(interpretada({ percepcionIva: null, percepcionIibb: null, paraRevisar: ['percepcionIva', 'percepcionIibb'] }));
+
+    expect(etiquetaDe('pIva')).not.toBeNull();
+    expect(etiquetaDe('pIibb')).not.toBeNull();
+    expect(campo('pIibb').getAttribute('aria-invalid')).toBe('true');
+    expect(etiquetaDe('pMunicipal')).toBeNull();
+    expect(campo('pMunicipal').hasAttribute('aria-invalid')).toBeFalse();
+  });
+
+  const sinProveedor = () => interpretada({
+    proveedorId: null, tipoComprobante: 'B', numero: '99-48437',
+    lineas: [linea('QQ1', null), linea('QQ2', null)], paraRevisar: ['numero', 'proveedorId'],
+  });
+  const elegido = { id: 7, codigo: 'PRV-7', razonSocial: 'Repuestos Ficticios', cuit: null, activo: true, tipoComprobanteHabitual: 'A' as const };
+
+  it('CA-003: elegir el proveedor después del PDF busca en él los códigos sin resolver y pasa a líneas los que encuentra', () => {
+    cargar(sinProveedor());
+
+    c.elegirProveedor(elegido);
+    const pedido = servidor.expectOne('/api/facturas-compra/pdf');
+    expect((pedido.request.body as FormData).get('proveedorId')).toBe('7');
+    expect((pedido.request.body as FormData).get('archivo')).toEqual(jasmine.any(File));
+    pedido.flush(interpretada({ ...sinProveedor(), proveedorId: 7, lineas: [linea('QQ1', 51), linea('QQ2', null)], paraRevisar: ['numero'] }));
+    servidor.expectOne('/api/articulos/51').flush(ficha(51));
+    fixture.detectChanges();
+
+    expect(c.lineas.map(l => [l.articulo.id, l.cantidad, l.precioUnitario])).toEqual([[51, 2, 4000]]);
+    expect(c.sinResolver.map(l => l.codigoProveedor)).toEqual(['QQ2']);
+    expect(c.revisar('proveedorId')).toBeFalse();
+    expect(raiz().textContent).toContain('Falta resolver 1 línea');
+    // El tipo y el número siguen siendo los del comprobante, no los del proveedor.
+    expect([c.tipoComprobante, c.numero]).toEqual(['B', '99-48437']);
+  });
+
+  it('CA-003: si el proveedor elegido no tiene ninguno de los códigos, las líneas siguen sin resolver', () => {
+    cargar(sinProveedor());
+
+    c.elegirProveedor(elegido);
+    servidor.expectOne('/api/facturas-compra/pdf').flush(interpretada({ ...sinProveedor(), proveedorId: 7, paraRevisar: ['numero'] }));
+    fixture.detectChanges();
+
+    expect(c.lineas).toEqual([]);
+    expect(c.sinResolver.map(l => l.codigoProveedor)).toEqual(['QQ1', 'QQ2']);
+  });
+
+  it('CA-003: con todas las líneas resueltas, elegir otro proveedor no vuelve a leer el PDF', () => {
+    cargar(interpretada());
+
+    c.elegirProveedor(elegido);
+
+    servidor.expectNone('/api/facturas-compra/pdf');
+  });
+
+  it('CA-003: un error al buscar los códigos se muestra y deja las líneas como estaban', () => {
+    cargar(sinProveedor());
+
+    c.elegirProveedor(elegido);
+    servidor.expectOne('/api/facturas-compra/pdf').flush({ detail: 'El proveedor 7 no existe o está dado de baja.' }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('[role="alert"]')?.textContent).toContain('dado de baja');
+    expect(c.sinResolver.length).toBe(2);
+  });
+
+  it('CA-003: la búsqueda de códigos que llega después de cargar otra factura no la toca', () => {
+    cargar(sinProveedor());
+    c.elegirProveedor(elegido);
+    const vieja = servidor.expectOne('/api/facturas-compra/pdf');
+    c.nueva();
+
+    vieja.flush(interpretada({ ...sinProveedor(), proveedorId: 7, lineas: [linea('QQ1', 51), linea('QQ2', null)] }));
+    servidor.expectNone('/api/articulos/51');
+
+    expect(c.lineas).toEqual([]);
+    expect(c.sinResolver).toEqual([]);
+  });
+
   it('CA-003: la línea sin artículo queda sin resolver, con su código y el enlace al alta', () => {
     cargar(interpretada({ lineas: [linea('AB-100', 50), linea('ZZ9', null, 1, 1250.5)] }));
 
