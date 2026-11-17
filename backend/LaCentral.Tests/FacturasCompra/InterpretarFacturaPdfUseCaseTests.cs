@@ -78,8 +78,8 @@ public class InterpretarFacturaPdfUseCaseTests
         Assert.Equal((2000.25m, 1000.50m), (f.PercepcionIva, f.PercepcionIibb));
         Assert.Equal([(int?)50, null], f.Lineas.Select(l => l.ArticuloId));
         Assert.Equal(("ZZ9", 1250.50m, 10m), (f.Lineas[1].CodigoProveedor, f.Lineas[1].PrecioUnitario, f.Lineas[1].DescuentoPorcentaje));
-        Assert.Equal((5m, 20m), (f.Lineas[0].Descuento2Porcentaje, f.Lineas[0].Descuento3Porcentaje));
-        Assert.Empty(f.ParaRevisar);
+        Assert.Equal((5m, 20m, 5m), (f.Lineas[0].Descuento2Porcentaje, f.Lineas[0].Descuento3Porcentaje, f.Lineas[0].Descuento4Porcentaje));
+        Assert.Equal(["lineas[0].descuento4", "lineas[1].descuento4"], f.ParaRevisar);
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class InterpretarFacturaPdfUseCaseTests
 
         Assert.True(resultado.IsSuccess, resultado.Error);
         Assert.Null(resultado.Value.ProveedorId);
-        Assert.Equal(["proveedorId"], resultado.Value.ParaRevisar);
+        Assert.Equal(["proveedorId"], resultado.Value.ParaRevisar.Where(c => !c.EndsWith(".descuento4")));
         Assert.All(resultado.Value.Lineas, l => Assert.Null(l.ArticuloId));
         _facturas.VerifyNoOtherCalls();
     }

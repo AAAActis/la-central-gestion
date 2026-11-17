@@ -525,6 +525,41 @@ public class RegistrarFacturaCompraUseCaseTests
         NoSeEscribioNada();
     }
 
+    [Fact]
+    public async Task Fco06_CuatroDescuentos_SeRegistranEnLaLinea()
+    {
+        var resultado = await Caso().EjecutarAsync(Request(new[] { new LineaFacturaCompraRequest(100, 1, 5m, 200m, 10m, 5m, 2.5m, 5m) }));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        var linea = Assert.Single(_registrada!.Lineas);
+        Assert.Equal((10m, 5m, 2.5m, 5m),
+            (linea.DescuentoPorcentaje, linea.Descuento2Porcentaje, linea.Descuento3Porcentaje, linea.Descuento4Porcentaje));
+    }
+
+    [Theory]
+    [InlineData(-0.01)]
+    [InlineData(100.01)]
+    [InlineData(0.001)]
+    public async Task Fco06_CuartoDescuentoFueraDeRango_Invalido(double cuarto)
+    {
+        var resultado = await Caso().EjecutarAsync(Request(new[]
+            { new LineaFacturaCompraRequest(100, 1, 5m, 200m, 0m, 0m, 0m, (decimal)cuarto) }));
+
+        AssertFallo(resultado, TipoError.Invalido);
+        NoSeEscribioNada();
+    }
+
+    [Fact]
+    public void Fco06_Totales_ElCuartoDescuentoEntraEnElNeto()
+    {
+        // 5 × (200 − 5 %) = 950, sin IVA (B).
+        var resultado = Caso().CalcularTotales(Request(new[] { new LineaFacturaCompraRequest(100, 1, 5m, 200m, 0m, 0m, 0m, 5m) },
+            tipo: "B", numero: "99-00000001", iva: 0m, iibb: 0m, municipal: 0m));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(new TotalesFacturaCompra(950m, 0m, 0m, 950m), resultado.Value);
+    }
+
     // CA-014 y CA-015: neto con descuentos sucesivos, 21 % de IVA solo en el A, percepciones, total.
     [Fact]
     public void Fco06_Totales_ComprobanteA_SumaVeintiunoPorCientoDeIva()

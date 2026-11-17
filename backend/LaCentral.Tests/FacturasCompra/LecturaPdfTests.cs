@@ -60,6 +60,28 @@ public class LecturaPdfTests
         Assert.Equal((2000.25m, 1000.50m), (leido.PercepcionIva, leido.PercepcionIibb));
         Assert.Null(leido.PercepcionMunicipal);
         Assert.Null(leido.PercepcionGanancias);
+        Assert.Equal(["lineas[0].descuento4", "lineas[1].descuento4"], leido.ParaRevisar);
+    }
+
+    [Fact]
+    public void Etman_ProponeElPagoContadoComoCuartoDescuentoDeCadaLinea_YLoMarcaParaRevisar()
+    {
+        // D-S6-15: el 5 % de pago contado no viene en las líneas, sale del renglón «Pago Contado 5%».
+        var leido = Leer(PdfSintetico.FacturaEtman());
+
+        Assert.All(leido.Lineas, l => Assert.Equal(5m, l.Descuento4));
+        Assert.Contains("lineas[0].descuento4", leido.ParaRevisar);
+        Assert.Contains("lineas[1].descuento4", leido.ParaRevisar);
+    }
+
+    [Fact]
+    public void Etman_SinElRenglonDePagoContado_NoProponeCuartoDescuento()
+    {
+        var renglones = Renglones(PdfSintetico.FacturaEtman()).Where(r => !r.StartsWith("Pago Contado")).ToList();
+
+        var leido = LayoutsPdf.Leer(renglones)!;
+
+        Assert.All(leido.Lineas, l => Assert.Equal(0m, l.Descuento4));
         Assert.Empty(leido.ParaRevisar);
     }
 
@@ -70,8 +92,8 @@ public class LecturaPdfTests
 
         Assert.Equal(
             [
-                new LineaLeida("AB-100", "PASTILLA FICTICIA DELANTERA MARCAX", 2m, 4000m, 0m, 5m, 20m),
-                new LineaLeida("ZZ9", "FILTRO FICTICIO MARCAY", 1m, 1250.50m, 10m, 0m, 0m),
+                new LineaLeida("AB-100", "PASTILLA FICTICIA DELANTERA MARCAX", 2m, 4000m, 0m, 5m, 20m, 5m),
+                new LineaLeida("ZZ9", "FILTRO FICTICIO MARCAY", 1m, 1250.50m, 10m, 0m, 0m, 5m),
             ],
             leido.Lineas);
     }
@@ -88,7 +110,7 @@ public class LecturaPdfTests
         var leido = Leer(PdfSintetico.FacturaEtman(codigoAfip: "03"));
 
         Assert.Null(leido.TipoComprobante);
-        Assert.Equal(["tipoComprobante"], leido.ParaRevisar);
+        Assert.Equal(["tipoComprobante"], leido.ParaRevisar.Where(c => !c.EndsWith(".descuento4")));
     }
 
     [Fact]
@@ -96,7 +118,7 @@ public class LecturaPdfTests
     {
         var leido = Leer(PdfSintetico.FacturaEtman(totalPrimeraLinea: "6,000.00"));
 
-        Assert.Equal(["lineas[0]"], leido.ParaRevisar);
+        Assert.Equal(["lineas[0]"], leido.ParaRevisar.Where(c => !c.EndsWith(".descuento4")));
     }
 
     [Theory]
@@ -108,7 +130,7 @@ public class LecturaPdfTests
         var leido = Leer(PdfSintetico.FacturaEtman(percepcionIibb: iibb, percepcionIva: iva));
 
         Assert.Null(campo == "percepcionIibb" ? leido.PercepcionIibb : leido.PercepcionIva);
-        Assert.Equal([campo], leido.ParaRevisar);
+        Assert.Equal([campo], leido.ParaRevisar.Where(c => !c.EndsWith(".descuento4")));
     }
 
     [Fact]
