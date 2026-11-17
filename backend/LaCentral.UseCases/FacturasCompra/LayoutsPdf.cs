@@ -18,7 +18,7 @@ public static class LayoutsPdf
     private static readonly Regex Fecha = new(@"\b\d{2}/\d{2}/\d{4}\b");
 
     /// <summary>El comprobante leído por el primer layout que reconoce el texto, o null.</summary>
-    public static ComprobanteLeido? Leer(IReadOnlyList<string> renglones)
+    public static ComprobanteLeido? Leer(IReadOnlyList<string> renglones, string? nombreArchivo = null)
         => Layouts.Select(leer => leer(renglones)).FirstOrDefault(c => c is not null);
 
     // ETMAN (Multioriginal Parts): factura; números en formato de EE. UU. (20,184.21); tres

@@ -19,7 +19,10 @@ public class InterpretarFacturaPdfUseCase
     public InterpretarFacturaPdfUseCase(ILectorTextoPdf lector, IProveedorRepositorio proveedores, IFacturaCompraRepositorio facturas)
         => (_lector, _proveedores, _facturas) = (lector, proveedores, facturas);
 
-    public async Task<Result<FacturaPdfInterpretada>> EjecutarAsync(byte[] archivo, CancellationToken ct = default)
+    /// <param name="nombreArchivo">El nombre con el que se subió: hay layouts que no traen el número en el texto.</param>
+    /// <param name="proveedorElegido">El proveedor que el operador eligió a mano, cuando el PDF no trae uno reconocible.</param>
+    public async Task<Result<FacturaPdfInterpretada>> EjecutarAsync(
+        byte[] archivo, string? nombreArchivo = null, int? proveedorElegido = null, CancellationToken ct = default)
     {
         // CA-002: ni un archivo que no es PDF ni un escaneado se interpretan.
         var texto = _lector.LeerRenglones(archivo);
