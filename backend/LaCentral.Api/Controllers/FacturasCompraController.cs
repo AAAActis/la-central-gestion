@@ -16,10 +16,33 @@ public class FacturasCompraController : ControllerBase
     private readonly RegistrarFacturaCompraUseCase _registrar;
     private readonly ConsultarFacturasCompraUseCase _consultar;
     private readonly AnularFacturaCompraUseCase _anular;
+    private readonly InterpretarFacturaPdfUseCase _interpretar;
+
+    // Una factura de un par de páginas pesa decenas de KB; 10 MB deja margen sin aceptar cualquier cosa.
+    private const long TamanoMaximoPdf = 10 * 1024 * 1024;
 
     public FacturasCompraController(RegistrarFacturaCompraUseCase registrar, ConsultarFacturasCompraUseCase consultar,
-        AnularFacturaCompraUseCase anular)
-        => (_registrar, _consultar, _anular) = (registrar, consultar, anular);
+        AnularFacturaCompraUseCase anular, InterpretarFacturaPdfUseCase interpretar)
+        => (_registrar, _consultar, _anular, _interpretar) = (registrar, consultar, anular, interpretar);
+
+    /// <summary>
+    /// HU-FCO-05 (029). Interpreta el PDF del proveedor (campo de formulario «archivo») y
+    /// devuelve la factura propuesta para revisar, sin guardar nada. 200; 400 si no es un PDF
+    /// con texto o su formato no se reconoce: se pide la carga manual.
+    /// </summary>
+    [HttpPost("pdf")]
+    [RequestSizeLimit(TamanoMaximoPdf)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> InterpretarPdf(IFormFile? archivo, CancellationToken ct)
+    {
+        using var contenido = new MemoryStream();
+        if (archivo is not null)
+            await archivo.CopyToAsync(contenido, ct);
+        return this.AResultadoHttp(await _interpretar.EjecutarAsync(contenido.ToArray(), ct));
+    }
 
     /// <summary>
     /// HU-FCO-02 (026). Consulta por proveedor, número y rangos de emisión y de vencimiento;

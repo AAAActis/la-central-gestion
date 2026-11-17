@@ -10,6 +10,8 @@ namespace LaCentral.UseCases.FacturasCompra;
 /// </summary>
 public class InterpretarFacturaPdfUseCase
 {
+    private const string CargaManual = "Cargá la factura por la vía manual.";
+
     private readonly ILectorTextoPdf _lector;
     private readonly IProveedorRepositorio _proveedores;
     private readonly IFacturaCompraRepositorio _facturas;
@@ -17,6 +19,40 @@ public class InterpretarFacturaPdfUseCase
     public InterpretarFacturaPdfUseCase(ILectorTextoPdf lector, IProveedorRepositorio proveedores, IFacturaCompraRepositorio facturas)
         => (_lector, _proveedores, _facturas) = (lector, proveedores, facturas);
 
-    public Task<Result<FacturaPdfInterpretada>> EjecutarAsync(byte[] archivo, CancellationToken ct = default)
-        => Task.FromResult(Result<FacturaPdfInterpretada>.Failure(TipoError.Invalido, "Sin implementar."));
+    public async Task<Result<FacturaPdfInterpretada>> EjecutarAsync(byte[] archivo, CancellationToken ct = default)
+    {
+        // CA-002: ni un archivo que no es PDF ni un escaneado se interpretan.
+        var texto = _lector.LeerRenglones(archivo);
+        if (!texto.IsSuccess)
+            return Fallo($"El archivo no es un PDF. {CargaManual}");
+        if (texto.Value.Count == 0)
+            return Fallo($"El PDF está escaneado, sin texto: el sistema no lo puede leer. {CargaManual}");
+        if (LayoutsPdf.Leer(texto.Value) is not { } leido)
+            return Fallo($"El sistema no reconoce el formato de este comprobante. {CargaManual}");
+
+        // El proveedor es el dueño de uno de los CUIT del texto (el otro es el de la empresa).
+        int? proveedorId = null;
+        foreach (var cuit in leido.Cuits)
+            if (await _proveedores.ObtenerPorCuitAsync(cuit, ct) is { Activo: true } proveedor)
+            {
+                proveedorId = proveedor.Id;
+                break;
+            }
+
+        // CA-004: sin proveedor no hay de quién buscar los códigos; ninguna línea se resuelve.
+        var articulos = proveedorId is { } id
+            ? await _facturas.ObtenerArticulosPorCodigoProveedorAsync(id, leido.Lineas.Select(l => l.CodigoProveedor).Distinct().ToArray(), ct)
+            : new Dictionary<string, int>();
+
+        var lineas = leido.Lineas.Select(l => new LineaPdfInterpretada(
+            l.CodigoProveedor, l.Descripcion, articulos.TryGetValue(l.CodigoProveedor, out var articuloId) ? articuloId : null,
+            l.Cantidad, l.PrecioUnitario, l.Descuento1, l.Descuento2, l.Descuento3)).ToList();
+        IReadOnlyList<string> revisar = proveedorId is null ? [.. leido.ParaRevisar, "proveedorId"] : leido.ParaRevisar;
+
+        return Result<FacturaPdfInterpretada>.Success(new FacturaPdfInterpretada(
+            proveedorId, leido.TipoComprobante, leido.Numero, leido.FechaEmision, leido.FechaVencimiento,
+            leido.PercepcionIva, leido.PercepcionIibb, leido.PercepcionMunicipal, leido.PercepcionGanancias, lineas, revisar));
+    }
+
+    private static Result<FacturaPdfInterpretada> Fallo(string error) => Result<FacturaPdfInterpretada>.Failure(TipoError.Invalido, error);
 }

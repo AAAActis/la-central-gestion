@@ -195,7 +195,9 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
         return Result.Success();
     }
 
-    public Task<IReadOnlyDictionary<string, int>> ObtenerArticulosPorCodigoProveedorAsync(
+    public async Task<IReadOnlyDictionary<string, int>> ObtenerArticulosPorCodigoProveedorAsync(
         int proveedorId, IReadOnlyCollection<string> codigos, CancellationToken ct = default)
-        => Task.FromResult<IReadOnlyDictionary<string, int>>(new Dictionary<string, int>());
+        => await _context.ArticuloCodigoAlternativo.AsNoTracking()
+            .Where(c => c.ProveedorId == proveedorId && codigos.Contains(c.Codigo) && c.Articulo.Activo)
+            .ToDictionaryAsync(c => c.Codigo, c => c.ArticuloId, ct);
 }
