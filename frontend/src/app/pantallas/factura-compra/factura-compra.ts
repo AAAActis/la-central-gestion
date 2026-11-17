@@ -321,13 +321,10 @@ export class FacturaCompra {
   elegirProveedor(p: ProveedorResumen) {
     this.proveedor.set(p);
     this.proveedores.set([]);
-    // 049: con el formulario del PDF, el tipo es el del comprobante y no se propone el habitual.
-    if (!this.desdePdf) {
-      // CA-004: solo una propuesta; el usuario la cambia cuando quiera.
-      this.cambiarTipo(p.tipoComprobanteHabitual ?? '');
-      return;
-    }
-    if (this.sinResolver.length > 0 && this.archivoPdf) this.buscarCodigos(this.archivoPdf, p.id);
+    // CA-004: solo una propuesta; el usuario la cambia cuando quiera. Con el formulario del PDF
+    // (049), el tipo es el del comprobante y no se propone el habitual.
+    if (!this.desdePdf) this.cambiarTipo(p.tipoComprobanteHabitual ?? '');
+    else if (this.sinResolver.length > 0) this.buscarCodigos(this.archivoPdf!, p.id);
   }
 
   /** 049 CA-003: el PDF no trajo un proveedor reconocible; se buscan los códigos sin resolver en el elegido. */
@@ -361,7 +358,6 @@ export class FacturaCompra {
           return false;
         });
         this.paraRevisar.update(r => r.filter(x => x !== 'proveedorId'));
-        this.invalidarTotales();
       },
       error: e => { if (version === this.version) this.errorPdf.set(mensajeDeError(e)); },
     });
@@ -643,7 +639,6 @@ export class FacturaCompra {
     this.resolviendo.set(null);
     this.paraRevisar.set([]);
     this.desdePdf = false;
-    this.archivoPdf = null;
     this.errorPdf.set(null);
     this.version++;
   }
