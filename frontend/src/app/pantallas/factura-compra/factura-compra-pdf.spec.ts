@@ -210,6 +210,20 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
     expect(raiz().textContent).not.toContain('Faltan resolver');
   });
 
+  it('CA-004: un total pedido antes de cargar el PDF y que llega después no se muestra sobre el formulario del PDF', () => {
+    c.proveedor.set({ id: 7, codigo: 'PRV-7', razonSocial: 'R', cuit: null, activo: true });
+    c.registrar();
+    const calculoViejo = servidor.expectOne('/api/facturas-compra/calculo');
+    cargar(interpretada({ lineas: [linea('X1', null)] }));
+
+    calculoViejo.flush({ neto: 1, iva: 0, percepciones: 0, total: 1 });
+    fixture.detectChanges();
+
+    expect(c.totales()).toBeNull();
+    expect(raiz().querySelector('[data-totales]')).toBeNull();
+    expect(verTotal().disabled).toBeTrue();
+  });
+
   it('029 CA-006: lo cargado desde el PDF se registra con la constancia; lo manual, no', () => {
     cargar(interpretada());
     c.confirmar();
