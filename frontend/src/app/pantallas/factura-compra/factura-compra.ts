@@ -211,7 +211,7 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
               </tbody>
             </table>
             <div class="fila">
-              <button type="button" (click)="confirmar()" [disabled]="registrando() || sinResolver.length > 0">Confirmar y registrar</button>
+              <button type="button" (click)="confirmar()" [disabled]="registrando()">Confirmar y registrar</button>
               <span class="tenue">Se suma el stock en el destino de cada línea y se actualiza el costo de cada artículo.</span>
             </div>
           </section>
@@ -267,6 +267,8 @@ export class FacturaCompra {
   /** CA-003: la línea sin resolver a la que se le asigna el próximo artículo que se elija. */
   readonly resolviendo = signal<number | null>(null);
   private desdePdf = false;
+  /** Cada formulario nuevo cambia la versión: un total pedido para el anterior no se muestra. */
+  private version = 0;
 
   constructor() {
     // CA-008: con tres caracteres o más, coincidencias aproximadas mientras se escribe.
@@ -472,10 +474,11 @@ export class FacturaCompra {
     if (!factura) return;
     this.errorRegistro.set(null);
     this.registrando.set(true);
+    const version = this.version;
     this.api.calcularFacturaCompra(factura).subscribe({
       next: t => {
         this.registrando.set(false);
-        this.totales.set(t);
+        if (version === this.version) this.totales.set(t);
       },
       error: e => {
         this.registrando.set(false);
@@ -592,6 +595,7 @@ export class FacturaCompra {
     this.paraRevisar.set([]);
     this.desdePdf = false;
     this.errorPdf.set(null);
+    this.version++;
   }
 }
 
