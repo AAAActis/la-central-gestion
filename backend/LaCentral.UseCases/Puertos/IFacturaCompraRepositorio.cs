@@ -43,4 +43,11 @@ public interface IFacturaCompraRepositorio
     /// último proveedor y con el costo que tenía (CA-002). Se llama dentro de IUnidadDeTrabajo.
     /// </summary>
     Task<Result> AnularConEfectosAsync(AnulacionFacturaCompra anulacion, CancellationToken ct = default);
+
+    /// <summary>
+    /// HU-FCO-05 (029) CA-004: código del proveedor → Id del artículo ACTIVO que lo tiene en
+    /// `articulo_codigo_alternativo`. Los que no coinciden no aparecen.
+    /// </summary>
+    Task<IReadOnlyDictionary<string, int>> ObtenerArticulosPorCodigoProveedorAsync(
+        int proveedorId, IReadOnlyCollection<string> codigos, CancellationToken ct = default);
 }
