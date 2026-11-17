@@ -12,6 +12,7 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
     private const string EstadoActiva = "ACTIVA";
     private const string EstadoAnulada = "ANULADA";
     private const string OrigenManual = "MANUAL";
+    private const string OrigenPdf = "PDF";
     // stock.cantidad es NUMERIC(12,3): la parte entera tiene a lo sumo 9 dígitos.
     private const decimal LimiteStock = 1_000_000_000m;
 
@@ -50,7 +51,7 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
             PercepcionMunicipal = factura.PercepcionMunicipal,
             PercepcionGanancias = factura.PercepcionGanancias,
             Estado = EstadoActiva,
-            Origen = OrigenManual,
+            Origen = factura.DesdePdf ? OrigenPdf : OrigenManual,
             UsuarioId = factura.UsuarioId,
             FechaRegistro = factura.FechaRegistro,
             FacturaCompraDetalle = factura.Lineas.Select(l => new FacturaCompraDetalle

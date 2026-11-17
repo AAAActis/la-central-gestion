@@ -92,6 +92,7 @@ public class RegistrarFacturaCompraUseCase
             PercepcionGanancias = request.PercepcionGanancias,
             UsuarioId = usuarioId,
             FechaRegistro = DateTime.UtcNow,
+            DesdePdf = request.DesdePdf,
             Lineas = lineas.Select(l => new FacturaCompraDetalle
             {
                 ArticuloId = l.ArticuloId,

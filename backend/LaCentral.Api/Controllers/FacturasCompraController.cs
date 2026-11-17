@@ -118,5 +118,6 @@ public class FacturasCompraController : ControllerBase
             l.ArticuloId, l.SucursalId, l.Cantidad, l.PrecioUnitario, l.DescuentoPorcentaje,
             l.Descuento2Porcentaje, l.Descuento3Porcentaje)).ToList(),
         request.TipoComprobante,
-        request.FechaImputacion);
+        request.FechaImputacion,
+        request.DesdePdf);
 }
