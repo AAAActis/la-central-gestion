@@ -57,10 +57,14 @@ public static class LayoutsPdf
             Agregar(lineas, linea, Eeuu(m.Groups[8].Value), afirmable: true, revisar);
         }
 
-        Revisar(revisar, ("tipoComprobante", tipo), ("numero", numero), ("fechaEmision", emision));
+        // El bloque de totales de ETMAN siempre trae las dos percepciones: la que no se puede leer
+        // se marca para revisar, nunca queda en null en silencio.
+        var percepcionIva = Monto(texto, @"Percepcion de IVA ([\d,]+\.\d{2})(?!\S)", Eeuu);
+        var percepcionIibb = Monto(texto, @"Percepcion IIBB: ([\d,]+\.\d{2})(?!\S)", Eeuu);
+        Revisar(revisar, ("tipoComprobante", tipo), ("numero", numero), ("fechaEmision", emision),
+            ("percepcionIva", percepcionIva), ("percepcionIibb", percepcionIibb));
         return new ComprobanteLeido(Cuits(texto), tipo, numero, emision, vencimiento,
-            Monto(texto, @"Percepcion de IVA ([\d,]+\.\d{2})", Eeuu), Monto(texto, @"Percepcion IIBB: ([\d,]+\.\d{2})", Eeuu),
-            null, null, lineas, revisar);
+            percepcionIva, percepcionIibb, null, null, lineas, revisar);
     }
 
     // Fazio (Badaloni): presupuesto, compra en negro; números en formato argentino (27.396,12);
