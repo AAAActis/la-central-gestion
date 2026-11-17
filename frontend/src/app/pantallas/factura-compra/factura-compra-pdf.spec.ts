@@ -180,6 +180,7 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
     expect(c.lineas.map(l => [l.articulo.id, l.cantidad, l.precioUnitario])).toEqual([[51, 2, 4000]]);
     expect(c.sinResolver.map(l => l.codigoProveedor)).toEqual(['QQ2']);
     expect(c.revisar('proveedorId')).toBeFalse();
+    expect(c.sucursales().map(x => x.id)).toEqual([1, 2]);
     expect(raiz().textContent).toContain('Falta resolver 1 línea');
     // El tipo y el número siguen siendo los del comprobante, no los del proveedor.
     expect([c.tipoComprobante, c.numero]).toEqual(['B', '99-48437']);
@@ -213,6 +214,37 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
 
     expect(raiz().querySelector('[role="alert"]')?.textContent).toContain('dado de baja');
     expect(c.sinResolver.length).toBe(2);
+
+    // Elegir otro y que ande saca el error anterior.
+    c.elegirProveedor({ ...elegido, id: 8 });
+    servidor.expectOne('/api/facturas-compra/pdf').flush(interpretada({ ...sinProveedor(), proveedorId: 8, paraRevisar: ['numero'] }));
+    fixture.detectChanges();
+    expect(raiz().querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('CA-003: un error de la búsqueda de códigos que llega después de cargar otra factura no se muestra', () => {
+    cargar(sinProveedor());
+    c.elegirProveedor(elegido);
+    const vieja = servidor.expectOne('/api/facturas-compra/pdf');
+    c.nueva();
+
+    vieja.flush({ detail: 'viejo' }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+
+    expect(c.errorPdf()).toBeNull();
+  });
+
+  it('CA-003: el artículo hallado que llega después de cargar otro PDF con el mismo código no lo resuelve', () => {
+    cargar(sinProveedor());
+    c.elegirProveedor(elegido);
+    servidor.expectOne('/api/facturas-compra/pdf').flush(interpretada({ ...sinProveedor(), proveedorId: 7, lineas: [linea('QQ1', 51)] }));
+    const ficha51 = servidor.expectOne('/api/articulos/51');
+    cargar(sinProveedor());
+
+    ficha51.flush(ficha(51));
+
+    expect(c.lineas).toEqual([]);
+    expect(c.sinResolver.map(l => l.codigoProveedor)).toEqual(['QQ1', 'QQ2']);
   });
 
   it('CA-003: la búsqueda de códigos que llega después de cargar otra factura no la toca', () => {
