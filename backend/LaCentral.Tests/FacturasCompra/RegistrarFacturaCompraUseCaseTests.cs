@@ -584,4 +584,17 @@ public class RegistrarFacturaCompraUseCaseTests
 
         AssertFallo(resultado, TipoError.Invalido);
     }
+
+    // HU-FCO-05 (029) CA-006: la carga desde el PDF deja constancia.
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Fco05_LaConstanciaDeCargaDesdePdf_LlegaAlRepositorio(bool desdePdf)
+    {
+        var resultado = await Caso().EjecutarAsync(Request() with { DesdePdf = desdePdf });
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(desdePdf, _registrada!.DesdePdf);
+    }
 }

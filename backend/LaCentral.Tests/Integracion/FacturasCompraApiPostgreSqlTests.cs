@@ -518,4 +518,23 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
         Assert.Contains("vía manual", await respuesta.Content.ReadAsStringAsync());
     }
+
+    [PostgreSqlFact]
+    public async Task Fco05_PostDesdePdf_201_YLaFilaQuedaConOrigenPdf_LaManualConOrigenManual()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        var manual = CuerpoFco06(s, "A", "0001-00000001");
+        var json = JsonSerializer.SerializeToNode(CuerpoFco06(s, "A", "0001-00000002"))!.AsObject();
+        json["desdePdf"] = true;
+
+        var respuestaManual = await cliente.PostAsJsonAsync("/api/facturas-compra", manual);
+        var respuestaPdf = await cliente.PostAsJsonAsync("/api/facturas-compra", json);
+
+        Assert.Equal((HttpStatusCode.Created, HttpStatusCode.Created), (respuestaManual.StatusCode, respuestaPdf.StatusCode));
+        await using var relectura = fixture.CrearContexto();
+        var origenes = await relectura.FacturaCompra.AsNoTracking().OrderBy(f => f.Numero).Select(f => f.Origen).ToListAsync();
+        Assert.Equal(["MANUAL", "PDF"], origenes);
+    }
 }
