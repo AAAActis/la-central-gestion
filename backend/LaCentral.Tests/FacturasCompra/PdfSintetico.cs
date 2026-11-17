@@ -31,6 +31,21 @@ public static class PdfSintetico
         return documento.Build();
     }
 
+    /// <summary>
+    /// Un renglón visual cuyas palabras no comparten la línea de base: la de la izquierda va
+    /// 0,8 puntos más abajo y se escribe después, como pasa con PDF generados por drivers de impresora.
+    /// </summary>
+    public static byte[] RenglonTorcido()
+    {
+        var documento = new PdfDocumentBuilder();
+        var fuente = documento.AddStandard14Font(Standard14Font.Helvetica);
+        var pagina = documento.AddPage(PageSize.A4);
+        pagina.AddText("derecha", 7, new PdfPoint(300, 800), fuente);
+        pagina.AddText("izquierda", 7, new PdfPoint(20, 799.2), fuente);
+        pagina.AddText("abajo", 7, new PdfPoint(20, 788), fuente);
+        return documento.Build();
+    }
+
     /// <summary>Un PDF con una página sin texto, como un escaneado.</summary>
     public static byte[] SinTexto()
     {
