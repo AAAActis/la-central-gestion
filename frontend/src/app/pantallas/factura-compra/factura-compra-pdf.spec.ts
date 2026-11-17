@@ -224,6 +224,29 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
     expect(verTotal().disabled).toBeTrue();
   });
 
+  it('CA-001: con el formulario cargado desde el PDF, «Ver total» muestra el total', () => {
+    cargar(interpretada());
+    c.registrar();
+    servidor.expectOne('/api/facturas-compra/calculo').flush({ neto: 6080, iva: 1276.8, percepciones: 3000.75, total: 10357.55 });
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('[data-totales]')).not.toBeNull();
+  });
+
+  it('CA-004: la carrera del total tampoco pasa entre el segundo PDF y el tercero', () => {
+    cargar(interpretada());
+    cargar(interpretada({ lineas: [linea('AB-100', 50)] }));
+    c.registrar();
+    const calculoViejo = servidor.expectOne('/api/facturas-compra/calculo');
+    cargar(interpretada({ lineas: [linea('X1', null)] }));
+
+    calculoViejo.flush({ neto: 1, iva: 0, percepciones: 0, total: 1 });
+    fixture.detectChanges();
+
+    expect(c.totales()).toBeNull();
+    expect(verTotal().disabled).toBeTrue();
+  });
+
   it('029 CA-006: lo cargado desde el PDF se registra con la constancia; lo manual, no', () => {
     cargar(interpretada());
     c.confirmar();
