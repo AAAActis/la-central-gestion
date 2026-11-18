@@ -1078,3 +1078,27 @@ Para volver atrás una base (solo si hiciera falta): `ssh atiz@arch docker exec 
 - Verificadores, de a uno: #177 ronda 2 **APTO** y `auditor-persistencia` **APTO**; #179 ronda 2 **APTO** (12 mutaciones muertas); Expoyer `verificador-tdd` **APTO** (rojo de 11 reproducido, 11 mutaciones muertas; no pudo correr la suite por permisos, la corrí yo) y `auditor-persistencia` **APTO** (sin persistencia en el diff). Suites completas sobre el HEAD de cada rama, de a una (base menos cargada, unos 5 minutos cada una): `b0cf239` (#177) `Correctas! - Con error: 0, Superado: 652, Omitido: 0, Total: 652, Duración: 4 m 44 s`; `5be9f56` (#178, mismo backend que el #179) `Superado: 655, Total: 655, Duración: 4 m 20 s`; `d89a06a` (Expoyer, con el cuarto descuento debajo) `Superado: 678, Total: 678, Duración: 5 m 8 s`. Frontend: `78ff462` (#179) 248/248; `a191863` (Expoyer; mismo frontend que `d89a06a`) 252/252. ESTADO al día (tablero y PRÓXIMA SESIÓN). Push de las cinco ramas; PR de Expoyer.
 
 **BLOQUEADO EN:** el cuarto descuento (D-S6-15) espera que Santi aplique el script 10 en `lacentral_test` (bitácora, «PARA SANTI · 17/11 · script 10»): sin eso no hay re-scaffold, ni mapeo del repositorio, ni prueba contra PostgreSQL, ni PR de esa rama. Lo demás de la revisión está hecho, con verificadores APTO. Siguen abiertos, todos de personas: las preguntas 4 y 5 a Sergio, la HU de notas de crédito (equipo), la factura de Autocor (Lauti) y el DoD 10 (Javi con Sergio). El sprint no se cierra.
+
+## 18/11/2026 10:36 · Script 10 aplicado en lacentral_test: cierre del cuarto descuento y merge en Expoyer
+
+**Instrucción recibida (verbatim):**
+> 10: TODO OK en lacentral_test (17/11). Seguí con el cuarto descuento: re-scaffold, mapeo del repositorio, prueba contra PostgreSQL releyendo la fila, suite completa, verificadores acotados a los commits nuevos y PR. Después mergeá esa rama en feature/13-lector-expoyer y corré lo que corresponda. El 10 en lacentral_demo y en lacentral lo aplico yo cuando me lo pidas. Resúmenes en español.
+
+**Plan:**
+1. `feature/163-cuarto-descuento`: re-scaffold contra `lacentral_test` (solo `FacturaCompraDetalle` y el DbContext deberían cambiar).
+2. Prueba contra PostgreSQL en rojo: registrar una factura con el cuarto descuento y releer la fila con un contexto nuevo. Commit del rojo.
+3. Mapeo del repositorio. Filtrado verde. Commit.
+4. Suite completa sobre el HEAD; `verificador-tdd` y `auditor-persistencia` acotados a los commits nuevos; PR (base `feature/51-pantalla-pdf`).
+5. Merge en `feature/13-lector-expoyer`; suite completa sobre ese HEAD (cambió backend); ESTADO y bitácora antes del push.
+6. Pedirle a Santi el 10 en `lacentral_demo` y `lacentral`.
+
+**Estado:** en curso
+- Arranque: `git fetch`; `origin/develop` sin commits nuevos (`b920a89`); sin worktrees extra.
+- Paso 1, re-scaffold contra `lacentral_test` (`dotnet-ef` 10.0.11, con `DOTNET_ROOT=$HOME/.dotnet`): el diff real (`--ignore-cr-at-eol`) es solo `Descuento4Porcentaje` en `FacturaCompraDetalle.cs` y su `HasPrecision(6, 2)` con el comentario en el DbContext. `fcb9e51`. Compilación sin warnings. No se comparó contra `lacentral` (README del re-scaffold): la única diferencia esperada es justamente el 10, que Santi aplica después.
+- Paso 2, rojo `d018c29`: relectura con contexto nuevo de una línea con cuatro descuentos, 1 con error por aserción (`Expected (10, 5, 2,5, 5)`, `Actual (10,00, 5,00, 2,50, 0,00)`); el test del CHECK `fcd_descuento_4_valido` en el motor pasa desde el principio (lo prueba el script 10, ya commiteado).
+- Paso 3, `da0412c` mapeo en `FacturaCompraRepositorio`. Filtrado `FacturasCompra`: 226/226. Suite completa sobre `da0412c`: `Correctas! - Con error: 0, Superado: 669, Omitido: 0, Total: 669, Duración: 4 m 30 s`.
+- Frontend completo sobre `da0412c`: `TOTAL: 252 SUCCESS`.
+- `verificador-tdd` ronda 1 (`a3650ed..da0412c`, sin los merges de abajo): **NO APTO**. Validó los cuatro rojos y el orden; de 15 mutaciones, sobrevivió solo una: el regex de «Pago Contado» de `LayoutsPdf.cs:51` sin la parte decimal, porque el sintético trae «5%». Arreglo `4125c24`, solo test: `Etman_PagoContadoConDecimales_LoProponeCompleto`, con «2.5%». Con la mutación: 1 con error por aserción; sin ella: filtrado `FacturasCompra` 227/227. Nota: una corrida filtrada dio 1 con error porque el `build -q` falló y `--no-build` usó el binario de la mutación; recompilado, verde. Suite completa sobre `4125c24` (`--no-incremental`, 0 advertencias): `Correctas! - Con error: 0, Superado: 670, Omitido: 0, Total: 670, Duración: 5 m 19 s`. Ronda 2 acotada a `4125c24`, en curso.
+- `verificador-tdd` ronda 2 (solo `4125c24`): **APTO**. La mutación de la ronda 1 muere (1 con error, `LecturaPdfTests.cs:85`), y también una de refuerzo (`Eeuu` → `Argentino`). Aceptó la suite de `4125c24`. Hallazgo no bloqueante: el test nuevo afirma `ParaRevisar` solo para `lineas[0]`. `auditor-persistencia`, en curso.
+- `auditor-persistencia` (`a3650ed..4125c24`, sin merges): **APTO**, sin hallazgos. Mató la mutación del mapeo contra PostgreSQL real; 9/9 `CuartoDescuento` sin omitidos. Aviso: hasta que el 10 esté en `lacentral_demo` y `lacentral`, registrar una factura de compra ahí da 42703 → el PR no se mergea a `develop` antes (ESTADO, E10). No pudo consultar `pg_constraint` ni buscar esquemas huérfanos: no hay cliente de PostgreSQL en la máquina.
+- ESTADO al día (tablero #163, E10, PRÓXIMA SESIÓN), antes del push.
