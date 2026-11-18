@@ -40,4 +40,21 @@ public class FacturaCompraDetalleTests
 
         Assert.Equal((decimal)esperado, linea.CostoUnitario);
     }
+
+    // D-S6-15: el cuarto descuento también es sucesivo, sobre el neto del tercero.
+    [Theory]
+    [InlineData(100, 10, 0, 0, 5, 85.5)]
+    [InlineData(100, 0, 0, 36, 5, 60.8)]
+    [InlineData(99.99, 33.33, 33.33, 33.33, 33.33, 19.76)]   // 19,7553… → 19,76
+    [InlineData(200, 0, 0, 0, 100, 0)]
+    public void CostoUnitario_ConCuatroDescuentosSucesivos(double precio, double d1, double d2, double d3, double d4, double esperado)
+    {
+        var linea = new FacturaCompraDetalle
+        {
+            PrecioUnitario = (decimal)precio, DescuentoPorcentaje = (decimal)d1,
+            Descuento2Porcentaje = (decimal)d2, Descuento3Porcentaje = (decimal)d3, Descuento4Porcentaje = (decimal)d4
+        };
+
+        Assert.Equal((decimal)esperado, linea.CostoUnitario);
+    }
 }
