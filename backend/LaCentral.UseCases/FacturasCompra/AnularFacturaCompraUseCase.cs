@@ -31,11 +31,6 @@ public class AnularFacturaCompraUseCase
         _calcularPrecios = calcularPrecios;
     }
 
-    // Valores de la tabla rol: 1 = OPERADOR, 2 = ADMINISTRADOR (ver AuthenticarUsuarioCase).
-    private const int RolAdministrador = 2;
-    // Un solo mensaje para usuario inexistente, inactivo o clave mala: no revela quién existe.
-    private const string AutorizacionInvalida = "La autorización no es válida: revisá el usuario y la contraseña de quien autoriza.";
-
     public async Task<Result> EjecutarAsync(int facturaId, AnularFacturaCompraRequest request, CancellationToken ct = default)
     {
         var usuarioId = _contexto.UsuarioId;
@@ -51,18 +46,11 @@ public class AnularFacturaCompraUseCase
             return Result.Failure(TipoError.Conflicto, $"La factura {factura.Numero} ya está anulada.");
 
         // Doble certificación (B.4 del 07): otra persona, ADMINISTRADOR y activa, con su contraseña.
-        var autoriza = string.IsNullOrWhiteSpace(request.UsuarioAutoriza)
-            ? null
-            : await _usuarios.ObtenerPorNombreAsync(request.UsuarioAutoriza.Trim(), ct);
-        if (autoriza is null || !autoriza.Activo || request.ContrasenaAutoriza is null
-            || !_hash.VerificarClave(request.ContrasenaAutoriza, autoriza.HashContrasena))
-            return Result.Failure(TipoError.Invalido, AutorizacionInvalida);
-        if (autoriza.Id == usuarioId)
-            return Result.Failure(TipoError.Invalido, "La anulación la tiene que autorizar otra persona, no quien la pide.");
-        if (autoriza.RolId != RolAdministrador)
-            return Result.Failure(TipoError.Invalido, "Quien autoriza la anulación tiene que ser ADMINISTRADOR.");
+        var autoriza = await DobleCertificacion.VerificarAsync(_usuarios, _hash, request.UsuarioAutoriza, request.ContrasenaAutoriza, usuarioId, ct);
+        if (!autoriza.IsSuccess)
+            return Result.Failure(autoriza.Tipo, autoriza.Error);
 
-        var anulacion = new AnulacionFacturaCompra(facturaId, request.Motivo.Trim(), usuarioId, autoriza.Id, DateTime.UtcNow);
+        var anulacion = new AnulacionFacturaCompra(facturaId, request.Motivo.Trim(), usuarioId, autoriza.Value, DateTime.UtcNow);
         return await _unidadDeTrabajo.EjecutarAsync(async token =>
         {
             var anulada = await _facturas.AnularConEfectosAsync(anulacion, token);

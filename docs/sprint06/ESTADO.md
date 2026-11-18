@@ -36,7 +36,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | E56 | Esquema de la 056: `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `fecha_imputacion`, dos descuentos más por línea (script SQL + re-scaffold, en `lacentral_test` y `lacentral_demo`) | Santi | 056; la 029 y la 049 lo usan | **Script 09 escrito y aplicado en `lacentral_demo`** (13/11) con re-scaffold. **CERRADA 13/11:** Santi aplicó el 09 a `lacentral_test.public` con el superusuario (`09: TODO OK`). La suite corre contra `public`, sin `LA_CENTRAL_TEST_SCHEMA`. La plantilla `fco06_fuente` se borró el 13/11 |
 | C7 | Facturas reales de varios proveedores, para decidir parser por reglas o interpretación asistida (nota de la 029) | Javi | 029 | **CERRADA COMPLETA (18/11/2026, D-S6-19)**: ETMAN, Fazio y Expoyer con PDF digital y lector; Autocor entrega en papel y se carga a mano (056). Ver «Compuerta C7» abajo |
 | E10 | Script 10 (cuarto descuento, D-S6-15) en `lacentral_test`, `lacentral_demo` y `lacentral` | Santi | el PR del cuarto descuento | **CERRADA 18/11/2026.** Santi aplicó el 10 en las tres bases: `s09 = 1` y `s10 = 1` en todas. En `lacentral` también el 08 (ya estaba) y el 09 (`TODO OK`); el 07 ya estaba. Re-scaffold `fcb9e51` |
-| E11 | Script 11 (nota de crédito de proveedor y depósito Reclamos, D-S6-18 y D-S6-20) en `lacentral_test`, después en `lacentral_demo` y `lacentral` | Santi | la 057 (lo que toca el esquema: re-scaffold, repositorio, pruebas contra PostgreSQL, API) | **ABIERTA (18/11/2026).** Script escrito en `feature/182-nota-credito`; comandos en la bitácora («PARA SANTI · 18/11 · script 11»). **Ojo:** con el 11 en `lacentral_test.public`, la suite de toda rama sin su re-scaffold se corta («tablas que el modelo no clona»): el momento lo decide Santi |
+| E11 | Script 11 (nota de crédito de proveedor y depósito Reclamos, D-S6-18 y D-S6-20; anulación, D-S6-23) en `lacentral_test` (plantilla `nc057_fuente`, según el equipo el 18/11), después en `lacentral_demo` y `lacentral` | Santi | la 057 (lo que toca el esquema: re-scaffold, repositorio, pruebas contra PostgreSQL, API) | **ABIERTA (18/11/2026).** Script escrito en `feature/182-nota-credito`; comandos en la bitácora («PARA SANTI · 18/11 · script 11»). **Ojo:** con el 11 en `lacentral_test.public`, la suite de toda rama sin su re-scaffold se corta («tablas que el modelo no clona»): el momento lo decide Santi |
 
 C2, C5, C6 y C1 pasaron al Sprint 7 con el comparador (D-PL-05). La P6 se cerró el 11/11.
 
@@ -143,20 +143,9 @@ La pregunta del IVA del presupuesto de Fazio (17/11) no llegó a esta lista: la 
 
 ## Lo que vuelve a Sergio · 18/11/2026 · nota de crédito de proveedor (057)
 
-No se construye lo que dependa de estas preguntas; lo demás de la 057, sí.
-
-1. Cuando el proveedor **vuelve a mandar el producto** después de un reclamo, ¿llega con factura nueva
-   o sin factura? ¿Cómo se carga esa entrada?
-2. ¿Se puede **anular una factura de compra que ya tiene notas de crédito**? Propuesta mientras tanto:
-   no, primero se anulan las notas de crédito. Está como **CA-011 de la 057, «a confirmar»**, y no se
-   construye.
-3. Una nota de crédito **por devolución**, ¿se puede anular? ¿Devuelve el stock? (La 057 no tiene
-   anulación.)
-4. **Supuesto de la 057, para confirmar:** una devolución que deja el stock del origen en negativo se
-   registra igual, como la venta (HU-STK-03 CA-002).
-
-
-**Una HU no se empieza hasta que su compuerta esté cerrada**, aunque esté en el milestone.
+Las cuatro preguntas del 18/11 (reposición después de un reclamo, anular una factura con notas,
+anular una devolución, stock negativo) las **decidió el equipo el 18/11: D-S6-21 a D-S6-25**
+(«Decisiones · 18/11/2026»). Se le muestran a Sergio; si corrige alguna, se cambia.
 
 ## Decisiones · 18/11/2026
 
@@ -166,6 +155,15 @@ No se construye lo que dependa de estas preguntas; lo demás de la 057, sí.
 | D-S6-18 | **Nota de crédito de proveedor: HU nueva en el Sprint 6** (no en el 8): 057, HU-FCO-07, issue #182, 13 SP estimados. Es parte de la factura de compra. El sprint se estira: cierra por entregable (D-PL-06). Reemplaza la propuesta de la D-S6-14 (Sprint 8). | Santi | Proforma, índice y plan. Script 11 (E11). Dos PR: carga manual, después PDF de Expoyer |
 | D-S6-19 | **Autocor entrega en papel**: se carga por la vía manual (056). Un escaneo no sirve. **C7 cerrada completa.** | Santi | La factura de Autocor sale de los pendientes |
 | D-S6-20 | **El depósito Reclamos es una fila de `sucursal`** con `es_reclamos = true` (a lo sumo una, índice único parcial), con su stock en `stock`, como cualquier ubicación. **La mercadería entra a Reclamos con una transferencia** desde una sucursal (HU-STK-04, 020, Sprint 8): no hace falta otra cosa, porque Reclamos es una ubicación más. Mientras no esté la 020, una devolución sale directo de la sucursal. | agente, 18/11/2026 | Script 11: la columna, el índice, la fila «RC · Reclamos (depósito)» y una fila de stock en 0 por artículo. **Reclamos no es destino de una factura de compra** (CA-008 de la 057): la API lo rechaza y la pantalla no lo ofrece. Sí aparece en las existencias del artículo y como origen de una devolución. Descartado: una tabla de stock aparte para Reclamos, que obligaría a la 020 a tratarla como caso especial |
+
+| D-S6-21 | **Reposición después de un reclamo:** el proveedor la manda con **factura nueva**, que se carga como cualquier factura de compra (056 o 029). La 057 no tiene circuito de reposición. | equipo (práctica de los sistemas de gestión y RG 4540 de AFIP) | Fuera de la 057 |
+| D-S6-22 | **No se anula una factura de compra con notas de crédito vigentes:** primero se anulan las notas y después la factura. El mensaje lo dice y nombra las notas. | equipo | CA-011 de la 057, sin «a confirmar». Toca la anulación de la 028 |
+| D-S6-23 | **Una nota de crédito se anula igual que una factura (028):** con motivo y con la autorización de otro ADMINISTRADOR con su contraseña. Si era por devolución, la mercadería **vuelve al mismo origen** (sucursal o Reclamos) en la misma transacción. | equipo | CA nuevo de la 057 (CA-012). Script 11 con las columnas de anulación y el número único solo entre vigentes |
+| D-S6-24 | **Una devolución que deja el stock del origen en negativo se registra igual**, pero la pantalla avisa antes de confirmar: qué artículo, en qué sucursal y cuánto queda. | equipo | CA nuevo de la 057 (CA-013). Reemplaza el supuesto del 18/11 |
+| D-S6-25 | **Regla de cantidades:** en una devolución, cada línea es de un artículo que figura en las facturas referenciadas, y lo devuelto acumulado por artículo no supera lo comprado en esas facturas, sin contar las notas anuladas. Un artículo dado de baja se puede devolver. | equipo | CA nuevo de la 057 (CA-014), con prueba contra PostgreSQL de la suma acumulada y de dos devoluciones simultáneas |
+
+Las cinco son del equipo, tomadas el 18/11 sobre la práctica de los sistemas de gestión comunes y la
+RG 4540 de AFIP. **Si Sergio corrige alguna, se cambia.**
 
 **Reglas de Sergio para la 057 (18/11/2026), resumidas** (texto completo en la bitácora del 18/11):
 a) la nota de crédito no cambia el costo de los artículos; es plata a favor en la cuenta corriente
@@ -353,6 +351,17 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
+**18/11 (tarde) · D-S6-21 a D-S6-25 del equipo cargadas; la 057 sigue frenada por E11 (`nc057_fuente`).**
+- Proforma 057 v1.1 (14 CA): CA-011 sin «a confirmar», CA-012 anulación, CA-013 aviso de stock negativo, CA-014 cantidades.
+- Script 11 (sin aplicar): `estado` y columnas de anulación en `nota_credito_compra`, número único solo entre vigentes
+  (`ux_nota_credito_compra_numero_activa`), motivo `TEXT`; la verificación espera 12 restricciones.
+- Hecho sin esquema, en `feature/182-nota-credito`: CA-014 en el registro (dentro de la transacción; el repositorio tiene que
+  bloquear las facturas con `FOR UPDATE`), CA-012 caso de uso de anulación (reusa la doble certificación de la 028, ahora en
+  `Comun/DobleCertificacion`), CA-013 aviso en la pantalla.
+- **Falta, con el 11:** CA-011 / D-S6-22 en la anulación de la factura (necesita el repositorio de notas en el DI de la 028);
+  `ObtenerCompradoYDevueltoAsync`, `ObtenerParaAnularAsync` y `AnularConEfectosAsync` del repositorio, con PostgreSQL: suma
+  acumulada, dos devoluciones simultáneas, stock que vuelve al origen y número liberado; endpoint y pantalla de la anulación.
+
 **18/11 · novedades del 18/11 hechas; lo que queda es de personas o espera el script 11.**
 Orden de merge de la pila: #176 → #177 → #178 → #179 → #181 → #180; la 057 va arriba (`feature/182-nota-credito`, y encima
 `feature/182-nota-credito-pdf`).
@@ -367,8 +376,7 @@ Orden de merge de la pila: #176 → #177 → #178 → #179 → #181 → #180; la
   `ncc_numero_unico`, `nccd_cantidad_positiva`); `NotasCreditoCompraController` (`POST /api/notas-credito-compra`, `/calculo`,
   401/403); CA-008 (Reclamos fuera de los destinos de la factura: API y pantalla); verificadores y PR 1. Después, en la rama del
   PDF: `POST /api/notas-credito-compra/pdf`, la precarga en la pantalla, verificadores y PR 2.
-- **Sergio:** preguntas 1 a 4 de «Lo que vuelve a Sergio · 18/11» (reingreso tras reclamo, anular factura con notas, anular una
-  devolución, stock negativo) y la 4 del 17/11 (028 y 016).
+- **Sergio:** mostrarle D-S6-21 a D-S6-25 (si corrige alguna, se cambia) y la 4 del 17/11 (028 y 016).
 - **Santi:** el script 11 (cuándo, por el efecto en las suites) y el Mandato del documento de tesis (GR-01).
 - **Javi:** revisar y mergear la pila; DoD 10 con Sergio. **El sprint no está cerrado.**
 - Deuda vista en una mutación (no es de este trabajo): en el lector de ETMAN, sacar `numero` de `Revisar` no pone ningún test

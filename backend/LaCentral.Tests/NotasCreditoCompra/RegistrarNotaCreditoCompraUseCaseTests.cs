@@ -56,9 +56,14 @@ public class RegistrarNotaCreditoCompraUseCaseTests
             .ReturnsAsync(Result<int>.Success(IdGenerado));
         _facturas.Setup(f => f.ObtenerEstadoArticulosAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<int, bool> { [100] = true, [200] = true, [300] = false });
+        LoCompradoYDevueltoEs(new(100, 10m, 0m), new(200, 10m, 0m), new(300, 5m, 0m));
         _articulos.Setup(a => a.ObtenerSucursalesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new short[] { 1, 2, Reclamos });
     }
+
+    private void LoCompradoYDevueltoEs(params CompradoYDevuelto[] filas) =>
+        _notas.Setup(n => n.ObtenerCompradoYDevueltoAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(filas);
 
     private RegistrarNotaCreditoCompraUseCase Caso() =>
         new(_notas.Object, _proveedores.Object, _facturas.Object, _articulos.Object, _unidad.Object, _contexto.Object);
@@ -168,6 +173,79 @@ public class RegistrarNotaCreditoCompraUseCaseTests
     [Fact]
     public async Task Devolucion_ElMismoArticuloDosVecesDelMismoOrigen_Invalido()
         => await Rechaza(Devolucion([Linea(100, 1, 1m), Linea(100, 1, 2m)]), TipoError.Invalido);
+
+    // ---- CA-014 · cantidades (D-S6-25) ----
+
+    [Fact]
+    public async Task Devolucion_DeUnArticuloQueNoFiguraEnLasFacturas_Invalido()
+    {
+        LoCompradoYDevueltoEs(new CompradoYDevuelto(100, 10m, 0m));
+
+        var resultado = await Caso().EjecutarAsync(Devolucion([Linea(100), Linea(200)]));
+
+        Assert.Equal((false, TipoError.Invalido), (resultado.IsSuccess, resultado.Tipo));
+        Assert.Contains("200", resultado.Error);
+        NoSeEscribioNada();
+    }
+
+    [Fact]
+    public async Task Devolucion_QuePasaLoComprado_ContandoLoYaDevuelto_Invalido_YDiceCuantoQueda()
+    {
+        LoCompradoYDevueltoEs(new CompradoYDevuelto(100, 10m, 7m));
+
+        var resultado = await Caso().EjecutarAsync(Devolucion([Linea(100, cantidad: 3.001m)]));
+
+        Assert.Equal((false, TipoError.Invalido), (resultado.IsSuccess, resultado.Tipo));
+        Assert.Contains("hasta 3", resultado.Error);
+        NoSeEscribioNada();
+    }
+
+    [Fact]
+    public async Task Devolucion_JustoHastaLoQueQueda_SeRegistra()
+    {
+        LoCompradoYDevueltoEs(new CompradoYDevuelto(100, 10m, 7m));
+
+        var resultado = await Caso().EjecutarAsync(Devolucion([Linea(100, cantidad: 3m)]));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+    }
+
+    [Fact]
+    public async Task Devolucion_LaCantidadSeSumaPorArticulo_AunqueSalgaDeDosOrigenes()
+    {
+        LoCompradoYDevueltoEs(new CompradoYDevuelto(100, 10m, 0m));
+
+        await Rechaza(Devolucion([Linea(100, 1, 6m), Linea(100, Reclamos, 5m)]), TipoError.Invalido);
+    }
+
+    [Fact]
+    public async Task Devolucion_LoCompradoSeConsultaConLasFacturasDeLaNota_DentroDeLaUnidadDeTrabajo()
+    {
+        IReadOnlyCollection<int>? consultadas = null;
+        _notas.Setup(n => n.ObtenerCompradoYDevueltoAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()))
+            .Callback((IReadOnlyCollection<int> ids, CancellationToken _) => consultadas = ids)
+            .ReturnsAsync([new CompradoYDevuelto(100, 10m, 0m)]);
+        var request = Bonificacion(clase: "DEVOLUCION", facturas: [501, 502], lineas: [Linea()]);
+
+        Assert.True((await Caso().EjecutarAsync(request)).IsSuccess);
+        Assert.Equal([501, 502], consultadas);
+
+        // Con una unidad de trabajo que no ejecuta, no se consulta: el bloqueo vive en la transacción.
+        _notas.Invocations.Clear();
+        var unidadQueNoEjecuta = new Mock<IUnidadDeTrabajo>();
+        unidadQueNoEjecuta.Setup(u => u.EjecutarAsync(It.IsAny<Func<CancellationToken, Task<Result>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(TipoError.Conflicto, "no corrió"));
+        await new RegistrarNotaCreditoCompraUseCase(_notas.Object, _proveedores.Object, _facturas.Object, _articulos.Object,
+            unidadQueNoEjecuta.Object, _contexto.Object).EjecutarAsync(request);
+        _notas.Verify(n => n.ObtenerCompradoYDevueltoAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Bonificacion_NoConsultaLoDevuelto()
+    {
+        Assert.True((await Caso().EjecutarAsync(Bonificacion())).IsSuccess);
+        _notas.Verify(n => n.ObtenerCompradoYDevueltoAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 
     // ---- CA-001 y CA-002 · facturas del mismo proveedor ----
 

@@ -8,6 +8,8 @@ import {
 
 /** 057 CA-005: un artículo devuelto y su origen, elegido por línea (D9). */
 interface LineaDevuelta { articulo: ArticuloResultado; sucursalId: number | null; cantidad: number | null; }
+/** CA-013: un artículo que, con esta devolución, queda en negativo en un origen. */
+interface StockNegativo { articulo: string; origen: string; queda: number; }
 interface Origen { id: number; nombre: string; }
 
 /**
@@ -122,6 +124,16 @@ interface Origen { id: number; nombre: string; }
 
         <section class="tarjeta">
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+          @if (stockNegativo().length > 0) {
+            <div class="aviso alerta" role="status" data-aviso-stock>
+              <p>La devolución deja stock en negativo. Se registra igual:</p>
+              <ul>
+                @for (n of stockNegativo(); track $index) {
+                  <li>{{ n.articulo }} queda en {{ n.queda | number: '1.0-3' }} en {{ n.origen }}</li>
+                }
+              </ul>
+            </div>
+          }
           @if (totales(); as t) {
             <table class="sin-seleccion" data-totales>
               <tbody>
@@ -164,6 +176,8 @@ export class NotaCreditoCompra {
   lineas: LineaDevuelta[] = [];
   /** Los orígenes salen de las existencias de la ficha: las sucursales y Reclamos. */
   readonly origenes = signal<Origen[]>([]);
+  /** CA-013: las existencias de cada artículo devuelto, por origen, de su ficha. */
+  private readonly existencias = new Map<number, Map<number, number>>();
 
   readonly totales = signal<TotalesNotaCreditoCompra | null>(null);
   readonly error = signal<string | null>(null);
@@ -226,8 +240,22 @@ export class NotaCreditoCompra {
     this.articulos.set([]);
     this.textoArticulo = '';
     this.invalidarTotales();
-    if (this.origenes().length === 0)
-      this.api.ficha(a.id).subscribe(f => this.origenes.set(f.existencias.map(e => ({ id: e.sucursalId, nombre: e.sucursal }))));
+    this.api.ficha(a.id).subscribe(f => {
+      this.existencias.set(a.id, new Map(f.existencias.map(e => [e.sucursalId, e.cantidad])));
+      if (this.origenes().length === 0)
+        this.origenes.set(f.existencias.map(e => ({ id: e.sucursalId, nombre: e.sucursal })));
+    });
+  }
+
+  /** CA-013 (D-S6-24): lo que queda en negativo en cada origen. La API no acepta dos líneas del mismo artículo y origen. */
+  stockNegativo(): StockNegativo[] {
+    if (this.clase !== 'DEVOLUCION') return [];
+    return this.lineas.flatMap(l => {
+      const hay = l.sucursalId === null ? undefined : this.existencias.get(l.articulo.id)?.get(l.sucursalId);
+      if (hay === undefined || !l.cantidad || hay - l.cantidad >= 0) return [];
+      const origen = this.origenes().find(o => o.id === l.sucursalId)?.nombre ?? `${l.sucursalId}`;
+      return [{ articulo: l.articulo.nombre, origen, queda: hay - l.cantidad }];
+    });
   }
 
   quitarLinea(i: number) {

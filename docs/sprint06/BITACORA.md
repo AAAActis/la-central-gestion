@@ -1146,7 +1146,7 @@ Para volver atrás una base (solo si hiciera falta): `ssh atiz@arch docker exec 
 5. PR 1 (carga manual): lo que no dependa del esquema, TDD. PR 2 (PDF de Expoyer): lector con sintético.
 6. Suite completa por HEAD, verificadores acotados, ESTADO antes del push, resumen.
 
-**Estado:** en curso
+**Estado:** terminada (lo abierto pasa al bloque «Decisiones del equipo para la 057»)
 - Arranque: `git fetch`; `origin/develop` sin commits nuevos. PR abiertos #176 a #181, apilados (#176 ← #177 ← #178 ← #179 ← #181 ← #180).
 - Punto 2, D-S6-17 en `feature/13-factura-pdf` (#177, worktree en el scratchpad porque la copia principal tiene la bitácora sin commitear): esqueleto `a688cba` (el sintético de Fazio acepta lista, final y total; solo test); rojo `aab80b9` (3 con error por aserción: el lector daba precio de lista 10.000 y descuentos 28+22; el test del total que no cierra pasa desde el principio); código `e0d6004` (precio unitario = P. Final, línea sin descuentos; con más de tres partes ya no se revisa). Filtrado `FacturasCompra`: 211/211. **Real de Fazio** (programa descartable, borrado): 10 líneas, neto **323.670,44**, solo `numero` para revisar. ETMAN igual que antes (98.005,75, nada para revisar).
 - Lo de abajo de la pila se pusheó (`feature/13-factura-pdf`, `-registro`, `51-pantalla-pdf`, `163-cuarto-descuento`) antes de actualizar el ESTADO: el ESTADO va en la rama de arriba (`feature/13-lector-expoyer`, `6277a67`).
@@ -1214,3 +1214,34 @@ Para volver atrás una base: `ssh atiz@arch docker exec -i lacentral_db pg_resto
 - ESTADO (`f8182d0`, rama de Expoyer, mergeado en `74d08e8` y `7dd501d`): tablero con las suites, la 057 y PRÓXIMA SESIÓN. Push de `feature/13-lector-expoyer`, `feature/182-nota-credito` y `feature/182-nota-credito-pdf`. Verificadores de la 057: no se invocaron, van uno por PR al cerrarlo.
 
 **BLOQUEADO EN:** lo que queda de la 057 (re-scaffold, repositorio con relectura contra PostgreSQL, API, CA-008, endpoint del PDF, precarga, verificadores y los dos PR) espera que Santi aplique el script 11 en `lacentral_test` (bitácora, «PARA SANTI · 18/11 · script 11»; él decide cuándo, porque corta la suite de las ramas sin el re-scaffold). El CA-011 y lo que no se construye esperan a Sergio (preguntas del 18/11). Merge de la pila #176 a #181: Javi. Mandato (GR-01): Santi. DoD 10: Javi con Sergio. El sprint no se cierra.
+
+## 18/11/2026 · Decisiones del equipo para la 057 (D-S6-21 a D-S6-25)
+
+**Instrucción recibida (verbatim):**
+> 18/11 · Decisiones del equipo para la 057 (nota de crédito de proveedor), tomadas sobre la práctica de los sistemas de gestión comunes y la RG 4540 de AFIP. Reemplazan los «a confirmar». Sacalas de «Lo que vuelve a Sergio» y anotalas en el ESTADO como D-S6-21 a D-S6-25; si Sergio después corrige alguna, se cambia.
+>
+> - D-S6-21 · Reposición después de un reclamo: el proveedor la manda con factura nueva, que se carga como cualquier factura de compra (056 o 029). La 057 no tiene circuito de reposición.
+> - D-S6-22 · No se puede anular una factura de compra con notas de crédito vigentes: primero se anulan las notas y después la factura. El mensaje lo dice y nombra las notas. Es el CA-011: sacale el «a confirmar».
+> - D-S6-23 · Una nota de crédito se puede anular igual que una factura (028): con motivo y con la autorización de otro ADMINISTRADOR con su contraseña. Si era por devolución, la mercadería vuelve a la misma sucursal o depósito de donde salió, en la misma transacción. Va como CA nuevo. Reusá lo de la 028 donde se pueda.
+> - D-S6-24 · Una devolución que deja el stock de origen en negativo se registra igual, pero la pantalla avisa antes de confirmar: qué artículo, en qué sucursal y cuánto queda.
+> - D-S6-25 · Regla de cantidades: en una nota de crédito por devolución, cada línea es de un artículo que figura en las facturas referenciadas, y la cantidad devuelta acumulada por artículo no supera lo comprado en esas facturas, sin contar las notas anuladas. Un artículo dado de baja se puede devolver, porque viene de la factura. Va como CA nuevo, con prueba contra PostgreSQL de la suma acumulada y de dos devoluciones simultáneas.
+>
+> Todo lo de la 057 sigue frenado por la compuerta E11 (nc057_fuente). Lo que no dependa del esquema, adelantalo. Resúmenes en español.
+
+**Plan:**
+1. ESTADO: D-S6-21 a D-S6-25, sacar las preguntas de «Lo que vuelve a Sergio», E11 con `nc057_fuente`. Proforma de la 057 v1.1 (CA-011 sin «a confirmar», CA nuevos de anulación, aviso de stock negativo y cantidades).
+2. Script 11: columnas de anulación en `nota_credito_compra` (como `factura_compra`) y unicidad del número solo entre vigentes.
+3. Backend sin esquema, TDD con Moq: D-S6-25 en el registro (dentro de la unidad de trabajo, con bloqueo de las facturas); D-S6-22 en la anulación de la factura (028); D-S6-23, caso de uso de anulación de la nota, reusando lo de la 028.
+4. Pantalla: D-S6-24, aviso de stock negativo antes de confirmar.
+5. Merge hacia la rama del PDF, ESTADO, push, resumen.
+
+**Estado:** terminada (queda abierto lo de E11 y CA-011; ver BLOQUEADO EN)
+- Arranque: `git fetch`; `develop` sin novedades; PR #176 a #181 abiertos. Un `merge --ff-only` mío adelantó por error la rama local `feature/182-nota-credito` hasta la del PDF (no se pusheó). No se pudo volver atrás con `reset --hard` (lo bloquea el modo automático): el trabajo sigue en una rama local nueva, `feature/182-nota-credito-manual`, desde `origin/feature/182-nota-credito`, y se pushea a `feature/182-nota-credito` (avance rápido). La rama local vieja queda para borrar a mano.
+- Docs `1f2a175`: ESTADO con D-S6-21 a D-S6-25 (fuera de «Lo que vuelve a Sergio»), E11 con `nc057_fuente`; proforma 057 v1.1 (CA-011 sin «a confirmar», CA-012, CA-013, CA-014); índice con 14 CA; script 11 con la anulación.
+- CA-014 (D-S6-25): esqueleto (puerto `ObtenerCompradoYDevueltoAsync`); rojo (4 con error por aserción); código `6378549`, 48/48; mutaciones propias 7 de 7 muertas.
+- CA-012 (D-S6-23): `refactor(fco04)` saca la doble certificación a `Comun/DobleCertificacion` (028: 17/17 sin cambios); esqueleto `22deaa0`; rojo (10 con error por aserción); código `d50833c`, 10/10; mutaciones 6 de 6 muertas.
+- CA-013 (D-S6-24): rojo (3 con error por aserción); código (pantalla: cada artículo trae su ficha, aviso `aviso alerta` con artículo, origen y cuánto queda); dos guardas sin test borradas (pedir la ficha una sola vez y mostrar el aviso solo con el total); `fd2f0b3` solo test (volver a bonificación), con la mutación 1 con error. Spec 24/24.
+- CA-011 (D-S6-22): **no se hizo**: la anulación de la factura necesita el repositorio de notas en su DI, y sin el 11 no hay tabla. Va con E11.
+- Verificaciones sobre `fd2f0b3`: unitarias de backend (`--no-incremental`, 0 advertencias) `Correctas! - Con error: 0, Superado: 501, Omitido: 0, Total: 501`; frontend completo `TOTAL: 276 SUCCESS`. Suite completa de backend: no, sin PR.
+
+**BLOQUEADO EN:** E11 (Santi aplica el 11 en `lacentral_test`, plantilla `nc057_fuente`): re-scaffold, repositorio de la nota con PostgreSQL (CA-014 suma acumulada y dos devoluciones simultáneas, CA-012 stock al origen y número liberado), CA-011 en la 028, API y PR. Sergio: ver D-S6-21 a 25. La rama local `feature/182-nota-credito` quedó adelantada por error a la del PDF (sin pushear): borrarla a mano (`git branch -D feature/182-nota-credito`) o pedirme que la reponga.
