@@ -1311,3 +1311,41 @@ git show origin/develop:backend/db/pruebas/nc057_fuente_borrado.sql | ssh atiz@a
 Si la copia quedara mal: el paso 2 es una transacción (si falla, no queda nada), y para rehacerla, el comando de borrado de arriba con `origin/feature/182-nota-credito` en lugar de `origin/develop`, y de nuevo los pasos 2 a 4.
 
 **BLOQUEADO EN:** que Santi corra los pasos 1 a 4 y diga `nc057_fuente: TODO OK`. Después, la 057 sigue con el re-scaffold, contra la plantilla.
+
+## 18/11/2026 · Revisión de Javi del #180 (REQUEST CHANGES, tres puntos [DOCS])
+
+**Instrucción recibida (verbatim):**
+> 18/11 · Revisión de Javi del #180 (REQUEST CHANGES, tres puntos [DOCS]). Javi mergeó #176, #177, #178, #179 y #181.
+>
+> 1. Base del #180: cambiala a develop (gh pr edit 180 --base develop) y hacé git merge origin/develop en la rama (nunca rebase).
+> 2. D-S6-20 (Reclamos como fila de sucursal) deja de ser decisión: pasa a PROPUESTA del 18/11, pendiente de aprobación del equipo. El script 11 no se aplica en ninguna base hasta que se apruebe. Corregilo en el ESTADO y en la proforma de la 057.
+> 3. D-S6-18 (la 057 en el Sprint 6) pasa a PROPUESTA pendiente de acuerdo de los tres integrantes y de aviso al tutor, porque cambia el alcance y choca con el Mandato v3.0. El #180 lleva solo lo del lector de Expoyer: lo de la 057 (D-S6-18, D-S6-20 a D-S6-25, la proforma, el índice y el plan) va en la rama de la 057, no en el #180.
+> 4. Respondé en el #180 cada punto de Javi, con el commit que lo arregla.
+> 5. Hubo merge a develop: suite completa sobre develop (momento 2 de la política de pruebas), una vez.
+> 6. Lo de la 057 queda congelado, sin tocar nada más, hasta que el equipo decida. No crees nc057_fuente.
+>
+> Resúmenes en español.
+
+**Plan:**
+1. Suite completa de backend sobre `origin/develop` (`37e8007`), una vez, en un worktree.
+2. #180: base a `develop`, `git merge origin/develop`; sacar del ESTADO todo lo de la 057 (D-S6-18, D-S6-20, E11, fila #182, «Lo que vuelve a Sergio · 18/11», reglas de Sergio, Mandato, PRÓXIMA SESIÓN); push.
+3. Rama de la 057: D-S6-18 y D-S6-20 como PROPUESTA en el ESTADO, la proforma, el índice y el plan; el 11 no se aplica en ninguna base; los bloques PARA SANTI del 11 y de `nc057_fuente`, suspendidos. Traer el #180 corregido sin perder lo de la 057. Después, congelada.
+4. Responder en el #180 punto por punto, con commits.
+
+**Estado:** en curso
+- #180: base cambiada a `develop` (`gh pr edit 180 --base develop`); `git merge origin/develop` → `bf952cf`, sin conflictos.
+- Rama de la 057 (`feature/182-nota-credito-manual` → `origin/feature/182-nota-credito`): merge de `feature/13-lector-expoyer` corregido → `d5ecc6b`. El ESTADO se resolvió con **la versión de la 057** (el #180 le saca lo de la 057, que acá tiene que quedar; `develop` no traía nada nuevo en `docs/`: `git diff f8182d0 bf952cf` vacío). Bitácora: las dos partes.
+
+**Instrucción recibida (verbatim), a mitad de la tarea:**
+> 18/11 · El equipo (Santi, Javi y Lauti) aprobó:
+> - D-S6-18: la 057 entra al Sprint 6 como última HU. El tutor ya está avisado. El Mandato pasa a v3.1; eso lo edita Santi en el GR-01.
+> - D-S6-20: el depósito Reclamos como fila de sucursal, aprobado por el equipo, ya no es propuesta del agente.
+> Sacales el «propuesta» en el ESTADO y en la proforma, con fecha y «aprobado por el equipo».
+>
+> Igual, lo que pidió Javi en el #180: base a develop (gh pr edit 180 --base develop), git merge origin/develop, y que el #180 lleve solo lo de Expoyer; lo de la 057 va en su rama. Respondé cada punto en el #180 con su commit. Suite completa sobre develop, una vez (hubo merge).
+>
+> La 057 se descongela. Para el script 11: dejame en la bitácora el bloque para fish que, con backup primero, crea en lacentral_test el esquema nc057_fuente como copia de public, le aplica el 11 con ON_ERROR_STOP=1 y lo verifica (contenedor lacentral_db, superusuario lacentral, sin marcadores). La 057 corre su suite con LA_CENTRAL_TEST_SCHEMA=nc057_fuente. En public, lacentral_demo y lacentral va cuando entre el PR de la carga manual de la 057, y ahí se borra nc057_fuente.
+>
+> Resúmenes en español.
+
+**Plan corregido:** la D-S6-18 y la D-S6-20 no pasan a propuesta: van como **aprobadas por el equipo el 18/11** (ESTADO, proforma v1.2, índice, plan). La 057 no se congela. El bloque de `nc057_fuente` ya está más arriba en esta bitácora («PARA SANTI · 18/11/2026 · plantilla nc057_fuente (E11)», ensayado el 18/11 en un esquema descartable) y sigue valiendo. **Una corrección a su «Más adelante»:** el 11 en `public`, `lacentral_demo` y `lacentral` va cuando entre a `develop` **el PR de la carga manual de la 057** (la pila ya entró, salvo el #180); el borrado de la plantilla, después de eso, con el mismo comando.
