@@ -1149,3 +1149,59 @@ Para volver atrás una base (solo si hiciera falta): `ssh atiz@arch docker exec 
 **Estado:** en curso
 - Arranque: `git fetch`; `origin/develop` sin commits nuevos. PR abiertos #176 a #181, apilados (#176 ← #177 ← #178 ← #179 ← #181 ← #180).
 - Punto 2, D-S6-17 en `feature/13-factura-pdf` (#177, worktree en el scratchpad porque la copia principal tiene la bitácora sin commitear): esqueleto `a688cba` (el sintético de Fazio acepta lista, final y total; solo test); rojo `aab80b9` (3 con error por aserción: el lector daba precio de lista 10.000 y descuentos 28+22; el test del total que no cierra pasa desde el principio); código `e0d6004` (precio unitario = P. Final, línea sin descuentos; con más de tres partes ya no se revisa). Filtrado `FacturasCompra`: 211/211. **Real de Fazio** (programa descartable, borrado): 10 líneas, neto **323.670,44**, solo `numero` para revisar. ETMAN igual que antes (98.005,75, nada para revisar).
+- Lo de abajo de la pila se pusheó (`feature/13-factura-pdf`, `-registro`, `51-pantalla-pdf`, `163-cuarto-descuento`) antes de actualizar el ESTADO: el ESTADO va en la rama de arriba (`feature/13-lector-expoyer`, `6277a67`).
+- Merges hacia arriba: `ab699e7` (#178), `fec0fe2` (#179), `925ea6e` (#181), sin conflictos; `465072d` (#180) con conflicto en `LecturaPdfTests.cs` (el nombre del test de Fazio), resuelto a mano. Filtrado `LecturaPdf|InterpretarFacturaPdf`: #181 41/41, #180 52/52.
+- `verificador-tdd` acotado a `a688cba..e0d6004` (#177), lanzado; corre él la suite sobre `e0d6004`.
+- Punto 1 y 3 en el ESTADO (`6277a67`): E10 cerrada, D-S6-17 a D-S6-20, C7 completa (Autocor en papel; era de Javi), preguntas a Sergio del 18/11, nota del Mandato (GR-01, Santi), E11.
+- Punto 4: issue **#182** (milestone «Sprint 6», 13 SP); proforma `057-HU-FCO-07.md` (11 CA, el CA-011 a confirmar); INDICE (54 proformas); plan (D-PL-06, Sprint 6 en 47 SP); script 11 y README del re-scaffold: `d66e68d` en la rama nueva `feature/182-nota-credito`, apilada sobre `feature/13-lector-expoyer`, pusheada. **El 11 no se probó contra un servidor**: no hay cliente de PostgreSQL en esta máquina.
+- **Decisión D-S6-20 (18/11):** Reclamos es una fila de `sucursal` con `es_reclamos` (ver ESTADO). Entra mercadería por transferencia (020).
+
+### PARA SANTI · 18/11/2026 · backup y script 11 (nota de crédito de proveedor y depósito Reclamos, E11)
+
+**Antes de aplicarlo en `lacentral_test`, leé esto:** el 11 crea tablas nuevas. `PostgreSqlPruebas` corta la suite si `public` tiene tablas que el modelo no clona, así que **desde que el 11 esté en `lacentral_test.public`, la suite de toda rama que no tenga el re-scaffold del 11 falla entera** (#176 a #181, y cualquier rama de Javi o Lauti). Dos opciones: aplicarlo después de que Javi mergee la pila, o aplicarlo ya y que cada rama abierta mergee el re-scaffold cuando entre a `develop`. Lo decidís vos. En `lacentral_demo` y `lacentral` va **cuando el PR de la carga manual de la 057 entre a `develop`**: con el 11 en esas bases, la pantalla de la 056 de hoy ofrecería Reclamos como destino (sale de las existencias del artículo).
+
+Desde fish, en tu máquina, parado en la raíz del repo. Requisito: el 10 en cada base (`s10 = 1`).
+
+1 · Backup de las tres bases (cada `.dump` tiene que pesar más de 0 bytes; si uno falla, no sigas):
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+mkdir -p ~/backups-lacentral
+set -l marca (date +%Y%m%d-%H%M)
+for base in lacentral_test lacentral_demo lacentral
+    ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc $base > ~/backups-lacentral/$base-$marca.dump
+    or begin; echo "FALLÓ el backup de $base: no sigas"; break; end
+end
+ls -l ~/backups-lacentral/*-$marca.dump
+```
+
+2 · Estado de cada base, solo lectura (`s10 = 1` es el requisito; `s11 = 0` es el 11 pendiente):
+
+```fish
+for base in lacentral_test lacentral_demo lacentral
+    echo "SELECT current_database() AS base, (SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'factura_compra_detalle' AND column_name = 'descuento_4_porcentaje') AS s10, (SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'nota_credito_compra') AS s11;" | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d $base
+end
+```
+
+3 · El 11, **primero solo en `lacentral_test`**. Tiene que terminar con `NOTICE: 11: TODO OK.` y `COMMIT` (el `WARNING` del `ROLLBACK` inicial es esperado):
+
+```fish
+git fetch origin
+git show origin/feature/182-nota-credito:backend/db/rescaffold/11_Nota_Credito_Compra.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+4 · Si dio `TODO OK`, avisame: sigo con el re-scaffold, el repositorio y las pruebas contra PostgreSQL. `lacentral_demo` y `lacentral`, cuando el PR de la carga manual entre a `develop`, de a una, y repetí el paso 2:
+
+```fish
+git show origin/feature/182-nota-credito:backend/db/rescaffold/11_Nota_Credito_Compra.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_demo -v ON_ERROR_STOP=1
+git show origin/feature/182-nota-credito:backend/db/rescaffold/11_Nota_Credito_Compra.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral -v ON_ERROR_STOP=1
+```
+
+Para volver atrás una base: `ssh atiz@arch docker exec -i lacentral_db pg_restore -U lacentral -d <base> --clean --if-exists < ~/backups-lacentral/<base>-<marca>.dump`.
+- `verificador-tdd` D-S6-17 (#177, `a688cba..e0d6004`): **APTO**. Rojo reproducido (3 por aserción), 8 mutaciones muertas; suite sobre `e0d6004`: `Correctas! - Con error: 0, Superado: 654, Omitido: 0, Total: 654, Duración: 4 m 22 s`. No bloqueantes: `afirmable` queda siempre en `true` (lo usan los otros lectores, se deja) y el comentario de Fazio mezcla la frase vieja con la nueva. El cambio de rama del árbol principal que vio fue mío (`checkout -b` de la 057). `auditor-persistencia`: **APTO** (sin persistencia en el diff; usó la suite del verificador).
+- Suites completas, de a una, en un worktree del scratchpad (`--no-incremental`, 0 advertencias): `ab699e7` (#178; mismo backend que el #179) `Correctas! - Con error: 0, Superado: 657, Omitido: 0, Total: 657, Duración: 17 m`; `925ea6e` (#181) `Correctas! - Con error: 0, Superado: 672, Omitido: 0, Total: 672, Duración: 4 m 35 s`. Frontend sin cambios en la pila: no se corrió.
+- 057, PR 1 (carga manual), lo que no depende del esquema, en `feature/182-nota-credito`:
+  - Núcleo: esqueleto `2caca64` (entidad, DTOs, puerto `INotaCreditoCompraRepositorio`, caso de uso vacío); rojo `a9d67d4` (40 con error por aserción; pasa desde el principio `Devolucion_DeUnArticuloDadoDeBaja_SeRegistra`; dos rojos con NRE y el IVA sin punto medio se corrigieron con `--amend` antes de pushear); código `0ab192d` (41/41). Mutaciones propias: de 13, sobrevivían 4 (proveedor inactivo tapado por «otro proveedor», `DesdePdf`, IIBB y municipal) → `2fdefd3` solo test, con cada una 1 con error; 42/42. Ojo: `dotnet build -q` falla con «Compilando completamente el destino» y `--no-build` corre el binario viejo; las mutaciones se rehicieron con `dotnet build`.
+  - Pantalla: esqueleto `d922eca` (API, módulo «Nota de crédito de proveedor» en el menú, pantalla con la superficie pública vacía); rojo `e84530b` (19 FAILED: 18 por `expectOne`, 1 por aserción); código `6259b1c` (19/19); `26ca848` alinea el total con el de la factura. Mutaciones propias: 12, todas muertas.
+  - **Decisión (18/11):** la devolución acepta un artículo dado de baja (se devuelve lo que se compró). Anotado en la proforma.
+  - **Frenado por E11:** re-scaffold, `NotaCreditoCompraRepositorio` con relectura de la fila y el stock (y que el costo no cambie), la API (`POST /api/notas-credito-compra` y `/calculo`, 401/403), el CA-008 (Reclamos fuera de los destinos de la factura, en la API y en la pantalla) y el PR.
