@@ -152,7 +152,7 @@ describe('NotaCreditoCompra · 057', () => {
     servidor.expectOne('/api/notas-credito-compra/calculo').flush({ neto: 115040, iva: 24158.4, percepciones: 0, total: 139198.4 });
     fixture.detectChanges();
 
-    expect(raiz.querySelector('dl.totales')).not.toBeNull();
+    expect(raiz.querySelector('[data-totales]')).not.toBeNull();
     expect(boton('registrar')?.disabled).withContext('con total').toBeFalse();
   });
 
@@ -163,7 +163,7 @@ describe('NotaCreditoCompra · 057', () => {
     numero.dispatchEvent(new Event('input', { bubbles: true }));
     fixture.detectChanges();
 
-    expect(raiz.querySelector('dl.totales')).toBeNull();
+    expect(raiz.querySelector('[data-totales]')).toBeNull();
     expect(boton('registrar')?.disabled).toBeTrue();
   });
 

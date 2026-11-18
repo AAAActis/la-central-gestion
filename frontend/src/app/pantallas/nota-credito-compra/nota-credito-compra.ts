@@ -123,12 +123,14 @@ interface Origen { id: number; nombre: string; }
         <section class="tarjeta">
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
           @if (totales(); as t) {
-            <dl class="totales">
-              <dt>Neto</dt><dd>$ {{ t.neto | number: '1.2-2' }}</dd>
-              <dt>IVA 21 %</dt><dd>$ {{ t.iva | number: '1.2-2' }}</dd>
-              <dt>Percepciones</dt><dd>$ {{ t.percepciones | number: '1.2-2' }}</dd>
-              <dt>Total</dt><dd><strong>$ {{ t.total | number: '1.2-2' }}</strong></dd>
-            </dl>
+            <table class="sin-seleccion" data-totales>
+              <tbody>
+                <tr><td>Neto</td><td>$ {{ t.neto | number: '1.2-2' }}</td></tr>
+                <tr><td>IVA 21 %</td><td>$ {{ t.iva | number: '1.2-2' }}</td></tr>
+                <tr><td>Percepciones</td><td>$ {{ t.percepciones | number: '1.2-2' }}</td></tr>
+                <tr><th>Total</th><th>$ {{ t.total | number: '1.2-2' }}</th></tr>
+              </tbody>
+            </table>
           }
           <div class="fila">
             <button type="button" class="secundario" name="calcular" (click)="calcular()" [disabled]="!nota()">Calcular el total</button>
