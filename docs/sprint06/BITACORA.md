@@ -1092,7 +1092,7 @@ Para volver atrás una base (solo si hiciera falta): `ssh atiz@arch docker exec 
 5. Merge en `feature/13-lector-expoyer`; suite completa sobre ese HEAD (cambió backend); ESTADO y bitácora antes del push.
 6. Pedirle a Santi el 10 en `lacentral_demo` y `lacentral`.
 
-**Estado:** en curso
+**Estado:** terminada
 - Arranque: `git fetch`; `origin/develop` sin commits nuevos (`b920a89`); sin worktrees extra.
 - Paso 1, re-scaffold contra `lacentral_test` (`dotnet-ef` 10.0.11, con `DOTNET_ROOT=$HOME/.dotnet`): el diff real (`--ignore-cr-at-eol`) es solo `Descuento4Porcentaje` en `FacturaCompraDetalle.cs` y su `HasPrecision(6, 2)` con el comentario en el DbContext. `fcb9e51`. Compilación sin warnings. No se comparó contra `lacentral` (README del re-scaffold): la única diferencia esperada es justamente el 10, que Santi aplica después.
 - Paso 2, rojo `d018c29`: relectura con contexto nuevo de una línea con cuatro descuentos, 1 con error por aserción (`Expected (10, 5, 2,5, 5)`, `Actual (10,00, 5,00, 2,50, 0,00)`); el test del CHECK `fcd_descuento_4_valido` en el motor pasa desde el principio (lo prueba el script 10, ya commiteado).
@@ -1102,3 +1102,6 @@ Para volver atrás una base (solo si hiciera falta): `ssh atiz@arch docker exec 
 - `verificador-tdd` ronda 2 (solo `4125c24`): **APTO**. La mutación de la ronda 1 muere (1 con error, `LecturaPdfTests.cs:85`), y también una de refuerzo (`Eeuu` → `Argentino`). Aceptó la suite de `4125c24`. Hallazgo no bloqueante: el test nuevo afirma `ParaRevisar` solo para `lineas[0]`. `auditor-persistencia`, en curso.
 - `auditor-persistencia` (`a3650ed..4125c24`, sin merges): **APTO**, sin hallazgos. Mató la mutación del mapeo contra PostgreSQL real; 9/9 `CuartoDescuento` sin omitidos. Aviso: hasta que el 10 esté en `lacentral_demo` y `lacentral`, registrar una factura de compra ahí da 42703 → el PR no se mergea a `develop` antes (ESTADO, E10). No pudo consultar `pg_constraint` ni buscar esquemas huérfanos: no hay cliente de PostgreSQL en la máquina.
 - ESTADO al día (tablero #163, E10, PRÓXIMA SESIÓN), antes del push.
+- PR #181 (`feature/163-cuarto-descuento` → `feature/51-pantalla-pdf`), con la advertencia de E10 en el cuerpo.
+- Paso 5: `3e8358c`, merge de `feature/163-cuarto-descuento` en `feature/13-lector-expoyer`, sin conflictos y solo backend y docs; frontend sin cambios, no se corrió. Suite completa sobre `3e8358c` (`--no-incremental`, 0 advertencias): `Correctas! - Con error: 0, Superado: 681, Omitido: 0, Total: 681, Duración: 4 m 56 s` (678 + los 3 tests nuevos). Verificadores no relanzados en el #180: el merge no trae commits de Expoyer, y lo que entra quedó verificado en el #181.
+- Abierto: el 10 en `lacentral_demo` y `lacentral` (Santi, cuando se le pida; condición para mergear el #181 a `develop`). Lo demás, igual que el bloque del 17/11: Sergio, equipo, Lauti, DoD 10.

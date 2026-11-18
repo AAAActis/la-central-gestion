@@ -312,9 +312,9 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 **18/11 · el cuarto descuento cerró con verificadores APTO y tiene PR; Expoyer lo tiene mergeado.**
 Orden de merge: #176 → #177 → #178 → #179 → cuarto descuento → Expoyer (#180).
-- **Cuarto descuento (D-S6-15):** PR abierto, base `feature/51-pantalla-pdf` (tablero). **Antes del merge a `develop`:** Santi
+- **Cuarto descuento (D-S6-15):** PR #181 abierto, base `feature/51-pantalla-pdf` (tablero). **Antes del merge a `develop`:** Santi
   aplica el 10 en `lacentral_demo` y en `lacentral` (E10, paso 4 del bloque «PARA SANTI · 17/11 · script 10»).
-- **Expoyer (#180):** `feature/163-cuarto-descuento` mergeada en `feature/13-lector-expoyer` (bitácora del 18/11).
+- **Expoyer (#180):** `feature/163-cuarto-descuento` mergeada en `feature/13-lector-expoyer` (`3e8358c`); backend 681/681 sobre `3e8358c`.
 - Lo demás, igual que el 17/11 (abajo): Sergio (preguntas 4 y 5), equipo (notas de crédito), Lauti (Autocor), Javi con
   Sergio (DoD 10). **El sprint no está cerrado.**
 
