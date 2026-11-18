@@ -61,6 +61,8 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
     fixture.detectChanges();
     const pedido = servidor.expectOne('/api/facturas-compra/pdf');
     expect((pedido.request.body as FormData).get('archivo')).toEqual(jasmine.any(File));
+    // La primera lectura no elige proveedor: lo busca el servidor por el CUIT del PDF.
+    expect((pedido.request.body as FormData).has('proveedorId')).toBeFalse();
     expect(raiz().querySelector('[role="status"]')?.textContent).toContain('Leyendo el PDF');
     expect((raiz().querySelector('input[type="file"]') as HTMLInputElement).disabled).toBeTrue();
 
@@ -155,9 +157,24 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
 
     expect(etiquetaDe('pIva')).not.toBeNull();
     expect(etiquetaDe('pIibb')).not.toBeNull();
+    expect(campo('pIva').getAttribute('aria-invalid')).toBe('true');
     expect(campo('pIibb').getAttribute('aria-invalid')).toBe('true');
     expect(etiquetaDe('pMunicipal')).toBeNull();
     expect(campo('pMunicipal').hasAttribute('aria-invalid')).toBeFalse();
+    expect(etiquetaDe('pGanancias')).toBeNull();
+    expect(campo('pGanancias').hasAttribute('aria-invalid')).toBeFalse();
+  });
+
+  it('CA-002: cada percepción se señala por su propia clave', () => {
+    cargar(interpretada({ paraRevisar: ['percepcionMunicipal', 'percepcionGanancias'] }));
+
+    expect(etiquetaDe('pIva')).toBeNull();
+    expect(campo('pIva').hasAttribute('aria-invalid')).toBeFalse();
+    expect(etiquetaDe('pIibb')).toBeNull();
+    expect(etiquetaDe('pMunicipal')).not.toBeNull();
+    expect(campo('pMunicipal').getAttribute('aria-invalid')).toBe('true');
+    expect(etiquetaDe('pGanancias')).not.toBeNull();
+    expect(campo('pGanancias').getAttribute('aria-invalid')).toBe('true');
   });
 
   const sinProveedor = () => interpretada({
@@ -174,16 +191,31 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
     expect((pedido.request.body as FormData).get('proveedorId')).toBe('7');
     expect((pedido.request.body as FormData).get('archivo')).toEqual(jasmine.any(File));
     pedido.flush(interpretada({ ...sinProveedor(), proveedorId: 7, lineas: [linea('QQ1', 51), linea('QQ2', null)], paraRevisar: ['numero'] }));
-    servidor.expectOne('/api/articulos/51').flush(ficha(51));
+    servidor.expectOne('/api/articulos/51').flush({ ...ficha(51), activo: false });
     fixture.detectChanges();
 
-    expect(c.lineas.map(l => [l.articulo.id, l.cantidad, l.precioUnitario])).toEqual([[51, 2, 4000]]);
+    // Los datos de la línea son los del primer PDF; el destino, el de la cabecera.
+    expect(c.lineas.map(l => [l.articulo.id, l.articulo.activo, l.sucursalId, l.cantidad, l.precioUnitario,
+      l.descuentoPorcentaje, l.descuento2Porcentaje, l.descuento3Porcentaje, l.revisar])).toEqual([[51, false, 1, 2, 4000, 0, 5, 20, false]]);
     expect(c.sinResolver.map(l => l.codigoProveedor)).toEqual(['QQ2']);
     expect(c.revisar('proveedorId')).toBeFalse();
     expect(c.sucursales().map(x => x.id)).toEqual([1, 2]);
     expect(raiz().textContent).toContain('Falta resolver 1 línea');
     // El tipo y el número siguen siendo los del comprobante, no los del proveedor.
     expect([c.tipoComprobante, c.numero]).toEqual(['B', '99-48437']);
+  });
+
+  it('CA-003: la línea resuelta con el proveedor elegido conserva su marca de revisión y sus descuentos', () => {
+    cargar(interpretada({ ...sinProveedor(), lineas: [{ ...linea('QQ1', null), descuentoPorcentaje: 7 }],
+      paraRevisar: ['numero', 'proveedorId', 'lineas[0]'] }));
+    c.sucursalCabecera = 2;
+
+    c.elegirProveedor(elegido);
+    servidor.expectOne('/api/facturas-compra/pdf').flush(interpretada({ ...sinProveedor(), proveedorId: 7, lineas: [linea('QQ1', 51)] }));
+    servidor.expectOne('/api/articulos/51').flush(ficha(51));
+    fixture.detectChanges();
+
+    expect(c.lineas.map(l => [l.sucursalId, l.descuentoPorcentaje, l.revisar])).toEqual([[2, 7, true]]);
   });
 
   it('CA-003: si el proveedor elegido no tiene ninguno de los códigos, las líneas siguen sin resolver', () => {
