@@ -44,7 +44,7 @@ el total final con percepciones e IVA antes de confirmar.
 | #182 | 057 · HU-FCO-07 · registro de nota de crédito de proveedor | 13 | Compra |
 
 **47 SP** (13 + 13 + 8 + 13). Los 13 de la 056 y los de la 057 son estimación (proformas del
-13/11 y del 18/11/2026). La 057 entró el 18/11/2026 (D-PL-06): el sprint se estira, no se recorta.
+13/11 y del 18/11/2026). La 057 entró el 18/11/2026 (D-PL-06, aprobada por el equipo), como última HU: el sprint se estira, no se recorta.
 
 - **La 056 es alcance nuevo sobre la 025 (HU-FCO-01), ya entregada y aceptada**: va como historia
   propia, con sus criterios (`docs/historias/056-HU-FCO-06.md`), no parcheada sobre la 025.
@@ -152,4 +152,4 @@ en el 6, el de la 056 y el de la 057 (D-PL-06); en el 7, C2 y C1 (D-PL-05).
 | D-PL-03 | La 050 no se parte; la pantalla de vinculación va en las proformas de la 053 y la 054. | 09/11/2026 | Santi | Todos los CA de la 050 son del comparador. |
 | D-PL-04 | ~~La 056 (HU-FCO-06, rehecha de la carga de factura de compra) entra en el Sprint 6; la factura desde PDF (029 #13 y 049 #51) pasa al Sprint 7.~~ **Reemplazada por la D-PL-05 (13/11/2026).** | 12/11/2026 | Lauti | La rehecha aprovecha el cambio de esquema ya previsto en el Sprint 6; el PDF necesita ese esquema terminado y la tabla de vinculación, así que se construye después y una sola vez. |
 | D-PL-05 | **El Sprint 6 pasa a ser factura de compra (056 + 029 + 049) y el comparador se va completo al Sprint 7 (053, 054 y 055 se suman al 7). Reemplaza la D-PL-04 (12/11/2026).** Los SP no cambian: es un intercambio de 21 SP (029 + 049 por 053 + 054 + 055). | 13/11/2026 | Santi | El entregable del Sprint 6 como estaba (vinculación de catálogos) no se puede demostrar: necesita filas de catálogo, y la única fuente son los scrapes, que están en el 7. |
-| D-PL-06 | **La 057 (HU-FCO-07, nota de crédito de proveedor, #182, 13 SP estimados) entra en el Sprint 6, no en el 8 (D-S6-18).** El Sprint 6 pasa de 34 a 47 SP y se estira: cierra por entregable. Trae su propio cambio de esquema (script 11). | 18/11/2026 | Santi | Es parte de la factura de compra y no tiene que quedar colgada. |
+| D-PL-06 | **La 057 (HU-FCO-07, nota de crédito de proveedor, #182, 13 SP estimados) entra en el Sprint 6, no en el 8 (D-S6-18).** El Sprint 6 pasa de 34 a 47 SP y se estira: cierra por entregable. Trae su propio cambio de esquema (script 11). **Aprobada por el equipo (Santi, Javi y Lauti) el 18/11/2026, como última HU del Sprint 6; tutor avisado; el Mandato pasa a v3.1.** | 18/11/2026 | Santi | Es parte de la factura de compra y no tiene que quedar colgada. |

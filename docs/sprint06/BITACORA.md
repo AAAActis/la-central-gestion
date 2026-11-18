@@ -1333,3 +1333,18 @@ Si la copia quedara mal: el paso 2 es una transacción (si falla, no queda nada)
 
 **Estado:** en curso
 - #180: base cambiada a `develop` (`gh pr edit 180 --base develop`); `git merge origin/develop` → `bf952cf`, sin conflictos.
+- Rama de la 057 (`feature/182-nota-credito-manual` → `origin/feature/182-nota-credito`): merge de `feature/13-lector-expoyer` corregido → `d5ecc6b`. El ESTADO se resolvió con **la versión de la 057** (el #180 le saca lo de la 057, que acá tiene que quedar; `develop` no traía nada nuevo en `docs/`: `git diff f8182d0 bf952cf` vacío). Bitácora: las dos partes.
+
+**Instrucción recibida (verbatim), a mitad de la tarea:**
+> 18/11 · El equipo (Santi, Javi y Lauti) aprobó:
+> - D-S6-18: la 057 entra al Sprint 6 como última HU. El tutor ya está avisado. El Mandato pasa a v3.1; eso lo edita Santi en el GR-01.
+> - D-S6-20: el depósito Reclamos como fila de sucursal, aprobado por el equipo, ya no es propuesta del agente.
+> Sacales el «propuesta» en el ESTADO y en la proforma, con fecha y «aprobado por el equipo».
+>
+> Igual, lo que pidió Javi en el #180: base a develop (gh pr edit 180 --base develop), git merge origin/develop, y que el #180 lleve solo lo de Expoyer; lo de la 057 va en su rama. Respondé cada punto en el #180 con su commit. Suite completa sobre develop, una vez (hubo merge).
+>
+> La 057 se descongela. Para el script 11: dejame en la bitácora el bloque para fish que, con backup primero, crea en lacentral_test el esquema nc057_fuente como copia de public, le aplica el 11 con ON_ERROR_STOP=1 y lo verifica (contenedor lacentral_db, superusuario lacentral, sin marcadores). La 057 corre su suite con LA_CENTRAL_TEST_SCHEMA=nc057_fuente. En public, lacentral_demo y lacentral va cuando entre el PR de la carga manual de la 057, y ahí se borra nc057_fuente.
+>
+> Resúmenes en español.
+
+**Plan corregido:** la D-S6-18 y la D-S6-20 no pasan a propuesta: van como **aprobadas por el equipo el 18/11** (ESTADO, proforma v1.2, índice, plan). La 057 no se congela. El bloque de `nc057_fuente` ya está más arriba en esta bitácora («PARA SANTI · 18/11/2026 · plantilla nc057_fuente (E11)», ensayado el 18/11 en un esquema descartable) y sigue valiendo. **Una corrección a su «Más adelante»:** el 11 en `public`, `lacentral_demo` y `lacentral` va cuando entre a `develop` **el PR de la carga manual de la 057** (la pila ya entró, salvo el #180); el borrado de la plantilla, después de eso, con el mismo comando.

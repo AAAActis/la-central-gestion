@@ -58,7 +58,7 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 051 | HU-UI-13 | Manejo global de errores y avisos | Medio | 2 | Sprint 8 | 3 | [`051-HU-UI-13.md`](./051-HU-UI-13.md) | #53 | Sprint 8 | Pendiente |
 | 052 | HU-UI-14 | Comprensión y documentación del frontend | Alto | 5 | Sprint 8 | 4 | [`052-HU-UI-14.md`](./052-HU-UI-14.md) | #54 | Sprint 8 | Pendiente |
 | 056 | HU-FCO-06 | Carga de factura de compra con la mecánica del negocio | Alto | 13 | Sprint 6 | 15 | [`056-HU-FCO-06.md`](./056-HU-FCO-06.md) | #163 | Sprint 6 | Construida · PR #166 (esquema y backend) y #167 (frontend), mergeados 16/11/2026, más el #170 (#169). Abierta: falta el recorrido DoD 10 contra `lacentral_demo` (Javi con Sergio) |
-| 057 | HU-FCO-07 | Registro de nota de crédito de proveedor | Alto | 13 | Sprint 6 | 14 | [`057-HU-FCO-07.md`](./057-HU-FCO-07.md) | #182 | Sprint 6 | Pendiente · entró el 18/11/2026 (D-S6-18). Dos PR: carga manual, después PDF de Expoyer. Necesita el script 11 (E11). CA-011 a CA-014 por decisión del equipo (D-S6-21 a 25, 18/11) |
+| 057 | HU-FCO-07 | Registro de nota de crédito de proveedor | Alto | 13 | Sprint 6 | 14 | [`057-HU-FCO-07.md`](./057-HU-FCO-07.md) | #182 | Sprint 6 | Pendiente · entró el 18/11/2026 (D-S6-18, aprobada por el equipo; última HU del Sprint 6). Dos PR: carga manual, después PDF de Expoyer. Necesita el script 11 (E11). CA-011 a CA-014 por decisión del equipo (D-S6-21 a 25, 18/11) |
 
 **Total: 54 historias con proforma** (las 52 del Excel, la 056 y la 057).
 
