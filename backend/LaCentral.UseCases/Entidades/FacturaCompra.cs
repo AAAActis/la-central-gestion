@@ -22,6 +22,8 @@ public class FacturaCompra
     public decimal PercepcionGanancias { get; set; }
     public int UsuarioId { get; set; }
     public DateTime FechaRegistro { get; set; }
+    /// <summary>HU-FCO-05 (029) CA-006: se cargó desde el PDF del proveedor (`origen = 'PDF'`).</summary>
+    public bool DesdePdf { get; set; }
     public List<FacturaCompraDetalle> Lineas { get; set; } = new();
 }
 
@@ -35,6 +37,8 @@ public class FacturaCompraDetalle
     public decimal DescuentoPorcentaje { get; set; }
     public decimal Descuento2Porcentaje { get; set; }
     public decimal Descuento3Porcentaje { get; set; }
+    /// <summary>D-S6-15: el externo por marca o por artículo (el 5 % de pago contado de ETMAN).</summary>
+    public decimal Descuento4Porcentaje { get; set; }
 
     /// <summary>
     /// El costo unitario que pasa a ser el costo vigente del artículo y queda en su
@@ -42,8 +46,8 @@ public class FacturaCompraDetalle
     /// articulo.precio_costo (NUMERIC(14,2)). El medio centavo se aleja del cero, como
     /// redondea PostgreSQL. Las percepciones son de la cabecera y no entran (D8).
     /// </summary>
-    // HU-FCO-06: los tres descuentos son sucesivos y se redondea una sola vez, al final.
+    // HU-FCO-06: los cuatro descuentos (D-S6-15) son sucesivos y se redondea una sola vez, al final.
     public decimal CostoUnitario =>
         Math.Round(PrecioUnitario * (100m - DescuentoPorcentaje) / 100m * (100m - Descuento2Porcentaje) / 100m
-            * (100m - Descuento3Porcentaje) / 100m, 2, MidpointRounding.AwayFromZero);
+            * (100m - Descuento3Porcentaje) / 100m * (100m - Descuento4Porcentaje) / 100m, 2, MidpointRounding.AwayFromZero);
 }

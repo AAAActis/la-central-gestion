@@ -1,18 +1,20 @@
 namespace LaCentral.UseCases.FacturasCompra.Dtos;
 
 /// <summary>
-/// Una línea del comprobante. D9: el destino de stock es de la línea. HU-FCO-06: hasta tres
-/// descuentos, sucesivos (el segundo sobre el neto del primero).
+/// Una línea del comprobante. D9: el destino de stock es de la línea. HU-FCO-06: hasta cuatro
+/// descuentos, sucesivos (cada uno sobre el neto del anterior); el cuarto, los externos por
+/// marca o por artículo (D-S6-15).
 /// </summary>
 public sealed record LineaFacturaCompraRequest(
     int ArticuloId, short SucursalId, decimal Cantidad, decimal PrecioUnitario, decimal DescuentoPorcentaje,
-    decimal Descuento2Porcentaje = 0m, decimal Descuento3Porcentaje = 0m);
+    decimal Descuento2Porcentaje = 0m, decimal Descuento3Porcentaje = 0m, decimal Descuento4Porcentaje = 0m);
 
 /// <summary>
 /// HU-FCO-01. Sin usuario: sale de la sesión. Las percepciones (D8) son datos del
 /// comprobante; si no se informan, son cero, como el DEFAULT de la columna.
 /// HU-FCO-06: el tipo de comprobante (A o B) es de esta factura; la imputación, si no se
 /// informa, es la emisión.
+/// HU-FCO-05 (029) CA-006: DesdePdf deja constancia de que se cargó desde el PDF del proveedor.
 /// </summary>
 public sealed record RegistrarFacturaCompraRequest(
     int ProveedorId,
@@ -25,7 +27,8 @@ public sealed record RegistrarFacturaCompraRequest(
     decimal PercepcionGanancias,
     IReadOnlyList<LineaFacturaCompraRequest>? Lineas,
     string? TipoComprobante = null,
-    DateOnly? FechaImputacion = null);
+    DateOnly? FechaImputacion = null,
+    bool DesdePdf = false);
 
 public sealed record RegistrarFacturaCompraResponse(int Id);
 

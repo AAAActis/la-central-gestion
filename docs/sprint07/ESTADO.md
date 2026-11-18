@@ -2,7 +2,24 @@
 
 **Entregable:** sin escribir. Lo define el equipo al abrir el sprint (§1 de `CLAUDE.md`). Este
 archivo se creó el 14/11/2026 solo para dejar la pregunta de la 027. El estado de lo adelantado
-del Sprint 7 (028, 026) sigue en `docs/sprint06/ESTADO.md`, «PRÓXIMA SESIÓN».
+del Sprint 7 (028, 026) está abajo, en «Construido antes de tiempo».
+
+---
+
+## Construido antes de tiempo · 17/11/2026
+
+Construidas el 14/11 (pedido de Santi) y mergeadas por Javi el 16/11/2026. Salen de la cuenta de
+SP del Sprint 7 (`docs/PLAN-SPRINTS-6-7-8.md`: 67 → 56).
+
+| Issue | HU | SP | PR | Estado |
+|---|---|---|---|---|
+| #33 | 026 · HU-FCO-02 · consulta de facturas de compra | 3 | #174 | **Terminada.** Los 5 CA con test (`ConsultarFacturasCompraPostgreSqlTests`, pantalla «Compras registradas»). Issue cerrada el 17/11 con referencia al #174. Observación no bloqueante del auditor: el desempate por id con la misma emisión no tiene test |
+| #9 | 028 · HU-FCO-04 · anulación de factura de compra | 8 | #173 (backend) y #175 (pantalla) | **Construida. Issue abierta:** el CA-002 está probado con una interpretación pendiente de Sergio («conserva su precio de costo previo» = el costo no se toca). Pregunta en «Lo que vuelve a Sergio · 17/11» del `docs/sprint06/ESTADO.md` |
+
+La 028 **cierra el CA-003 de la 016 (#23)**; el CA-004 de la 016 queda con la misma interpretación
+pendiente que el CA-002 de la 028, y la #23 sigue abierta hasta la respuesta.
+
+Recorrido DoD 10 de la 026 y la 028 contra `lacentral_demo`: sin hacer, va con el del Sprint 7.
 
 ---
 

@@ -151,3 +151,6 @@ $RECYCLE.BIN/
 graphify-out/
 claude-mods-computer-use-threads/
 Claude outputs/
+
+# Facturas reales de proveedores: nunca al repo (es público). Se analizan fuera, en ~/dev/TESIS/facturas-reales/
+docs/facturas/

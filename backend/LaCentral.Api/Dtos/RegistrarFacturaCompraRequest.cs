@@ -33,6 +33,9 @@ public record RegistrarFacturaCompraRequest
     public decimal PercepcionGanancias { get; init; }
 
     public List<LineaFacturaCompraRequest>? Lineas { get; init; }
+
+    /// <summary>HU-FCO-05 (029) CA-006: la factura se cargó desde el PDF del proveedor.</summary>
+    public bool DesdePdf { get; init; }
 }
 
 /// <summary>Una línea. D9: el destino de stock es de la línea.</summary>
@@ -45,4 +48,6 @@ public record LineaFacturaCompraRequest
     public decimal DescuentoPorcentaje { get; init; }
     public decimal Descuento2Porcentaje { get; init; }
     public decimal Descuento3Porcentaje { get; init; }
+    /// <summary>D-S6-15: el externo por marca o por artículo.</summary>
+    public decimal Descuento4Porcentaje { get; init; }
 }

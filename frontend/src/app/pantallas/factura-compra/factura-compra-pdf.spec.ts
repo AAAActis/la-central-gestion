@@ -1,0 +1,458 @@
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { appConfig } from '../../app.config';
+import { FacturaPdfInterpretada } from '../../nucleo/api';
+import { SesionActual } from '../../nucleo/sesion';
+import { FacturaCompra } from './factura-compra';
+
+/** HU-UI-11 (049) · la carga desde el PDF precarga el formulario de la 056. Datos inventados. */
+describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
+  let fixture: ComponentFixture<FacturaCompra>;
+  let servidor: HttpTestingController;
+  let c: FacturaCompra;
+  const raiz = () => fixture.nativeElement as HTMLElement;
+  const pdf = () => new File(['%PDF-1.7'], 'factura.pdf', { type: 'application/pdf' });
+
+  const ficha = (id: number, costo: number | null = 999) => ({
+    id, codigoInterno: `A${id}`, nombre: `Artículo ${id}`, activo: true, costoVigente: costo, precios: [], codigos: [],
+    existencias: [{ sucursalId: 1, sucursal: 'Fragueiro', cantidad: 0 }, { sucursalId: 2, sucursal: 'San Vicente', cantidad: 0 }],
+  });
+  const linea = (codigo: string, articuloId: number | null, cantidad = 2, precio = 4000) => ({
+    codigoProveedor: codigo, descripcion: `Descripción ${codigo}`, articuloId, cantidad, precioUnitario: precio,
+    descuentoPorcentaje: 0, descuento2Porcentaje: 5, descuento3Porcentaje: 20, descuento4Porcentaje: 0,
+  });
+  const interpretada = (cambios: Partial<FacturaPdfInterpretada> = {}): FacturaPdfInterpretada => ({
+    proveedorId: 7, tipoComprobante: 'A', numero: '0042-00001234', fechaEmision: '2027-02-03', fechaVencimiento: '2027-03-10',
+    percepcionIva: 2000.25, percepcionIibb: 1000.5, percepcionMunicipal: null, percepcionGanancias: null,
+    lineas: [linea('AB-100', 50)], paraRevisar: [], ...cambios,
+  });
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [FacturaCompra], providers: [...appConfig.providers, provideHttpClientTesting()] });
+    TestBed.inject(SesionActual).sesion.set({ token: 't', nombreUsuario: 'u', rol: 'OPERADOR', sucursalId: 1 });
+    servidor = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(FacturaCompra);
+    c = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  afterEach(() => servidor.verify());
+
+  /** Carga el PDF y contesta la interpretación, el proveedor y la ficha de cada línea resuelta. */
+  function cargar(respuesta: FacturaPdfInterpretada, habitual: 'A' | 'B' | null = 'B') {
+    c.cargarPdf(pdf());
+    servidor.expectOne('/api/facturas-compra/pdf').flush(respuesta);
+    if (respuesta.proveedorId !== null)
+      servidor.expectOne(`/api/proveedores/${respuesta.proveedorId}`).flush({
+        codigo: 'PRV-7', razonSocial: 'Repuestos Ficticios', cuit: '30-11111111-2', activo: true, telefonos: [], direcciones: [],
+        tipoComprobanteHabitual: habitual,
+      });
+    for (const l of respuesta.lineas.filter(x => x.articuloId !== null))
+      servidor.expectOne(`/api/articulos/${l.articuloId}`).flush(ficha(l.articuloId!));
+    fixture.detectChanges();
+  }
+
+  const campo = (nombre: string) => raiz().querySelector(`[name="${nombre}"]`) as HTMLInputElement;
+  const etiquetaDe = (nombre: string) => campo(nombre).closest('label')!.querySelector('.etiqueta.revisar');
+  const verTotal = () => Array.from(raiz().querySelectorAll('button')).find(b => b.textContent!.includes('Ver total')) as HTMLButtonElement;
+
+  it('CA-005: mientras se lee el PDF muestra el avance y no deja elegir otro; después lo saca', () => {
+    c.cargarPdf(pdf());
+    fixture.detectChanges();
+    const pedido = servidor.expectOne('/api/facturas-compra/pdf');
+    expect((pedido.request.body as FormData).get('archivo')).toEqual(jasmine.any(File));
+    // La primera lectura no elige proveedor: lo busca el servidor por el CUIT del PDF.
+    expect((pedido.request.body as FormData).has('proveedorId')).toBeFalse();
+    expect(raiz().querySelector('[role="status"]')?.textContent).toContain('Leyendo el PDF');
+    expect((raiz().querySelector('input[type="file"]') as HTMLInputElement).disabled).toBeTrue();
+
+    pedido.flush({ message: 'x' }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+    expect(raiz().textContent).not.toContain('Leyendo el PDF');
+    expect((raiz().querySelector('input[type="file"]') as HTMLInputElement).disabled).toBeFalse();
+  });
+
+  it('CA-005: elegir el archivo en el campo lo manda a leer', () => {
+    const entrada = raiz().querySelector('input[type="file"]') as HTMLInputElement;
+    const archivos = new DataTransfer();
+    archivos.items.add(pdf());
+    entrada.files = archivos.files;
+    entrada.dispatchEvent(new Event('change'));
+    servidor.expectOne('/api/facturas-compra/pdf').flush({}, { status: 400, statusText: 'Bad Request' });
+  });
+
+  it('CA-001: precarga el mismo formulario con lo que leyó, todo editable', async () => {
+    cargar(interpretada());
+    // ngModel escribe en el DOM en una tarea posterior.
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(raiz().textContent).toContain('Repuestos Ficticios');
+    expect(c.tipoComprobante).toBe('A'); // el del PDF, no el habitual del proveedor (B)
+    expect(campo('numero').value).toBe('0042-00001234');
+    expect(campo('emision').value).toBe('2027-02-03');
+    expect(campo('vencimiento').value).toBe('2027-03-10');
+    expect(campo('pIva').valueAsNumber).toBe(2000.25);
+    expect(campo('pIibb').valueAsNumber).toBe(1000.5);
+    expect(campo('pMunicipal').valueAsNumber).toBe(0);
+    expect(c.lineas.length).toBe(1);
+    // Entradas de la fila: cantidad, precio, cuatro descuentos. El precio es el del comprobante, no el costo de la ficha.
+    const fila = Array.from(raiz().querySelectorAll<HTMLInputElement>('table.lineas tbody tr')[0].querySelectorAll('input'));
+    expect(fila.map(i => i.valueAsNumber)).toEqual([2, 4000, 0, 5, 20, 0]);
+    expect(fila.some(i => i.disabled) || campo('numero').disabled).toBeFalse();
+    expect(c.lineas[0].sucursalId).toBe(1);
+  });
+
+  it('CA-005: al terminar de leer bien el PDF saca el avance y vuelve a habilitar el campo', () => {
+    cargar(interpretada());
+
+    expect(raiz().textContent).not.toContain('Leyendo el PDF');
+    expect((raiz().querySelector('input[type="file"]') as HTMLInputElement).disabled).toBeFalse();
+  });
+
+  it('CA-001: un segundo PDF reemplaza lo que dejó el primero, no se le suma', () => {
+    cargar(interpretada({ lineas: [linea('AB-100', 50), linea('X1', null)], paraRevisar: ['numero'] }));
+    cargar(interpretada({ numero: '0042-00009999', lineas: [linea('CC-3', 51)], paraRevisar: [] }));
+
+    expect(c.lineas.map(l => l.articulo.id)).toEqual([51]);
+    expect(c.sinResolver.length).toBe(0);
+    expect(c.paraRevisar()).toEqual([]);
+    expect(c.numero).toBe('0042-00009999');
+  });
+
+  it('CA-001: un rechazo del servidor se muestra y el formulario queda como estaba', () => {
+    c.numero = 'escrito a mano';
+    c.cargarPdf(pdf());
+    servidor.expectOne('/api/facturas-compra/pdf').flush(
+      { detail: 'El PDF está escaneado, sin texto: el sistema no lo puede leer. Cargá la factura por la vía manual.' },
+      { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('[role="alert"]')?.textContent).toContain('vía manual');
+    expect(c.numero).toBe('escrito a mano');
+  });
+
+  it('CA-002: los campos que el PDF no pudo afirmar se señalan; los demás, no', () => {
+    cargar(interpretada({ tipoComprobante: null, numero: null, paraRevisar: ['tipoComprobante', 'numero', 'lineas[0]'] }));
+
+    expect(etiquetaDe('numero')?.textContent).toContain('Revisar');
+    expect(etiquetaDe('tipo')).not.toBeNull();
+    expect(etiquetaDe('emision')).toBeNull();
+    expect(raiz().querySelectorAll('tbody tr')[0].querySelector('.etiqueta.revisar')).not.toBeNull();
+    expect(campo('numero').getAttribute('aria-invalid')).toBe('true');
+    expect(campo('emision').getAttribute('aria-invalid')).toBeNull();
+  });
+
+  it('CA-002: sin proveedor reconocido, lo señala y deja buscarlo a mano', () => {
+    cargar(interpretada({ proveedorId: null, lineas: [], paraRevisar: ['proveedorId'] }));
+
+    expect(c.proveedor()).toBeNull();
+    expect(raiz().querySelector('[name="textoProveedor"]')).not.toBeNull();
+    expect(raiz().querySelector('.etiqueta.revisar')?.textContent).toContain('Revisar');
+  });
+
+  it('CA-002: una percepción que el PDF no pudo leer se señala; las demás, no', () => {
+    cargar(interpretada({ percepcionIva: null, percepcionIibb: null, paraRevisar: ['percepcionIva', 'percepcionIibb'] }));
+
+    expect(etiquetaDe('pIva')).not.toBeNull();
+    expect(etiquetaDe('pIibb')).not.toBeNull();
+    expect(campo('pIva').getAttribute('aria-invalid')).toBe('true');
+    expect(campo('pIibb').getAttribute('aria-invalid')).toBe('true');
+    expect(etiquetaDe('pMunicipal')).toBeNull();
+    expect(campo('pMunicipal').hasAttribute('aria-invalid')).toBeFalse();
+    expect(etiquetaDe('pGanancias')).toBeNull();
+    expect(campo('pGanancias').hasAttribute('aria-invalid')).toBeFalse();
+  });
+
+  it('CA-002: cada percepción se señala por su propia clave', () => {
+    cargar(interpretada({ paraRevisar: ['percepcionMunicipal', 'percepcionGanancias'] }));
+
+    expect(etiquetaDe('pIva')).toBeNull();
+    expect(campo('pIva').hasAttribute('aria-invalid')).toBeFalse();
+    expect(etiquetaDe('pIibb')).toBeNull();
+    expect(etiquetaDe('pMunicipal')).not.toBeNull();
+    expect(campo('pMunicipal').getAttribute('aria-invalid')).toBe('true');
+    expect(etiquetaDe('pGanancias')).not.toBeNull();
+    expect(campo('pGanancias').getAttribute('aria-invalid')).toBe('true');
+  });
+
+  const sinProveedor = () => interpretada({
+    proveedorId: null, tipoComprobante: 'B', numero: '99-48437',
+    lineas: [linea('QQ1', null), linea('QQ2', null)], paraRevisar: ['numero', 'proveedorId'],
+  });
+  const elegido = { id: 7, codigo: 'PRV-7', razonSocial: 'Repuestos Ficticios', cuit: null, activo: true, tipoComprobanteHabitual: 'A' as const };
+
+  it('CA-003: elegir el proveedor después del PDF busca en él los códigos sin resolver y pasa a líneas los que encuentra', () => {
+    cargar(sinProveedor());
+
+    c.elegirProveedor(elegido);
+    const pedido = servidor.expectOne('/api/facturas-compra/pdf');
+    expect((pedido.request.body as FormData).get('proveedorId')).toBe('7');
+    expect((pedido.request.body as FormData).get('archivo')).toEqual(jasmine.any(File));
+    pedido.flush(interpretada({ ...sinProveedor(), proveedorId: 7, lineas: [linea('QQ1', 51), linea('QQ2', null)], paraRevisar: ['numero'] }));
+    servidor.expectOne('/api/articulos/51').flush({ ...ficha(51), activo: false });
+    fixture.detectChanges();
+
+    // Los datos de la línea son los del primer PDF; el destino, el de la cabecera.
+    expect(c.lineas.map(l => [l.articulo.id, l.articulo.activo, l.sucursalId, l.cantidad, l.precioUnitario,
+      l.descuentoPorcentaje, l.descuento2Porcentaje, l.descuento3Porcentaje, l.revisar])).toEqual([[51, false, 1, 2, 4000, 0, 5, 20, false]]);
+    expect(c.sinResolver.map(l => l.codigoProveedor)).toEqual(['QQ2']);
+    expect(c.revisar('proveedorId')).toBeFalse();
+    expect(c.sucursales().map(x => x.id)).toEqual([1, 2]);
+    expect(raiz().textContent).toContain('Falta resolver 1 línea');
+    // El tipo y el número siguen siendo los del comprobante, no los del proveedor.
+    expect([c.tipoComprobante, c.numero]).toEqual(['B', '99-48437']);
+  });
+
+  it('CA-003: la línea resuelta con el proveedor elegido conserva su marca de revisión y sus descuentos', () => {
+    cargar(interpretada({ ...sinProveedor(), lineas: [{ ...linea('QQ1', null), descuentoPorcentaje: 7 }],
+      paraRevisar: ['numero', 'proveedorId', 'lineas[0]'] }));
+    c.sucursalCabecera = 2;
+
+    c.elegirProveedor(elegido);
+    servidor.expectOne('/api/facturas-compra/pdf').flush(interpretada({ ...sinProveedor(), proveedorId: 7, lineas: [linea('QQ1', 51)] }));
+    servidor.expectOne('/api/articulos/51').flush(ficha(51));
+    fixture.detectChanges();
+
+    expect(c.lineas.map(l => [l.sucursalId, l.descuentoPorcentaje, l.revisar])).toEqual([[2, 7, true]]);
+  });
+
+  it('CA-003: si el proveedor elegido no tiene ninguno de los códigos, las líneas siguen sin resolver', () => {
+    cargar(sinProveedor());
+
+    c.elegirProveedor(elegido);
+    servidor.expectOne('/api/facturas-compra/pdf').flush(interpretada({ ...sinProveedor(), proveedorId: 7, paraRevisar: ['numero'] }));
+    fixture.detectChanges();
+
+    expect(c.lineas).toEqual([]);
+    expect(c.sinResolver.map(l => l.codigoProveedor)).toEqual(['QQ1', 'QQ2']);
+  });
+
+  it('CA-003: con todas las líneas resueltas, elegir otro proveedor no vuelve a leer el PDF', () => {
+    cargar(interpretada());
+
+    c.elegirProveedor(elegido);
+
+    servidor.expectNone('/api/facturas-compra/pdf');
+  });
+
+  it('CA-003: un error al buscar los códigos se muestra y deja las líneas como estaban', () => {
+    cargar(sinProveedor());
+
+    c.elegirProveedor(elegido);
+    servidor.expectOne('/api/facturas-compra/pdf').flush({ detail: 'El proveedor 7 no existe o está dado de baja.' }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('[role="alert"]')?.textContent).toContain('dado de baja');
+    expect(c.sinResolver.length).toBe(2);
+
+    // Elegir otro y que ande saca el error anterior.
+    c.elegirProveedor({ ...elegido, id: 8 });
+    servidor.expectOne('/api/facturas-compra/pdf').flush(interpretada({ ...sinProveedor(), proveedorId: 8, paraRevisar: ['numero'] }));
+    fixture.detectChanges();
+    expect(raiz().querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('CA-003: un error de la búsqueda de códigos que llega después de cargar otra factura no se muestra', () => {
+    cargar(sinProveedor());
+    c.elegirProveedor(elegido);
+    const vieja = servidor.expectOne('/api/facturas-compra/pdf');
+    c.nueva();
+
+    vieja.flush({ detail: 'viejo' }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+
+    expect(c.errorPdf()).toBeNull();
+  });
+
+  it('CA-003: el artículo hallado que llega después de cargar otro PDF con el mismo código no lo resuelve', () => {
+    cargar(sinProveedor());
+    c.elegirProveedor(elegido);
+    servidor.expectOne('/api/facturas-compra/pdf').flush(interpretada({ ...sinProveedor(), proveedorId: 7, lineas: [linea('QQ1', 51)] }));
+    const ficha51 = servidor.expectOne('/api/articulos/51');
+    cargar(sinProveedor());
+
+    ficha51.flush(ficha(51));
+
+    expect(c.lineas).toEqual([]);
+    expect(c.sinResolver.map(l => l.codigoProveedor)).toEqual(['QQ1', 'QQ2']);
+  });
+
+  it('CA-003: la búsqueda de códigos que llega después de cargar otra factura no la toca', () => {
+    cargar(sinProveedor());
+    c.elegirProveedor(elegido);
+    const vieja = servidor.expectOne('/api/facturas-compra/pdf');
+    c.nueva();
+
+    vieja.flush(interpretada({ ...sinProveedor(), proveedorId: 7, lineas: [linea('QQ1', 51), linea('QQ2', null)] }));
+    servidor.expectNone('/api/articulos/51');
+
+    expect(c.lineas).toEqual([]);
+    expect(c.sinResolver).toEqual([]);
+  });
+
+  const conCuarto = (codigo: string, articuloId: number | null) => ({ ...linea(codigo, articuloId), descuento4Porcentaje: 5 });
+  // Cantidad, precio y los cuatro descuentos: el cuarto es el sexto campo de la fila.
+  const cuartoDescuento = (fila = 0) =>
+    raiz().querySelectorAll('table.lineas tbody tr')[fila]?.querySelectorAll<HTMLInputElement>('input')[5];
+
+  it('CA-001 y CA-002: precarga el cuarto descuento propuesto y lo señala en su celda, no en toda la línea (D-S6-15)', async () => {
+    cargar(interpretada({ lineas: [conCuarto('AB-100', 50)], paraRevisar: ['lineas[0].descuento4'] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const cuarto = cuartoDescuento();
+    expect(cuarto?.valueAsNumber).toBe(5);
+    expect(cuarto?.getAttribute('aria-invalid')).toBe('true');
+    expect(cuarto?.closest('td')?.querySelector('.etiqueta.revisar')).toBeTruthy();
+    // La línea en sí no se marca: solo el cuarto descuento.
+    expect(raiz().querySelector('table.lineas tbody tr td:first-child .etiqueta.revisar')).toBeNull();
+    expect(raiz().querySelectorAll('table.lineas tbody tr')[0].querySelectorAll('[aria-invalid]').length).toBe(1);
+  });
+
+  it('CA-003: resolver una línea a mano conserva su cuarto descuento y su señal', () => {
+    cargar(interpretada({ lineas: [conCuarto('ZZ9', null)], paraRevisar: ['lineas[0].descuento4'] }));
+    c.resolviendo.set(0);
+    c.textoArticulo = 'A60';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush({
+      articulos: [{ id: 60, codigoInterno: 'A60', nombre: 'Artículo 60', activo: true, codigosProveedor: [] }],
+      total: 1, pagina: 1, tamanoPagina: 10, conflictos: [],
+    });
+    servidor.expectOne('/api/articulos/60').flush(ficha(60));
+    fixture.detectChanges();
+
+    expect(cuartoDescuento()?.getAttribute('aria-invalid')).toBe('true');
+    c.registrar();
+    expect(servidor.expectOne('/api/facturas-compra/calculo').request.body.lineas[0].descuento4Porcentaje).toBe(5);
+  });
+
+  it('CA-003: resolver con el proveedor elegido conserva el cuarto descuento y su señal', () => {
+    cargar(interpretada({ proveedorId: null, lineas: [conCuarto('QQ1', null)], paraRevisar: ['proveedorId', 'lineas[0].descuento4'] }));
+    c.elegirProveedor({ id: 7, codigo: 'PRV-7', razonSocial: 'R', cuit: null, activo: true, tipoComprobanteHabitual: null });
+    servidor.expectOne('/api/facturas-compra/pdf').flush(interpretada({ lineas: [conCuarto('QQ1', 51)] }));
+    servidor.expectOne('/api/articulos/51').flush(ficha(51));
+    fixture.detectChanges();
+
+    expect(cuartoDescuento()?.getAttribute('aria-invalid')).toBe('true');
+    c.registrar();
+    expect(servidor.expectOne('/api/facturas-compra/calculo').request.body.lineas[0].descuento4Porcentaje).toBe(5);
+  });
+
+  it('CA-003: la línea sin artículo queda sin resolver, con su código y el enlace al alta', () => {
+    cargar(interpretada({ lineas: [linea('AB-100', 50), linea('ZZ9', null, 1, 1250.5)] }));
+
+    expect(c.lineas.length).toBe(1);
+    const pendiente = raiz().querySelector('[data-sin-resolver]')!;
+    expect(pendiente.textContent).toContain('ZZ9');
+    expect(pendiente.textContent).toContain('Descripción ZZ9');
+    const alta = pendiente.querySelector('a') as HTMLAnchorElement;
+    expect(alta.getAttribute('href')).toBe('/articulos');
+    expect(alta.target).toBe('_blank');
+  });
+
+  it('CA-003: elegir el artículo de una línea sin resolver la pasa a las líneas con los datos del PDF', () => {
+    cargar(interpretada({ lineas: [linea('ZZ9', null, 3, 1250.5)] }));
+    c.resolviendo.set(0);
+    c.textoArticulo = 'A60';
+    c.enterArticulo();
+    servidor.expectOne(r => r.url === '/api/articulos').flush({
+      articulos: [{ id: 60, codigoInterno: 'A60', nombre: 'Artículo 60', activo: true, codigosProveedor: [] }],
+      total: 1, pagina: 1, tamanoPagina: 10, conflictos: [],
+    });
+    servidor.expectOne('/api/articulos/60').flush(ficha(60));
+    fixture.detectChanges();
+
+    expect(c.sinResolver.length).toBe(0);
+    expect(c.resolviendo()).toBeNull();
+    expect(c.lineas.map(l => [l.articulo.id, l.cantidad, l.precioUnitario, l.descuento3Porcentaje])).toEqual([[60, 3, 1250.5, 20]]);
+  });
+
+  it('CA-003: quitar una línea sin resolver la saca', () => {
+    cargar(interpretada({ lineas: [linea('ZZ9', null)] }));
+    const quitar = Array.from(raiz().querySelectorAll('[data-sin-resolver] button')).find(b => b.textContent!.includes('Quitar')) as HTMLButtonElement;
+    quitar.click();
+    fixture.detectChanges();
+
+    expect(c.sinResolver.length).toBe(0);
+    expect(raiz().querySelector('[data-sin-resolver]')).toBeNull();
+  });
+
+  it('CA-004: con líneas sin resolver, no deja ver el total ni confirmar, y dice cuántas faltan', () => {
+    cargar(interpretada({ lineas: [linea('X1', null), linea('X2', null)] }));
+
+    expect(verTotal().disabled).toBeTrue();
+    expect(raiz().textContent).toContain('Faltan resolver 2 líneas');
+
+    c.registrar();
+    servidor.expectNone('/api/facturas-compra/calculo');
+    c.confirmar();
+    servidor.expectNone('/api/facturas-compra');
+  });
+
+  it('CA-004: al resolver la última, se habilita', () => {
+    cargar(interpretada({ lineas: [linea('X1', null)] }));
+    c.sinResolver.splice(0, 1);
+    fixture.detectChanges();
+
+    expect(verTotal().disabled).toBeFalse();
+    expect(raiz().textContent).not.toContain('Faltan resolver');
+  });
+
+  it('CA-004: un total pedido antes de cargar el PDF y que llega después no se muestra sobre el formulario del PDF', () => {
+    c.proveedor.set({ id: 7, codigo: 'PRV-7', razonSocial: 'R', cuit: null, activo: true });
+    c.registrar();
+    const calculoViejo = servidor.expectOne('/api/facturas-compra/calculo');
+    cargar(interpretada({ lineas: [linea('X1', null)] }));
+
+    calculoViejo.flush({ neto: 1, iva: 0, percepciones: 0, total: 1 });
+    fixture.detectChanges();
+
+    expect(c.totales()).toBeNull();
+    expect(raiz().querySelector('[data-totales]')).toBeNull();
+    expect(verTotal().disabled).toBeTrue();
+  });
+
+  it('CA-001: con el formulario cargado desde el PDF, «Ver total» muestra el total', () => {
+    cargar(interpretada());
+    c.registrar();
+    servidor.expectOne('/api/facturas-compra/calculo').flush({ neto: 6080, iva: 1276.8, percepciones: 3000.75, total: 10357.55 });
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('[data-totales]')).not.toBeNull();
+  });
+
+  it('CA-004: la carrera del total tampoco pasa entre el segundo PDF y el tercero', () => {
+    cargar(interpretada());
+    cargar(interpretada({ lineas: [linea('AB-100', 50)] }));
+    c.registrar();
+    const calculoViejo = servidor.expectOne('/api/facturas-compra/calculo');
+    cargar(interpretada({ lineas: [linea('X1', null)] }));
+
+    calculoViejo.flush({ neto: 1, iva: 0, percepciones: 0, total: 1 });
+    fixture.detectChanges();
+
+    expect(c.totales()).toBeNull();
+    expect(verTotal().disabled).toBeTrue();
+  });
+
+  it('029 CA-006: lo cargado desde el PDF se registra con la constancia; lo manual, no', () => {
+    cargar(interpretada());
+    c.confirmar();
+    expect(servidor.expectOne('/api/facturas-compra').request.body.desdePdf).toBeTrue();
+  });
+
+  it('029 CA-006: «Cargar otra factura» borra la constancia y lo pendiente del PDF anterior', () => {
+    cargar(interpretada({ lineas: [linea('X1', null)], paraRevisar: ['numero'] }));
+    c.nueva();
+    fixture.detectChanges();
+
+    expect(c.sinResolver.length).toBe(0);
+    expect(c.paraRevisar()).toEqual([]);
+    c.proveedor.set({ id: 7, codigo: 'PRV-7', razonSocial: 'R', cuit: null, activo: true });
+    c.confirmar();
+    expect(servidor.expectOne('/api/facturas-compra').request.body.desdePdf).toBeFalsy();
+  });
+});

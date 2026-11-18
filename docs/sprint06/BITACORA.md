@@ -715,7 +715,7 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 
 **BLOQUEADO EN:** la 028 necesita una decisión del equipo (Santi): si la anulación pide la doble certificación de B.4 y qué rol anula. La 026 y la 027 no dependen de esto.
 
-**Estado:** en curso
+**Estado:** terminada (la 027 es Sprint 7 y no se arranca; cerrado por el bloque del 17/11 13:20)
 - 14:52 · Respuesta de Santi: la 028 incluye la doble certificación, y la anulación la piden ADMINISTRADOR y OPERADOR, con la autorización de otro usuario ADMINISTRADOR. La identidad de quien autoriza se prueba con su usuario y su contraseña, nunca con un Id del cuerpo. Las dos decisiones quedan como CA-006 y CA-007 de la 028 v1.1.
 - **028 partida en dos PR** (con la doble certificación pasa los 8 SP): este, solo backend (caso de uso, repositorio y endpoint), y otro con la pantalla de anulación, que necesita el listado de la 026 para elegir la factura.
 - Esqueleto `bb8a1f8`, rojo `b53c5c3` (Moq 16 con error y 1 superado; PostgreSQL 9 con error, por aserción), código `bc313e2` (26/26), rojo HTTP, endpoint `acaaec5` (FacturasCompraApiPostgreSqlTests 17/17).
@@ -764,7 +764,7 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 4. 027: pregunta para Sergio en el ESTADO del Sprint 7, sin arrancarla.
 5. Cuando entren #166 y #167: `git merge origin/develop` en cada rama abierta y su suite.
 
-**Estado:** en curso
+**Estado:** terminada (#166 y #167 mergeados por Javi; cerrado por el bloque del 17/11 13:20)
 - Paso 1: rama creada y merge de la parte 1. Conflictos solo por agregados de los dos lados (puerto, repositorio, controlador, Program, test HTTP, bitácora y ESTADO): se conservaron los dos. Build 0 errores; filtrado `FacturasCompra|FacturaCompra`: 168/168.
 - 19:57 · Paso 2: rojo `d0697a5` (solo spec: 4 FAILED, 9 SUCCESS; la primera falla de cada uno es la aserción «botón Anular de la fila», después cae un TypeError porque no hay diálogo). Código `070027b`: 13/13 en `compras-registradas`. Mutaciones mías antes del verificador, todas muertas (1 FAILED cada una): recarga en la página 1 en vez de la actual, el aviso que no se borra, `enviando` que no vuelve a false, autocomplete de la contraseña y Cancelar que no cierra. Los `trim` del motivo y el usuario no se pusieron: los hace el caso de uso.
 - 19:57 · Frontend completo sobre `070027b`: `TOTAL: 210 SUCCESS`. Backend completo en curso.
@@ -775,3 +775,330 @@ Se agrega, nunca se reescribe. Formato y reglas: `CLAUDE.md`, «Bitácora de tar
 - 20:15 · Push de `525b57f` y **PR #175** (028 parte 2, `Refs #9`, milestone Sprint 7). Es el último PR: no se abren más hasta que Javi revise los que esperan (#166, #167, #170 a #175).
 
 **BLOQUEADO EN:** paso 5. Hace falta que Javi mergee el #166 y el #167 en develop. Después: `git merge origin/develop` en cada rama abierta y la suite de cada una. La P7-01 (027) espera la respuesta de Sergio, vía Santi.
+
+## 17/11/2026 13:20 · Sprint 6: fase A (docs), compuerta C7, 029 y 049
+
+**Instrucción recibida (verbatim):**
+> LEE PROMPT-SPRINT-06.md ahi estan tus tareas
+> se encuentra en ~/dev/TESIS/la-central-gestion/docs/sprint06
+> tambien ahi se encuentran el ESTADO.md y la BITACORA.md
+>
+> Contenido de `docs/sprint06/PROMPT-SPRINT-06.md` (verbatim):
+>
+> Arrancamos el Sprint 6 en serio. Trabajás solo hasta terminarlo o hasta que algo dependa de una
+> persona. No me consultes decisiones técnicas: las tomás vos, las anotás con fecha en el
+> `ESTADO.md` y seguís. Solo parás una pieza por una regla de negocio que falta, y mientras tanto
+> seguís con lo que no depende de ella.
+>
+> ## 0 · Antes de tocar nada
+>
+> 1. Leé `CLAUDE.md` entero y respetalo. En particular: la bitácora (`docs/sprint06/BITACORA.md`),
+>    la política de pruebas, la sección de los verificadores y la de `pull`.
+> 2. Leé el último bloque de `docs/sprint06/BITACORA.md` con `Estado: en curso`. Si hay uno,
+>    seguís desde ahí.
+> 3. Abrí un bloque nuevo en la bitácora con esta instrucción completa, verbatim.
+> 4. `git fetch --all --prune`, pasate a `develop` y traé lo último. Mi copia local estaba parada
+>    en una rama `feature/9-…` ya mergeada y con cambios sin commitear: mirá `git status`, y si hay
+>    algo que no sea la carpeta `docs/facturas/` (que ya saqué del repo), anotalo en la
+>    bitácora y no lo descartes.
+> 5. Leé `docs/sprint06/ESTADO.md`, `docs/PLAN-SPRINTS-6-7-8.md`, `docs/historias/INDICE.md` y las
+>    proformas `029-HU-FCO-05.md`, `049-HU-UI-11.md` y `056-HU-FCO-06.md`.
+>
+> ## 1 · Lo que cambió desde el último ESTADO
+>
+> - **Javi revisó, aprobó y mergeó todos los PR abiertos:** #166, #167, #170, #171, #172, #173 y
+>   #175. El Sprint 5 está cerrado (tag `sprint-5`).
+> - Eso deja la **056 mergeada**, el **#169 mergeado** y la **028 (anulación de factura de
+>   compra, #9) construida antes de tiempo**, aunque está planificada para el Sprint 7.
+> - Falta el recorrido DoD 10 de la 056 contra `lacentral_demo`. Lo hace Javi con Sergio: no es
+>   tuyo, solo dejalo bien armado.
+>
+> **Fase A · poner al día la documentación (un PR solo de docs, sin verificadores):**
+> - `docs/sprint06/ESTADO.md`: tablero con lo mergeado, PR por PR. Lo mismo para la 028 en el
+>   ESTADO o el plan que corresponda, y si cierra el CA-003 y el CA-004 de la 016, decilo.
+> - `docs/historias/INDICE.md`: Sprint vigente y Estado de la 056, la 028 y la 016.
+> - `docs/PLAN-SPRINTS-6-7-8.md`: si la 028 ya está, sale de la cuenta de SP del Sprint 7.
+> - Revisá con `gh` el estado de las issues y los milestones contra lo que escribiste. Si una issue
+>   quedó abierta con el PR mergeado y todos sus CA verificados, cerrala con un comentario que
+>   diga qué PR la cierra. Si tiene un CA sin verificar, no la cierres: anotalo.
+>
+> **Para Santi (no lo corrés vos, no tenés acceso a `lacentral`):** dejá en la bitácora, en un
+> bloque «PARA SANTI», los comandos listos para pegar en fish para:
+> 1. hacer el backup de `lacentral` con `/home/atiz/tesis-db/backup.sh` (vía `ssh atiz@arch`);
+> 2. verificar qué scripts de `backend/db/rescaffold/` ya tiene aplicados `lacentral` (una consulta
+>    de solo lectura que mire columnas o tablas que agrega cada script, del 07 al 09);
+> 3. aplicar los que falten, en orden, con `ON_ERROR_STOP=1`, contra el contenedor `lacentral_db`
+>    con el superusuario `lacentral`.
+> Sin marcadores para completar: comandos enteros.
+>
+> ## 2 · Compuerta C7 · ya hay PDFs reales
+>
+> Están **fuera del repo**, en `~/dev/TESIS/facturas-reales/`. **Nunca van al repo** (es público):
+> ni el PDF, ni un recorte, ni sus datos copiados en un test. Agregá `docs/facturas/` al
+> `.gitignore`, en el PR de docs, para que no vuelva a pasar.
+>
+> | Archivo | Proveedor | Qué es |
+> |---|---|---|
+> | `10713-VT-FA0137-25630.pdf` | ETMAN (Multioriginal Parts S.A.) | **Factura A**, 0137-00025630, 17/11/2026. Texto extraíble (PScript + Ghostscript). Por línea: código, descripción, marca, cantidad, precio, **tres columnas de descuento** (Bonif., Bonif., Dto.), total. Percepción IIBB Córdoba aparte. IVA 21 %. **Números en formato estadounidense** (`20,184.21`). |
+> | `Presupuesto_48437.pdf` | Fazio (Badaloni) | **Presupuesto**, compra **en negro**, no es factura. Texto extraíble. Por línea: código de fábrica, descripción, cantidad, remito, precio de lista, descuento combinado `43,84 (28+22)`, precio final, total. **Números en formato argentino** (`27.396,12`). |
+> | `V20261105NCBA0010-00021495 (1).pdf` | Expoyer S.A. | **Nota de crédito A** por bonificación, en blanco. **No es una factura de compra.** |
+>
+> Dos hechos que salen de los PDF y conviene registrar en el ESTADO:
+> - **Los descuentos son sucesivos, confirmado con dos proveedores:** en ETMAN,
+>   20.184,21 × 0,95 × 0,64 = 12.272,00 (el total de la línea); en Fazio, 28 + 22 = 43,84 %. Era el
+>   supuesto de la 056 que faltaba confirmar.
+> - **Cada proveedor usa un formato de número distinto**, así que el parser no puede asumir uno.
+>
+> Lo que te toca:
+> 1. Decidí si con esto alcanza para cerrar la C7, o si se cierra parcial. Con lo que hay, falta
+>    una **factura** de Expoyer: la de ellos es una nota de crédito. Anotá la decisión con fecha.
+> 2. La nota de la 029 pide decidir entre un parser por reglas o una interpretación asistida.
+>    Decidilo vos con estos tres layouts a la vista. Dejá escrito el porqué y qué cuesta agregar
+>    un proveedor nuevo con la opción elegida. Si la opción usa un servicio externo, la clave va
+>    en variables de entorno y nunca en el repo.
+> 3. **Los tests no usan los PDF reales.** Generá en los tests PDF sintéticos que imiten cada
+>    layout, con datos inventados (proveedor, CUIT, códigos y montos ficticios). Ningún test
+>    depende de que exista `~/dev/TESIS/facturas-reales/`: la DoD prohíbe pruebas omitidas. Los
+>    reales se usan para analizar el layout y para el recorrido a mano de la DoD 10.
+> 4. Antes de construir, preguntas para Sergio (no las inventes, dejalas en el ESTADO en «Lo que
+>    vuelve a Sergio» y seguí con lo que no dependa de ellas):
+>    - El presupuesto en negro de Fazio, ¿se carga como comprobante **B** con el prefijo **99**
+>      (D-S6-10)? ¿Qué número lleva, el del presupuesto (48437)?
+>    - Las notas de crédito de proveedor, ¿se cargan en el sistema? El Mandato deja las notas de
+>      crédito fuera de alcance: confirmarlo.
+>    - ETMAN informa «Pago contado 5 %» y vencimientos con descuento por pronto pago. ¿El sistema
+>      lo ignora (el costo es el de la línea) o tiene que registrarlo?
+>
+> ## 3 · Construcción · 029 y después 049
+>
+> - Una rama y un PR por HU (§2 de `CLAUDE.md`). Si la 029 pasa de 500 líneas de diff, partila en
+>   dos PR con sentido propio (sección de ahorro de tokens, punto 4).
+> - TDD con los tres commits. Persistencia contra PostgreSQL real, releyendo con contexto nuevo.
+> - La 029 nunca persiste antes de la confirmación del operador y nunca crea artículos por su
+>   cuenta (RF-011). El código del proveedor se busca en `articulo_codigo_alternativo`. Lo que no
+>   reconoce con certeza lo marca para revisar, no lo adivina.
+> - La 049 sigue `docs/diseno/SISTEMA-VISUAL.md` y reutiliza la pantalla de la 056: el PDF
+>   precarga el mismo formulario, no hay un formulario nuevo.
+> - Verificadores: una invocación por PR, al cerrar la HU, con el alcance acotado a sus commits y
+>   con el hash, la línea literal y el conteo de la suite completa si ya la corriste. Worktrees
+>   afuera antes de invocarlos. Ante un NO APTO, las 3 rondas de `CLAUDE.md`.
+> - `ESTADO.md` actualizado antes de cada push, en el mismo push.
+>
+> ## 4 · Lo que NO es tuyo en este sprint
+>
+> - **Scrapes de proveedores (Sprint 7, D-PL-02):** los armamos a mano Javi, Lauti y Santi en n8n,
+>   fuera de la cuenta de SP. Son cuatro: Expoyer, Autocor, Nafazio (Fazio) y ETMAN (Link3).
+>   **Las credenciales de esos portales no las vas a ver nunca:** van en el almacén de
+>   credenciales de n8n (RNF-007). Si en algún archivo, issue o mensaje aparece un usuario o
+>   contraseña de proveedor, no lo copies a ningún lado y avisá en la bitácora. Lo único que
+>   hacés es anotar en el ESTADO, en «Fuera del Sprint 6», que los scrapes de esos cuatro
+>   arrancaron el 17/11/2026 y que el destino de sus datos es la compuerta C2 del Sprint 7.
+> - No arranques ninguna HU del Sprint 7 ni del 8.
+>
+> ## 5 · Cuándo parás
+>
+> Parás y me escribís un resumen corto (qué quedó hecho, con PR, hash y conteo de la última suite
+> completa; qué quedó abierto y de quién depende) cuando pase cualquiera de estas cosas:
+> - la 029 y la 049 quedaron con PR abierto y verificadores APTO;
+> - todo lo que queda depende de una respuesta de Sergio o de una acción de Santi;
+> - 3 rondas de NO APTO sin salida.
+>
+> Antes de parar, la línea `**BLOQUEADO EN:**` o el `Estado: terminada` en la bitácora, según
+> corresponda.
+
+**Plan:**
+1. Arranque: bloques abiertos, fetch, develop, git status.
+2. Fase A (PR solo de docs): ESTADO, INDICE, PLAN 6-7-8, `.gitignore` con `docs/facturas/`, issues y milestones con `gh`, bloque «PARA SANTI».
+3. Compuerta C7: análisis de los tres PDF, decisión de cierre, decisión parser, preguntas para Sergio.
+4. 029 (rama, TDD, PDF sintéticos, verificadores, PR; partida en dos si pasa de 500 líneas).
+5. 049 (reutiliza la pantalla de la 056, verificadores, PR).
+6. Resumen y BLOQUEADO EN / terminada.
+
+**Estado:** terminada (la 029 y la 049 con PR y verificadores APTO; lo abierto, en la última línea del bloque)
+- 13:20 · Bloques abiertos: el de las 14:19 del 14/11 (lo que quedaba era la 027, Sprint 7: no se arranca) y el de las 19:51 (paso 5, merges de #166/#167: ya mergeados por Javi). Los dos quedan cerrados por este bloque.
+- 13:20 · `git fetch`; `develop` en `b920a89` (merge del #175). Sin commitear en la copia local, conservado y no descartado: `frontend/angular.json` (una línea `"analytics": "e83a8c62-…"`, el id local del CLI de Angular; es lo mismo que guarda el `stash@{0}`), la carpeta `.serena/` (cache de la herramienta) y `docs/sprint06/PROMPT-SPRINT-06.md` (este prompt). `docs/facturas/` ya no existe. Stashes `stash@{0}` y `stash@{1}` intactos.
+- 13:45 · Fase A en la rama `docs/sprint06-fase-a`: ESTADO del 6 (tablero, «Lo mergeado el 16/11», C7, decisión del parser, «Lo que vuelve a Sergio · 17/11», scrapes en «Fuera del Sprint 6», PRÓXIMA SESIÓN), ESTADO del 7 («Construido antes de tiempo»: 026 y 028), INDICE (056, 028, 026, 016), PLAN (Sprint 7: 67 → 56, salen la 028 y la 026, que también está hecha), `.gitignore` con `docs/facturas/`. Issues cerradas con comentario: #169 (PR #170), #168 (PR #171), #33 (PR #174). Abiertas con comentario del motivo: #163 (DoD 10), #9 (interpretación del CA-002), #23 (CA-004, la misma).
+- 13:45 · C7 cerrada parcial (falta una factura de Expoyer y una de Autocor). 029: parser por reglas, un lector por layout, PdfPig en `LaCentral.Api`. No hay cambio de esquema: `factura_compra.origen` ya admite `'PDF'` (`fc_origen_valido`). En los PDF y en los archivos leídos no apareció ningún usuario ni contraseña de proveedor.
+
+### PARA SANTI · 17/11/2026 · backup de `lacentral` y scripts 07 a 09
+
+Desde fish, en tu máquina, parado en la raíz del repo (los scripts viajan por la entrada estándar del `ssh`, no hace falta el repo en la Arch).
+
+1 · Backup (mirá primero si el script pide argumentos; después corrélo):
+
+```fish
+ssh atiz@arch head -n 30 /home/atiz/tesis-db/backup.sh
+ssh -t atiz@arch /home/atiz/tesis-db/backup.sh
+```
+
+2 · Qué scripts ya tiene `lacentral` (solo lectura). `t` = aplicado; `f` = falta. El 07 crea la tabla `provincia`; el 08 deja `stock.ubicacion_deposito` en 60; el 09 agrega `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `factura_compra_detalle.descuento_3_porcentaje`:
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+echo "SELECT to_regclass('public.provincia') IS NOT NULL AS s07, coalesce((SELECT character_maximum_length = 60 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'stock' AND column_name = 'ubicacion_deposito'), false) AS s08, (SELECT count(*) = 3 FROM information_schema.columns WHERE table_schema = 'public' AND (table_name, column_name) IN (('proveedor', 'tipo_comprobante_habitual'), ('factura_compra', 'tipo_comprobante'), ('factura_compra_detalle', 'descuento_3_porcentaje'))) AS s09;" | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral
+```
+
+3 · Aplicar SOLO los que dieron `f`, en este orden, de a uno (cada script abre su transacción; con `ON_ERROR_STOP=1` el primer error corta y no aplica nada de ese script). Si uno falla, no sigas con el siguiente:
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral -v ON_ERROR_STOP=1 < backend/db/rescaffold/07_Normalizacion_3FN_y_Reportes.sql
+ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral -v ON_ERROR_STOP=1 < backend/db/rescaffold/08_Ubicacion_Deposito_60.sql
+ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral -v ON_ERROR_STOP=1 < backend/db/rescaffold/09_Factura_Compra_Mecanica.sql
+```
+
+Después, repetí el paso 2: tienen que dar los tres `t`. El 08 y el 09 son idempotentes; el 07 **no**: no lo corras si el paso 2 dio `s07 = t`.
+- 14:30 · Fase A: PR #176 (`d7a4020`, solo docs). 029: rama `feature/13-factura-pdf` desde `docs/sprint06-fase-a`. Esqueleto `40a122a` (PdfPig 0.1.16 en `LaCentral.Api`; `LaCentral.UseCases` sigue sin paquetes). Rojo en el commit siguiente: 22 con error por aserción (HTTP: 404, sin endpoint), 2 superados porque el esqueleto ya devuelve lo pedido (PDF sin texto → vacío; texto desconocido → null). Las fuentes estándar de PdfPig no escriben «ó»: los PDF sintéticos van sin tildes.
+- 15:20 · 029 parte 1: código `bc7c125` (antes, `4810a69`: solo el PDF sintético de Fazio, columnas más anchas). Filtrado: `LecturaPdfTests` + `InterpretarFacturaPdfUseCaseTests` 20/20; con PG y HTTP, 24/24. Prueba a mano con los PDF reales desde un programa descartable en el scratchpad (nada al repo): ETMAN 3 líneas, A, `0137-00025630`, nada para revisar; Fazio 10 líneas 28/22, B y número para revisar; nota de crédito de Expoyer no reconocida. **Partición:** la 029 pasa de 500 líneas → parte 1 = interpretación (CA-001 a CA-004), parte 2 = registro con `origen = 'PDF'` (CA-005, CA-006). Suite completa sobre `bc7c125` corriendo; la base compartida está lenta (20 a 30 s por test de PG).
+- 16:50 · Suite completa sobre `bc7c125`, primera corrida: `Con error: 1, Superado: 635, Total: 636` (44 m 41 s). Falló `FacturasCompraApiPostgreSqlTests.Get_ConElRangoInvertido_400ConMensaje` (1 m 1 s, ajeno al PDF); filtrado pasa (26 s): la base compartida estaba lenta. Segunda corrida, la única que cuenta: `Correctas! - Con error: 0, Superado: 636, Omitido: 0, Total: 636, Duración: 44 m` sobre `bc7c125`.
+- 16:50 · Parte 2 empezada en `feature/13-factura-pdf-registro` (apilada sobre la parte 1): esqueleto `DesdePdf` commiteado; tests rojos escritos, sin compilar todavía (la suite usaba los binarios). Siguen los verificadores de la parte 1, uno por vez: `verificador-tdd` y después `auditor-persistencia`, acotados a `40a122a..bc7c125`.
+- 18:05 · `verificador-tdd` ronda 1 de la 029 parte 1 (`40a122a..bc7c125`): **NO APTO**. Orden test → producción y rojo validados (22 rojos por aserción, 2 verdes). Sobrevivió M14, `LectorTextoPdf.cs:47` sin `OrderBy(p => p.X)`: los PDF sintéticos ponían todas las palabras de un renglón a la misma altura. M15 (`OrderBy` de `LayoutsPdf.cs:122`) sobrevivió por ser equivalente: código muerto. No bloqueante: ningún `PostPdf_*` prueba 401/403 (el endpoint hereda `[Authorize]` de la clase). Arreglo: `8b9edf0`, solo test (renglón con la palabra de la izquierda 0,8 pt más abajo y escrita después; con M14 y con la tolerancia en `> 0`, 1 con error cada una), y `e9e3d03`, borra el `OrderBy` muerto. Filtrado 21/21. Suite completa sobre `e9e3d03` corriendo.
+- 18:05 · Mientras la ronda 1 corría: 029 parte 2 en `feature/13-factura-pdf-registro` (esqueleto `ca9c29b`, rojo `e56499a`: Moq 1 con error y 1 superado, el caso false es el valor por defecto; HTTP PG 1 con error, las dos filas MANUAL; código `5939547`, 3/3). 049 en `feature/51-pantalla-pdf`, apilada sobre la parte 2: esqueleto `d5d025a`, rojo `d511560` (13 FAILED: 12 por expectOne, 1 por TypeError porque no había campo de archivo), `da81124` solo test (el CA-001 espera con whenStable a que ngModel escriba en el DOM, como el spec de la 056), código `bbb196c`. Frontend completo sobre `bbb196c`: `TOTAL: 233 SUCCESS`.
+- 19:30 · `verificador-tdd` ronda 2 (`bc7c125..e9e3d03`; cortada por el límite de uso y retomada): **NO APTO**. M14 y la tolerancia mueren con el test nuevo. Sobrevive la partición de `Ordenar` (`LayoutsPdf.cs:122`): los layouts agregan las líneas antes que la cabecera, y ningún test combina las dos marcas. Arreglo `f5b0ebd`: se borra `Ordenar` (nadie lee `paraRevisar` por posición; la 049 usa `includes`). Filtrado 21/21. Suite completa sobre `f5b0ebd` corriendo. Si la ronda 3 da NO APTO, se para (3 rondas).
+- 21:00 · Suite completa sobre `f5b0ebd`, primera corrida: 1 con error ajeno (`CrearArticuloPostgreSqlTests.DosAltasSimultaneas_CodigosInternosDistintos`, 53 s; filtrado pasa en 29 s). Segunda corrida, la que cuenta: `Correctas! - Con error: 0, Superado: 637, Omitido: 0, Total: 637, Duración: 46 m 49 s` sobre `87456be` (= `f5b0ebd` + docs).
+- 21:00 · `verificador-tdd` ronda 3 (`e9e3d03..f5b0ebd`): **APTO**, 9 mutaciones muertas. Observación no bloqueante: cuatro tests afirman `paraRevisar` en orden aunque el contrato dice que no importa. La 049 sí consulta con `includes`, pero está en `feature/51-pantalla-pdf`, que el verificador no miró. `auditor-persistencia` (`40a122a..f5b0ebd`): **APTO**, sin corridas propias. Observación: el cotejo de códigos es exacto (mayúsculas y espacios); un código con otro formato queda sin artículo y va a revisión. ESTADO al día. Push y PR de la parte 1.
+- 22:10 · Parte 1: push de `decebfb` y **PR #177** (base `docs/sprint06-fase-a`; pasa a `develop` cuando entre el #176). Parte 2: merge de la parte 1 (`61e4ebb`); suite completa corriendo.
+- 22:10 · `verificador-tdd` ronda 1 de la 049 (`d5d025a..bbb196c`): **NO APTO**. Orden y rojo validados (13 FAILED: 12 por expectOne, 1 por TypeError, este último no es un rojo válido, como estaba declarado). Sobrevivieron `factura-compra.ts:560` (`leyendoPdf.set(false)` del éxito; con la suite entera en verde) y `:214` (la guarda de líneas sin resolver de «Confirmar», alcanzable por una carrera: un `/calculo` en vuelo cuando se carga un PDF). Hallazgo: `:527` (`nueva()` al recibir el PDF) sin test. Arreglo: `d0b3158` solo test (avance después de leer bien; dos PDF seguidos; cada mutación, 1 FAILED); `f7602da` rojo por el camino real de la carrera (1 FAILED por aserción: el total viejo aparece); `d45bffe` el arreglo (versión del formulario: un total pedido para el anterior no se muestra) y se borra la guarda de `:214`, que queda inalcanzable. Sacando el control de versión, 1 FAILED. Frontend completo sobre `d45bffe`: `TOTAL: 236 SUCCESS`.
+- 22:45 · `verificador-tdd` ronda 2 de la 049 (`448f62b..d45bffe`): **NO APTO**. Rojo de `f7602da` validado (por aserción); mueren el `if (true)`, el `version++` comentado y el `!==`. Sobreviven M4 (`const version = 0`: ningún test ve un total después de un `nueva()`) y M5 (`version = 1`: la carrera no se prueba en un segundo formulario). No bloqueantes: el `error` de `registrar()` no mira la versión, y una respuesta vieja igual hace `registrando.set(false)`. Arreglo `43edd66`, solo test (el total se ve después de cargar un PDF; la carrera entre el segundo PDF y el tercero): con M4 y con M5, 1 FAILED cada una. Frontend completo sobre `43edd66`: `TOTAL: 238 SUCCESS`. Sigue la ronda 3, la última.
+- 23:05 · `verificador-tdd` ronda 3 de la 049 (`0ade230..43edd66`): **APTO**. M4 y M5 mueren, cada una por aserción. Sin hallazgos. La 049 espera el PR de la parte 2 (está apilada sobre ella); la suite de la parte 2 sobre `61e4ebb` sigue corriendo.
+- 23:50 · Parte 2: suite completa sobre `61e4ebb` `Correctas! - Con error: 0, Superado: 640, Omitido: 0, Total: 640, Duración: 40 m 43 s`. `verificador-tdd` (`ca9c29b`, `e56499a`, `5939547`): **APTO** en la ronda 1 (10 mutaciones muertas, rojo validado). `auditor-persistencia`: **APTO**, sin corridas propias; sugiere revisar, cuando la base esté menos cargada, que no queden esquemas `pr110_test_*` huérfanos. Push y PR de la parte 2 (base: la rama de la parte 1).
+- 23:55 · Parte 2: push y **PR #178** (base `feature/13-factura-pdf`). 049: merge de la parte 2 (conflicto solo en la bitácora, agregados de los dos lados: se conservaron los dos, en orden). ESTADO al día (fila #51 y PRÓXIMA SESIÓN). Push y PR de la 049 (base `feature/13-factura-pdf-registro`).
+- 00:05 · **PR #179** (049). Cierre: la 029 y la 049 tienen PR y verificadores APTO (#177, #178, #179; docs en #176). **Queda abierto, todo de personas:** Javi revisa y mergea en el orden #176 → #177 → #178 → #179 y hace el DoD 10 de la 056, la 029 y la 049 con Sergio, contra `lacentral_demo`, con los PDF reales; Santi corre el bloque «PARA SANTI» del 17/11 (backup y scripts 07 a 09 en `lacentral`); Sergio contesta las cuatro preguntas del 17/11 (presupuesto en negro, notas de crédito, pago contado, CA-002 de la 028); Lauti consigue una factura de Expoyer y una de Autocor (C7 parcial). Sin decidir y sin test: el error de un `/calculo` viejo sobre el formulario nuevo (observación no bloqueante del verificador, en el #179).
+
+## 17/11/2026 · Revisión de Santi de los PR #176 a #179: percepciones de ETMAN, proveedor elegido después del PDF, respuestas de Sergio y lector de Expoyer
+
+**Instrucción recibida (verbatim):**
+> Revisión de Santi de los PR #176 a #179 (17/11). Escribime los resúmenes en español.
+>
+> Arreglos antes de que Javi revise. Cada uno, como commit en la rama del PR que corresponda; después git merge hacia las ramas de arriba (nunca rebase). Al re-verificar, acotá el alcance a los commits del arreglo.
+>
+> 1. Percepciones de ETMAN (#177). El lector busca «Percepcion IIBB:» y «Percepcion de IVA», que solo existen en el PDF sintético. La factura real dice «Percepciones IIBB» y en otro renglón «Cordoba : 3920.23». Con el PDF real (~/dev/TESIS/facturas-reales/10713-VT-FA0137-25630.pdf, fuera del repo) la percepción IIBB tiene que dar 3.920,23. Corregí el lector según el texto que PdfPig saca del PDF real, y el sintético para que imite ese texto real, no uno inventado. Regla nueva: si el layout tiene bloque de percepciones y no puede leer un monto, el campo va a ParaRevisar; nunca queda en null en silencio. Rojo primero.
+>
+> 2. Proveedor sin CUIT en el PDF (Fazio). Hoy el operador elige el proveedor a mano y las 10 líneas quedan sin resolver. Cuando se elige el proveedor después de cargar un PDF, el sistema tiene que volver a buscar los códigos de las líneas sin resolver en articulo_codigo_alternativo de ese proveedor y pasar a líneas las que encuentre. El cómo lo decidís vos: backend en la rama de la 029 y pantalla en la de la 049.
+>
+> 3. Respuestas de Sergio, para el ESTADO:
+>    - D-S6-13: lo en negro se carga como comprobante B con prefijo 99 y el número del presupuesto. El texto del PDF de Fazio no trae el número, pero el nombre del archivo sí (Presupuesto_48437.pdf). Proponé 99-48437 a partir del nombre del archivo y dejalo marcado para revisar.
+>    - D-S6-14: las notas de crédito de proveedor SÍ se cargan. Choca con el Mandato v3.0, que las deja fuera de alcance, y no hay HU. No la construyas: anotala en el ESTADO como HU nueva pendiente de decisión del equipo, propuesta para el Sprint 8. Mientras tanto, el lector sigue rechazando la nota de crédito.
+>    - D-S6-15: el 5 % de pago contado no viene en la línea porque depende de la forma de pago; si se paga de contado, se carga como un descuento más en cada producto. Pendiente: dónde va si la línea ya usa los tres descuentos. Va a «Lo que vuelve a Sergio»; no lo resuelvas por tu cuenta.
+>    - Pregunta nueva para «Lo que vuelve a Sergio»: el presupuesto de Fazio suma IVA ($67.970,79; total $391.640,79). Si va como B sin IVA, el sistema registra $323.670. ¿Ese IVA se paga?
+>
+> 4. Lector de Expoyer. La factura está en ~/dev/TESIS/facturas-reales/FCA0012-00091771.pdf: factura A 0012-00091771 del 27/10/2026. Layout: dos columnas de artículos por hoja (Cant., Código, Descripción, P.Unit., Total, repetido a la derecha); descuento global en la cabecera («Descuento: 61.08%+15») con los precios de línea ya netos (el subtotal 98.506,97 es la suma de las líneas); códigos con espacios y guiones internos («C 115105 4- F»); números en formato de EE. UU.; IVA 21 %. Va en un PR propio, apilado arriba de #178, con su sintético que imite el texto real, sus tests y los verificadores. Probalo a mano con el real y anotá el resultado en la bitácora. En la C7 queda faltando solo la factura de Autocor.
+>
+> Cuando estén los cuatro: una sola suite completa sobre el HEAD de cada rama tocada, los verificadores acotados a los commits nuevos, y el ESTADO al día antes del push. Después parás y me pasás el resumen. El sprint no lo das por cerrado: falta el DoD 10 con Sergio.
+
+**Plan:**
+1. #177 (`feature/13-factura-pdf`): texto real de ETMAN con PdfPig; rojo y arreglo de las percepciones con la regla de ParaRevisar; D-S6-13 (número 99-<n> desde el nombre del archivo, para revisar); backend del punto 2 (buscar los códigos de un proveedor elegido a mano).
+2. Merge a #178 y #179. #179 (`feature/51-pantalla-pdf`): pantalla del punto 2.
+3. Expoyer: rama nueva desde `feature/13-factura-pdf-registro`, lector con su sintético, prueba a mano con el real, PR.
+4. ESTADO (D-S6-13 a 15, HU nueva de notas de crédito, preguntas a Sergio, C7).
+5. Suite completa por rama tocada, verificadores acotados, push, resumen. El sprint no se cierra.
+
+**Estado:** en curso
+- Arranque: `git fetch`; develop sin novedades; #176 a #179 abiertos sin revisión. El prompt del sprint, que estaba sin seguimiento en la copia local, se movió al scratchpad para poder cambiar de rama; vuelve al terminar.
+- Punto 1: el texto real de ETMAN (PdfPig, fuera del repo) sí trae «Percepcion IIBB: 3,920.23» y «Percepcion de IVA 2,940.17», en el mismo renglón que el código de barras; «Cordoba : 3920.23» es el detalle por jurisdicción. El lector ya daba 3.920,23 con el real. Lo que sí estaba mal: un monto ilegible quedaba null en silencio, y «1.000,50» se leía 1,00. `5f0e908` sintético con la forma del texto real (solo test, 21 verdes); `70fb2ac` rojo (3 con error por aserción); `8a9aca4` arreglo (24 verdes; real: IIBB 3.920,23, IVA 2.940,17, nada para revisar).
+- Punto 2 y D-S6-13, backend: esqueleto `c8d9d2c`… (ver git log de `feature/13-factura-pdf`): `POST /api/facturas-compra/pdf` acepta un `proveedorId` opcional y el caso de uso recibe el nombre del archivo. Sigue el rojo.
+
+## 17/11/2026 · Respuestas del 17/11: D-S6-15 (cuatro descuentos) y D-S6-16 (el IVA de lo comprado en negro no se paga)
+
+**Instrucción recibida (verbatim):**
+> Respuestas del 17/11 que cierran dos preguntas del ESTADO:
+>
+> - D-S6-15 (reemplaza la versión pendiente): la línea de la factura de compra pasa a tener CUATRO descuentos sucesivos, no tres. Tres es lo que traen habitualmente los proveedores; el cuarto es para los descuentos externos por marca o por artículo. Ejemplo ETMAN: siempre trae el 36 % y además un 5 % que no figura en la factura porque es por forma de pago; el operador lo carga en la línea.
+>   Impacto:
+>   - Cambia el CA-012 de la 056: actualizá la proforma con esta decisión y su fecha.
+>   - Hay cambio de esquema: un descuento más en factura_compra_detalle, con el mismo CHECK que los otros. Va por script SQL 10 en backend/db/rescaffold/ más re-scaffold, nunca migraciones.
+>   - Toca el cálculo del costo, el total, la pantalla de la 056 y la precarga de la 049.
+>   - El lector de ETMAN propone el 5 % en el cuarto descuento, marcado para revisar, porque el PDF no lo trae.
+>   Va en su propio PR, antes del de Expoyer.
+>   El script 10 no lo aplicás vos en lacentral_test ni en lacentral: dejá en la bitácora un bloque «PARA SANTI» con los comandos listos para fish (backup primero, ON_ERROR_STOP=1, contenedor lacentral_db, superusuario lacentral) para lacentral_test, lacentral_demo y lacentral. Mientras Santi no lo aplique en lacentral_test, lo que dependa del esquema queda frenado; seguí con lo que no dependa.
+>
+> - D-S6-16: lo comprado en negro es comprobante B y ese IVA no se paga. El IVA que muestra el presupuesto de Fazio se ignora: el total que se registra es 323.670,44, sin IVA. Sacá la pregunta de «Lo que vuelve a Sergio» y anotá la decisión.
+
+**Plan:**
+1. Script `10` en `backend/db/rescaffold/` (idempotente, con verificación) en una rama nueva `feature/163-cuarto-descuento`, apilada sobre `feature/51-pantalla-pdf`; push de la rama y bloque «PARA SANTI» con los comandos para fish (backup, `lacentral_test`, `lacentral_demo`, `lacentral`).
+2. Terminar los arreglos del bloque anterior en #177/#179 (punto 2, D-S6-13), que no dependen del esquema.
+3. D-S6-15, lo que no depende del esquema: proforma de la 056 (CA-012), entidad, cálculo y validación del cuarto descuento con Moq, DTO de la API, pantalla de la 056, precarga de la 049, lector de ETMAN con el 5 % para revisar. Frenado hasta que Santi aplique el 10 en `lacentral_test`: re-scaffold, mapeo del repositorio y pruebas contra PostgreSQL.
+4. D-S6-16 en el ESTADO; comprobar con el PDF real de Fazio que el total sin IVA da 323.670,44.
+5. Expoyer, en su PR, apilado arriba del de la D-S6-15 (va después de él).
+
+**Decisión (17/11):** el PR del cuarto descuento se apila sobre la 049 (toca su precarga y la pantalla de la 056), y el de Expoyer sobre el del cuarto descuento. Orden de merge: #176 → #177 → #178 → #179 → cuarto descuento → Expoyer.
+
+**Estado:** en curso
+- Corrección de la línea del esqueleto del punto 2 (más arriba): el commit es `b251416`, no `c8d9d2c`.
+- Script 10 escrito: `a3650ed` en `feature/163-cuarto-descuento` (rama nueva, apilada sobre `feature/51-pantalla-pdf`), pusheada sin PR. **No se ejecutó en ninguna base**: no hay Postgres local en esta máquina (ni `psql` ni daemon de Docker), así que tampoco se probó su sintaxis contra un servidor. La primera corrida es la de Santi en `lacentral_test`, en una transacción con `ON_ERROR_STOP=1`.
+
+### PARA SANTI · 17/11/2026 · backup y script 10 (cuarto descuento, D-S6-15)
+
+Desde fish, en tu máquina, parado en la raíz del repo. El script se lee de la rama pusheada con `git show`: no hace falta cambiar de rama ni tener el repo en la Arch. **Requisito:** el 09 aplicado en cada base (el paso 2 lo muestra; si una da `s09 = 0`, primero el bloque «PARA SANTI» anterior).
+
+1 · Backup de las tres bases, a tu máquina. Cada `.dump` tiene que pesar más de 0 bytes; si uno da error o pesa 0, no sigas:
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+mkdir -p ~/backups-lacentral
+set -l marca (date +%Y%m%d-%H%M)
+for base in lacentral_test lacentral_demo lacentral
+    ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc $base > ~/backups-lacentral/$base-$marca.dump
+    or begin; echo "FALLÓ el backup de $base: no sigas"; break; end
+end
+ls -l ~/backups-lacentral/*-$marca.dump
+```
+
+2 · Estado de cada base, solo lectura. `s09 = 1` es el 09 aplicado; `s10 = 0` es el 10 pendiente:
+
+```fish
+for base in lacentral_test lacentral_demo lacentral
+    echo "SELECT current_database() AS base, count(*) FILTER (WHERE column_name = 'descuento_3_porcentaje') AS s09, count(*) FILTER (WHERE column_name = 'descuento_4_porcentaje') AS s10 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'factura_compra_detalle';" | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d $base
+end
+```
+
+3 · El 10, **primero solo en `lacentral_test`**. Tiene que terminar con `NOTICE: 10: TODO OK.` y `COMMIT`. El `WARNING` del `ROLLBACK` inicial es esperado (no hay transacción abierta):
+
+```fish
+git fetch origin
+git show origin/feature/163-cuarto-descuento:backend/db/rescaffold/10_Cuarto_Descuento.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+4 · Si el 3 dio `TODO OK`, avisame: con eso sigo con el re-scaffold y las pruebas contra PostgreSQL. Después, el mismo comando en `lacentral_demo` y en `lacentral`, de a una, y repetí el paso 2: las tres con `s10 = 1`. El script es idempotente: correrlo dos veces en la misma base no cambia nada.
+
+```fish
+git show origin/feature/163-cuarto-descuento:backend/db/rescaffold/10_Cuarto_Descuento.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_demo -v ON_ERROR_STOP=1
+git show origin/feature/163-cuarto-descuento:backend/db/rescaffold/10_Cuarto_Descuento.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral -v ON_ERROR_STOP=1
+```
+
+Para volver atrás una base (solo si hiciera falta): `ssh atiz@arch docker exec -i lacentral_db pg_restore -U lacentral -d <base> --clean --if-exists < ~/backups-lacentral/<base>-<marca>.dump`.
+- Punto 2 y D-S6-13, backend: esqueleto `b251416`, rojo `6b2d65c` (12 con error por aserción; dos rojos que primero daban NRE y una excepción de JSON se reescribieron para que fallen por aserción antes de commitear), código `4668ba0`. Filtrado (lectura, caso de uso, `PostPdf_*`): 36/36. Real: Fazio `99-48437`, solo el número para revisar. **D-S6-16:** el neto de las 10 líneas del real de Fazio da **323.670,42**, no 323.670,44: el PDF redondea el precio unitario final («P. Final») y lo multiplica por la cantidad; el sistema aplica los descuentos al precio de lista y redondea la línea. Diferencia de 2 centavos, sin marcar (entra en la tolerancia de la línea). Va al ESTADO como pregunta, no lo resuelvo.
+- Puntos 1 y 2, pantalla (`feature/51-pantalla-pdf`): rojo `34c33e9` (5 FAILED: percepciones sin etiqueta por aserción, 4 por `expectOne` porque no había pedido; dos errores del spec, el texto en singular y el cuerpo del error con `detail`, se corrigieron con `--amend` antes de pushear); código `4de30a5` (etiqueta y `aria-invalid` en las cuatro percepciones; elegir el proveedor con el formulario del PDF vuelve a mandar el archivo con `proveedorId` y pasa a líneas los códigos hallados; ya no pisa el tipo del comprobante con el habitual). Mutaciones propias antes de los verificadores: sobrevivían dos líneas sin efecto (`invalidarTotales`, `archivoPdf = null`) → `ceb1a67` las borra; tres ramas sin test → `7cc9f1f` solo test; el cruce con pendientes antes de pedir fichas → `8ea250d` lo borra. Sin cada guarda de versión, sin la API mandando `proveedorId`, sin las sucursales: 1 FAILED cada una. Frontend completo sobre `8ea250d`: `TOTAL: 246 SUCCESS`.
+- D-S6-15, lo que no depende del esquema (`feature/163-cuarto-descuento`): proforma de la 056 v1.1 (CA-012 con cuatro descuentos). Núcleo: esqueleto, rojo y código (ver `git log` de la rama): 13 con error por aserción → 127/127 filtrado (detalle, registro, lectura, caso de uso). ETMAN toma el porcentaje de «Pago Contado N%» y lo marca `lineas[i].descuento4` (decisión: clave propia por línea para no tapar la marca de «el total no cierra»). Real de ETMAN: 5 % en las tres líneas, para revisar. Pantalla: rojo 7 FAILED por aserción → código `b815c8f`; mutaciones propias muertas; frontend completo sobre `b815c8f`: `TOTAL: 250 SUCCESS`. API: `/calculo` no escribe, así que su test HTTP corre sin el script 10: rojo (neto 200 en vez de 190) → `a84c6c7`. **Frenado por E10:** repositorio, re-scaffold y relectura de la fila. Ojo: hasta entonces, en esa rama el costo usa el cuarto descuento pero la línea no lo guarda; la rama no se mergea sin el repositorio.
+- Punto 4, Expoyer (`feature/13-lector-expoyer`, apilada sobre `feature/163-cuarto-descuento`): rojo `c419b66` (11 con error, todos por aserción: 7 por el helper Leer, 4 por `Assert.NotNull`; tres casos sobre renglones directos se agregaron con `--amend` antes de pushear, incluido el «º» y las tildes del texto real, que el sintético no puede escribir); código `062dbfa`. Filtrado 45/45. Mutaciones propias (13): todas muertas. **Prueba a mano con el real** (programa descartable en el scratchpad, nada al repo): factura A `0012-00091771` del 27/10/2026, CUIT del proveedor reconocido (el del cliente, sin guiones, no se toma), dos líneas `101324-3` × 1 a 67.778,40 y `C 115105 4- F` × 1 a 30.728,57, neto 98.506,97 = subtotal del PDF, nada para revisar, sin vencimiento. La nota de crédito de Expoyer sigue sin reconocerse (D-S6-14). En la C7 falta solo Autocor.
+- ESTADO: D-S6-13 a D-S6-16, decisiones técnicas de la revisión, compuerta E10, C7 con Expoyer, HU nueva de notas de crédito (pendiente del equipo, propuesta Sprint 8), pregunta nueva a Sergio por los 2 centavos de Fazio. Base: el ESTADO de la rama de arriba (contiene todo lo de las ramas apiladas).
+- `verificador-tdd` de los arreglos del #177, ronda 1 (`5f0e908`, `70fb2ac`, `8a9aca4`, `b251416`, `6b2d65c`, `4668ba0`): **NO APTO**. Orden y rojos validados. Sobrevivieron el `(?!\S)` del monto de IVA, el `Path.GetFileName` y el ancla `^` de Fazio. Hallazgo: el caso del proveedor inactivo mataba U1 por una excepción. **Correcciones de esta bitácora:** el rojo de `6b2d65c` fue de **11** con error, no 12 (lo reprodujo el verificador); el «21 verdes» de `5f0e908` es la suma de `LecturaPdfTests` (14) e `InterpretarFacturaPdfUseCaseTests` (7). Arreglo `36654aa`, solo test: con cada una de las cuatro mutaciones, 1 con error por aserción; filtrado 35/35. Suite completa sobre `86ceffd` (649/649); `36654aa` solo agrega tests.
+- `verificador-tdd` de los arreglos del #179, ronda 1 (`34c33e9..8ea250d`): **NO APTO**. Sobrevivieron el aria-invalid de IVA, la clave de Ganancias, y la sucursal, los descuentos y la marca de la línea resuelta con el proveedor elegido. Arreglo `78ff462`, solo test (hecho en un worktree, borrado después): con cada mutación, 1 o 2 FAILED; además, la clave de Municipal, `activo` y que la primera lectura no manda `proveedorId`. Frontend completo sobre `78ff462`: `TOTAL: 248 SUCCESS`.
+- Suites completas de backend (corridas de a una, 17/11 20:27 a 22:36): `86ceffd` (#177) `Correctas! - Con error: 0, Superado: 649, Omitido: 0, Total: 649, Duración: 43 m 28 s`; `6968cd5` (#178; el backend del #179 es el mismo árbol) `Superado: 652, Total: 652, Duración: 43 m 14 s`; `e50413d` (cuarto descuento + Expoyer) `Superado: 675, Total: 675, Duración: 42 m 33 s`. Frontend sobre `a191863` (rama de Expoyer): `TOTAL: 252 SUCCESS`.
+- Verificadores, de a uno: #177 ronda 2 **APTO** y `auditor-persistencia` **APTO**; #179 ronda 2 **APTO** (12 mutaciones muertas); Expoyer `verificador-tdd` **APTO** (rojo de 11 reproducido, 11 mutaciones muertas; no pudo correr la suite por permisos, la corrí yo) y `auditor-persistencia` **APTO** (sin persistencia en el diff). Suites completas sobre el HEAD de cada rama, de a una (base menos cargada, unos 5 minutos cada una): `b0cf239` (#177) `Correctas! - Con error: 0, Superado: 652, Omitido: 0, Total: 652, Duración: 4 m 44 s`; `5be9f56` (#178, mismo backend que el #179) `Superado: 655, Total: 655, Duración: 4 m 20 s`; `d89a06a` (Expoyer, con el cuarto descuento debajo) `Superado: 678, Total: 678, Duración: 5 m 8 s`. Frontend: `78ff462` (#179) 248/248; `a191863` (Expoyer; mismo frontend que `d89a06a`) 252/252. ESTADO al día (tablero y PRÓXIMA SESIÓN). Push de las cinco ramas; PR de Expoyer.
+
+**BLOQUEADO EN:** el cuarto descuento (D-S6-15) espera que Santi aplique el script 10 en `lacentral_test` (bitácora, «PARA SANTI · 17/11 · script 10»): sin eso no hay re-scaffold, ni mapeo del repositorio, ni prueba contra PostgreSQL, ni PR de esa rama. Lo demás de la revisión está hecho, con verificadores APTO. Siguen abiertos, todos de personas: las preguntas 4 y 5 a Sergio, la HU de notas de crédito (equipo), la factura de Autocor (Lauti) y el DoD 10 (Javi con Sergio). El sprint no se cierra.
+
+## 18/11/2026 10:36 · Script 10 aplicado en lacentral_test: cierre del cuarto descuento y merge en Expoyer
+
+**Instrucción recibida (verbatim):**
+> 10: TODO OK en lacentral_test (17/11). Seguí con el cuarto descuento: re-scaffold, mapeo del repositorio, prueba contra PostgreSQL releyendo la fila, suite completa, verificadores acotados a los commits nuevos y PR. Después mergeá esa rama en feature/13-lector-expoyer y corré lo que corresponda. El 10 en lacentral_demo y en lacentral lo aplico yo cuando me lo pidas. Resúmenes en español.
+
+**Plan:**
+1. `feature/163-cuarto-descuento`: re-scaffold contra `lacentral_test` (solo `FacturaCompraDetalle` y el DbContext deberían cambiar).
+2. Prueba contra PostgreSQL en rojo: registrar una factura con el cuarto descuento y releer la fila con un contexto nuevo. Commit del rojo.
+3. Mapeo del repositorio. Filtrado verde. Commit.
+4. Suite completa sobre el HEAD; `verificador-tdd` y `auditor-persistencia` acotados a los commits nuevos; PR (base `feature/51-pantalla-pdf`).
+5. Merge en `feature/13-lector-expoyer`; suite completa sobre ese HEAD (cambió backend); ESTADO y bitácora antes del push.
+6. Pedirle a Santi el 10 en `lacentral_demo` y `lacentral`.
+
+**Estado:** en curso
+- Arranque: `git fetch`; `origin/develop` sin commits nuevos (`b920a89`); sin worktrees extra.
+- Paso 1, re-scaffold contra `lacentral_test` (`dotnet-ef` 10.0.11, con `DOTNET_ROOT=$HOME/.dotnet`): el diff real (`--ignore-cr-at-eol`) es solo `Descuento4Porcentaje` en `FacturaCompraDetalle.cs` y su `HasPrecision(6, 2)` con el comentario en el DbContext. `fcb9e51`. Compilación sin warnings. No se comparó contra `lacentral` (README del re-scaffold): la única diferencia esperada es justamente el 10, que Santi aplica después.
+- Paso 2, rojo `d018c29`: relectura con contexto nuevo de una línea con cuatro descuentos, 1 con error por aserción (`Expected (10, 5, 2,5, 5)`, `Actual (10,00, 5,00, 2,50, 0,00)`); el test del CHECK `fcd_descuento_4_valido` en el motor pasa desde el principio (lo prueba el script 10, ya commiteado).
+- Paso 3, `da0412c` mapeo en `FacturaCompraRepositorio`. Filtrado `FacturasCompra`: 226/226. Suite completa sobre `da0412c`: `Correctas! - Con error: 0, Superado: 669, Omitido: 0, Total: 669, Duración: 4 m 30 s`.
+- Frontend completo sobre `da0412c`: `TOTAL: 252 SUCCESS`.
+- `verificador-tdd` ronda 1 (`a3650ed..da0412c`, sin los merges de abajo): **NO APTO**. Validó los cuatro rojos y el orden; de 15 mutaciones, sobrevivió solo una: el regex de «Pago Contado» de `LayoutsPdf.cs:51` sin la parte decimal, porque el sintético trae «5%». Arreglo `4125c24`, solo test: `Etman_PagoContadoConDecimales_LoProponeCompleto`, con «2.5%». Con la mutación: 1 con error por aserción; sin ella: filtrado `FacturasCompra` 227/227. Nota: una corrida filtrada dio 1 con error porque el `build -q` falló y `--no-build` usó el binario de la mutación; recompilado, verde. Suite completa sobre `4125c24` (`--no-incremental`, 0 advertencias): `Correctas! - Con error: 0, Superado: 670, Omitido: 0, Total: 670, Duración: 5 m 19 s`. Ronda 2 acotada a `4125c24`, en curso.
+- `verificador-tdd` ronda 2 (solo `4125c24`): **APTO**. La mutación de la ronda 1 muere (1 con error, `LecturaPdfTests.cs:85`), y también una de refuerzo (`Eeuu` → `Argentino`). Aceptó la suite de `4125c24`. Hallazgo no bloqueante: el test nuevo afirma `ParaRevisar` solo para `lineas[0]`. `auditor-persistencia`, en curso.
+- `auditor-persistencia` (`a3650ed..4125c24`, sin merges): **APTO**, sin hallazgos. Mató la mutación del mapeo contra PostgreSQL real; 9/9 `CuartoDescuento` sin omitidos. Aviso: hasta que el 10 esté en `lacentral_demo` y `lacentral`, registrar una factura de compra ahí da 42703 → el PR no se mergea a `develop` antes (ESTADO, E10). No pudo consultar `pg_constraint` ni buscar esquemas huérfanos: no hay cliente de PostgreSQL en la máquina.
+- ESTADO al día (tablero #163, E10, PRÓXIMA SESIÓN), antes del push.
