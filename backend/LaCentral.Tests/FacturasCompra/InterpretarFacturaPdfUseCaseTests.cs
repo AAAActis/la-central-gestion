@@ -165,6 +165,9 @@ public class InterpretarFacturaPdfUseCaseTests
         ElPdfDice(PdfSintetico.PresupuestoFazio());
         _proveedores.Setup(p => p.ObtenerDetallePorIdAsync(7, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existe ? new Proveedor { Id = 7, RazonSocial = "Dado de baja", Activo = false } : null);
+        // Si el caso de uso siguiera de largo, la búsqueda de códigos respondería: falla la aserción, no una excepción.
+        _facturas.Setup(f => f.ObtenerArticulosPorCodigoProveedorAsync(It.IsAny<int>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, int>());
 
         var resultado = await CasoDeUso().EjecutarAsync([1], proveedorElegido: 7);
 
