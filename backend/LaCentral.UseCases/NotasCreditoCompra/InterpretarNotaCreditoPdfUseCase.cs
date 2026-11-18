@@ -52,7 +52,8 @@ public class InterpretarNotaCreditoPdfUseCase
         var revisar = leida.ParaRevisar.ToList();
         if (proveedorId is null)
             revisar.Add("proveedorId");
-        if (sinEncontrar.Count > 0 && !revisar.Contains("facturaIds"))
+        // Sin facturas en el texto ya va a revisión desde el lector, y entonces no hay sin encontrar.
+        if (sinEncontrar.Count > 0)
             revisar.Add("facturaIds");
 
         return Result<NotaCreditoPdfInterpretada>.Success(new(proveedorId, leida.Numero, leida.FechaEmision, leida.Clase,
