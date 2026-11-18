@@ -92,7 +92,7 @@ BEGIN
             fecha_registro       TIMESTAMPTZ   NOT NULL DEFAULT now(),
             -- Anulación (D-S6-23, 18/11/2026), como factura_compra: motivo y doble certificación.
             estado                  VARCHAR(10)   NOT NULL DEFAULT 'ACTIVA',
-            motivo_anulacion        VARCHAR(500),
+            motivo_anulacion        TEXT,
             fecha_anulacion         TIMESTAMPTZ,
             usuario_anulacion_id    INTEGER       REFERENCES usuario(id),
             usuario_autorizacion_id INTEGER       REFERENCES usuario(id),
