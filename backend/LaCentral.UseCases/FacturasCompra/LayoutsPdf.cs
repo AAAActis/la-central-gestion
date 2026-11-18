@@ -187,7 +187,40 @@ public static class LayoutsPdf
         => renglones.Select((r, i) => (r, i)).FirstOrDefault(x => condicion(x.r), (r: "", i: -1)).i;
 
     /// <summary>HU-FCO-07 (057) CA-010: la nota de crédito leída por el primer layout que la reconoce, o null.</summary>
-    public static NotaCreditoLeida? LeerNotaCredito(IReadOnlyList<string> renglones) => null;
+    public static NotaCreditoLeida? LeerNotaCredito(IReadOnlyList<string> renglones) => LeerNotaCreditoExpoyer(renglones);
+
+    // Expoyer, nota de crédito A (V20261105NCBA0010-00021495): «[ A ] 0010 - 00021495», la clase
+    // cortada a continuación de «Nota de crédito», las facturas en «Doc.Asoc.:», números de EE. UU.
+    private const string EncabezadoNotaCreditoExpoyer = "Partida Pr. Unitario %Desc. Importe";
+
+    private static NotaCreditoLeida? LeerNotaCreditoExpoyer(IReadOnlyList<string> renglones)
+    {
+        var texto = string.Join('\n', renglones);
+        if (!texto.Contains(EncabezadoNotaCreditoExpoyer) || !Regex.IsMatch(texto, @"Nota de cr[eé]dito"))
+            return null;
+        var revisar = new List<string>();
+
+        var numero = Regex.Match(texto, @"\[ A \] (\d{4}) - (\d{8})") is { Success: true } n ? $"{n.Groups[1].Value}-{n.Groups[2].Value}" : null;
+        var emision = Regex.Match(texto, @"Fecha: (\d{2}/\d{2}/\d{4})") is { Success: true } f ? AFecha(f.Groups[1].Value) : null;
+        // shortcut: solo hay una nota real, por bonificación; otra clase va a revisión hasta tener su PDF.
+        var clase = Regex.IsMatch(texto, @"Nota de cr[eé]dito Bonific") ? "BONIFICACION" : null;
+        var asociadas = renglones.Where(r => r.StartsWith("Doc.Asoc.:"))
+            .SelectMany(r => Regex.Matches(r, @"FC[AB](\d{4})-(\d{8})").Select(m => $"{m.Groups[1].Value}-{m.Groups[2].Value}"))
+            .Distinct().ToArray();
+
+        var neto = Monto(texto, @"(?m)^Subtotal ([\d,]+\.\d{2})$", Eeuu);
+        var total = Monto(texto, @"(?m)^Total ([\d,]+\.\d{2})$", Eeuu);
+        // Es A: el total es el neto más el 21 %. Si no cierra, hay algo que el lector no vio.
+        var importe = neto is { } x && total == x + Math.Round(x * 0.21m, 2, MidpointRounding.AwayFromZero) ? neto : null;
+
+        Revisar(revisar, ("numero", numero), ("fechaEmision", emision), ("clase", clase), ("importeNeto", importe));
+        if (asociadas.Length == 0)
+            revisar.Add("facturaIds");
+        // Sin una nota real con percepciones, no se sabe leerlas: si el texto las menciona, se revisan.
+        if (texto.Contains("Percep", StringComparison.OrdinalIgnoreCase))
+            revisar.Add("percepciones");
+        return new NotaCreditoLeida(Cuits(texto), numero, emision, clase, neto, asociadas, revisar);
+    }
 
     private static string[] Cuits(string texto) => Cuit.Matches(texto).Select(m => m.Value).Distinct().ToArray();
 
