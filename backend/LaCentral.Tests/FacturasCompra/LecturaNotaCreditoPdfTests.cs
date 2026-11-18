@@ -67,6 +67,35 @@ public class LecturaNotaCreditoPdfTests
     public void Expoyer_SiElTextoMencionaPercepciones_QuedanParaRevisar()
         => Assert.Equal(["percepciones"], Leer(PdfSintetico.NotaCreditoExpoyer(percepcion: "Percepcion IIBB 10.00")).ParaRevisar);
 
+    [Theory]
+    [InlineData(false, "Nota de credito")]   // sin el encabezado de columnas de la nota
+    [InlineData(true, "Comprobante")]        // con el encabezado, pero no dice que es una nota de crédito
+    public void SinLasDosMarcasDelLayout_NoEsUnaNotaDeCredito(bool conEncabezado, string titulo)
+        => Assert.Null(LayoutsPdf.LeerNotaCredito(Renglones(PdfSintetico.NotaCreditoExpoyer(conEncabezado: conEncabezado, titulo: titulo))));
+
+    [Fact]
+    public void Expoyer_UnaFacturaAsociadaRepetida_VaUnaSolaVez()
+        => Assert.Equal(["0011-00001111"], Leer(PdfSintetico.NotaCreditoExpoyer(docAsoc: "FCA0011-00001111 FCA0011-00001111")).FacturasAsociadas);
+
+    [Fact]
+    public void Expoyer_UnNumeroDeFacturaFueraDeDocAsoc_NoSeToma()
+        => Assert.Equal(["0011-00001111"],
+            Leer(PdfSintetico.NotaCreditoExpoyer(docAsoc: "FCA0011-00001111", otroRenglon: "Ref. FCA0099-00009999")).FacturasAsociadas);
+
+    [Fact]
+    public void Expoyer_ElIvaDelMedioCentavoRedondeaHaciaArriba_ComoLaFactura()
+        // 0,50 × 0,21 = 0,105 → 0,11: el total 0,61 cierra.
+        => Assert.Empty(Leer(PdfSintetico.NotaCreditoExpoyer(subtotal: "0.50", total: "0.61")).ParaRevisar);
+
+    [Fact]
+    public void Expoyer_SinNumeroNiFecha_QuedanParaRevisar()
+    {
+        var leida = Leer(PdfSintetico.NotaCreditoExpoyer(numero: "", fecha: ""));
+
+        Assert.Equal((null, null), (leida.Numero, leida.FechaEmision));
+        Assert.Equal(["numero", "fechaEmision"], leida.ParaRevisar);
+    }
+
     [Fact]
     public void UnaFacturaDeExpoyer_NoEsUnaNotaDeCredito()
         => Assert.Null(LayoutsPdf.LeerNotaCredito(Renglones(PdfSintetico.FacturaExpoyer())));
