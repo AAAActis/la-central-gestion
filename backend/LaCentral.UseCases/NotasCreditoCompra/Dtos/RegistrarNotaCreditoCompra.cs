@@ -29,3 +29,6 @@ public sealed record TotalesNotaCreditoCompra(decimal Neto, decimal Iva, decimal
 
 /// <summary>Lo que hace falta saber de una factura para asociarle una nota de crédito.</summary>
 public sealed record FacturaParaNotaCredito(int Id, int ProveedorId, bool Activa);
+
+/// <summary>CA-014: de un artículo, lo comprado en las facturas referenciadas y lo devuelto en notas vigentes.</summary>
+public sealed record CompradoYDevuelto(int ArticuloId, decimal Comprado, decimal Devuelto);

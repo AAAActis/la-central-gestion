@@ -17,6 +17,14 @@ public interface INotaCreditoCompraRepositorio
     Task<IReadOnlyList<FacturaParaNotaCredito>> ObtenerFacturasAsync(IReadOnlyCollection<int> ids, CancellationToken ct = default);
 
     /// <summary>
+    /// CA-014 (D-S6-25): bloquea las facturas (FOR UPDATE, para que dos devoluciones simultáneas
+    /// no pasen juntas el límite) y devuelve, por cada artículo que figura en ellas, lo comprado en
+    /// esas facturas y lo ya devuelto en notas de crédito vigentes que referencian alguna. Se llama
+    /// dentro de IUnidadDeTrabajo.
+    /// </summary>
+    Task<IReadOnlyList<CompradoYDevuelto>> ObtenerCompradoYDevueltoAsync(IReadOnlyCollection<int> facturaIds, CancellationToken ct = default);
+
+    /// <summary>
     /// Escribe la cabecera, su relación con las facturas y, en una devolución, sus líneas, y
     /// resta del stock del origen de cada línea. No toca costo, precios ni historial de compra.
     /// Se llama dentro de IUnidadDeTrabajo. Devuelve el Id que generó la base.

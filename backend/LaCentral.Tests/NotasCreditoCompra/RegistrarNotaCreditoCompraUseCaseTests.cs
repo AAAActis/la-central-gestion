@@ -56,9 +56,14 @@ public class RegistrarNotaCreditoCompraUseCaseTests
             .ReturnsAsync(Result<int>.Success(IdGenerado));
         _facturas.Setup(f => f.ObtenerEstadoArticulosAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<int, bool> { [100] = true, [200] = true, [300] = false });
+        LoCompradoYDevueltoEs(new(100, 10m, 0m), new(200, 10m, 0m), new(300, 5m, 0m));
         _articulos.Setup(a => a.ObtenerSucursalesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new short[] { 1, 2, Reclamos });
     }
+
+    private void LoCompradoYDevueltoEs(params CompradoYDevuelto[] filas) =>
+        _notas.Setup(n => n.ObtenerCompradoYDevueltoAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(filas);
 
     private RegistrarNotaCreditoCompraUseCase Caso() =>
         new(_notas.Object, _proveedores.Object, _facturas.Object, _articulos.Object, _unidad.Object, _contexto.Object);
