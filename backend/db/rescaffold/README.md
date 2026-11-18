@@ -18,6 +18,7 @@ de EF se regenera desde la base. **Prohibido `dotnet ef migrations`.**
 | `08_Ubicacion_Deposito_60.sql` | `stock.ubicacion_deposito` de 30 a 60. |
 | `09_Factura_Compra_Mecanica.sql` | HU-FCO-06 (056): tipo de comprobante habitual del proveedor, tipo de comprobante y fecha de imputación de la factura, segundo y tercer descuento por línea. Idempotente. |
 | `10_Cuarto_Descuento.sql` | HU-FCO-06 (056) CA-012, D-S6-15: cuarto descuento sucesivo por línea de factura de compra. Requiere el 09. Idempotente. |
+| `11_Nota_Credito_Compra.sql` | HU-FCO-07 (057), D-S6-18 y D-S6-20: depósito Reclamos (`sucursal.es_reclamos`, su fila y su stock en 0), `nota_credito_compra`, su relación muchos a muchos con `factura_compra` (mismo proveedor por FK compuesta) y sus líneas de devolución. Requiere el 10. Idempotente. |
 
 Cada script corre en una transacción y no es idempotente. Se aplica a mano: primero
 en `lacentral_test`, se verifica, después en `lacentral`.
