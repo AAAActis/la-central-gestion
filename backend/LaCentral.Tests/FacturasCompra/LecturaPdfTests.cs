@@ -103,6 +103,7 @@ public class LecturaPdfTests
     [InlineData("", "2,000.25", "percepcionIibb")]
     [InlineData("1,000.50", "", "percepcionIva")]
     [InlineData("1.000,50", "2,000.25", "percepcionIibb")]
+    [InlineData("1,000.50", "2.000,25", "percepcionIva")]
     public void Etman_UnaPercepcionDelBloqueQueNoSePuedeLeer_QuedaNull_YSeMarcaParaRevisar(string iibb, string iva, string campo)
     {
         var leido = Leer(PdfSintetico.FacturaEtman(percepcionIibb: iibb, percepcionIva: iva));
@@ -127,6 +128,7 @@ public class LecturaPdfTests
     [InlineData(null)]
     [InlineData("factura.pdf")]
     [InlineData("Presupuesto_.pdf")]
+    [InlineData("copia_Presupuesto_12345.pdf")]   // el nombre tiene que empezar con «Presupuesto_»
     public void Fazio_SinElNumeroEnElNombreDelArchivo_EsB_YElNumeroQuedaParaRevisar(string? nombreArchivo)
     {
         var leido = Leer(PdfSintetico.PresupuestoFazio(), nombreArchivo);
@@ -140,6 +142,7 @@ public class LecturaPdfTests
     [Theory]
     [InlineData("Presupuesto_12345.pdf", "99-12345")]
     [InlineData("presupuesto_00777.PDF", "99-00777")]
+    [InlineData("descargas/Presupuesto_4242.pdf", "99-4242")]   // algunos navegadores mandan la ruta
     public void Fazio_ElNumeroSaleDelNombreDelArchivo_ConPrefijo99_YQuedaParaRevisar(string nombreArchivo, string numero)
     {
         var leido = Leer(PdfSintetico.PresupuestoFazio(), nombreArchivo);
