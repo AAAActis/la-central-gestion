@@ -721,6 +721,51 @@ public class RegistrarFacturaCompraPostgreSqlTests
         Assert.Equal(166.73m, articulo.PrecioCosto);
     }
 
+    // D-S6-15 (script 10) contra PostgreSQL: el cuarto descuento se guarda en la línea y entra
+    // en el costo. Se relee con un contexto nuevo.
+    [PostgreSqlFact]
+    public async Task Fco06_CuartoDescuento_SeGuardaEnLaLinea_YElCostoEsElNetoDeLosCuatro()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+
+        Result<RegistrarFacturaCompraResponse> resultado;
+        await using (var contexto = fixture.CrearContexto())
+            resultado = await Caso(contexto, e).EjecutarAsync(Compra(e, "0001-00004568") with
+            {
+                Lineas = new[] { new LineaFacturaCompraRequest(e.Comprado1, e.Sucursal1, 5m, 200m, 10m, 5m, 2.5m, 5m) }
+            });
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        await using var relectura = fixture.CrearContexto();
+        var linea = await relectura.FacturaCompraDetalle.AsNoTracking().SingleAsync(d => d.FacturaCompraId == resultado.Value.Id);
+        Assert.Equal((10m, 5m, 2.5m, 5m),
+            (linea.DescuentoPorcentaje, linea.Descuento2Porcentaje, linea.Descuento3Porcentaje, linea.Descuento4Porcentaje));
+        // 200 × 0,90 × 0,95 × 0,975 × 0,95 = 158,38875 → 158,39
+        var articulo = await relectura.Articulo.AsNoTracking().SingleAsync(a => a.Id == e.Comprado1);
+        Assert.Equal(158.39m, articulo.PrecioCosto);
+    }
+
+    // El CHECK fcd_descuento_4_valido (script 10) existe en el motor.
+    [PostgreSqlFact]
+    public async Task Fco06_CuartoDescuentoFueraDeRango_LoRechazaElMotor()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        await using var contexto = fixture.CrearContexto();
+        contexto.FacturaCompra.Add(new FacturaCompra
+        {
+            ProveedorId = e.Proveedor, Numero = "99-2", FechaEmision = new DateOnly(2026, 10, 1),
+            FechaImputacion = new DateOnly(2026, 10, 1), TipoComprobante = 'B', Estado = "ACTIVA", Origen = "MANUAL",
+            UsuarioId = e.UsuarioId, FechaRegistro = DateTime.UtcNow, ConComprobanteFiscal = true,
+            FacturaCompraDetalle = { new FacturaCompraDetalle
+                { ArticuloId = e.Comprado1, SucursalId = e.Sucursal1, Cantidad = 1m, PrecioUnitario = 1m, Descuento4Porcentaje = 101m } }
+        });
+
+        var error = await Assert.ThrowsAsync<DbUpdateException>(() => contexto.SaveChangesAsync());
+        Assert.Equal("fcd_descuento_4_valido", Assert.IsType<PostgresException>(error.InnerException).ConstraintName);
+    }
+
     // El CHECK fcd_descuento_2_valido existe en el motor: el caso de uso no es la única defensa.
     [PostgreSqlFact]
     public async Task Fco06_SegundoDescuentoFueraDeRango_LoRechazaElMotor()

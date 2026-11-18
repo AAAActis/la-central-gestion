@@ -440,6 +440,31 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
         Assert.Equal(1m, await relectura.Stock.Where(x => x.ArticuloId == s.ArticuloId).Select(x => x.Cantidad).SingleAsync());
     }
 
+    // D-S6-15: el cuarto descuento llega del cuerpo al caso de uso. /calculo no escribe, así que
+    // no depende del script 10; el registro de la columna se prueba cuando esté aplicado.
+    [PostgreSqlFact]
+    public async Task Fco06_PostCalculo_ElCuartoDescuentoEntraEnElNeto()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        var cuerpo = new
+        {
+            proveedorId = s.ProveedorId, numero = "99-00000001", tipoComprobante = "B", fechaEmision = "2026-10-01",
+            percepcionIva = 0m, percepcionIibb = 0m, percepcionMunicipal = 0m, percepcionGanancias = 0m,
+            lineas = new[]
+            {
+                new { articuloId = s.ArticuloId, sucursalId = s.SucursalId, cantidad = 2m, precioUnitario = 100m, descuentoPorcentaje = 0m, descuento4Porcentaje = 5m }
+            }
+        };
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra/calculo", cuerpo);
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        // 2 × (100 − 5 %) = 190, sin IVA (B).
+        Assert.Equal(190m, (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("neto").GetDecimal());
+    }
+
     // Hallazgo no bloqueante de la ronda 1: /calculo pide sesión, como el registro.
     [PostgreSqlFact]
     public async Task Fco06_PostCalculoSinToken_401()
@@ -543,5 +568,24 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
 
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
         Assert.Contains("vía manual", await respuesta.Content.ReadAsStringAsync());
+    }
+
+    [PostgreSqlFact]
+    public async Task Fco05_PostDesdePdf_201_YLaFilaQuedaConOrigenPdf_LaManualConOrigenManual()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        var manual = CuerpoFco06(s, "A", "0001-00000001");
+        var json = JsonSerializer.SerializeToNode(CuerpoFco06(s, "A", "0001-00000002"))!.AsObject();
+        json["desdePdf"] = true;
+
+        var respuestaManual = await cliente.PostAsJsonAsync("/api/facturas-compra", manual);
+        var respuestaPdf = await cliente.PostAsJsonAsync("/api/facturas-compra", json);
+
+        Assert.Equal((HttpStatusCode.Created, HttpStatusCode.Created), (respuestaManual.StatusCode, respuestaPdf.StatusCode));
+        await using var relectura = fixture.CrearContexto();
+        var origenes = await relectura.FacturaCompra.AsNoTracking().OrderBy(f => f.Numero).Select(f => f.Origen).ToListAsync();
+        Assert.Equal(["MANUAL", "PDF"], origenes);
     }
 }
