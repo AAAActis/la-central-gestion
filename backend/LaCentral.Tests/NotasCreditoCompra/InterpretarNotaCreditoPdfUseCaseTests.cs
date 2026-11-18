@@ -77,6 +77,15 @@ public class InterpretarNotaCreditoPdfUseCaseTests
     }
 
     [Fact]
+    public async Task SiLosDosCuitSonDeProveedores_MandaElPrimero_ElDelEmisor()
+    {
+        _proveedores.Setup(p => p.ObtenerPorCuitAsync(PdfSintetico.CuitCliente, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Proveedor { Id = 77, RazonSocial = "Otro", Activo = true });
+
+        Assert.Equal(Expoyer, (await Caso().EjecutarAsync([1])).Value.ProveedorId);
+    }
+
+    [Fact]
     public async Task ElProveedorDelCuitDadoDeBaja_NoSeToma()
     {
         ElProveedorDelCuitEs(new Proveedor { Id = Expoyer, RazonSocial = "Expoyer S.A.", Activo = false, MotivoBaja = "x", FechaBaja = DateTime.UtcNow });
