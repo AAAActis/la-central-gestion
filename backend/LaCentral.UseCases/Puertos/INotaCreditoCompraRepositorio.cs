@@ -30,4 +30,14 @@ public interface INotaCreditoCompraRepositorio
     /// Se llama dentro de IUnidadDeTrabajo. Devuelve el Id que generó la base.
     /// </summary>
     Task<Result<int>> RegistrarConEfectosAsync(NotaCreditoCompra nota, CancellationToken ct = default);
+
+    /// <summary>CA-012: la nota con su número y si está vigente, o null si no existe.</summary>
+    Task<NotaCreditoParaAnular?> ObtenerParaAnularAsync(int id, CancellationToken ct = default);
+
+    /// <summary>
+    /// CA-012 (D-S6-23): marca la nota ANULADA con motivo, fecha, quién la pidió y quién la autorizó
+    /// y, si era por devolución, suma al stock del origen de cada línea lo que había restado. Se llama
+    /// dentro de IUnidadDeTrabajo.
+    /// </summary>
+    Task<Result> AnularConEfectosAsync(AnulacionNotaCreditoCompra anulacion, CancellationToken ct = default);
 }
