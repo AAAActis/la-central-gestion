@@ -9,7 +9,7 @@ public interface INotaCreditoCompraRepositorio
 {
     /// <summary>
     /// Si el proveedor ya tiene una nota de crédito con ese número. Es la validación previa:
-    /// ante concurrencia decide ncc_numero_unico.
+    /// ante concurrencia decide ux_nota_credito_compra_numero_activa (solo entre vigentes).
     /// </summary>
     Task<bool> ExisteNumeroAsync(int proveedorId, string numero, CancellationToken ct = default);
 

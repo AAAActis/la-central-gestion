@@ -1,6 +1,6 @@
 -- =====================================================================================
 --  11_Nota_Credito_Compra.sql
---  La Central · 18/11/2026 · HU-FCO-07 (057, issue #182) · D-S6-18 y D-S6-20
+--  La Central · 18/11/2026 · HU-FCO-07 (057, issue #182) · D-S6-18, D-S6-20 y D-S6-23
 --
 --  QUÉ HACE
 --    1. sucursal.es_reclamos BOOLEAN NOT NULL DEFAULT false, con índice único parcial (a lo
@@ -9,7 +9,9 @@
 --    2. factura_compra: UNIQUE (id, proveedor_id), para que la relación con la nota de
 --       crédito garantice el mismo proveedor con una FK compuesta.
 --    3. nota_credito_compra: la cabecera (proveedor, número, emisión, clase, importe neto,
---       percepciones, origen, usuario, fecha de registro).
+--       percepciones, origen, usuario, fecha de registro) y su anulación (estado, motivo,
+--       fecha, quién la pidió y quién la autorizó, D-S6-23); el número es único por
+--       proveedor solo entre las vigentes.
 --    4. nota_credito_compra_factura: muchos a muchos con factura_compra, del mismo proveedor.
 --    5. nota_credito_compra_detalle: las líneas de una devolución (artículo, sucursal de
 --       origen, cantidad).
@@ -88,7 +90,19 @@ BEGIN
             origen               VARCHAR(10)   NOT NULL DEFAULT 'MANUAL',
             usuario_id           INTEGER       NOT NULL REFERENCES usuario(id),
             fecha_registro       TIMESTAMPTZ   NOT NULL DEFAULT now(),
-            CONSTRAINT ncc_numero_unico UNIQUE (proveedor_id, numero),
+            -- Anulación (D-S6-23, 18/11/2026), como factura_compra: motivo y doble certificación.
+            estado                  VARCHAR(10)   NOT NULL DEFAULT 'ACTIVA',
+            motivo_anulacion        VARCHAR(500),
+            fecha_anulacion         TIMESTAMPTZ,
+            usuario_anulacion_id    INTEGER       REFERENCES usuario(id),
+            usuario_autorizacion_id INTEGER       REFERENCES usuario(id),
+            CONSTRAINT ncc_estado_valido CHECK (estado IN ('ACTIVA', 'ANULADA')),
+            CONSTRAINT ncc_anulacion_coherente CHECK (
+                (estado = 'ACTIVA'  AND motivo_anulacion IS NULL AND fecha_anulacion IS NULL
+                    AND usuario_anulacion_id IS NULL AND usuario_autorizacion_id IS NULL) OR
+                (estado = 'ANULADA' AND motivo_anulacion IS NOT NULL AND fecha_anulacion IS NOT NULL
+                    AND usuario_anulacion_id IS NOT NULL AND usuario_autorizacion_id IS NOT NULL)),
+            CONSTRAINT ncc_autorizacion_distinta CHECK (usuario_autorizacion_id <> usuario_anulacion_id),
             CONSTRAINT ncc_id_proveedor_unico UNIQUE (id, proveedor_id),
             CONSTRAINT ncc_clase_valida CHECK (clase IN ('BONIFICACION', 'DEVOLUCION')),
             CONSTRAINT ncc_origen_valido CHECK (origen IN ('MANUAL', 'PDF')),
@@ -97,6 +111,9 @@ BEGIN
                 COALESCE(percepcion_iva, 0) >= 0 AND COALESCE(percepcion_iibb, 0) >= 0 AND
                 COALESCE(percepcion_municipal, 0) >= 0 AND COALESCE(percepcion_ganancias, 0) >= 0)
         );
+        -- El número se libera al anularse: la unicidad rige solo entre las vigentes (como la factura).
+        CREATE UNIQUE INDEX ux_nota_credito_compra_numero_activa
+            ON nota_credito_compra (proveedor_id, numero) WHERE estado = 'ACTIVA';
         COMMENT ON TABLE nota_credito_compra IS
             'Nota de crédito de un proveedor (HU-FCO-07). Siempre tipo A: el número se copia exacto y el IVA es el 21 % del neto, que no se guarda. No cambia el costo de ningún artículo: es plata a favor en la cuenta corriente con el proveedor, que el sistema no lleva (Sergio, 18/11/2026).';
         COMMENT ON COLUMN nota_credito_compra.clase IS
@@ -157,10 +174,15 @@ BEGIN
         RAISE EXCEPTION '11: hay artículos sin fila de stock en Reclamos.';
     END IF;
     IF (SELECT count(*) FROM pg_constraint WHERE connamespace = current_schema()::regnamespace AND conname IN (
-            'fc_id_proveedor_unico', 'ncc_numero_unico', 'ncc_id_proveedor_unico', 'ncc_clase_valida',
+            'fc_id_proveedor_unico', 'ncc_id_proveedor_unico', 'ncc_clase_valida',
+            'ncc_estado_valido', 'ncc_anulacion_coherente', 'ncc_autorizacion_distinta',
             'ncc_origen_valido', 'ncc_importe_positivo', 'ncc_percepciones_no_negativas',
-            'nccf_nota_mismo_proveedor', 'nccf_factura_mismo_proveedor', 'nccd_cantidad_positiva')) <> 10 THEN
-        RAISE EXCEPTION '11: faltan restricciones (se esperaban 10).';
+            'nccf_nota_mismo_proveedor', 'nccf_factura_mismo_proveedor', 'nccd_cantidad_positiva')) <> 12 THEN
+        RAISE EXCEPTION '11: faltan restricciones (se esperaban 12).';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = current_schema()
+            AND indexname = 'ux_nota_credito_compra_numero_activa') THEN
+        RAISE EXCEPTION '11: falta el índice ux_nota_credito_compra_numero_activa.';
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = current_schema() AND indexname = 'ux_sucursal_reclamos') THEN
         RAISE EXCEPTION '11: falta el índice ux_sucursal_reclamos.';

@@ -70,7 +70,7 @@ public class RegistrarNotaCreditoCompraUseCase
                 return Fallo(TipoError.Invalido, $"El origen {sinOrigen.SucursalId} de la línea del artículo {sinOrigen.ArticuloId} no existe.");
         }
 
-        // CA-003: validación previa; ante dos registros simultáneos decide ncc_numero_unico.
+        // CA-003: validación previa; ante dos registros simultáneos decide ux_nota_credito_compra_numero_activa (solo entre vigentes).
         if (await _notas.ExisteNumeroAsync(request.ProveedorId, numero, ct))
             return Fallo(TipoError.Conflicto, $"El proveedor {proveedor.RazonSocial} ya tiene la nota de crédito {numero}.");
 
