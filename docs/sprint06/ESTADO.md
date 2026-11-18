@@ -36,7 +36,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | E56 | Esquema de la 056: `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `fecha_imputacion`, dos descuentos más por línea (script SQL + re-scaffold, en `lacentral_test` y `lacentral_demo`) | Santi | 056; la 029 y la 049 lo usan | **Script 09 escrito y aplicado en `lacentral_demo`** (13/11) con re-scaffold. **CERRADA 13/11:** Santi aplicó el 09 a `lacentral_test.public` con el superusuario (`09: TODO OK`). La suite corre contra `public`, sin `LA_CENTRAL_TEST_SCHEMA`. La plantilla `fco06_fuente` se borró el 13/11 |
 | C7 | Facturas reales de varios proveedores, para decidir parser por reglas o interpretación asistida (nota de la 029) | Javi | 029 | **CERRADA COMPLETA (18/11/2026, D-S6-19)**: ETMAN, Fazio y Expoyer con PDF digital y lector; Autocor entrega en papel y se carga a mano (056). Ver «Compuerta C7» abajo |
 | E10 | Script 10 (cuarto descuento, D-S6-15) en `lacentral_test`, `lacentral_demo` y `lacentral` | Santi | el PR del cuarto descuento | **CERRADA 18/11/2026.** Santi aplicó el 10 en las tres bases: `s09 = 1` y `s10 = 1` en todas. En `lacentral` también el 08 (ya estaba) y el 09 (`TODO OK`); el 07 ya estaba. Re-scaffold `fcb9e51` |
-| E11 | Script 11 (nota de crédito de proveedor y depósito Reclamos, D-S6-18 y D-S6-20; anulación, D-S6-23) en `lacentral_test` (plantilla `nc057_fuente`, según el equipo el 18/11), después en `lacentral_demo` y `lacentral` | Santi | la 057 (lo que toca el esquema: re-scaffold, repositorio, pruebas contra PostgreSQL, API) | **ABIERTA (18/11/2026).** Script escrito en `feature/182-nota-credito`; comandos en la bitácora («PARA SANTI · 18/11 · script 11»). **Ojo:** con el 11 en `lacentral_test.public`, la suite de toda rama sin su re-scaffold se corta («tablas que el modelo no clona»): el momento lo decide Santi |
+| E11 | Script 11 (nota de crédito de proveedor y depósito Reclamos, D-S6-18 y D-S6-20; anulación, D-S6-23) en `lacentral_test` (plantilla `nc057_fuente`, según el equipo el 18/11), después en `lacentral_demo` y `lacentral` | Santi | la 057 (lo que toca el esquema: re-scaffold, repositorio, pruebas contra PostgreSQL, API) | **ABIERTA (18/11/2026).** Script escrito en `feature/182-nota-credito`. **Ahora: plantilla `nc057_fuente`** en `lacentral_test` (copia de `public` con el 11; `public` no se toca, las suites de las otras ramas siguen igual): comandos en la bitácora («PARA SANTI · 18/11 · plantilla nc057_fuente»), ensayados el 18/11 en un esquema descartable. La 057 corre con `LA_CENTRAL_TEST_SCHEMA=nc057_fuente`. **El 11 en `public`, `lacentral_demo` y `lacentral`**, cuando Javi mergee la pila y el PR de la carga manual de la 057; ahí se borra `nc057_fuente` |
 
 C2, C5, C6 y C1 pasaron al Sprint 7 con el comparador (D-PL-05). La P6 se cerró el 11/11.
 
@@ -369,11 +369,11 @@ Orden de merge de la pila: #176 → #177 → #178 → #179 → #181 → #180; la
 - **D-S6-17 (Fazio, P. Final):** en el #177, verificadores APTO, mergeada hacia arriba con suites sobre cada HEAD (tablero).
 - **C7 cerrada completa (D-S6-19).** Autocor, carga manual.
 - **057 (#182):** proforma, issue, índice, plan (D-PL-06), decisión de Reclamos (D-S6-20) y script 11. Lo que no depende del
-  esquema está hecho en las dos ramas (tablero). **Cuando Santi diga «11: TODO OK» en `lacentral_test`** (bitácora, «PARA SANTI ·
-  18/11 · script 11», con la advertencia de que corta la suite de las ramas sin el re-scaffold): re-scaffold;
+  esquema está hecho en las dos ramas (tablero). **Cuando Santi diga «nc057_fuente: TODO OK»** (plantilla en `lacentral_test`, bitácora «PARA SANTI · 18/11 ·
+  plantilla nc057_fuente»; `public` no cambia): re-scaffold, y la suite de la 057 con `LA_CENTRAL_TEST_SCHEMA=nc057_fuente`;
   `NotaCreditoCompraRepositorio` (cabecera, relación con facturas, líneas, stock del origen) con relectura de la fila con un
   contexto nuevo, que el costo y el historial no cambian, y las restricciones del 11 (`nccf_factura_mismo_proveedor`,
-  `ncc_numero_unico`, `nccd_cantidad_positiva`); `NotasCreditoCompraController` (`POST /api/notas-credito-compra`, `/calculo`,
+  `ux_nota_credito_compra_numero_activa`, `nccd_cantidad_positiva`); `NotasCreditoCompraController` (`POST /api/notas-credito-compra`, `/calculo`,
   401/403); CA-008 (Reclamos fuera de los destinos de la factura: API y pantalla); verificadores y PR 1. Después, en la rama del
   PDF: `POST /api/notas-credito-compra/pdf`, la precarga en la pantalla, verificadores y PR 2.
 - **Sergio:** mostrarle D-S6-21 a D-S6-25 (si corrige alguna, se cambia) y la 4 del 17/11 (028 y 016).

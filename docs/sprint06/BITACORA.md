@@ -1245,3 +1245,68 @@ Para volver atrás una base: `ssh atiz@arch docker exec -i lacentral_db pg_resto
 - Verificaciones sobre `fd2f0b3`: unitarias de backend (`--no-incremental`, 0 advertencias) `Correctas! - Con error: 0, Superado: 501, Omitido: 0, Total: 501`; frontend completo `TOTAL: 276 SUCCESS`. Suite completa de backend: no, sin PR.
 
 **BLOQUEADO EN:** E11 (Santi aplica el 11 en `lacentral_test`, plantilla `nc057_fuente`): re-scaffold, repositorio de la nota con PostgreSQL (CA-014 suma acumulada y dos devoluciones simultáneas, CA-012 stock al origen y número liberado), CA-011 en la 028, API y PR. Sergio: ver D-S6-21 a 25. La rama local `feature/182-nota-credito` quedó adelantada por error a la del PDF (sin pushear): borrarla a mano (`git branch -D feature/182-nota-credito`) o pedirme que la reponga.
+
+## 18/11/2026 · Plantilla nc057_fuente para el script 11
+
+**Instrucción recibida (verbatim):**
+> El bloque «PARA SANTI · 18/11 · script 11» aplica el 11 en lacentral_test.public, y te había pedido la copia nc057_fuente para no cortar las suites de las otras ramas. Dejame en la bitácora el bloque para fish que, después del backup, crea en lacentral_test el esquema nc057_fuente como copia de public (estructura y datos que necesite la suite), le aplica el 11 con ON_ERROR_STOP=1 y lo verifica. Contenedor lacentral_db, superusuario lacentral, sin marcadores. Después la 057 corre su suite con LA_CENTRAL_TEST_SCHEMA=nc057_fuente. El 11 en public, lacentral_demo y lacentral va cuando Javi mergee la pila y el PR de la carga manual de la 057; ahí se borra nc057_fuente. Resúmenes en español.
+
+**Plan:**
+1. SQL versionados en `backend/db/pruebas/`: copia (mismo método que `PostgreSqlPruebas` y que `fco06_fuente`), guarda antes del 11, verificación y borrado.
+2. Ensayarlos en un esquema descartable de `lacentral_test` con el rol de la suite, y correr tests de PostgreSQL con esa copia como plantilla.
+3. Bloque PARA SANTI en fish; ESTADO (E11 y PRÓXIMA SESIÓN); push.
+
+**Estado:** terminada (queda que Santi lo corra)
+- Error mío: el bloque «PARA SANTI · 18/11 · script 11» de arriba aplicaba el 11 en `lacentral_test.public`. **Su paso 3 queda reemplazado por el bloque de abajo**; los pasos 1, 2 y 4 (el 11 en `lacentral_demo` y `lacentral`) siguen valiendo para cuando Javi mergee.
+- SQL en `backend/db/pruebas/`: `nc057_fuente_copia.sql` (tablas con `LIKE … INCLUDING ALL`, índices y PK/UNIQUE con los nombres de `public`, FK redirigidas a la copia, datos solo de `rol` y `sucursal` —lo único que la suite lee de la plantilla—, `similarity()` que llama a la de `public`, SELECT para `lacentral_tests` y `lacentral_santi`; se niega si `nc057_fuente` ya existe), `nc057_fuente_entrar.sql` (pone el `search_path` y corta si la plantilla no existe: el 11 no llega a correr en `public`), `nc057_fuente_verificacion.sql` (solo lectura) y `nc057_fuente_borrado.sql` (solo en `lacentral_test`, sin dependientes fuera del esquema).
+- Ensayo en `lacentral_test`, con `lacentral_santi`, en el esquema descartable `nc057_ensayo_6d7f5e4f` (los mismos archivos, con el nombre reemplazado): copia `copia creada (27 tablas)`; tests de PostgreSQL de la rama (sin el 11) con esa copia como plantilla, filtrados FacturasCompra, BusquedaPaginada, RestriccionesUnicas y ClienteRepositorio: `Correctas! - Con error: 0, Superado: 81, Omitido: 0, Total: 81, Duración: 6 m 13 s`; guarda + 11: **`11: TODO OK.`** (primera vez que el 11 corre contra un servidor); verificación `TODO OK (30 tablas; public: 27)`; el 11 otra vez: `TODO OK` (idempotente); la copia otra vez: se niega; borrado: `public: 27 tablas`; guarda sin plantilla: corta antes del 11; borrado sin plantilla: «nada que borrar». El esquema de ensayo ya no existe.
+
+### PARA SANTI · 18/11/2026 · plantilla nc057_fuente (E11)
+
+Esto **no toca `public`**: las suites de #176 a #181 y de las ramas de Javi y Lauti siguen igual. Desde fish, en tu máquina. Cada paso que falla corta (`ON_ERROR_STOP=1`, y la copia es una sola transacción): si algo da `ERROR`, no sigas y pasame la salida.
+
+1 · Backup de `lacentral_test` (tiene que decir `backup OK`):
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+git fetch origin
+mkdir -p ~/backups-lacentral
+set marca (date +%Y%m%d-%H%M)
+ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc lacentral_test > ~/backups-lacentral/lacentral_test-$marca.dump
+and test -s ~/backups-lacentral/lacentral_test-$marca.dump
+and echo "backup OK"
+or echo "FALLÓ el backup: no sigas"
+```
+
+2 · La copia. Tiene que terminar con `NOTICE: nc057_fuente: copia creada (27 tablas).` y `COMMIT`:
+
+```fish
+git show origin/feature/182-nota-credito:backend/db/pruebas/nc057_fuente_copia.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+3 · El 11 sobre la copia. Tiene que terminar con `NOTICE: 11: TODO OK.` y `COMMIT` (el `WARNING` del `ROLLBACK` inicial es esperado):
+
+```fish
+begin
+    git show origin/feature/182-nota-credito:backend/db/pruebas/nc057_fuente_entrar.sql
+    git show origin/feature/182-nota-credito:backend/db/rescaffold/11_Nota_Credito_Compra.sql
+end | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+4 · Verificación, solo lectura. Tiene que decir `NOTICE: nc057_fuente: TODO OK (30 tablas; public: 27).`:
+
+```fish
+git show origin/feature/182-nota-credito:backend/db/pruebas/nc057_fuente_verificacion.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+5 · Avisame. La 057 sigue con el re-scaffold y corre su suite con `LA_CENTRAL_TEST_SCHEMA=nc057_fuente`.
+
+**Más adelante**, cuando Javi mergee la pila y el PR de la carga manual de la 057: el 11 en `public` de `lacentral_test`, en `lacentral_demo` y en `lacentral` (backup y estado con los pasos 1 y 2 del bloque «script 11» de arriba, y su paso 4 para las dos últimas; para `lacentral_test`, el mismo comando con `-d lacentral_test`). Después se borra la plantilla. Tiene que decir `nc057_fuente borrado; public: …`:
+
+```fish
+git show origin/develop:backend/db/pruebas/nc057_fuente_borrado.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+Si la copia quedara mal: el paso 2 es una transacción (si falla, no queda nada), y para rehacerla, el comando de borrado de arriba con `origin/feature/182-nota-credito` en lugar de `origin/develop`, y de nuevo los pasos 2 a 4.
+
+**BLOQUEADO EN:** que Santi corra los pasos 1 a 4 y diga `nc057_fuente: TODO OK`. Después, la 057 sigue con el re-scaffold, contra la plantilla.
