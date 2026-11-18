@@ -98,6 +98,13 @@ public class RegistrarNotaCreditoCompraUseCase
         RegistrarNotaCreditoCompraResponse? registrada = null;
         var resultado = await _unidadDeTrabajo.EjecutarAsync(async token =>
         {
+            // CA-014 (D-S6-25): dentro de la transacción, con las facturas bloqueadas por el repositorio.
+            if (nota.Clase == NotaCreditoCompra.Devolucion)
+            {
+                var cantidades = await ValidarCantidadesAsync(nota, token);
+                if (!cantidades.IsSuccess)
+                    return cantidades;
+            }
             var escrita = await _notas.RegistrarConEfectosAsync(nota, token);
             if (escrita.IsSuccess)
                 registrada = new RegistrarNotaCreditoCompraResponse(escrita.Value);
@@ -107,6 +114,21 @@ public class RegistrarNotaCreditoCompraUseCase
         return resultado.IsSuccess
             ? Result<RegistrarNotaCreditoCompraResponse>.Success(registrada!)
             : Fallo(resultado.Tipo, resultado.Error);
+    }
+
+    private async Task<Result> ValidarCantidadesAsync(NotaCreditoCompra nota, CancellationToken ct)
+    {
+        var compradas = (await _notas.ObtenerCompradoYDevueltoAsync(nota.FacturaIds, ct)).ToDictionary(c => c.ArticuloId);
+        foreach (var articulo in nota.Lineas.GroupBy(l => l.ArticuloId))
+        {
+            if (!compradas.TryGetValue(articulo.Key, out var c))
+                return Result.Failure(TipoError.Invalido, $"El artículo {articulo.Key} no figura en las facturas de la nota de crédito: solo se devuelve lo que se compró en ellas.");
+            var queda = c.Comprado - c.Devuelto;
+            if (articulo.Sum(l => l.Cantidad) > queda)
+                return Result.Failure(TipoError.Invalido,
+                    $"Del artículo {articulo.Key} se compraron {c.Comprado:0.###} en esas facturas y ya se devolvieron {c.Devuelto:0.###}: se pueden devolver hasta {queda:0.###}.");
+        }
+        return Result.Success();
     }
 
     /// <summary>CA-007: los totales de la nota, sin guardar nada. Es siempre A: 21 % de IVA.</summary>
