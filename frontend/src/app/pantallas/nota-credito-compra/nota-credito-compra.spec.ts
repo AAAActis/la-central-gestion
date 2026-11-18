@@ -323,4 +323,12 @@ describe('NotaCreditoCompra · 057', () => {
 
     servidor.expectOne('/api/articulos/200');
   });
+
+  it('CA-013: al volver a bonificación, el aviso se va: las líneas no viajan', () => {
+    calcularDevolucion(1, 6);
+    c().clase = 'BONIFICACION';
+    fixture.detectChanges();
+
+    expect(aviso()).toBeNull();
+  });
 });
