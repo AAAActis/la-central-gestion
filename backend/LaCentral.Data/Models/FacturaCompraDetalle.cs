@@ -30,6 +30,11 @@ public partial class FacturaCompraDetalle
     /// </summary>
     public decimal Descuento3Porcentaje { get; set; }
 
+    /// <summary>
+    /// Cuarto descuento de la línea, sucesivo: se aplica sobre el neto del tercero. Para los descuentos externos por marca o por artículo, como el 5 % de pago contado de ETMAN, que no figura en la factura (Sergio, 17/11/2026, D-S6-15).
+    /// </summary>
+    public decimal Descuento4Porcentaje { get; set; }
+
     public virtual Articulo Articulo { get; set; } = null!;
 
     public virtual FacturaCompra FacturaCompra { get; set; } = null!;

@@ -62,7 +62,8 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
                 PrecioUnitario = l.PrecioUnitario,
                 DescuentoPorcentaje = l.DescuentoPorcentaje,
                 Descuento2Porcentaje = l.Descuento2Porcentaje,
-                Descuento3Porcentaje = l.Descuento3Porcentaje
+                Descuento3Porcentaje = l.Descuento3Porcentaje,
+                Descuento4Porcentaje = l.Descuento4Porcentaje
             }).ToList()
         };
         _context.FacturaCompra.Add(fila);
