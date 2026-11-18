@@ -33,7 +33,8 @@ public class RegistrarNotaCreditoCompraUseCaseTests
         new(501, ProveedorActivo, true),
         new(502, ProveedorActivo, true),
         new(503, OtroProveedor, true),
-        new(504, ProveedorActivo, false)
+        new(504, ProveedorActivo, false),
+        new(505, ProveedorInactivo, true)
     ];
 
     public RegistrarNotaCreditoCompraUseCaseTests()
@@ -233,11 +234,27 @@ public class RegistrarNotaCreditoCompraUseCaseTests
         await Rechaza(Bonificacion() with { PercepcionGanancias = percepcion }, TipoError.Invalido);
     }
 
-    [Theory]
-    [InlineData(ProveedorInactivo)]
-    [InlineData(12345)]
-    public async Task ProveedorInactivoOInexistente_Invalido(int proveedorId)
-        => await Rechaza(Bonificacion(proveedorId: proveedorId), TipoError.Invalido);
+    [Fact]
+    public async Task ProveedorInexistente_Invalido()
+        => await Rechaza(Bonificacion(proveedorId: 12345), TipoError.Invalido);
+
+    [Fact]
+    public async Task ProveedorInactivo_Invalido_AunqueLaFacturaSeaSuya()
+        => await Rechaza(Bonificacion(proveedorId: ProveedorInactivo, facturas: [505]), TipoError.Invalido);
+
+    [Fact]
+    public async Task LasCuatroPercepcionesYElOrigenPdf_LleganALaNota()
+    {
+        var resultado = await Caso().EjecutarAsync(Bonificacion(iva: 1m, iibb: 2m) with
+        {
+            PercepcionMunicipal = 3m, PercepcionGanancias = 4m, DesdePdf = true
+        });
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(((decimal?)1m, (decimal?)2m, (decimal?)3m, (decimal?)4m, true),
+            (_registrada?.PercepcionIva, _registrada?.PercepcionIibb, _registrada?.PercepcionMunicipal,
+             _registrada?.PercepcionGanancias, _registrada?.DesdePdf ?? false));
+    }
 
     [Fact]
     public async Task SinUsuarioEnLaSesion_NoAutorizado()
