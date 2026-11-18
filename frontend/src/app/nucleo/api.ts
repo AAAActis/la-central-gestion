@@ -299,6 +299,45 @@ export class ApiLaCentral {
   calcularFacturaCompra(factura: FacturaCompraNueva): Observable<TotalesFacturaCompra> {
     return this.http.post<TotalesFacturaCompra>('/api/facturas-compra/calculo', factura);
   }
+
+  /** HU-FCO-07 (057): el usuario sale de la sesión; es siempre A, así que no viaja el tipo. */
+  registrarNotaCreditoCompra(nota: NotaCreditoCompraNueva): Observable<{ id: number }> {
+    return this.http.post<{ id: number }>('/api/notas-credito-compra', nota);
+  }
+
+  /** 057 CA-007: neto, 21 % de IVA y percepciones, sin guardar nada. */
+  calcularNotaCreditoCompra(nota: NotaCreditoCompraNueva): Observable<TotalesNotaCreditoCompra> {
+    return this.http.post<TotalesNotaCreditoCompra>('/api/notas-credito-compra/calculo', nota);
+  }
+}
+
+/** HU-FCO-07 (057): un artículo devuelto; sale del stock de sucursalId (una sucursal o Reclamos). */
+export interface LineaNotaCreditoCompra {
+  articuloId: number;
+  sucursalId: number;
+  cantidad: number;
+}
+
+/** 057: el cuerpo de `POST /api/notas-credito-compra`. La bonificación va sin líneas. */
+export interface NotaCreditoCompraNueva {
+  proveedorId: number;
+  numero: string;
+  fechaEmision: string;
+  clase: 'BONIFICACION' | 'DEVOLUCION';
+  importeNeto: number;
+  percepcionIva: number | null;
+  percepcionIibb: number | null;
+  percepcionMunicipal: number | null;
+  percepcionGanancias: number | null;
+  facturaIds: number[];
+  lineas: LineaNotaCreditoCompra[];
+}
+
+export interface TotalesNotaCreditoCompra {
+  neto: number;
+  iva: number;
+  percepciones: number;
+  total: number;
 }
 
 /** HU-FCO-04 (028): el cuerpo de `POST /api/facturas-compra/{id}/anulacion`. */

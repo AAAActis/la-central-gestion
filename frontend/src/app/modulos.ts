@@ -2,6 +2,7 @@ import { Modulo } from './nucleo/acceso';
 import { Articulos } from './pantallas/articulos/articulos';
 import { ComprasRegistradas } from './pantallas/compras-registradas/compras-registradas';
 import { FacturaCompra } from './pantallas/factura-compra/factura-compra';
+import { NotaCreditoCompra } from './pantallas/nota-credito-compra/nota-credito-compra';
 import { Clientes, Proveedores } from './pantallas/terceros/terceros';
 
 /**
@@ -23,5 +24,9 @@ export const MODULOS_DEL_SISTEMA: readonly Modulo[] = [
   {
     ruta: 'compras-registradas', titulo: 'Compras registradas', bajada: 'Consultá las facturas de compra por proveedor, número o fechas.',
     roles: ['ADMINISTRADOR', 'OPERADOR'], componente: ComprasRegistradas,
+  },
+  {
+    ruta: 'nota-credito-compra', titulo: 'Nota de crédito de proveedor', bajada: 'Registrá una bonificación o una devolución y las facturas a las que corresponde.',
+    roles: ['ADMINISTRADOR', 'OPERADOR'], componente: NotaCreditoCompra,
   },
 ];
