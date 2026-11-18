@@ -117,7 +117,7 @@ public class FacturasCompraController : ControllerBase
         request.PercepcionGanancias,
         request.Lineas?.Select(l => new DtosNucleo.LineaFacturaCompraRequest(
             l.ArticuloId, l.SucursalId, l.Cantidad, l.PrecioUnitario, l.DescuentoPorcentaje,
-            l.Descuento2Porcentaje, l.Descuento3Porcentaje)).ToList(),
+            l.Descuento2Porcentaje, l.Descuento3Porcentaje, l.Descuento4Porcentaje)).ToList(),
         request.TipoComprobante,
         request.FechaImputacion,
         request.DesdePdf);

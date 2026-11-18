@@ -56,7 +56,7 @@ public class InterpretarFacturaPdfUseCase
 
         var lineas = leido.Lineas.Select(l => new LineaPdfInterpretada(
             l.CodigoProveedor, l.Descripcion, articulos.TryGetValue(l.CodigoProveedor, out var articuloId) ? articuloId : null,
-            l.Cantidad, l.PrecioUnitario, l.Descuento1, l.Descuento2, l.Descuento3)).ToList();
+            l.Cantidad, l.PrecioUnitario, l.Descuento1, l.Descuento2, l.Descuento3, l.Descuento4)).ToList();
         IReadOnlyList<string> revisar = proveedorId is null ? [.. leido.ParaRevisar, "proveedorId"] : leido.ParaRevisar;
 
         return Result<FacturaPdfInterpretada>.Success(new FacturaPdfInterpretada(

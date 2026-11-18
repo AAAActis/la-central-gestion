@@ -1,12 +1,13 @@
 namespace LaCentral.UseCases.FacturasCompra.Dtos;
 
 /// <summary>
-/// Una línea del comprobante. D9: el destino de stock es de la línea. HU-FCO-06: hasta tres
-/// descuentos, sucesivos (el segundo sobre el neto del primero).
+/// Una línea del comprobante. D9: el destino de stock es de la línea. HU-FCO-06: hasta cuatro
+/// descuentos, sucesivos (cada uno sobre el neto del anterior); el cuarto, los externos por
+/// marca o por artículo (D-S6-15).
 /// </summary>
 public sealed record LineaFacturaCompraRequest(
     int ArticuloId, short SucursalId, decimal Cantidad, decimal PrecioUnitario, decimal DescuentoPorcentaje,
-    decimal Descuento2Porcentaje = 0m, decimal Descuento3Porcentaje = 0m);
+    decimal Descuento2Porcentaje = 0m, decimal Descuento3Porcentaje = 0m, decimal Descuento4Porcentaje = 0m);
 
 /// <summary>
 /// HU-FCO-01. Sin usuario: sale de la sesión. Las percepciones (D8) son datos del
