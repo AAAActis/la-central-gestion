@@ -49,3 +49,12 @@ public sealed record FacturaPdfInterpretada(
     decimal? PercepcionGanancias,
     IReadOnlyList<LineaPdfInterpretada> Lineas,
     IReadOnlyList<string> ParaRevisar);
+
+/// <summary>
+/// HU-FCO-07 (057) CA-010: lo que un lector sacó del texto de una nota de crédito de proveedor.
+/// Siempre A (regla d): no hay tipo. Las facturas asociadas son números («0011-00044774»), sin
+/// resolver todavía. ParaRevisar nombra lo que no se pudo afirmar.
+/// </summary>
+public sealed record NotaCreditoLeida(
+    IReadOnlyList<string> Cuits, string? Numero, DateOnly? FechaEmision, string? Clase, decimal? ImporteNeto,
+    IReadOnlyList<string> FacturasAsociadas, IReadOnlyList<string> ParaRevisar);

@@ -186,6 +186,9 @@ public static class LayoutsPdf
     private static int Indice(IReadOnlyList<string> renglones, Func<string, bool> condicion)
         => renglones.Select((r, i) => (r, i)).FirstOrDefault(x => condicion(x.r), (r: "", i: -1)).i;
 
+    /// <summary>HU-FCO-07 (057) CA-010: la nota de crédito leída por el primer layout que la reconoce, o null.</summary>
+    public static NotaCreditoLeida? LeerNotaCredito(IReadOnlyList<string> renglones) => null;
+
     private static string[] Cuits(string texto) => Cuit.Matches(texto).Select(m => m.Value).Distinct().ToArray();
 
     private static DateOnly? PrimeraFecha(string renglon) => Fecha.Match(renglon) is { Success: true } m ? AFecha(m.Value) : null;
