@@ -113,7 +113,7 @@ public class LecturaPdfTests
     }
 
     [Fact]
-    public void Fazio_LeeElPresupuesto_ConLosNumerosEnFormatoArgentino_YElDescuentoPorPartes()
+    public void Fazio_LeeElPresupuesto_ConLosNumerosEnFormatoArgentino_YElPFinalComoPrecioSinDescuentos()
     {
         var leido = Leer(PdfSintetico.PresupuestoFazio());
 
@@ -121,7 +121,27 @@ public class LecturaPdfTests
         Assert.Equal(new DateOnly(2027, 2, 5), leido.FechaEmision);
         Assert.Null(leido.FechaVencimiento);
         Assert.Null(leido.PercepcionIva);
-        Assert.Equal([new LineaLeida("QQ123", "Campana ficticia", 2m, 10000m, 28m, 22m, 0m)], leido.Lineas);
+        // D-S6-17: el costo es el «P. Final», lo que se paga; los descuentos ya están adentro.
+        Assert.Equal([new LineaLeida("QQ123", "Campana ficticia", 2m, 5616m, 0m, 0m, 0m)], leido.Lineas);
+    }
+
+    [Fact]
+    public void Fazio_ElCostoEsElPFinal_AunqueElRecalculoDesdeLaListaDeOtroCentavo()
+    {
+        // 10.000,01 × 0,72 × 0,78 = 5.616,0056: el proveedor cobra 5.616,01 por unidad.
+        var leido = Leer(PdfSintetico.PresupuestoFazio(lista: "10.000,01", final: "5.616,01", total: "11.232,02"));
+
+        Assert.Equal((5616.01m, 0m, 0m, 0m), (leido.Lineas[0].PrecioUnitario, leido.Lineas[0].Descuento1,
+            leido.Lineas[0].Descuento2, leido.Lineas[0].Descuento3));
+        Assert.DoesNotContain("lineas[0]", leido.ParaRevisar);
+    }
+
+    [Fact]
+    public void Fazio_SiElPFinalPorLaCantidadNoDaElTotal_LaLineaQuedaParaRevisar()
+    {
+        var leido = Leer(PdfSintetico.PresupuestoFazio(total: "11.300,00"));
+
+        Assert.Contains("lineas[0]", leido.ParaRevisar);
     }
 
     [Theory]
@@ -152,11 +172,12 @@ public class LecturaPdfTests
     }
 
     [Fact]
-    public void Fazio_ConMasDeTresDescuentos_UsaElCombinado_YMarcaLaLineaParaRevisar()
+    public void Fazio_ConMasDeTresDescuentos_TomaIgualElPFinal_SinRevisarLaLinea()
     {
         var leido = Leer(PdfSintetico.PresupuestoFazio(partes: "10+10+10+5"));
 
-        Assert.Equal((43.84m, 0m, 0m), (leido.Lineas[0].Descuento1, leido.Lineas[0].Descuento2, leido.Lineas[0].Descuento3));
-        Assert.Contains("lineas[0]", leido.ParaRevisar);
+        Assert.Equal((5616m, 0m, 0m, 0m), (leido.Lineas[0].PrecioUnitario, leido.Lineas[0].Descuento1,
+            leido.Lineas[0].Descuento2, leido.Lineas[0].Descuento3));
+        Assert.DoesNotContain("lineas[0]", leido.ParaRevisar);
     }
 }
