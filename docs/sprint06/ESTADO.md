@@ -24,9 +24,8 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | **Construida (17/11/2026), PR abierto** en `feature/51-pantalla-pdf`, apilado sobre el #178. El PDF precarga el formulario de la 056, sin pantalla nueva. `verificador-tdd`: NO APTO en las rondas 1 y 2, APTO en la 3; el auditor no aplica. Frontend 238/238 sobre `43edd66`. Falta el DoD 10 contra `lacentral_demo` con los PDF reales (Javi con Sergio). **Revisión de Santi (17/11):** las percepciones sin leer se señalan, y elegir el proveedor después del PDF resuelve sus códigos; `verificador-tdd` NO APTO en la ronda 1 y APTO en la 2; frontend 248/248 sobre `78ff462`; su backend es el del #178 |
 | #169 | Factura de compra: el mismo artículo a sucursales distintas (D9), observación de Javi del 14/11 | sin estimar | Santi | — | **Hecha:** PR #170, mergeado por Javi el 16/11/2026 (`verificador-tdd` APTO, 203/203 frontend sobre `b7973d6`). Issue cerrada el 17/11 con referencia al #170 |
 
-| #182 | 057 · HU-FCO-07 · registro de nota de crédito de proveedor (D-S6-18) | 13 (estimación) | Santi | E11 | **Entró el 18/11/2026.** Proforma `docs/historias/057-HU-FCO-07.md` (11 CA; el CA-011, a confirmar). Dos PR: carga manual, después PDF de Expoyer. Script 11 escrito. **Hecho sin esquema (18/11):** PR 1 en `feature/182-nota-credito` (caso de uso con Moq 42/42, pantalla 19/19, módulo en el menú; frontend completo 271/271) y PR 2 en `feature/182-nota-credito-pdf`, apilada encima (lector de la nota de Expoyer: con el real, `0010-00021495`, 115.040,00, dos facturas, nada para revisar; interpretación por CUIT y número 9/9). Sin PR todavía: **frenada por E11** (re-scaffold, repositorio, API, CA-008, endpoint del PDF y precarga). Verificadores: se invocan al cerrar cada PR |
 
-**47 SP** (13 + 13 + 8 + 13; la 057 entró el 18/11, D-PL-06: el sprint se estira). Salieron al Sprint 7 la #126, la #127 y la #128 (21 SP); entraron la
+**34 SP** (13 + 13 + 8). Salieron al Sprint 7 la #126, la #127 y la #128 (21 SP); entraron la
 #13 y la #51 (21 SP). Es un intercambio: el total no cambia.
 
 ## Compuertas · cada una bloquea solo las HU de su fila
@@ -36,7 +35,6 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | E56 | Esquema de la 056: `proveedor.tipo_comprobante_habitual`, `factura_compra.tipo_comprobante` y `fecha_imputacion`, dos descuentos más por línea (script SQL + re-scaffold, en `lacentral_test` y `lacentral_demo`) | Santi | 056; la 029 y la 049 lo usan | **Script 09 escrito y aplicado en `lacentral_demo`** (13/11) con re-scaffold. **CERRADA 13/11:** Santi aplicó el 09 a `lacentral_test.public` con el superusuario (`09: TODO OK`). La suite corre contra `public`, sin `LA_CENTRAL_TEST_SCHEMA`. La plantilla `fco06_fuente` se borró el 13/11 |
 | C7 | Facturas reales de varios proveedores, para decidir parser por reglas o interpretación asistida (nota de la 029) | Javi | 029 | **CERRADA COMPLETA (18/11/2026, D-S6-19)**: ETMAN, Fazio y Expoyer con PDF digital y lector; Autocor entrega en papel y se carga a mano (056). Ver «Compuerta C7» abajo |
 | E10 | Script 10 (cuarto descuento, D-S6-15) en `lacentral_test`, `lacentral_demo` y `lacentral` | Santi | el PR del cuarto descuento | **CERRADA 18/11/2026.** Santi aplicó el 10 en las tres bases: `s09 = 1` y `s10 = 1` en todas. En `lacentral` también el 08 (ya estaba) y el 09 (`TODO OK`); el 07 ya estaba. Re-scaffold `fcb9e51` |
-| E11 | Script 11 (nota de crédito de proveedor y depósito Reclamos, D-S6-18 y D-S6-20) en `lacentral_test`, después en `lacentral_demo` y `lacentral` | Santi | la 057 (lo que toca el esquema: re-scaffold, repositorio, pruebas contra PostgreSQL, API) | **ABIERTA (18/11/2026).** Script escrito en `feature/182-nota-credito`; comandos en la bitácora («PARA SANTI · 18/11 · script 11»). **Ojo:** con el 11 en `lacentral_test.public`, la suite de toda rama sin su re-scaffold se corta («tablas que el modelo no clona»): el momento lo decide Santi |
 
 C2, C5, C6 y C1 pasaron al Sprint 7 con el comparador (D-PL-05). La P6 se cerró el 11/11.
 
@@ -141,44 +139,14 @@ Sin respuesta, la 029 sigue con lo que no depende de esto: lo que falta se marca
 
 La pregunta del IVA del presupuesto de Fazio (17/11) no llegó a esta lista: la respondió D-S6-16.
 
-## Lo que vuelve a Sergio · 18/11/2026 · nota de crédito de proveedor (057)
-
-No se construye lo que dependa de estas preguntas; lo demás de la 057, sí.
-
-1. Cuando el proveedor **vuelve a mandar el producto** después de un reclamo, ¿llega con factura nueva
-   o sin factura? ¿Cómo se carga esa entrada?
-2. ¿Se puede **anular una factura de compra que ya tiene notas de crédito**? Propuesta mientras tanto:
-   no, primero se anulan las notas de crédito. Está como **CA-011 de la 057, «a confirmar»**, y no se
-   construye.
-3. Una nota de crédito **por devolución**, ¿se puede anular? ¿Devuelve el stock? (La 057 no tiene
-   anulación.)
-4. **Supuesto de la 057, para confirmar:** una devolución que deja el stock del origen en negativo se
-   registra igual, como la venta (HU-STK-03 CA-002).
-
-
-**Una HU no se empieza hasta que su compuerta esté cerrada**, aunque esté en el milestone.
-
 ## Decisiones · 18/11/2026
 
 | # | Decisión | Quién | Impacto |
 |---|---|---|---|
 | D-S6-17 | En Fazio, **el costo de la línea es el «P. Final» del proveedor**, que es lo que se paga, no el recálculo desde el precio de lista. Con el PDF real, el total da **323.670,44**. Cierra la pregunta 5 del 17/11. | Santi | El lector de Fazio pone el P. Final como precio unitario y la línea va sin descuentos (ya están adentro); con más de tres partes ya no se revisa. En el #177 (`a688cba`, `aab80b9`, `e0d6004`), mergeado hacia arriba de la pila |
-| D-S6-18 | **Nota de crédito de proveedor: HU nueva en el Sprint 6** (no en el 8): 057, HU-FCO-07, issue #182, 13 SP estimados. Es parte de la factura de compra. El sprint se estira: cierra por entregable (D-PL-06). Reemplaza la propuesta de la D-S6-14 (Sprint 8). | Santi | Proforma, índice y plan. Script 11 (E11). Dos PR: carga manual, después PDF de Expoyer |
 | D-S6-19 | **Autocor entrega en papel**: se carga por la vía manual (056). Un escaneo no sirve. **C7 cerrada completa.** | Santi | La factura de Autocor sale de los pendientes |
-| D-S6-20 | **El depósito Reclamos es una fila de `sucursal`** con `es_reclamos = true` (a lo sumo una, índice único parcial), con su stock en `stock`, como cualquier ubicación. **La mercadería entra a Reclamos con una transferencia** desde una sucursal (HU-STK-04, 020, Sprint 8): no hace falta otra cosa, porque Reclamos es una ubicación más. Mientras no esté la 020, una devolución sale directo de la sucursal. | agente, 18/11/2026 | Script 11: la columna, el índice, la fila «RC · Reclamos (depósito)» y una fila de stock en 0 por artículo. **Reclamos no es destino de una factura de compra** (CA-008 de la 057): la API lo rechaza y la pantalla no lo ofrece. Sí aparece en las existencias del artículo y como origen de una devolución. Descartado: una tabla de stock aparte para Reclamos, que obligaría a la 020 a tratarla como caso especial |
 
-**Reglas de Sergio para la 057 (18/11/2026), resumidas** (texto completo en la bitácora del 18/11):
-a) la nota de crédito no cambia el costo de los artículos; es plata a favor en la cuenta corriente
-con el proveedor, que **el sistema no lleva** (el Mandato deja afuera las cuentas a pagar): se
-registran la nota, sus importes y sus facturas, sin saldos; b) dos clases: **bonificación o
-diferencia de precio** (solo importes, no mueve stock) y **devolución** (mueve stock; origen por
-línea: la sucursal que devuelve o Reclamos); c) toda nota referencia **al menos una factura de
-compra del mismo proveedor**, muchos a muchos; d) siempre **tipo A**, el número se copia exacto,
-sin 99; e) carga manual obligatoria, y desde el PDF con el mecanismo de la 029 (lector de la nota de
-Expoyer), en un segundo PR.
-
-**Mandato:** el Mandato v3.0 deja las notas de crédito fuera de alcance. **El Mandato del documento
-de tesis (GR-01) se actualiza; lo hace Santi.**
+**Una HU no se empieza hasta que su compuerta esté cerrada**, aunque esté en el milestone.
 
 ## Respuestas de Sergio · 17/11/2026
 
@@ -187,7 +155,7 @@ Llegaron el 17/11 (vía Santi). Responden «Lo que vuelve a Sergio · 17/11».
 | # | Decisión | Responde | Impacto |
 |---|---|---|---|
 | D-S6-13 | Lo comprado en negro se carga como comprobante **B** con prefijo **99** y el **número del presupuesto**. | 1 del 17/11 | El texto del PDF de Fazio no trae el número; el nombre del archivo sí («Presupuesto_48437.pdf»): el lector propone `99-48437` y lo deja **para revisar** (un nombre puede cambiarse a mano). El tipo B ya no va a revisión. En el #177 |
-| D-S6-14 | Las **notas de crédito de proveedor sí se cargan**. | 2 del 17/11 | **Choca con el Mandato v3.0**, que las deja fuera de alcance, y no hay HU. ~~No se construye: HU nueva pendiente de decisión del equipo, propuesta para el Sprint 8.~~ **Reemplazado por la D-S6-18 (18/11):** la 057 entra en el Sprint 6 |
+| D-S6-14 | Las **notas de crédito de proveedor sí se cargan**. | 2 del 17/11 | **Choca con el Mandato v3.0**, que las deja fuera de alcance, y no hay HU. **No se construye:** HU nueva pendiente de decisión del equipo, propuesta para el Sprint 8 (ver «Fuera del Sprint 6»). El lector sigue rechazando la nota de crédito |
 | D-S6-15 | La línea de la factura de compra tiene **cuatro descuentos sucesivos**, no tres. Los tres primeros son los que traen los proveedores; el cuarto, los **externos por marca o por artículo**. Ejemplo ETMAN: siempre trae el 36 % y además un 5 % que no figura en la factura, porque es por forma de pago; el operador lo carga en la línea. **Reemplaza** la versión pendiente de la misma fecha (dónde iba el 5 % si la línea ya usa los tres). | 3 del 17/11 | **Cambio de esquema:** script 10 (`factura_compra_detalle.descuento_4_porcentaje`, mismo CHECK) + re-scaffold, compuerta E10. CA-012 de la 056 reescrito (proforma v1.1). Toca el costo, el total, la pantalla de la 056 y la precarga de la 049. El lector de ETMAN propone el porcentaje de «Pago Contado N%» en el cuarto descuento, marcado para revisar. PR propio, antes del de Expoyer |
 | D-S6-16 | Lo comprado en negro es comprobante B y **ese IVA no se paga**: el IVA que muestra el presupuesto de Fazio se ignora. El total que se registra es **323.670,44**, sin IVA. | pregunta nueva del 17/11 | El sistema ya no suma IVA a un B (CA-014 de la 056, D-S6-11). **Diferencia de 2 centavos** con el PDF real: vuelve a Sergio (pregunta 5 de arriba) |
 
@@ -309,8 +277,11 @@ número de comprobante) y qué pasó; si no pasó lo esperado, el número de iss
 
 ## Fuera del Sprint 6
 
-**Notas de crédito de proveedor:** ya no están fuera: entraron al Sprint 6 el 18/11/2026 como la 057
-(D-S6-18, #182).
+**HU nueva · carga de notas de crédito de proveedor (D-S6-14, 17/11/2026).** Sergio confirmó que las
+notas de crédito de proveedor se cargan (como la de Expoyer, una bonificación sobre facturas ya
+cargadas). **Choca con el Mandato v3.0**, que las deja fuera de alcance, y no hay HU que la cubra.
+**Pendiente de decisión del equipo**: cambiar el alcance del Mandato, escribir la HU y estimarla.
+**Propuesta:** Sprint 8. No se construyó nada; el lector de PDF sigue rechazando la nota de crédito.
 
 **Scrapes de proveedores (Sprint 7, D-PL-02):** los de **Expoyer, Autocor, Nafazio (Fazio) y ETMAN
 (Link3)** arrancaron el **17/11/2026**, a mano, en n8n, por Javi, Lauti y Santi, fuera de la cuenta de
@@ -353,24 +324,12 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
-**18/11 · novedades del 18/11 hechas; lo que queda es de personas o espera el script 11.**
-Orden de merge de la pila: #176 → #177 → #178 → #179 → #181 → #180; la 057 va arriba (`feature/182-nota-credito`, y encima
-`feature/182-nota-credito-pdf`).
-- **E10 cerrada:** el #181 puede entrar a `develop` cuando Javi lo revise.
-- **D-S6-17 (Fazio, P. Final):** en el #177, verificadores APTO, mergeada hacia arriba con suites sobre cada HEAD (tablero).
-- **C7 cerrada completa (D-S6-19).** Autocor, carga manual.
-- **057 (#182):** proforma, issue, índice, plan (D-PL-06), decisión de Reclamos (D-S6-20) y script 11. Lo que no depende del
-  esquema está hecho en las dos ramas (tablero). **Cuando Santi diga «11: TODO OK» en `lacentral_test`** (bitácora, «PARA SANTI ·
-  18/11 · script 11», con la advertencia de que corta la suite de las ramas sin el re-scaffold): re-scaffold;
-  `NotaCreditoCompraRepositorio` (cabecera, relación con facturas, líneas, stock del origen) con relectura de la fila con un
-  contexto nuevo, que el costo y el historial no cambian, y las restricciones del 11 (`nccf_factura_mismo_proveedor`,
-  `ncc_numero_unico`, `nccd_cantidad_positiva`); `NotasCreditoCompraController` (`POST /api/notas-credito-compra`, `/calculo`,
-  401/403); CA-008 (Reclamos fuera de los destinos de la factura: API y pantalla); verificadores y PR 1. Después, en la rama del
-  PDF: `POST /api/notas-credito-compra/pdf`, la precarga en la pantalla, verificadores y PR 2.
-- **Sergio:** preguntas 1 a 4 de «Lo que vuelve a Sergio · 18/11» (reingreso tras reclamo, anular factura con notas, anular una
-  devolución, stock negativo) y la 4 del 17/11 (028 y 016).
-- **Santi:** el script 11 (cuándo, por el efecto en las suites) y el Mandato del documento de tesis (GR-01).
-- **Javi:** revisar y mergear la pila; DoD 10 con Sergio. **El sprint no está cerrado.**
+**18/11 (noche) · Javi mergeó #176, #177, #178, #179 y #181; el #180 (Expoyer) tiene base `develop`.**
+- **E10 cerrada** (el 10 en las tres bases). **D-S6-17** (Fazio, P. Final) entró con el #177. **C7 cerrada completa (D-S6-19).**
+- **#180:** revisión de Javi respondida; lleva solo el lector de Expoyer (lo de la nota de crédito de proveedor va en su
+  propia rama y su propio PR).
+- **Sergio:** la 4 del 17/11 (028 y 016).
+- **Javi:** revisar el #180; DoD 10 con Sergio. **El sprint no está cerrado.**
 - Deuda vista en una mutación (no es de este trabajo): en el lector de ETMAN, sacar `numero` de `Revisar` no pone ningún test
   en rojo.
 
