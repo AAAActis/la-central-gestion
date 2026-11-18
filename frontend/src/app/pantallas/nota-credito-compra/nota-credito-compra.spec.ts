@@ -280,4 +280,47 @@ describe('NotaCreditoCompra · 057', () => {
 
     expect(servidor.expectOne('/api/notas-credito-compra/calculo').request.body.lineas).toEqual([]);
   });
+
+  // ---- CA-013 (D-S6-24): aviso de stock negativo antes de confirmar ----
+
+  function calcularDevolucion(origen: number, cantidad: number) {
+    devolucionConArticulo();
+    c().lineas[0].sucursalId = origen;
+    c().lineas[0].cantidad = cantidad;
+    fixture.detectChanges();
+    boton('calcular')?.click();
+    servidor.expectOne('/api/notas-credito-compra/calculo').flush({ neto: 115040, iva: 24158.4, percepciones: 0, total: 139198.4 });
+    fixture.detectChanges();
+  }
+
+  const aviso = () => raiz.querySelector('[data-aviso-stock]');
+
+  it('CA-013: si la devolución deja el origen en negativo, avisa qué artículo, dónde y cuánto queda, y se puede registrar igual', () => {
+    calcularDevolucion(1, 6);
+
+    expect(aviso()?.textContent).toContain('Bomba de agua');
+    expect(aviso()?.textContent).toContain('Fragueiro (Casa Central)');
+    expect(aviso()?.textContent).toContain('-2');
+    expect(boton('registrar')?.disabled).toBeFalse();
+  });
+
+  it('CA-013: si el origen queda en cero o más, no avisa', () => {
+    calcularDevolucion(1, 4);
+
+    expect(aviso()).toBeNull();
+  });
+
+  it('CA-013: el aviso usa las existencias del origen elegido', () => {
+    calcularDevolucion(3, 2);
+
+    expect(aviso()?.textContent).toContain('Reclamos (depósito)');
+    expect(aviso()?.textContent).toContain('-1');
+  });
+
+  it('CA-013: cada artículo agregado trae su ficha, para saber su stock', () => {
+    devolucionConArticulo();
+    c().agregarArticulo({ ...articulo, id: 200, codigoInterno: 'A-200', nombre: 'Correa' });
+
+    servidor.expectOne('/api/articulos/200');
+  });
 });
