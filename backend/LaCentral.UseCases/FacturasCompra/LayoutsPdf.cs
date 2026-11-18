@@ -73,11 +73,13 @@ public static class LayoutsPdf
     }
 
     // Fazio (Badaloni): presupuesto, compra en negro; números en formato argentino (27.396,12);
-    // el descuento viene combinado con sus partes sucesivas entre paréntesis: 43,84 (28+22). El
+    // el descuento viene combinado con sus partes sucesivas entre paréntesis: 43,84 (28+22), y
+    // D-S6-17 (Santi, 18/11/2026): el costo es el «P. Final», lo que se paga, no el recálculo
+    // desde el precio de lista, que puede diferir en un centavo por unidad. El
     // texto no trae el número del presupuesto ni el CUIT del emisor.
     private const string EncabezadoFazio = "Remito P. Lista % Desc. P. Final Total";
     private static readonly Regex LineaFazio = new(
-        @"^\d+ (\S+) (.+) (\d+(?:,\d+)?) \S+ - ([\d.]+,\d{2}) ([\d.]+,\d{2}) \(([\d,]+(?:\+[\d,]+)*)\) [\d.]+,\d{2} ([\d.]+,\d{2})$");
+        @"^\d+ (\S+) (.+) (\d+(?:,\d+)?) \S+ - [\d.]+,\d{2} [\d.]+,\d{2} \([\d,]+(?:\+[\d,]+)*\) ([\d.]+,\d{2}) ([\d.]+,\d{2})$");
 
     private static ComprobanteLeido? LeerFazio(IReadOnlyList<string> renglones, string? nombreArchivo)
     {
@@ -94,13 +96,9 @@ public static class LayoutsPdf
             var m = LineaFazio.Match(renglon);
             if (!m.Success)
                 continue;
-            var partes = m.Groups[6].Value.Split('+').Select(Argentino).ToArray();
-            // La línea admite tres descuentos (056): con más, va el combinado y se revisa.
-            var masDeTres = partes.Length > 3;
-            var d = masDeTres ? [Argentino(m.Groups[5].Value)] : partes;
             var linea = new LineaLeida(m.Groups[1].Value, m.Groups[2].Value, Argentino(m.Groups[3].Value), Argentino(m.Groups[4].Value),
-                d[0], d.ElementAtOrDefault(1), d.ElementAtOrDefault(2));
-            Agregar(lineas, linea, Argentino(m.Groups[7].Value), afirmable: !masDeTres, revisar);
+                0m, 0m, 0m);
+            Agregar(lineas, linea, Argentino(m.Groups[5].Value), afirmable: true, revisar);
         }
 
         // D-S6-13 (Sergio, 17/11/2026): lo comprado en negro es B, con 99 y el número del
