@@ -548,6 +548,10 @@ public partial class LaCentralDbContext : DbContext
                 .HasPrecision(6, 2)
                 .HasComment("Tercer descuento de la línea, sucesivo: se aplica sobre el neto del segundo.")
                 .HasColumnName("descuento_3_porcentaje");
+            entity.Property(e => e.Descuento4Porcentaje)
+                .HasPrecision(6, 2)
+                .HasComment("Cuarto descuento de la línea, sucesivo: se aplica sobre el neto del tercero. Para los descuentos externos por marca o por artículo, como el 5 % de pago contado de ETMAN, que no figura en la factura (Sergio, 17/11/2026, D-S6-15).")
+                .HasColumnName("descuento_4_porcentaje");
             entity.Property(e => e.DescuentoPorcentaje)
                 .HasPrecision(6, 2)
                 .HasColumnName("descuento_porcentaje");
