@@ -1235,5 +1235,13 @@ Para volver atrás una base: `ssh atiz@arch docker exec -i lacentral_db pg_resto
 4. Pantalla: D-S6-24, aviso de stock negativo antes de confirmar.
 5. Merge hacia la rama del PDF, ESTADO, push, resumen.
 
-**Estado:** en curso
+**Estado:** terminada (queda abierto lo de E11 y CA-011; ver BLOQUEADO EN)
 - Arranque: `git fetch`; `develop` sin novedades; PR #176 a #181 abiertos. Un `merge --ff-only` mío adelantó por error la rama local `feature/182-nota-credito` hasta la del PDF (no se pusheó). No se pudo volver atrás con `reset --hard` (lo bloquea el modo automático): el trabajo sigue en una rama local nueva, `feature/182-nota-credito-manual`, desde `origin/feature/182-nota-credito`, y se pushea a `feature/182-nota-credito` (avance rápido). La rama local vieja queda para borrar a mano.
+- Docs `1f2a175`: ESTADO con D-S6-21 a D-S6-25 (fuera de «Lo que vuelve a Sergio»), E11 con `nc057_fuente`; proforma 057 v1.1 (CA-011 sin «a confirmar», CA-012, CA-013, CA-014); índice con 14 CA; script 11 con la anulación.
+- CA-014 (D-S6-25): esqueleto (puerto `ObtenerCompradoYDevueltoAsync`); rojo (4 con error por aserción); código `6378549`, 48/48; mutaciones propias 7 de 7 muertas.
+- CA-012 (D-S6-23): `refactor(fco04)` saca la doble certificación a `Comun/DobleCertificacion` (028: 17/17 sin cambios); esqueleto `22deaa0`; rojo (10 con error por aserción); código `d50833c`, 10/10; mutaciones 6 de 6 muertas.
+- CA-013 (D-S6-24): rojo (3 con error por aserción); código (pantalla: cada artículo trae su ficha, aviso `aviso alerta` con artículo, origen y cuánto queda); dos guardas sin test borradas (pedir la ficha una sola vez y mostrar el aviso solo con el total); `fd2f0b3` solo test (volver a bonificación), con la mutación 1 con error. Spec 24/24.
+- CA-011 (D-S6-22): **no se hizo**: la anulación de la factura necesita el repositorio de notas en su DI, y sin el 11 no hay tabla. Va con E11.
+- Verificaciones sobre `fd2f0b3`: unitarias de backend (`--no-incremental`, 0 advertencias) `Correctas! - Con error: 0, Superado: 501, Omitido: 0, Total: 501`; frontend completo `TOTAL: 276 SUCCESS`. Suite completa de backend: no, sin PR.
+
+**BLOQUEADO EN:** E11 (Santi aplica el 11 en `lacentral_test`, plantilla `nc057_fuente`): re-scaffold, repositorio de la nota con PostgreSQL (CA-014 suma acumulada y dos devoluciones simultáneas, CA-012 stock al origen y número liberado), CA-011 en la 028, API y PR. Sergio: ver D-S6-21 a 25. La rama local `feature/182-nota-credito` quedó adelantada por error a la del PDF (sin pushear): borrarla a mano (`git branch -D feature/182-nota-credito`) o pedirme que la reponga.

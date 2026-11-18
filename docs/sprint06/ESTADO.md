@@ -351,6 +351,17 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
+**18/11 (tarde) · D-S6-21 a D-S6-25 del equipo cargadas; la 057 sigue frenada por E11 (`nc057_fuente`).**
+- Proforma 057 v1.1 (14 CA): CA-011 sin «a confirmar», CA-012 anulación, CA-013 aviso de stock negativo, CA-014 cantidades.
+- Script 11 (sin aplicar): `estado` y columnas de anulación en `nota_credito_compra`, número único solo entre vigentes
+  (`ux_nota_credito_compra_numero_activa`), motivo `TEXT`; la verificación espera 12 restricciones.
+- Hecho sin esquema, en `feature/182-nota-credito`: CA-014 en el registro (dentro de la transacción; el repositorio tiene que
+  bloquear las facturas con `FOR UPDATE`), CA-012 caso de uso de anulación (reusa la doble certificación de la 028, ahora en
+  `Comun/DobleCertificacion`), CA-013 aviso en la pantalla.
+- **Falta, con el 11:** CA-011 / D-S6-22 en la anulación de la factura (necesita el repositorio de notas en el DI de la 028);
+  `ObtenerCompradoYDevueltoAsync`, `ObtenerParaAnularAsync` y `AnularConEfectosAsync` del repositorio, con PostgreSQL: suma
+  acumulada, dos devoluciones simultáneas, stock que vuelve al origen y número liberado; endpoint y pantalla de la anulación.
+
 **18/11 · novedades del 18/11 hechas; lo que queda es de personas o espera el script 11.**
 Orden de merge de la pila: #176 → #177 → #178 → #179 → #181 → #180; la 057 va arriba (`feature/182-nota-credito`, y encima
 `feature/182-nota-credito-pdf`).
@@ -365,8 +376,7 @@ Orden de merge de la pila: #176 → #177 → #178 → #179 → #181 → #180; la
   `ncc_numero_unico`, `nccd_cantidad_positiva`); `NotasCreditoCompraController` (`POST /api/notas-credito-compra`, `/calculo`,
   401/403); CA-008 (Reclamos fuera de los destinos de la factura: API y pantalla); verificadores y PR 1. Después, en la rama del
   PDF: `POST /api/notas-credito-compra/pdf`, la precarga en la pantalla, verificadores y PR 2.
-- **Sergio:** preguntas 1 a 4 de «Lo que vuelve a Sergio · 18/11» (reingreso tras reclamo, anular factura con notas, anular una
-  devolución, stock negativo) y la 4 del 17/11 (028 y 016).
+- **Sergio:** mostrarle D-S6-21 a D-S6-25 (si corrige alguna, se cambia) y la 4 del 17/11 (028 y 016).
 - **Santi:** el script 11 (cuándo, por el efecto en las suites) y el Mandato del documento de tesis (GR-01).
 - **Javi:** revisar y mergear la pila; DoD 10 con Sergio. **El sprint no está cerrado.**
 - Deuda vista en una mutación (no es de este trabajo): en el lector de ETMAN, sacar `numero` de `Revisar` no pone ningún test
