@@ -75,6 +75,18 @@ public class LecturaPdfTests
     }
 
     [Fact]
+    public void Etman_PagoContadoConDecimales_LoProponeCompleto()
+    {
+        var renglones = Renglones(PdfSintetico.FacturaEtman())
+            .Select(r => r.StartsWith("Pago Contado") ? r.Replace("5%", "2.5%") : r).ToList();
+
+        var leido = LayoutsPdf.Leer(renglones)!;
+
+        Assert.All(leido.Lineas, l => Assert.Equal(2.5m, l.Descuento4));
+        Assert.Contains("lineas[0].descuento4", leido.ParaRevisar);
+    }
+
+    [Fact]
     public void Etman_SinElRenglonDePagoContado_NoProponeCuartoDescuento()
     {
         var renglones = Renglones(PdfSintetico.FacturaEtman()).Where(r => !r.StartsWith("Pago Contado")).ToList();
