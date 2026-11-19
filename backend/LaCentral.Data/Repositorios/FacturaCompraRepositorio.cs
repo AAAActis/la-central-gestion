@@ -26,8 +26,8 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
             .Select(f => new FacturaCompraExistente(f.Id, f.Numero, f.FechaEmision))
             .FirstOrDefaultAsync(ct);
 
-    public Task<short?> ObtenerIdReclamosAsync(CancellationToken ct = default)
-        => Task.FromResult<short?>(null);
+    public async Task<short?> ObtenerIdReclamosAsync(CancellationToken ct = default)
+        => await _context.Sucursal.Where(s => s.EsReclamos).Select(s => (short?)s.Id).SingleOrDefaultAsync(ct);
 
     public async Task<IReadOnlyDictionary<int, bool>> ObtenerEstadoArticulosAsync(IReadOnlyCollection<int> ids, CancellationToken ct = default)
         => await _context.Articulo.AsNoTracking()
