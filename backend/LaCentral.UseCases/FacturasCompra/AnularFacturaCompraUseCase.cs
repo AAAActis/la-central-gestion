@@ -56,6 +56,11 @@ public class AnularFacturaCompraUseCase
         var anulacion = new AnulacionFacturaCompra(facturaId, request.Motivo.Trim(), usuarioId, autoriza.Value, DateTime.UtcNow);
         return await _unidadDeTrabajo.EjecutarAsync(async token =>
         {
+            // CA-011 (D-S6-22): con la factura bloqueada, así no entra una nota entre la consulta y la anulación.
+            var notas = await _notas.ObtenerVigentesDeFacturaAsync(facturaId, token);
+            if (notas.Count > 0)
+                return Result.Failure(TipoError.Conflicto,
+                    $"La factura {factura.Numero} tiene notas de crédito vigentes ({string.Join(", ", notas)}): primero se anulan las notas y después la factura.");
             var anulada = await _facturas.AnularConEfectosAsync(anulacion, token);
             if (!anulada.IsSuccess)
                 return anulada;
