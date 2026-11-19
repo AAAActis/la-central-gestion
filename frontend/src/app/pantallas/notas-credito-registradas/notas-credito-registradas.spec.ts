@@ -112,6 +112,26 @@ describe('NotasCreditoRegistradas · 057 CA-012', () => {
 
     expect(raiz().querySelector('[role="alert"]')?.textContent).toContain('El rango de emisión empieza después de terminar.');
     expect(raiz().querySelector('tbody')).toBeNull();
+
+    // Al volver a buscar, mientras el pedido está en vuelo, no reaparece la tabla vieja.
+    buscar();
+    fixture.detectChanges();
+    expect(raiz().querySelector('tbody')).toBeNull();
+    servidor.expectOne(r => r.url === URL).flush(pagina([]));
+  });
+
+  it('una fecha borrada no viaja como criterio vacío', () => {
+    c.emisionDesde = '2026-11-01';
+    c.emisionHasta = '2026-11-30';
+    buscar();
+    servidor.expectOne(r => r.url === URL).flush(pagina([]));
+    c.emisionDesde = '';
+    c.emisionHasta = '  ';
+    buscar();
+
+    const pedido = servidor.expectOne(r => r.url === URL);
+    expect([pedido.request.params.has('emisionDesde'), pedido.request.params.has('emisionHasta')]).toEqual([false, false]);
+    pedido.flush(pagina([]));
   });
 
   it('pagina: «Siguiente» pide la página 2 con los criterios de la búsqueda, no con lo que se escribió después', () => {
