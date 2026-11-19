@@ -14,7 +14,15 @@ public class ConsultarNotasCreditoCompraUseCase
     public async Task<Result<PaginaDto<NotaCreditoCompraResumen>>> EjecutarAsync(
         FiltroNotasCreditoCompra filtro, int pagina = 1, int tamanoPagina = 20, CancellationToken ct = default)
     {
+        if (pagina < 1 || tamanoPagina is < 1 or > 100 || (long)(pagina - 1) * tamanoPagina > int.MaxValue)
+            return Fallo("La página o su tamaño no son válidos.");
+        if (filtro.EmisionDesde > filtro.EmisionHasta)
+            return Fallo("El rango de emisión empieza después de terminar.");
+
         var (items, total) = await _notas.BuscarAsync(filtro, pagina, tamanoPagina, ct);
         return Result<PaginaDto<NotaCreditoCompraResumen>>.Success(new PaginaDto<NotaCreditoCompraResumen>(items, total, pagina, tamanoPagina));
     }
+
+    private static Result<PaginaDto<NotaCreditoCompraResumen>> Fallo(string mensaje)
+        => Result<PaginaDto<NotaCreditoCompraResumen>>.Failure(TipoError.Invalido, mensaje);
 }
