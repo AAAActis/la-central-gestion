@@ -472,4 +472,26 @@ public class NotaCreditoCompraPostgreSqlTests
         await using var relectura = fixture.CrearContexto();
         Assert.False(await relectura.FacturaCompra.AnyAsync(f => f.Numero == "A-0001-00000099"));
     }
+
+    // CA-003 con concurrencia: si dos registros pasan la validación previa, decide el índice único
+    // parcial, y el manejador global lo traduce a 409 con su mensaje (no a 500).
+    [PostgreSqlFact]
+    public async Task NumeroRepetido_ElIndiceLoRechaza_YElManejadorLoReconoce()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        LaCentral.UseCases.Entidades.NotaCreditoCompra Nota() => new()
+        {
+            ProveedorId = e.P1, Numero = "NC-D", FechaEmision = new DateOnly(2026, 11, 5), Clase = "BONIFICACION", ImporteNeto = 10m,
+            UsuarioId = e.Operador, FechaRegistro = DateTime.UtcNow, FacturaIds = [e.F1]
+        };
+        await using (var primero = fixture.CrearContexto())
+            Assert.True((await new NotaCreditoCompraRepositorio(primero).RegistrarConEfectosAsync(Nota())).IsSuccess);
+
+        await using var segundo = fixture.CrearContexto();
+        var error = await Assert.ThrowsAsync<DbUpdateException>(() => new NotaCreditoCompraRepositorio(segundo).RegistrarConEfectosAsync(Nota()));
+
+        Assert.Equal("Ya existe una nota de crédito vigente con ese número para el proveedor.",
+            LaCentral.Api.Middleware.ManejadorExcepcionesGlobal.MensajeDeConflicto(error));
+    }
 }
