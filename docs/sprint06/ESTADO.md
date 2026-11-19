@@ -24,7 +24,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | **Construida (17/11/2026), PR abierto** en `feature/51-pantalla-pdf`, apilado sobre el #178. El PDF precarga el formulario de la 056, sin pantalla nueva. `verificador-tdd`: NO APTO en las rondas 1 y 2, APTO en la 3; el auditor no aplica. Frontend 238/238 sobre `43edd66`. Falta el DoD 10 contra `lacentral_demo` con los PDF reales (Javi con Sergio). **Revisión de Santi (17/11):** las percepciones sin leer se señalan, y elegir el proveedor después del PDF resuelve sus códigos; `verificador-tdd` NO APTO en la ronda 1 y APTO en la 2; frontend 248/248 sobre `78ff462`; su backend es el del #178 |
 | #169 | Factura de compra: el mismo artículo a sucursales distintas (D9), observación de Javi del 14/11 | sin estimar | Santi | — | **Hecha:** PR #170, mergeado por Javi el 16/11/2026 (`verificador-tdd` APTO, 203/203 frontend sobre `b7973d6`). Issue cerrada el 17/11 con referencia al #170 |
 
-| #182 | 057 · HU-FCO-07 · registro de nota de crédito de proveedor (D-S6-18) | 13 (estimación) | Santi | E11 | **Entró el 18/11/2026, aprobada por el equipo (D-S6-18).** Proforma `docs/historias/057-HU-FCO-07.md` (14 CA). Dos PR. **PR 1 (carga manual), 19/11:** re-scaffold con el 11, `NotaCreditoCompraRepositorio` con PostgreSQL (CA-014 acumulado y dos devoluciones simultáneas, CA-012, CA-011 con la carrera nota/anulación de factura), CA-008 (API, ficha y pantalla de la factura), API (`/api/notas-credito-compra`, `/calculo`, `/{id}/anulacion`, 401/403). Corre contra una plantilla con el 11 (`LA_CENTRAL_TEST_SCHEMA`). PR #183, verificadores APTO, base `develop` desde el 19/11 (#180 mergeado). **PR 2 (PDF de Expoyer, CA-010), 19/11:** lector, interpretación, `POST /api/notas-credito-compra/pdf` y precarga de la pantalla (proveedor, número, fecha, clase, neto, facturas de «Doc.Asoc.»; «Revisar» en lo que el PDF no afirmó; origen PDF), en `feature/182-nota-credito-pdf`; suites sobre `7cd1220` contra `nc057_fuente` 789/789 y frontend 286; verificadores APTO; PR con base `feature/182-nota-credito`. **PR 3 (CA-012 con pantalla, D-S6-26):** listado de notas y «Anular», en `feature/182-nota-credito-anulacion` |
+| #182 | 057 · HU-FCO-07 · registro de nota de crédito de proveedor (D-S6-18) | 13 (estimación) | Santi | E11 | **Entró el 18/11/2026, aprobada por el equipo (D-S6-18).** Proforma `docs/historias/057-HU-FCO-07.md` (14 CA). Dos PR. **PR 1 (carga manual), 19/11:** re-scaffold con el 11, `NotaCreditoCompraRepositorio` con PostgreSQL (CA-014 acumulado y dos devoluciones simultáneas, CA-012, CA-011 con la carrera nota/anulación de factura), CA-008 (API, ficha y pantalla de la factura), API (`/api/notas-credito-compra`, `/calculo`, `/{id}/anulacion`, 401/403). Corre contra una plantilla con el 11 (`LA_CENTRAL_TEST_SCHEMA`). PR #183, verificadores APTO, base `develop` desde el 19/11 (#180 mergeado). **PR 2 (PDF de Expoyer, CA-010), 19/11:** lector, interpretación, `POST /api/notas-credito-compra/pdf` y precarga de la pantalla (proveedor, número, fecha, clase, neto, facturas de «Doc.Asoc.»; «Revisar» en lo que el PDF no afirmó; origen PDF), en `feature/182-nota-credito-pdf`; suites sobre `7cd1220` contra `nc057_fuente` 789/789 y frontend 286; verificadores APTO; PR con base `feature/182-nota-credito`. **PR 3 (CA-012 con pantalla, D-S6-26), 19/11:** `GET /api/notas-credito-compra` y la pantalla «Notas de crédito registradas» (proveedor, fecha, anuladas marcadas, «Anular» con motivo y otro ADMINISTRADOR), en `feature/182-nota-credito-anulacion`; backend 803/803 sobre `59be2c8` contra `nc057_fuente`, frontend 301 sobre `bb9d4c8`; `verificador-tdd` APTO en la ronda 2 (la 1 dio NO APTO por dos mutaciones de la pantalla, arregladas en `bb9d4c8`), `auditor-persistencia` APTO; PR con base `feature/182-nota-credito-pdf` |
 
 **47 SP** (13 + 13 + 8 + 13; la 057 entró el 18/11, D-PL-06: el sprint se estira). Salieron al Sprint 7 la #126, la #127 y la #128 (21 SP); entraron la
 #13 y la #51 (21 SP). Es un intercambio: el total no cambia.
@@ -352,7 +352,7 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
-**19/11 (tarde) · la 057: PR 2 (PDF) abierto; el PR 3 (CA-012 con pantalla, D-S6-26) en curso.**
+**19/11 (tarde) · la 057: PR 2 (#184, PDF) y PR 3 (CA-012 con pantalla, D-S6-26) abiertos.**
 - `nc057_fuente` rehecha por Santi con el 11 corregido (`TODO OK`, 30 tablas). Borrados de `lacentral_test` la copia
   descartable `nc057_ensayo_2f673d44` y el huérfano `pr110_test_9d4670f6b05140749a0e351312a4b273`; `public` sigue con 27.
 - #180 mergeado a `develop`: el #183 (PR 1) tiene base `develop`.
@@ -360,7 +360,10 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
   `nc057_fuente`, frontend 286), `verificador-tdd` APTO (18 mutaciones muertas), `auditor-persistencia` APTO.
 - **PR 3** (`feature/182-nota-credito-anulacion`, base la rama del PDF): `GET /api/notas-credito-compra` (proveedor, rango de
   emisión, anuladas marcadas) y la pantalla «Notas de crédito registradas» con «Anular» (motivo y otro ADMINISTRADOR).
-  Faltan suites, verificadores, ESTADO y PR.
+  Backend 803/803 sobre `59be2c8` (`nc057_fuente`), frontend 301 sobre `bb9d4c8`. `verificador-tdd`: NO APTO en la ronda 1
+  (la tabla vieja reaparecía después de un error y una fecha borrada viajaba vacía), APTO en la ronda 2 con `bb9d4c8`.
+  `auditor-persistencia` APTO. PR abierto.
+- **La 057 queda completa en tres PR (14 CA).** Falta revisarlos y mergearlos, y el DoD 10 en `lacentral_demo` cuando esté el 11.
 - **Orden de merge:** #183 → PR 2 → PR 3. **Antes del merge del #183 a `develop`:** el 11 en `public` de `lacentral_test`,
   en `lacentral_demo` y en `lacentral` (sin eso, DoD 10 de la 057 no se puede recorrer en `lacentral_demo`).
 
