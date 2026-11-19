@@ -265,4 +265,21 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
         Assert.Contains("nota de crédito por la vía manual", await respuesta.Content.ReadAsStringAsync());
     }
+
+    [PostgreSqlFact]
+    public async Task Post_DesdePdf_201_YLaFilaQuedaConOrigenPdf()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        var json = JsonSerializer.SerializeToNode(Devolucion(s))!.AsObject();
+        json["desdePdf"] = true;
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/notas-credito-compra", json);
+
+        Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
+        var id = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        await using var relectura = fixture.CrearContexto();
+        Assert.Equal("PDF", await relectura.NotaCreditoCompra.Where(n => n.Id == id).Select(n => n.Origen).SingleAsync());
+    }
 }
