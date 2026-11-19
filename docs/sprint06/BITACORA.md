@@ -1477,3 +1477,25 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 
 **Quedó abierto:** el 11 en `public` de `lacentral_test`, en `lacentral_demo` y en `lacentral` antes del merge del #183 (decide el equipo); DoD 10 de la 057 en `lacentral_demo`, que depende de eso; revisión y merge en orden #183 → #184 → PR 3. Sin prueba propia: el límite de 10 MB y el pedido sin «archivo» del endpoint del PDF, y el desempate por Id del listado. Los bloques del 18/11 se cierran con este: su trabajo está en el #183 y el #184.
 - **PR #185** abierto (base `feature/182-nota-credito-pdf`).
+
+## 19/11/2026 · El 11 aplicado en las tres bases; pruebas que faltaban en el #184 y el #185; cierre de la 057
+
+**Instrucción recibida (verbatim):**
+> Script 11 aplicado en public de lacentral_test, en lacentral_demo y en lacentral (19/11): s11 = 1 en las tres. Anotalo en el ESTADO y en la bitácora, y avisá en el #183 que ya se puede mergear.
+>
+> Antes de que Javi revise, cubrí lo que quedó sin prueba propia: en el #184, el límite de 10 MB del PDF y el pedido sin el campo «archivo»; en el #185, el orden entre dos notas con la misma fecha de emisión (desempate por id). Cada uno con rojo por un camino real y en su rama; si una guarda no es alcanzable, se borra. Verificador acotado a esos commits y suite. Después, merge hacia las ramas de arriba.
+>
+> Cuando Javi mergee los tres: suite completa sobre develop y borrá nc057_fuente con el script de borrado. Resúmenes en español.
+
+**Plan:**
+1. ESTADO y bitácora: el 11 en `public` de las tres bases (19/11). Comentario en el #183: listo para mergear.
+2. #184 (`feature/182-nota-credito-pdf`): pruebas HTTP del límite de 10 MB y del pedido sin «archivo»; rojo por camino real (mutando la guarda), o borrar la guarda si no es alcanzable.
+3. #185 (`feature/182-nota-credito-anulacion`): prueba contra PostgreSQL de dos notas con la misma fecha (desempate por Id), rojo mutando el `ThenByDescending`.
+4. Suite completa sobre el HEAD de cada rama; `verificador-tdd` acotado a esos commits (no toca persistencia nueva: el auditor no se relanza salvo que el test de orden lo amerite).
+5. Merge de la del PDF hacia la de anulación; push; ESTADO antes del push.
+6. Cuando Javi mergee #183, #184, #185: suite completa sobre `develop` y `nc057_fuente_borrado.sql`.
+
+**Estado:** en curso
+- Arranque: `git fetch`; `develop` sin commits nuevos respecto de esta rama.
+- El 11 aplicado por Santi en `public` de `lacentral_test`, `lacentral_demo` y `lacentral` (19/11): `s11 = 1` en las tres (dato de Santi, no lo corrí yo).
+- Comentario en el #183: ya se puede mergear (orden #183 → #184 → #185).
