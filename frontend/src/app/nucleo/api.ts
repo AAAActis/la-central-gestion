@@ -306,6 +306,19 @@ export class ApiLaCentral {
     return this.http.post<{ id: number }>('/api/notas-credito-compra', nota);
   }
 
+  /** 057 CA-012: el listado de notas; solo viajan los criterios con valor. */
+  notasCreditoCompra(filtro: FiltroNotasCreditoCompra, pagina: number, tamanoPagina: number): Observable<Pagina<NotaCreditoCompraResumen>> {
+    let params = new HttpParams().set('pagina', pagina).set('tamanoPagina', tamanoPagina);
+    for (const [clave, valor] of Object.entries(filtro))
+      if (valor !== null && valor !== undefined && String(valor).trim() !== '') params = params.set(clave, String(valor).trim());
+    return this.http.get<Pagina<NotaCreditoCompraResumen>>('/api/notas-credito-compra', { params });
+  }
+
+  /** 057 CA-012 (D-S6-23): como la factura (028), con motivo y la autorización de otro ADMINISTRADOR. */
+  anularNotaCreditoCompra(id: number, anulacion: AnulacionFacturaCompra): Observable<void> {
+    return this.http.post<void>(`/api/notas-credito-compra/${id}/anulacion`, anulacion);
+  }
+
   /** 057 CA-010: el PDF viaja como formulario, en el campo «archivo». Nada se guarda. */
   interpretarNotaCreditoPdf(archivo: File): Observable<NotaCreditoPdfInterpretada> {
     const formulario = new FormData();
@@ -341,6 +354,25 @@ export interface NotaCreditoCompraNueva {
   lineas: LineaNotaCreditoCompra[];
   /** CA-010: se cargó desde el PDF del proveedor. */
   desdePdf?: boolean;
+}
+
+/** 057 CA-012: los criterios del listado; todos opcionales. */
+export interface FiltroNotasCreditoCompra {
+  proveedorId?: number | null;
+  emisionDesde?: string;
+  emisionHasta?: string;
+}
+
+/** 057 CA-012: una fila del listado; las anuladas vienen marcadas. */
+export interface NotaCreditoCompraResumen {
+  id: number;
+  proveedorId: number;
+  proveedor: string;
+  numero: string;
+  clase: 'BONIFICACION' | 'DEVOLUCION';
+  fechaEmision: string;
+  importeNeto: number;
+  anulada: boolean;
 }
 
 /** 057 CA-010: lo que devuelve `POST /api/notas-credito-compra/pdf`. `paraRevisar` nombra lo que el PDF no afirmó. */

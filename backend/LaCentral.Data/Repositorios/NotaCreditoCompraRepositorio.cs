@@ -166,4 +166,22 @@ public class NotaCreditoCompraRepositorio : INotaCreditoCompraRepositorio
         }
         return Result.Success();
     }
+
+    public async Task<(IReadOnlyList<NotaCreditoCompraResumen> Items, int Total)> BuscarAsync(
+        FiltroNotasCreditoCompra filtro, int pagina, int tamanoPagina, CancellationToken ct = default)
+    {
+        var consulta = _context.NotaCreditoCompra.AsNoTracking();
+        if (filtro.ProveedorId is { } proveedor) consulta = consulta.Where(n => n.ProveedorId == proveedor);
+        if (filtro.EmisionDesde is { } desde) consulta = consulta.Where(n => n.FechaEmision >= desde);
+        if (filtro.EmisionHasta is { } hasta) consulta = consulta.Where(n => n.FechaEmision <= hasta);
+
+        var total = await consulta.CountAsync(ct);
+        var items = await consulta
+            .OrderByDescending(n => n.FechaEmision).ThenByDescending(n => n.Id)
+            .Skip((pagina - 1) * tamanoPagina).Take(tamanoPagina)
+            .Select(n => new NotaCreditoCompraResumen(n.Id, n.ProveedorId, n.Proveedor.RazonSocial, n.Numero, n.Clase,
+                n.FechaEmision, n.ImporteNeto, n.Estado != EstadoActiva))
+            .ToListAsync(ct);
+        return (items, total);
+    }
 }
