@@ -187,4 +187,38 @@ public class AnularFacturaCompraUseCaseTests
         Assert.Equal("El stock no entra en su columna.", resultado.Error);
         _precios.Verify(p => p.ObtenerAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    // CA-011 (D-S6-22): con notas de crédito vigentes no se anula; el mensaje dice que primero
+    // se anulan las notas y las nombra. Se consulta dentro de la unidad de trabajo (con la
+    // factura bloqueada), con la factura pedida.
+    [Fact]
+    public async Task ConNotasDeCreditoVigentes_ConflictoQueLasNombra()
+    {
+        int? consultada = null;
+        _notas.Setup(n => n.ObtenerVigentesDeFacturaAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Callback((int id, CancellationToken _) => consultada = id)
+            .ReturnsAsync(["0010-00021495", "0010-00021496"]);
+
+        var resultado = await Caso().EjecutarAsync(FacturaActiva, Pedido());
+
+        AssertFallo(resultado, TipoError.Conflicto);
+        Assert.Equal(FacturaActiva, consultada);
+        Assert.Contains("0010-00021495", resultado.Error);
+        Assert.Contains("0010-00021496", resultado.Error);
+        Assert.Contains("primero", resultado.Error);
+        _precios.Verify(p => p.ObtenerAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task LasNotasVigentesSeConsultanDentroDeLaUnidadDeTrabajo()
+    {
+        _unidad = DoblesBaja.UnidadQueNoEjecuta();
+
+        await Caso().EjecutarAsync(FacturaActiva, Pedido());
+
+        _notas.Verify(n => n.ObtenerVigentesDeFacturaAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unidad = DoblesBaja.UnidadQueEjecuta();
+        Assert.True((await Caso().EjecutarAsync(FacturaActiva, Pedido())).IsSuccess);
+        _notas.Verify(n => n.ObtenerVigentesDeFacturaAsync(FacturaActiva, It.IsAny<CancellationToken>()), Times.Once);
+    }
 }
