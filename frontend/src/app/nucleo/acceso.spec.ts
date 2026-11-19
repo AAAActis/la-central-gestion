@@ -32,7 +32,7 @@ describe('modulosPara · CA1 y CA2', () => {
 
   it('los dos roles de la base ven Artículos, Clientes, Proveedores y Factura de compra, en ese orden', () => {
     for (const rol of ['ADMINISTRADOR', 'OPERADOR']) {
-      expect(modulosPara(rol, MODULOS_DEL_SISTEMA).map(m => m.ruta)).toEqual(['articulos', 'clientes', 'proveedores', 'factura-compra', 'compras-registradas', 'nota-credito-compra']);
+      expect(modulosPara(rol, MODULOS_DEL_SISTEMA).map(m => m.ruta)).toEqual(['articulos', 'clientes', 'proveedores', 'factura-compra', 'compras-registradas', 'nota-credito-compra', 'notas-credito-registradas']);
     }
   });
 });

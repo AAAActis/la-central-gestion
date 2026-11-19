@@ -86,7 +86,7 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       await ir(fixture, '/articulos');
       const enlaces = enlacesDelMenu(fixture);
       expect(enlaces.map(a => a.textContent?.trim())).toEqual(['Artículos', 'Clientes', 'Proveedores', 'Factura de compra', 'Compras registradas', 'Nota de crédito de proveedor']);
-      expect(enlaces.map(a => a.getAttribute('href'))).toEqual(['/articulos', '/clientes', '/proveedores', '/factura-compra', '/compras-registradas', '/nota-credito-compra']);
+      expect(enlaces.map(a => a.getAttribute('href'))).toEqual(['/articulos', '/clientes', '/proveedores', '/factura-compra', '/compras-registradas', '/nota-credito-compra', '/notas-credito-registradas']);
     });
 
     it('CA1 · marca el módulo en el que está el usuario', async () => {
@@ -320,7 +320,7 @@ describe('appConfig · el cableado real de la aplicación', () => {
     entrarComo('OPERADOR');
     await ir(fixture, '/factura-compra');
 
-    expect(enlacesDelMenu(fixture).map(a => a.getAttribute('href'))).toEqual(['/articulos', '/clientes', '/proveedores', '/factura-compra', '/compras-registradas', '/nota-credito-compra']);
+    expect(enlacesDelMenu(fixture).map(a => a.getAttribute('href'))).toEqual(['/articulos', '/clientes', '/proveedores', '/factura-compra', '/compras-registradas', '/nota-credito-compra', '/notas-credito-registradas']);
     expect(pantalla(fixture, 'app-factura-compra')).not.toBeNull();
   });
 });
