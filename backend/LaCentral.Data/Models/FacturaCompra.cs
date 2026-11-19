@@ -78,6 +78,8 @@ public partial class FacturaCompra
 
     public virtual ICollection<FacturaCompraDetalle> FacturaCompraDetalle { get; set; } = new List<FacturaCompraDetalle>();
 
+    public virtual ICollection<NotaCreditoCompraFactura> NotaCreditoCompraFactura { get; set; } = new List<NotaCreditoCompraFactura>();
+
     public virtual Proveedor Proveedor { get; set; } = null!;
 
     public virtual Usuario Usuario { get; set; } = null!;

@@ -43,6 +43,8 @@ public partial class Articulo
 
     public virtual ICollection<FacturaVentaDetalle> FacturaVentaDetalle { get; set; } = new List<FacturaVentaDetalle>();
 
+    public virtual ICollection<NotaCreditoCompraDetalle> NotaCreditoCompraDetalle { get; set; } = new List<NotaCreditoCompraDetalle>();
+
     public virtual ICollection<PrecioProveedor> PrecioProveedor { get; set; } = new List<PrecioProveedor>();
 
     public virtual ICollection<Stock> Stock { get; set; } = new List<Stock>();
