@@ -214,4 +214,55 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
         await using var relectura = fixture.CrearContexto();
         Assert.False(await relectura.NotaCreditoCompra.AnyAsync());
     }
+    // CA-010 · el PDF de Expoyer (sintético, datos inventados) precarga la carga manual; nada se guarda.
+
+    [PostgreSqlFact]
+    public async Task PostPdf_NotaDeExpoyer_200ConLaPropuesta_YNoEscribeNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        await using (var c = fixture.CrearContexto())
+        {
+            (await c.Proveedor.FindAsync(s.ProveedorId))!.Cuit = FacturasCompra.PdfSintetico.CuitProveedor;
+            (await c.FacturaCompra.FindAsync(s.FacturaId))!.Numero = "0011-00001111";
+            await c.SaveChangesAsync();
+        }
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        using var formulario = new MultipartFormDataContent
+        {
+            { new ByteArrayContent(FacturasCompra.PdfSintetico.NotaCreditoExpoyer()), "archivo", "nota.pdf" }
+        };
+
+        var respuesta = await cliente.PostAsync("/api/notas-credito-compra/pdf", formulario);
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        var cuerpo = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(s.ProveedorId, cuerpo.GetProperty("proveedorId").GetInt32());
+        Assert.Equal("0010-00004321", cuerpo.GetProperty("numero").GetString());
+        Assert.Equal("2027-02-04", cuerpo.GetProperty("fechaEmision").GetString());
+        Assert.Equal("BONIFICACION", cuerpo.GetProperty("clase").GetString());
+        Assert.Equal(1000m, cuerpo.GetProperty("importeNeto").GetDecimal());
+        Assert.Equal([s.FacturaId], cuerpo.GetProperty("facturaIds").EnumerateArray().Select(x => x.GetInt32()));
+        Assert.Equal(["0011-00002222"], cuerpo.GetProperty("facturasSinEncontrar").EnumerateArray().Select(x => x.GetString()));
+        Assert.Equal(["facturaIds"], cuerpo.GetProperty("paraRevisar").EnumerateArray().Select(x => x.GetString()));
+        await using var nuevo = fixture.CrearContexto();
+        Assert.Equal(0, await nuevo.NotaCreditoCompra.CountAsync());
+    }
+
+    [PostgreSqlFact]
+    public async Task PostPdf_UnArchivoQueNoEsPdf_400ConElPedidoDeCargaManual()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        using var formulario = new MultipartFormDataContent
+        {
+            { new ByteArrayContent("no soy un PDF"u8.ToArray()), "archivo", "nota.pdf" }
+        };
+
+        var respuesta = await cliente.PostAsync("/api/notas-credito-compra/pdf", formulario);
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Contains("nota de crédito por la vía manual", await respuesta.Content.ReadAsStringAsync());
+    }
 }
