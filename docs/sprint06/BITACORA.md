@@ -1440,3 +1440,22 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - **Suite completa sobre `develop` (`37e8007`)**, una vez, sin filtrar los fallos, 23:51 a 23:56 (hora local): build `--no-incremental` 0 advertencias; `Correctas! - Con error: 0, Superado: 672, Omitido: 0, Total: 672, Duración: 4 m 43 s`. **Los tres que fallaron el 18/11 pasaron.** No hubo nada que investigar: no se repitieron. Lo que se sabe de la corrida del 18/11: tardó 1 h 9 m (15 veces lo normal), cada prueba de PostgreSQL tardaba alrededor de un minuto, también las que pasaban, y a la 01:50 `arch` se cayó de Tailscale. Coincide con un servidor sobrecargado o a punto de caerse, no con un bloqueo de esas tres pruebas. Pero el mensaje de error de entonces no se guardó, así que la causa no está demostrada. Worktree sacado.
 
 **Dónde queda (para retomar):** PR 1 hecho (#183, verificadores APTO). Falta el **PR 2 (PDF de Expoyer, CA-010)** en `feature/182-nota-credito-pdf`: merge de `feature/182-nota-credito`, `POST /api/notas-credito-compra/pdf`, precarga de la pantalla, suite contra la plantilla, verificadores acotados a sus commits y PR con base `feature/182-nota-credito`. Santi rehace `nc057_fuente` (bloque del 19/11). Cuando esté, se borra `nc057_ensayo_2f673d44`. Queda también el huérfano `pr110_test_9d4670f6b05140749a0e351312a4b273`. Equipo: ¿pantalla para anular la nota (CA-012)?
+
+## 19/11/2026 13:22 · La 057: limpieza de esquemas, PR 2 (PDF, CA-010) y PR 3 (anulación, CA-012)
+
+**Instrucción recibida (verbatim):**
+> nc057_fuente rehecha con el 11 corregido: TODO OK (19/11). Borrá tu copia nc057_ensayo_2f673d44 y el esquema huérfano pr110_test_9d4670f6b05140749a0e351312a4b273 de lacentral_test (son esquemas de prueba; public no se toca).
+>
+> Decisión del equipo sobre el CA-012: SÍ entra en la 057. Listado de notas de crédito (filtrable por proveedor y fecha, con las anuladas marcadas) y botón «Anular» con motivo y la autorización de otro ADMINISTRADOR, reusando el patrón de la 026 y la 028. Va en su propio PR, después del PR 2.
+>
+> Seguí en orden: PR 2 (PDF de Expoyer, CA-010) y después PR 3 (pantalla de anulación). TDD, suite contra nc057_fuente, verificadores acotados y ESTADO antes del push. Cuando termines, parás con el resumen. Resúmenes en español.
+
+**Plan:**
+1. Verificar `nc057_fuente` (solo lectura) y borrar `nc057_ensayo_2f673d44` y `pr110_test_9d4670f6b05140749a0e351312a4b273` de `lacentral_test`, sin tocar `public`.
+2. #180 ya entró a `develop` (`fe7e6aa`): base del #183 a `develop`.
+3. PR 2 en `feature/182-nota-credito-pdf` (ya tiene lector e interpretación): lo que falte del CA-010 (endpoint, precarga de la pantalla), TDD, suite contra `nc057_fuente`, verificadores acotados, ESTADO, push, PR.
+4. PR 3 en rama nueva desde la del PDF: listado de NC (proveedor, fecha, anuladas marcadas) y «Anular» con motivo y autorización de otro ADMINISTRADOR (patrón 026/028), TDD, suite, verificadores, ESTADO, push, PR.
+5. Resumen y parar.
+
+**Estado:** en curso
+- Paso 1 (13:20 hora del servidor): `nc057_fuente_verificacion.sql` → `NOTICE: nc057_fuente: TODO OK (30 tablas; public: 27).` Borrados con guarda (solo `lacentral_test`, sin dependencias desde fuera) `nc057_ensayo_2f673d44` (31 objetos) y `pr110_test_9d4670f6b05140749a0e351312a4b273` (27). Después: `public` 27 tablas, `nc057_fuente` 30. Quedan `demo_ensayo_c3` y `staging`, que no son míos.
