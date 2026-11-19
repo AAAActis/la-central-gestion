@@ -97,6 +97,14 @@ describe('NotaCreditoCompra · 057 · carga desde PDF', () => {
     expect(aviso?.querySelector('.etiqueta.revisar')).not.toBeNull();
   });
 
+  it('CA-010: la fecha y las percepciones que el PDF no afirmó también quedan señaladas', () => {
+    cargar(interpretada({ fechaEmision: null, paraRevisar: ['fechaEmision', 'percepciones'] }));
+
+    expect(campo('emision').closest('label')!.querySelector('.etiqueta.revisar')).not.toBeNull();
+    expect(raiz.querySelector('fieldset legend .etiqueta.revisar')).not.toBeNull();
+    expect(raiz.querySelector('[data-sin-encontrar]')).toBeNull();
+  });
+
   it('CA-010: sin proveedor reconocido, señala que hay que buscarlo y no pide ficha ni facturas', async () => {
     cargar(interpretada({ proveedorId: null, facturaIds: [], facturasSinEncontrar: ['0011-00001111'], paraRevisar: ['proveedorId', 'facturaIds'] }));
     await fixture.whenStable();
