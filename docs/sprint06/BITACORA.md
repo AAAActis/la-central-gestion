@@ -1476,3 +1476,4 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - ESTADO (fila #182 y PRÓXIMA SESIÓN), push de `feature/182-nota-credito-anulacion` y PR 3 con base `feature/182-nota-credito-pdf`.
 
 **Quedó abierto:** el 11 en `public` de `lacentral_test`, en `lacentral_demo` y en `lacentral` antes del merge del #183 (decide el equipo); DoD 10 de la 057 en `lacentral_demo`, que depende de eso; revisión y merge en orden #183 → #184 → PR 3. Sin prueba propia: el límite de 10 MB y el pedido sin «archivo» del endpoint del PDF, y el desempate por Id del listado. Los bloques del 18/11 se cierran con este: su trabajo está en el #183 y el #184.
+- **PR #185** abierto (base `feature/182-nota-credito-pdf`).
