@@ -166,4 +166,8 @@ public class NotaCreditoCompraRepositorio : INotaCreditoCompraRepositorio
         }
         return Result.Success();
     }
+
+    public Task<(IReadOnlyList<NotaCreditoCompraResumen> Items, int Total)> BuscarAsync(
+        FiltroNotasCreditoCompra filtro, int pagina, int tamanoPagina, CancellationToken ct = default)
+        => Task.FromResult<(IReadOnlyList<NotaCreditoCompraResumen>, int)>(([], 0));
 }

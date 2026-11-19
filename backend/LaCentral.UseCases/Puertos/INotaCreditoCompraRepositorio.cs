@@ -46,4 +46,8 @@ public interface INotaCreditoCompraRepositorio
     /// dentro de IUnidadDeTrabajo.
     /// </summary>
     Task<Result> AnularConEfectosAsync(AnulacionNotaCreditoCompra anulacion, CancellationToken ct = default);
+
+    /// <summary>CA-012: la página pedida del listado, de la más reciente a la más vieja, y el total.</summary>
+    Task<(IReadOnlyList<NotaCreditoCompraResumen> Items, int Total)> BuscarAsync(
+        FiltroNotasCreditoCompra filtro, int pagina, int tamanoPagina, CancellationToken ct = default);
 }
