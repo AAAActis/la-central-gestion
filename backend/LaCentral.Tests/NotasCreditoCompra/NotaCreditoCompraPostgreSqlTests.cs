@@ -452,4 +452,24 @@ public class NotaCreditoCompraPostgreSqlTests
         await using var relectura = fixture.CrearContexto();
         Assert.False(await relectura.NotaCreditoCompra.AnyAsync());
     }
+
+    // CA-008: Reclamos no es destino de una factura de compra (sí origen de una devolución, arriba).
+    [PostgreSqlFact]
+    public async Task Factura_ConDestinoReclamos_SeRechaza()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var resultado = await new RegistrarFacturaCompraUseCase(new FacturaCompraRepositorio(contexto), new ProveedorRepositorio(contexto),
+                    new ArticuloRepositorio(contexto), new UnidadDeTrabajo(contexto), Sesion(e).Object,
+                    new CalcularPreciosArticuloUseCase(new ArticuloRepositorio(contexto)))
+                .EjecutarAsync(new RegistrarFacturaCompraRequest(e.P1, "A-0001-00000099", new DateOnly(2026, 10, 1), null, 0m, 0m, 0m, 0m,
+                    [new LineaFacturaCompraRequest(e.X, e.RC, 1m, 100m, 0m)], TipoComprobante: "A"));
+            Assert.Equal(TipoError.Invalido, resultado.Tipo);
+        }
+        await using var relectura = fixture.CrearContexto();
+        Assert.False(await relectura.FacturaCompra.AnyAsync(f => f.Numero == "A-0001-00000099"));
+    }
 }
