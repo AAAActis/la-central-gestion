@@ -13,6 +13,9 @@ public interface IFacturaCompraRepositorio
     /// </summary>
     Task<FacturaCompraExistente?> ObtenerNumeroActivoAsync(int proveedorId, string numero, CancellationToken ct = default);
 
+    /// <summary>HU-FCO-07 CA-008: el Id del depósito Reclamos, que no es destino de una compra; null si no hay.</summary>
+    Task<short?> ObtenerIdReclamosAsync(CancellationToken ct = default);
+
     /// <summary>Id → activo de los artículos pedidos. Los que no existen no aparecen.</summary>
     Task<IReadOnlyDictionary<int, bool>> ObtenerEstadoArticulosAsync(IReadOnlyCollection<int> ids, CancellationToken ct = default);
 
