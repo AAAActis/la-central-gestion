@@ -6,6 +6,7 @@ using LaCentral.UseCases;
 using LaCentral.UseCases.Articulos;
 using LaCentral.UseCases.Clientes;
 using LaCentral.UseCases.FacturasCompra;
+using LaCentral.UseCases.NotasCreditoCompra;
 using LaCentral.UseCases.Proveedores;
 using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -70,6 +71,8 @@ builder.Services.AddScoped<CalcularPreciosArticuloUseCase>();
 builder.Services.AddScoped<RegistrarFacturaCompraUseCase>();
 builder.Services.AddScoped<ConsultarFacturasCompraUseCase>();
 builder.Services.AddScoped<AnularFacturaCompraUseCase>();
+builder.Services.AddScoped<RegistrarNotaCreditoCompraUseCase>();
+builder.Services.AddScoped<AnularNotaCreditoCompraUseCase>();
 builder.Services.AddScoped<InterpretarFacturaPdfUseCase>();
 builder.Services.AddScoped<ILectorTextoPdf, LaCentral.Api.Pdf.LectorTextoPdf>();
 
