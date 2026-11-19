@@ -14,6 +14,7 @@ public class AnularFacturaCompraUseCase
     private readonly IUnidadDeTrabajo _unidadDeTrabajo;
     private readonly IContextoUsuario _contexto;
     private readonly CalcularPreciosArticuloUseCase _calcularPrecios;
+    private readonly INotaCreditoCompraRepositorio _notas;
 
     public AnularFacturaCompraUseCase(
         IFacturaCompraRepositorio facturas,
@@ -21,8 +22,10 @@ public class AnularFacturaCompraUseCase
         IServicioHash hash,
         IUnidadDeTrabajo unidadDeTrabajo,
         IContextoUsuario contexto,
-        CalcularPreciosArticuloUseCase calcularPrecios)
+        CalcularPreciosArticuloUseCase calcularPrecios,
+        INotaCreditoCompraRepositorio notas)
     {
+        _notas = notas;
         _facturas = facturas;
         _usuarios = usuarios;
         _hash = hash;

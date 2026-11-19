@@ -29,6 +29,7 @@ builder.Services.AddScoped<IArticuloRepositorio, ArticuloRepositorio>();
 builder.Services.AddScoped<IPreciosArticuloRepositorio, ArticuloRepositorio>();
 builder.Services.AddScoped<IHistorialBajaRepositorio, HistorialBajaRepositorio>();
 builder.Services.AddScoped<IFacturaCompraRepositorio, FacturaCompraRepositorio>();
+builder.Services.AddScoped<INotaCreditoCompraRepositorio, NotaCreditoCompraRepositorio>();
 builder.Services.AddScoped<IUnidadDeTrabajo, UnidadDeTrabajo>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
 

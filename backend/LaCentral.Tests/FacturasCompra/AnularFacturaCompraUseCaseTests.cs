@@ -25,6 +25,7 @@ public class AnularFacturaCompraUseCaseTests
     private readonly Mock<IUsuarioRepositorio> _usuarios = new();
     private readonly Mock<IServicioHash> _hash = new();
     private readonly Mock<IPreciosArticuloRepositorio> _precios = new();
+    private readonly Mock<INotaCreditoCompraRepositorio> _notas = new();
     private Mock<IUnidadDeTrabajo> _unidad = DoblesBaja.UnidadQueEjecuta();
     private Mock<IContextoUsuario> _contexto = DoblesBaja.Contexto();
     private AnulacionFacturaCompra? _anulacion;
@@ -53,7 +54,7 @@ public class AnularFacturaCompraUseCaseTests
 
     private AnularFacturaCompraUseCase Caso() =>
         new(_facturas.Object, _usuarios.Object, _hash.Object, _unidad.Object, _contexto.Object,
-            new CalcularPreciosArticuloUseCase(_precios.Object));
+            new CalcularPreciosArticuloUseCase(_precios.Object), _notas.Object);
 
     private static AnularFacturaCompraRequest Pedido(string? motivo = " Cargada dos veces ", string? autoriza = "jefa",
         string? clave = "clave-buena") => new(motivo, autoriza, clave);
