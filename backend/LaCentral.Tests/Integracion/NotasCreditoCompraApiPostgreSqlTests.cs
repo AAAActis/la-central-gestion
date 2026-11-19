@@ -36,9 +36,10 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
     public NotasCreditoCompraApiPostgreSqlTests(WebApplicationFactory<Program> factory, ITestOutputHelper salida)
         => (_factory, _salida) = (factory, salida);
 
-    private HttpClient Cliente(PostgreSqlPruebas fixture, string? rol, int usuarioId = 1)
+    /// <param name="kestrel">Servidor HTTP real: TestServer no aplica <c>[RequestSizeLimit]</c>.</param>
+    private HttpClient Cliente(PostgreSqlPruebas fixture, string? rol, int usuarioId = 1, bool kestrel = false)
     {
-        var cliente = fixture.Liberar(_factory.WithWebHostBuilder(builder =>
+        var fabrica = fixture.Liberar(_factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(ConfiguracionJwt));
             builder.ConfigureTestServices(servicios =>
@@ -47,7 +48,9 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
                 servicios.RemoveAll<IDbContextOptionsConfiguration<LaCentralDbContext>>();
                 servicios.AddDbContext<LaCentralDbContext>(o => o.UseNpgsql(fixture.ConexionAislada));
             });
-        })).CreateClient();
+        }));
+        if (kestrel) fabrica.UseKestrel(0);
+        var cliente = fabrica.CreateClient();
 
         if (rol is not null)
         {
@@ -264,6 +267,42 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
 
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
         Assert.Contains("nota de crédito por la vía manual", await respuesta.Content.ReadAsStringAsync());
+    }
+
+    [PostgreSqlFact]
+    public async Task PostPdf_SinElCampoArchivo_400ConElPedidoDeCargaManual()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        using var formulario = new MultipartFormDataContent { { new StringContent("x"), "otro" } };
+
+        var respuesta = await cliente.PostAsync("/api/notas-credito-compra/pdf", formulario);
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Contains("nota de crédito por la vía manual", await respuesta.Content.ReadAsStringAsync());
+    }
+
+    [PostgreSqlFact]
+    public async Task PostPdf_DeMasDe10MB_400SinLeerElArchivo()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId, kestrel: true);
+        // Sin esperar el 100-continue, Kestrel responde 413 y corta mientras el cuerpo todavía sube.
+        cliente.DefaultRequestHeaders.ExpectContinue = true;
+        using var formulario = new MultipartFormDataContent
+        {
+            { new ByteArrayContent(new byte[10 * 1024 * 1024 + 1]), "archivo", "nota.pdf" }
+        };
+
+        var respuesta = await cliente.PostAsync("/api/notas-credito-compra/pdf", formulario);
+
+        // Kestrel corta la lectura del formulario y [ApiController] lo devuelve como 400: el PDF no llega a leerse.
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        var cuerpo = await respuesta.Content.ReadAsStringAsync();
+        Assert.Contains("The max request body size is 10485760 bytes", cuerpo);
+        Assert.DoesNotContain("vía manual", cuerpo);
     }
 
     [PostgreSqlFact]
