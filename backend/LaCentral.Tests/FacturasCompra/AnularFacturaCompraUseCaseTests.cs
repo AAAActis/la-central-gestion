@@ -39,6 +39,7 @@ public class AnularFacturaCompraUseCaseTests
         _facturas.Setup(f => f.AnularConEfectosAsync(It.IsAny<AnulacionFacturaCompra>(), It.IsAny<CancellationToken>()))
             .Callback((AnulacionFacturaCompra a, CancellationToken _) => _anulacion = a)
             .ReturnsAsync(Result.Success());
+        _notas.Setup(n => n.ObtenerVigentesDeFacturaAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         Usuario("jefa", id: 9, rol: Administrador);
         Usuario("cajero", id: 10, rol: Operador);
         Usuario("ex.jefe", id: 11, rol: Administrador, activo: false);
