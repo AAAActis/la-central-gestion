@@ -1352,3 +1352,75 @@ Si la copia quedara mal: el paso 2 es una transacción (si falla, no queda nada)
 - Rama de la 057 (ver el bloque en `feature/182-nota-credito`): merge del #180 corregido (`d5ecc6b`, ESTADO con la versión de la 057) y `6f36b7c` D-S6-18 y D-S6-20 **aprobadas por el equipo el 18/11** (ESTADO, proforma v1.2, índice, plan); merge en la rama del PDF `463721d`. Push de las dos.
 - #180: respuesta punto por punto con los commits (comentario 6990438840). Error mío: la primera versión del comentario decía «@javi…», que GitHub puede tomar como mención a otro usuario; se editó en el momento a «Javi».
 - **Suite completa de backend sobre `develop` (`37e8007`)**, en un worktree, una vez: build `--no-incremental` 0 advertencias; `Con error! - Con error: 3, Superado: 669, Omitido: 0, Total: 672, Duración: 1 h 9 m`. Fallaron `ProveedorPostgreSqlTests.ModificarConDireccionVaciaNueva_NoCreaUnaFilaVacia` (1 m 7 s), `PostgreSqlPruebasLimpiezaTests.ConOtraFuente_ElSearchPathResuelveEnEsaFuenteYNoEnPublic` (1 m 12 s) y `HistorialBajaRepositorioTests.UnidadDeTrabajo_DevuelveElResultadoDeLaOperacionYLaEjecutaUnaVez` (53 s). La corrida tardó 15 veces lo normal (~4 m 30 s) y cada fallo, cerca de un minuto: carga del servidor compartido. **No se capturó el mensaje de error** (el filtro de la salida lo dejó afuera). Filtradas las tres después: `Correctas! - Con error: 0, Superado: 4, Omitido: 0, Total: 4, Duración: 1 m 50 s`. No se reprodujeron; no se volvió a correr la suite entera (se pidió una vez). Worktree sacado.
+
+## 18/11/2026 · La 057 contra la plantilla nc057_fuente (E11 abierta)
+
+**Instrucción recibida (verbatim):**
+> nc057_fuente: TODO OK (18/11). Seguí con la 057 contra la plantilla: re-scaffold, repositorio con las pruebas contra PostgreSQL, D-S6-22, API, PDF, verificadores y los dos PR.
+>
+> Suite sobre develop: 669/672 no es verde. Cuando termines con la 057 y la netbook esté más tranquila, corré la suite completa sobre develop una sola vez más, sin filtrar la salida de los fallos. Si vuelven a fallar los mismos tres, investigá por qué tardan un minuto en la corrida completa (¿esperan un lock? ¿un timeout?) en vez de asumir que es carga. Resúmenes en español.
+
+**Plan:**
+1. Re-scaffold de `LaCentral.Data/Models/` contra `lacentral_test`, esquema `nc057_fuente` (rama `feature/182-nota-credito-manual`).
+2. `NotaCreditoCompraRepositorio` con TDD y pruebas contra PostgreSQL (fuente `nc057_fuente`): alta releída con contexto nuevo, suma acumulada, dos devoluciones concurrentes, anulación con stock de vuelta al origen y número liberado.
+3. D-S6-22 (CA-011): la 028 no anula una factura con NC vigentes y nombra las notas.
+4. API: controlador, DI, CA-008; suite completa de la rama con `LA_CENTRAL_TEST_SCHEMA=nc057_fuente`; ESTADO; verificadores acotados; PR de la carga manual.
+5. Rama del PDF: endpoint y precarga de la pantalla; suite; verificadores; PR.
+6. Suite completa sobre `develop`, una vez, sin filtrar los fallos; si fallan los mismos tres, investigar la espera de un minuto.
+
+**Estado:** en curso
+- Paso 1, re-scaffold: **no hay esquema `nc057_fuente` en `lacentral_test`**. `dotnet ef dbcontext scaffold … --schema nc057_fuente` → «Unable to find a schema in the database matching the selected schema nc057_fuente» (dejó `LaCentralDbContext.cs` vacío; restaurado con `git checkout`, `Models/` intacto). Consulta de solo lectura con `LACENTRAL_TEST_PG` (servidor 172.19.0.2, PostgreSQL 18.6, `current_user` lacentral_santi, 19/11 01:22 hora del servidor): `pg_namespace` tiene `demo_ensayo_c3`, `information_schema`, `public` (27 tablas) y `staging`, pero no `nc057_fuente`. Ninguna tabla `nota_credito%` ni columna `es_reclamos` en ningún esquema. O sea, en esta base la copia no está (y el 11 tampoco). Puede que se haya corrido contra otro servidor o contenedor, o que la transacción del paso 2 haya vuelto atrás.
+- Mientras tanto, el paso 6 (suite completa sobre `develop`, que no depende del esquema): se adelanta, porque son la 1 de la mañana en el servidor y lo de la 057 está frenado.
+- La suite sobre `develop` que se adelantó (worktree `wt-develop`, `37e8007`) quedó cortada a mitad con la sesión: la salida termina sin resumen (`dev2.txt`, 22:33), sin proceso `dotnet` vivo. No cuenta. Cada test de PostgreSQL tardaba de 46 s a 1 m 10 s, incluso los que pasan.
+
+## 18/11/2026 · La 057 contra nc057_fuente, segunda vez (Santi la verificó a las 22:35)
+
+**Instrucción recibida (verbatim):**
+> nc057_fuente: TODO OK, verificado contra 172.19.0.2 (18/11, 22:35). Copia de 27 tablas, el 11 aplicado sobre la copia (sucursal 3 «Reclamos (depósito)», nota_credito_compra, nota_credito_compra_factura, nota_credito_compra_detalle) y verificación: 30 tablas; public: 27. Seguí con la 057 contra la plantilla: re-scaffold, repositorio con las pruebas contra PostgreSQL, D-S6-22, API, PDF, verificadores y los dos PR. Cuando termine la suite sobre develop, pasame el resultado. Resúmenes en español.
+
+**Plan:**
+1. Confirmar `nc057_fuente` en `lacentral_test` (solo lectura). Si no está, parar.
+2. Re-scaffold contra `nc057_fuente`.
+3. `NotaCreditoCompraRepositorio` con pruebas contra PostgreSQL (`LA_CENTRAL_TEST_SCHEMA=nc057_fuente`).
+4. D-S6-22 (CA-011), API, CA-008; suite de la rama; ESTADO; verificadores; PR de la carga manual.
+5. Rama del PDF: endpoint, precarga, suite, verificadores, PR.
+6. Suite completa sobre `develop` (la anterior quedó cortada), una vez, sin filtrar fallos; resultado a Santi.
+
+**Estado:** en curso
+- Paso 1: `nc057_fuente` presente en `lacentral_test` (172.19.0.2, 01:35 hora del servidor): 30 tablas, sucursal 3 «Reclamos (depósito)». Queda además un esquema `pr110_test_9d4670f6b05140749a0e351312a4b273` (27 tablas), seguramente de la suite cortada.
+- Paso 2, re-scaffold `ddbffae`: contra `nc057_fuente` a un directorio aparte; entra solo lo nuevo (3 tablas, `es_reclamos`, `fc_id_proveedor_unico`, navegaciones), sin el esquema en `ToTable` y conservando los comentarios de tabla de `public` (la copia no los trae) y los fines de línea. Build: 0 advertencias, 0 errores.
+- Paso 3, repositorio: esqueleto `NotaCreditoCompraRepositorio` (valores neutros) y 7 pruebas contra PostgreSQL (`NotaCreditoCompraPostgreSqlTests`: bonificación, devolución con Reclamos en negativo, facturas, CA-014 acumulado y sin anuladas, dos devoluciones simultáneas con espera de bloqueo visible en `pg_stat_activity`, CA-012 anulación y número liberado, stock fuera de rango). Primera corrida con `LA_CENTRAL_TEST_SCHEMA=nc057_fuente`: 7 con error, **pero no por aserción**: 6 cortan en el fixture («No se pudo aparear sin ambigüedad el índice factura_compra.factura_compra_id_proveedor_unico») y 1 por timeout de conexión.
+- **Error mío en el script 11**: el 07 ya creó `factura_compra_id_proveedor_unico UNIQUE (id, proveedor_id)` y el 11 agregaba `fc_id_proveedor_unico`, igual. `c4c5946`: el 11 exige el del 07 y no crea nada en `factura_compra`; el modelo pierde el índice duplicado; `nc057_fuente_verificacion.sql` ahora rechaza índices duplicados. **Hay que rehacer `nc057_fuente`** (la de hoy tiene el duplicado): bloque PARA SANTI más abajo.
+- 01:50 aprox.: `arch` offline en Tailscale (`tailscale status`: «offline, last seen 1m ago»; ping 100 % perdido). El ensayo de los scripts corregidos en `nc057_ensayo_2f673d44` no llegó a conectar (no se creó nada). Sigo con lo que no toca la base.
+- Ensayo de los scripts corregidos en `nc057_ensayo_2f673d44` (lacentral_santi): copia 27 tablas, el 11 `TODO OK`, verificación `TODO OK (30 tablas; public: 27)`. La verificación nueva sobre la `nc057_fuente` de hoy: «Índices duplicados en nc057_fuente: nc057_fuente.factura_compra» (confirma que hay que rehacerla). **Error mío en el ensayo:** el primer intento concatenó `entrar` y el 11 en un solo comando de Npgsql; la transacción implícita hizo que el `ROLLBACK` del 11 deshiciera el `SET search_path` y el `ALTER TABLE sucursal` apuntó a `public`. Lo frenó que `lacentral_santi` no es dueño de `public` (`must be owner of table sucursal`); verificado después: `public` 27 tablas, sin `es_reclamos`. Con psql (el bloque de Santi) no pasa: cada sentencia va sola.
+- CA-011 (D-S6-22), en la anulación de la factura: esqueleto `144fcd4`, rojo `81f3c98` (2 con error por aserción), `c122ffa` solo test (por defecto sin notas), código `ca9145f` (19/19). La consulta va dentro de la unidad de trabajo, con la factura bloqueada.
+- Repositorio: rojo `548d2fa` (9 con error por aserción, contra el ensayo), código `aa29bc7` (9/9), `bef903b` prueba de la carrera nota/anulación de factura (1 con error con la mutación). Mutaciones propias: sin bloqueo en comprado/devuelto (1 con error), sin recomprobar el estado (1), sin `FOR UPDATE` (2), sin bloqueo en notas vigentes (1): todas muertas. Clases afectadas: `Correctas! - Con error: 0, Superado: 99, Omitido: 0, Total: 99`.
+
+### PARA SANTI · 19/11/2026 · rehacer nc057_fuente (el 11 corregido)
+
+La `nc057_fuente` de anoche tiene un índice duplicado en `factura_compra` (error mío en el 11, ya corregido en `c4c5946`) y con eso **ninguna prueba de PostgreSQL de la 057 arranca** contra ella. No toca `public`. Desde fish, en tu máquina, parado en la raíz del repo; cada paso que falla corta. Si algo da `ERROR`, no sigas y pasame la salida.
+
+1 · Backup (tiene que decir `backup OK`):
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+git fetch origin
+mkdir -p ~/backups-lacentral
+set marca (date +%Y%m%d-%H%M)
+ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc lacentral_test > ~/backups-lacentral/lacentral_test-$marca.dump
+and test -s ~/backups-lacentral/lacentral_test-$marca.dump
+and echo "backup OK"
+or echo "FALLÓ el backup: no sigas"
+```
+
+2 · Borrar la plantilla de anoche. Tiene que decir `nc057_fuente borrado; public: 27 tablas` (o parecido):
+
+```fish
+git show origin/feature/182-nota-credito:backend/db/pruebas/nc057_fuente_borrado.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+3 · Los pasos 2, 3 y 4 del bloque «PARA SANTI · 18/11/2026 · plantilla nc057_fuente (E11)» de arriba, iguales (copia, el 11, verificación). La verificación ahora también rechaza índices duplicados; tiene que terminar con `NOTICE: nc057_fuente: TODO OK (30 tablas; public: 27).`
+
+4 · Avisame. La 057 corre su suite completa con `LA_CENTRAL_TEST_SCHEMA=nc057_fuente` antes de cada PR.
+
+Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2f673d44`, en `lacentral_test`, creada con `lacentral_santi`), que borro cuando la tuya esté.
