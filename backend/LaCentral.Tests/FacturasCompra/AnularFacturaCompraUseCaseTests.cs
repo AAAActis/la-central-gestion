@@ -222,4 +222,16 @@ public class AnularFacturaCompraUseCaseTests
         Assert.True((await Caso().EjecutarAsync(FacturaActiva, Pedido())).IsSuccess);
         _notas.Verify(n => n.ObtenerVigentesDeFacturaAsync(FacturaActiva, It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    // CA-011, el borde: con una sola nota vigente ya no se anula.
+    [Fact]
+    public async Task ConUnaSolaNotaVigente_Conflicto()
+    {
+        _notas.Setup(n => n.ObtenerVigentesDeFacturaAsync(FacturaActiva, It.IsAny<CancellationToken>())).ReturnsAsync(["0010-00021495"]);
+
+        var resultado = await Caso().EjecutarAsync(FacturaActiva, Pedido());
+
+        AssertFallo(resultado, TipoError.Conflicto);
+        Assert.Contains("0010-00021495", resultado.Error);
+    }
 }
