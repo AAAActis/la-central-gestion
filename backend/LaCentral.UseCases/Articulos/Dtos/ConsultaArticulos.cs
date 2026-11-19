@@ -42,7 +42,9 @@ public sealed record CodigoProveedorConsultaDto(
     int ProveedorId, string RazonSocial, string CodigoOriginal, string ClaveNormalizada);
 
 /// <summary>N-9: la ubicación es de ESA sucursal, como la cantidad. null = sin estante asignado.</summary>
-public sealed record StockSucursalConsultaDto(short SucursalId, string Sucursal, decimal Cantidad, string? UbicacionDeposito = null);
+/// <summary>EsReclamos (HU-FCO-07 CA-008): el depósito Reclamos, que no es destino de una compra.</summary>
+public sealed record StockSucursalConsultaDto(short SucursalId, string Sucursal, decimal Cantidad, string? UbicacionDeposito = null,
+    bool EsReclamos = false);
 
 /// <summary>Fila de articulo_precio_modalidad tal como está guardada (H3: todo por valor).</summary>
 public sealed record PrecioModalidadConsultaDto(
