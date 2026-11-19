@@ -31,6 +31,12 @@ public interface INotaCreditoCompraRepositorio
     /// </summary>
     Task<Result<int>> RegistrarConEfectosAsync(NotaCreditoCompra nota, CancellationToken ct = default);
 
+    /// <summary>
+    /// CA-011 (D-S6-22): bloquea la factura (FOR UPDATE, el mismo bloqueo que toma el registro de una
+    /// nota) y devuelve los números de sus notas de crédito vigentes. Se llama dentro de IUnidadDeTrabajo.
+    /// </summary>
+    Task<IReadOnlyList<string>> ObtenerVigentesDeFacturaAsync(int facturaId, CancellationToken ct = default);
+
     /// <summary>CA-012: la nota con su número y si está vigente, o null si no existe.</summary>
     Task<NotaCreditoParaAnular?> ObtenerParaAnularAsync(int id, CancellationToken ct = default);
 

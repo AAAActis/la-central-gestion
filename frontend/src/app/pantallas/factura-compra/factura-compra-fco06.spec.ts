@@ -18,7 +18,8 @@ describe('FacturaCompra · HU-FCO-06', () => {
   const pagina = (...a: unknown[]) => ({ articulos: a, total: a.length, pagina: 1, tamanoPagina: 10, conflictos: [] });
   const ficha = (id: number, costo: number | null) => ({
     id, codigoInterno: `A${id}`, nombre: `Artículo ${id}`, activo: true, costoVigente: costo, precios: [], codigosProveedor: [],
-    existencias: [{ sucursalId: 1, sucursal: 'Fragueiro', cantidad: 0 }, { sucursalId: 2, sucursal: 'San Vicente', cantidad: 0 }],
+    existencias: [{ sucursalId: 1, sucursal: 'Fragueiro', cantidad: 0 }, { sucursalId: 2, sucursal: 'San Vicente', cantidad: 0 },
+      { sucursalId: 3, sucursal: 'Reclamos (depósito)', cantidad: 0, esReclamos: true }],
   });
 
   beforeEach(() => {
@@ -47,6 +48,14 @@ describe('FacturaCompra · HU-FCO-06', () => {
     servidor.expectOne(`/api/articulos/${id}`).flush(ficha(id, costo));
     fixture.detectChanges();
   }
+
+  it('057 CA-008: el depósito Reclamos no se ofrece como destino de una línea', () => {
+    agregar(10, 'A10');
+
+    expect(c.sucursales().map(s => s.id)).toEqual([1, 2]);
+    const opciones = Array.from(raiz().querySelectorAll('select option')).map(o => o.textContent);
+    expect(opciones).not.toContain('Reclamos (depósito)');
+  });
 
   // ---- CA-001 a CA-003 · proveedor ----
 

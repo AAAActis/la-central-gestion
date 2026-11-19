@@ -119,7 +119,8 @@ public class AsignarUbicacionPostgreSqlTests
         var detalle = await new ArticuloRepositorio(relectura).ObtenerDetallePorIdAsync(id);
 
         Assert.NotNull(detalle);
-        Assert.Equal(new[] { (e.Sucursal1, 5m, (string?)"Estante 4"), (e.Sucursal2, 0m, (string?)null) },
+        // La 3 es el depósito Reclamos (script 11, HU-FCO-07 CA-008).
+        Assert.Equal(new[] { (e.Sucursal1, 5m, (string?)"Estante 4"), (e.Sucursal2, 0m, (string?)null), ((short)3, 0m, (string?)null) },
             detalle.Existencias.Select(x => (x.SucursalId, x.Cantidad, x.UbicacionDeposito)));
     }
 }

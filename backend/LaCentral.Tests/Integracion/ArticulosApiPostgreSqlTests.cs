@@ -354,7 +354,8 @@ public class ArticulosApiPostgreSqlTests : IClassFixture<WebApplicationFactory<P
         }
 
         var sinMovimientos = await ExistenciasAsync(cliente, id);
-        Assert.Equal(new[] { 0m, 0m }, sinMovimientos.Cantidades);
+        // La tercera es el depósito Reclamos (script 11, HU-FCO-07 CA-008).
+        Assert.Equal(new[] { 0m, 0m, 0m }, sinMovimientos.Cantidades);
         Assert.Equal(0m, sinMovimientos.Total);
 
         await using (var contexto = fixture.CrearContexto())
@@ -366,7 +367,7 @@ public class ArticulosApiPostgreSqlTests : IClassFixture<WebApplicationFactory<P
         }
 
         var conNegativo = await ExistenciasAsync(cliente, id);
-        Assert.Equal(new[] { 7m, -3m }, conNegativo.Cantidades);
+        Assert.Equal(new[] { 7m, -3m, 0m }, conNegativo.Cantidades);
         Assert.Equal(4m, conNegativo.Total);
     }
 

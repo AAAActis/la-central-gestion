@@ -37,6 +37,12 @@ public partial class LaCentralDbContext : DbContext
 
     public virtual DbSet<FacturaVentaDetalle> FacturaVentaDetalle { get; set; }
 
+    public virtual DbSet<NotaCreditoCompra> NotaCreditoCompra { get; set; }
+
+    public virtual DbSet<NotaCreditoCompraDetalle> NotaCreditoCompraDetalle { get; set; }
+
+    public virtual DbSet<NotaCreditoCompraFactura> NotaCreditoCompraFactura { get; set; }
+
     public virtual DbSet<PrecioProveedor> PrecioProveedor { get; set; }
 
     public virtual DbSet<Proveedor> Proveedor { get; set; }
@@ -671,6 +677,134 @@ public partial class LaCentralDbContext : DbContext
                 .HasConstraintName("factura_venta_detalle_factura_venta_id_fkey");
         });
 
+        modelBuilder.Entity<NotaCreditoCompra>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("nota_credito_compra_pkey");
+
+            entity.ToTable("nota_credito_compra", tb => tb.HasComment("Nota de crédito de un proveedor (HU-FCO-07). Siempre tipo A: el número se copia exacto y el IVA es el 21 % del neto, que no se guarda. No cambia el costo de ningún artículo: es plata a favor en la cuenta corriente con el proveedor, que el sistema no lleva (Sergio, 18/11/2026)."));
+
+            entity.HasIndex(e => new { e.Id, e.ProveedorId }, "ncc_id_proveedor_unico").IsUnique();
+
+            entity.HasIndex(e => new { e.ProveedorId, e.Numero }, "ux_nota_credito_compra_numero_activa")
+                .IsUnique()
+                .HasFilter("((estado)::text = 'ACTIVA'::text)");
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.Clase)
+                .HasMaxLength(12)
+                .HasComment("BONIFICACION: bonificación o diferencia de precio, solo importes, no mueve stock. DEVOLUCION: devolución de mercadería, mueve stock (nota_credito_compra_detalle).")
+                .HasColumnName("clase");
+            entity.Property(e => e.Estado)
+                .HasMaxLength(10)
+                .HasDefaultValueSql("'ACTIVA'::character varying")
+                .HasColumnName("estado");
+            entity.Property(e => e.FechaAnulacion).HasColumnName("fecha_anulacion");
+            entity.Property(e => e.FechaEmision).HasColumnName("fecha_emision");
+            entity.Property(e => e.FechaRegistro)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("fecha_registro");
+            entity.Property(e => e.ImporteNeto)
+                .HasPrecision(14, 2)
+                .HasComment("Importe neto del comprobante, sin IVA ni percepciones. En una devolución también se transcribe: las líneas mueven stock, no plata.")
+                .HasColumnName("importe_neto");
+            entity.Property(e => e.MotivoAnulacion).HasColumnName("motivo_anulacion");
+            entity.Property(e => e.Numero)
+                .HasMaxLength(30)
+                .HasColumnName("numero");
+            entity.Property(e => e.Origen)
+                .HasMaxLength(10)
+                .HasDefaultValueSql("'MANUAL'::character varying")
+                .HasColumnName("origen");
+            entity.Property(e => e.PercepcionGanancias)
+                .HasPrecision(14, 2)
+                .HasColumnName("percepcion_ganancias");
+            entity.Property(e => e.PercepcionIibb)
+                .HasPrecision(14, 2)
+                .HasColumnName("percepcion_iibb");
+            entity.Property(e => e.PercepcionIva)
+                .HasPrecision(14, 2)
+                .HasColumnName("percepcion_iva");
+            entity.Property(e => e.PercepcionMunicipal)
+                .HasPrecision(14, 2)
+                .HasColumnName("percepcion_municipal");
+            entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
+            entity.Property(e => e.UsuarioAnulacionId).HasColumnName("usuario_anulacion_id");
+            entity.Property(e => e.UsuarioAutorizacionId).HasColumnName("usuario_autorizacion_id");
+            entity.Property(e => e.UsuarioId).HasColumnName("usuario_id");
+
+            entity.HasOne(d => d.Proveedor).WithMany(p => p.NotaCreditoCompra)
+                .HasForeignKey(d => d.ProveedorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("nota_credito_compra_proveedor_id_fkey");
+
+            entity.HasOne(d => d.UsuarioAnulacion).WithMany(p => p.NotaCreditoCompraUsuarioAnulacion)
+                .HasForeignKey(d => d.UsuarioAnulacionId)
+                .HasConstraintName("nota_credito_compra_usuario_anulacion_id_fkey");
+
+            entity.HasOne(d => d.UsuarioAutorizacion).WithMany(p => p.NotaCreditoCompraUsuarioAutorizacion)
+                .HasForeignKey(d => d.UsuarioAutorizacionId)
+                .HasConstraintName("nota_credito_compra_usuario_autorizacion_id_fkey");
+
+            entity.HasOne(d => d.Usuario).WithMany(p => p.NotaCreditoCompraUsuario)
+                .HasForeignKey(d => d.UsuarioId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("nota_credito_compra_usuario_id_fkey");
+        });
+
+        modelBuilder.Entity<NotaCreditoCompraDetalle>(entity =>
+        {
+            entity.HasKey(e => new { e.NotaCreditoCompraId, e.ArticuloId, e.SucursalId }).HasName("nota_credito_compra_detalle_pkey");
+
+            entity.ToTable("nota_credito_compra_detalle", tb => tb.HasComment("Mercadería devuelta en una nota de crédito por devolución. Sin precio: la nota no cambia costos."));
+
+            entity.Property(e => e.NotaCreditoCompraId).HasColumnName("nota_credito_compra_id");
+            entity.Property(e => e.ArticuloId).HasColumnName("articulo_id");
+            entity.Property(e => e.SucursalId)
+                .HasComment("Origen de la mercadería de ESTA línea: la sucursal que la devuelve o el depósito Reclamos, elegido por línea como el destino de la factura (D9). El stock baja contra esta ubicación.")
+                .HasColumnName("sucursal_id");
+            entity.Property(e => e.Cantidad)
+                .HasPrecision(12, 3)
+                .HasColumnName("cantidad");
+
+            entity.HasOne(d => d.Articulo).WithMany(p => p.NotaCreditoCompraDetalle)
+                .HasForeignKey(d => d.ArticuloId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("nota_credito_compra_detalle_articulo_id_fkey");
+
+            entity.HasOne(d => d.NotaCreditoCompra).WithMany(p => p.NotaCreditoCompraDetalle)
+                .HasForeignKey(d => d.NotaCreditoCompraId)
+                .HasConstraintName("nota_credito_compra_detalle_nota_credito_compra_id_fkey");
+
+            entity.HasOne(d => d.Sucursal).WithMany(p => p.NotaCreditoCompraDetalle)
+                .HasForeignKey(d => d.SucursalId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("nota_credito_compra_detalle_sucursal_id_fkey");
+        });
+
+        modelBuilder.Entity<NotaCreditoCompraFactura>(entity =>
+        {
+            entity.HasKey(e => new { e.NotaCreditoCompraId, e.FacturaCompraId }).HasName("nota_credito_compra_factura_pkey");
+
+            entity.ToTable("nota_credito_compra_factura", tb => tb.HasComment("Facturas de compra a las que corresponde una nota de crédito: muchos a muchos. Las dos FK compuestas con proveedor_id hacen que la base rechace una factura de otro proveedor (Sergio, 18/11/2026)."));
+
+            entity.Property(e => e.NotaCreditoCompraId).HasColumnName("nota_credito_compra_id");
+            entity.Property(e => e.FacturaCompraId).HasColumnName("factura_compra_id");
+            entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
+
+            entity.HasOne(d => d.FacturaCompra).WithMany(p => p.NotaCreditoCompraFactura)
+                .HasPrincipalKey(p => new { p.Id, p.ProveedorId })
+                .HasForeignKey(d => new { d.FacturaCompraId, d.ProveedorId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("nccf_factura_mismo_proveedor");
+
+            entity.HasOne(d => d.NotaCreditoCompra).WithMany(p => p.NotaCreditoCompraFactura)
+                .HasPrincipalKey(p => new { p.Id, p.ProveedorId })
+                .HasForeignKey(d => new { d.NotaCreditoCompraId, d.ProveedorId })
+                .HasConstraintName("nccf_nota_mismo_proveedor");
+        });
+
         modelBuilder.Entity<PrecioProveedor>(entity =>
         {
             entity.HasKey(e => new { e.ArticuloId, e.ProveedorId }).HasName("precio_proveedor_pkey");
@@ -953,6 +1087,10 @@ public partial class LaCentralDbContext : DbContext
 
             entity.HasIndex(e => e.Codigo, "sucursal_codigo_key").IsUnique();
 
+            entity.HasIndex(e => e.EsReclamos, "ux_sucursal_reclamos")
+                .IsUnique()
+                .HasFilter("es_reclamos");
+
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");
@@ -960,6 +1098,9 @@ public partial class LaCentralDbContext : DbContext
                 .HasMaxLength(2)
                 .IsFixedLength()
                 .HasColumnName("codigo");
+            entity.Property(e => e.EsReclamos)
+                .HasComment("TRUE solo para el depósito Reclamos, donde el negocio sigue la mercadería en reclamo al proveedor. Es una ubicación más (stock, transferencias, origen de una devolución), pero no es destino de una factura de compra (HU-FCO-07, D-S6-20, 18/11/2026).")
+                .HasColumnName("es_reclamos");
             entity.Property(e => e.Nombre)
                 .HasMaxLength(60)
                 .UseCollation("es-AR-x-icu")

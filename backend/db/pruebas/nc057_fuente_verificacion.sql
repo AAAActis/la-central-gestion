@@ -37,6 +37,14 @@ BEGIN
         AND contype IN ('p', 'u', 'f', 'c')
         AND NOT EXISTS (SELECT 1 FROM pg_constraint c WHERE c.connamespace = 'nc057_fuente'::regnamespace AND c.conname = p.conname);
     IF v_faltan IS NOT NULL THEN RAISE EXCEPTION 'Restricciones de public que faltan en nc057_fuente: %', v_faltan; END IF;
+    -- Dos índices con la misma definición en una tabla: PostgreSqlPruebas no puede aparearlos
+    -- (pasó el 18/11 con un UNIQUE (id, proveedor_id) que el 11 duplicaba del 07).
+    SELECT string_agg(i.indrelid::regclass::text, ', ') INTO v_faltan FROM (
+        SELECT indrelid FROM pg_index x JOIN pg_class t ON t.oid = x.indrelid
+        WHERE t.relnamespace = 'nc057_fuente'::regnamespace
+        GROUP BY indrelid, indisunique, regexp_replace(pg_get_indexdef(indexrelid), '^.* USING ', '')
+        HAVING count(*) > 1) i;
+    IF v_faltan IS NOT NULL THEN RAISE EXCEPTION 'Índices duplicados en nc057_fuente: %', v_faltan; END IF;
     -- Ninguna FK de la copia apunta fuera de ella.
     IF EXISTS (SELECT 1 FROM pg_constraint c JOIN pg_class r ON r.oid = c.confrelid
                WHERE c.contype = 'f' AND c.connamespace = 'nc057_fuente'::regnamespace

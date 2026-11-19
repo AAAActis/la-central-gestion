@@ -6,8 +6,8 @@
 --    1. sucursal.es_reclamos BOOLEAN NOT NULL DEFAULT false, con índice único parcial (a lo
 --       sumo un depósito Reclamos), la fila «RC · Reclamos (depósito)» y una fila de stock
 --       en 0 para cada artículo en Reclamos (todo artículo tiene una fila por ubicación).
---    2. factura_compra: UNIQUE (id, proveedor_id), para que la relación con la nota de
---       crédito garantice el mismo proveedor con una FK compuesta.
+--    2. Nada en factura_compra: la FK compuesta (mismo proveedor) usa el UNIQUE (id, proveedor_id)
+--       que ya puso el 07 (factura_compra_id_proveedor_unico). Si falta, se corta.
 --    3. nota_credito_compra: la cabecera (proveedor, número, emisión, clase, importe neto,
 --       percepciones, origen, usuario, fecha de registro) y su anulación (estado, motivo,
 --       fecha, quién la pidió y quién la autorizó, D-S6-23); el número es único por
@@ -67,10 +67,11 @@ BEGIN
         SELECT a.id, id_reclamos FROM articulo a
         ON CONFLICT (articulo_id, sucursal_id) DO NOTHING;
 
-    -- 2 · Clave para la FK compuesta (mismo proveedor)
+    -- 2 · La FK compuesta (mismo proveedor) usa el UNIQUE (id, proveedor_id) del 07. Un segundo
+    --     UNIQUE igual sería un índice duplicado (y PostgreSqlPruebas no podría aparearlo).
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = current_schema()::regnamespace
-            AND conname = 'fc_id_proveedor_unico') THEN
-        ALTER TABLE factura_compra ADD CONSTRAINT fc_id_proveedor_unico UNIQUE (id, proveedor_id);
+            AND conname = 'factura_compra_id_proveedor_unico') THEN
+        RAISE EXCEPTION '11: falta factura_compra_id_proveedor_unico (script 07).';
     END IF;
 
     -- 3 · Cabecera
@@ -174,11 +175,11 @@ BEGIN
         RAISE EXCEPTION '11: hay artículos sin fila de stock en Reclamos.';
     END IF;
     IF (SELECT count(*) FROM pg_constraint WHERE connamespace = current_schema()::regnamespace AND conname IN (
-            'fc_id_proveedor_unico', 'ncc_id_proveedor_unico', 'ncc_clase_valida',
+            'ncc_id_proveedor_unico', 'ncc_clase_valida',
             'ncc_estado_valido', 'ncc_anulacion_coherente', 'ncc_autorizacion_distinta',
             'ncc_origen_valido', 'ncc_importe_positivo', 'ncc_percepciones_no_negativas',
-            'nccf_nota_mismo_proveedor', 'nccf_factura_mismo_proveedor', 'nccd_cantidad_positiva')) <> 12 THEN
-        RAISE EXCEPTION '11: faltan restricciones (se esperaban 12).';
+            'nccf_nota_mismo_proveedor', 'nccf_factura_mismo_proveedor', 'nccd_cantidad_positiva')) <> 11 THEN
+        RAISE EXCEPTION '11: faltan restricciones (se esperaban 11).';
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = current_schema()
             AND indexname = 'ux_nota_credito_compra_numero_activa') THEN
