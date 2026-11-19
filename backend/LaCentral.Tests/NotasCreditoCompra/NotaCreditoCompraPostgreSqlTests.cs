@@ -287,13 +287,13 @@ public class NotaCreditoCompraPostgreSqlTests
         await using var observador = fixture.CrearContexto();
         for (var intento = 0; intento < 300; intento++)
         {
-            Assert.False(enEspera.IsCompleted, "La segunda devolución terminó sin esperar el bloqueo de la factura.");
+            Assert.False(enEspera.IsCompleted, "La operación en espera terminó sin esperar el bloqueo de la factura.");
             var espera = await observador.Database.SqlQuery<string?>($"SELECT wait_event_type AS \"Value\" FROM pg_stat_activity WHERE pid = {pid}").SingleOrDefaultAsync();
             if (espera == "Lock")
                 return;
             await Task.Delay(100);
         }
-        Assert.Fail("La segunda devolución no llegó a esperar el bloqueo en 30 s.");
+        Assert.Fail("La operación en espera no llegó a esperar el bloqueo en 30 s.");
     }
 
     // CA-012 (D-S6-23): la anulación escribe la doble certificación, devuelve el stock a cada origen
@@ -420,5 +420,36 @@ public class NotaCreditoCompraPostgreSqlTests
         await using var relectura = fixture.CrearContexto();
         Assert.False(await relectura.NotaCreditoCompra.AnyAsync());
         Assert.Equal(6m, await StockAsync(e, e.X, e.S1));
+    }
+
+    // CA-011 con concurrencia: mientras se anula la factura (que la tiene bloqueada desde que pidió
+    // las notas vigentes), una nota sobre esa factura espera y, al confirmarse la anulación, se rechaza.
+    [PostgreSqlFact]
+    public async Task NotaMientrasSeAnulaLaFactura_EsperaYSeRechaza()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        await using var anulacion = fixture.CrearContexto();
+        await using var registro = fixture.CrearContexto();
+        await registro.Database.OpenConnectionAsync();
+        var pidRegistro = await registro.Database.SqlQueryRaw<int>("SELECT pg_backend_pid() AS \"Value\"").SingleAsync();
+        int jefa;
+        await using (var c = fixture.CrearContexto())
+            jefa = await c.Usuario.Where(u => u.NombreUsuario == "jefa.fco07").Select(u => u.Id).SingleAsync();
+
+        await using var transaccion = await anulacion.Database.BeginTransactionAsync();
+        Assert.Empty(await new NotaCreditoCompraRepositorio(anulacion).ObtenerVigentesDeFacturaAsync(e.F2));
+
+        var enEspera = CasoRegistrar(e, registro).EjecutarAsync(new RegistrarNotaCreditoCompraRequest(e.P1, "NC-C", new DateOnly(2026, 11, 5),
+            "BONIFICACION", 10m, null, null, null, null, [e.F2], null));
+        await EsperarBloqueoAsync(fixture, pidRegistro, enEspera);
+
+        Assert.True((await new FacturaCompraRepositorio(anulacion).AnularConEfectosAsync(
+            new AnulacionFacturaCompra(e.F2, "Cargada dos veces", e.Operador, jefa, DateTime.UtcNow))).IsSuccess);
+        await transaccion.CommitAsync();
+
+        Assert.Equal(TipoError.Conflicto, (await enEspera).Tipo);
+        await using var relectura = fixture.CrearContexto();
+        Assert.False(await relectura.NotaCreditoCompra.AnyAsync());
     }
 }
