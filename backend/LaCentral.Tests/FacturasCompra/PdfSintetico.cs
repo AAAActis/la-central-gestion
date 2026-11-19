@@ -54,6 +54,40 @@ public static class PdfSintetico
         return documento.Build();
     }
 
+    /// <summary>
+    /// Factura con el layout de Expoyer, imitando el texto que PdfPig saca de la real: dos
+    /// columnas de artículos por hoja (un renglón puede traer dos), precios ya netos del
+    /// descuento global de la cabecera, códigos con espacios y guiones internos, números en
+    /// formato de EE. UU. y el CUIT del cliente sin guiones. Sin «º» ni tildes: las fuentes
+    /// estándar de PdfPig no los escriben.
+    /// </summary>
+    public static byte[] FacturaExpoyer(string codigoAfip = "1", string totalTercera = "300.00", string? percepcion = null)
+    {
+        var renglones = new List<(double, string)[]>
+        {
+            R((300, "A")),
+            R((300, "FACTURA No 0012-00001234")),
+            R((20, "Codigo Identificatorio del Tipo de Comprobante. Codigo No " + codigoAfip), (420, "FECHA: 03/02/2027")),
+            R((20, $"C.U.I.T.: {CuitProveedor}")),
+            R((20, "Sres.: 000001 CLIENTE DE PRUEBA SAS")),
+            R((20, "Calle Falsa 123 - Ciudad Ficticia"), (250, "C.U.I.T.: 30222222223"), (420, "Descuento: 50.00%+10")),
+            R((300, "Condicion de Venta: CUENTA CORRIENTE 35 DIAS")),
+            R((20, "Cant."), (40, "Codigo"), (90, "Descripcion"), (200, "P.Unit."), (250, "Total"),
+              (300, "Cant."), (320, "Codigo"), (370, "Descripcion"), (480, "P.Unit."), (530, "Total")),
+            R((20, "2"), (40, "AB-100"), (90, "PASTILLA FICTICIA"), (200, "1,000.00"), (250, "2,000.00"),
+              (300, "1"), (320, "C 1234 5- F"), (370, "BOMBA FICTICIA 6325"), (480, "1,250.50"), (530, "1,250.50")),
+            R((20, "3"), (40, "ZZ9"), (90, "FILTRO FICTICIO"), (200, "100.00"), (250, totalTercera)),
+            R((20, "RECUERDE ABONAR LAS FACTURAS A LOS 27 DIAS DE SU FECHA DE EMISION,")),
+            R((300, "SUBTOTAL 3,550.50")),
+            R((300, "IVA Inscripto 21 % 745.61")),
+        };
+        if (percepcion is not null)
+            renglones.Add(R((300, percepcion)));
+        renglones.Add(R((300, "T O T A L 4,296.11")));
+        renglones.Add(R((20, "Total de Items: 3")));
+        return Generar([.. renglones]);
+    }
+
     private static (double, string)[] R(params (double, string)[] celdas) => celdas;
 
     /// <summary>

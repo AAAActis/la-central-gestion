@@ -1092,7 +1092,7 @@ Para volver atrás una base (solo si hiciera falta): `ssh atiz@arch docker exec 
 5. Merge en `feature/13-lector-expoyer`; suite completa sobre ese HEAD (cambió backend); ESTADO y bitácora antes del push.
 6. Pedirle a Santi el 10 en `lacentral_demo` y `lacentral`.
 
-**Estado:** en curso
+**Estado:** terminada
 - Arranque: `git fetch`; `origin/develop` sin commits nuevos (`b920a89`); sin worktrees extra.
 - Paso 1, re-scaffold contra `lacentral_test` (`dotnet-ef` 10.0.11, con `DOTNET_ROOT=$HOME/.dotnet`): el diff real (`--ignore-cr-at-eol`) es solo `Descuento4Porcentaje` en `FacturaCompraDetalle.cs` y su `HasPrecision(6, 2)` con el comentario en el DbContext. `fcb9e51`. Compilación sin warnings. No se comparó contra `lacentral` (README del re-scaffold): la única diferencia esperada es justamente el 10, que Santi aplica después.
 - Paso 2, rojo `d018c29`: relectura con contexto nuevo de una línea con cuatro descuentos, 1 con error por aserción (`Expected (10, 5, 2,5, 5)`, `Actual (10,00, 5,00, 2,50, 0,00)`); el test del CHECK `fcd_descuento_4_valido` en el motor pasa desde el principio (lo prueba el script 10, ya commiteado).
@@ -1102,3 +1102,77 @@ Para volver atrás una base (solo si hiciera falta): `ssh atiz@arch docker exec 
 - `verificador-tdd` ronda 2 (solo `4125c24`): **APTO**. La mutación de la ronda 1 muere (1 con error, `LecturaPdfTests.cs:85`), y también una de refuerzo (`Eeuu` → `Argentino`). Aceptó la suite de `4125c24`. Hallazgo no bloqueante: el test nuevo afirma `ParaRevisar` solo para `lineas[0]`. `auditor-persistencia`, en curso.
 - `auditor-persistencia` (`a3650ed..4125c24`, sin merges): **APTO**, sin hallazgos. Mató la mutación del mapeo contra PostgreSQL real; 9/9 `CuartoDescuento` sin omitidos. Aviso: hasta que el 10 esté en `lacentral_demo` y `lacentral`, registrar una factura de compra ahí da 42703 → el PR no se mergea a `develop` antes (ESTADO, E10). No pudo consultar `pg_constraint` ni buscar esquemas huérfanos: no hay cliente de PostgreSQL en la máquina.
 - ESTADO al día (tablero #163, E10, PRÓXIMA SESIÓN), antes del push.
+- PR #181 (`feature/163-cuarto-descuento` → `feature/51-pantalla-pdf`), con la advertencia de E10 en el cuerpo.
+- Paso 5: `3e8358c`, merge de `feature/163-cuarto-descuento` en `feature/13-lector-expoyer`, sin conflictos y solo backend y docs; frontend sin cambios, no se corrió. Suite completa sobre `3e8358c` (`--no-incremental`, 0 advertencias): `Correctas! - Con error: 0, Superado: 681, Omitido: 0, Total: 681, Duración: 4 m 56 s` (678 + los 3 tests nuevos). Verificadores no relanzados en el #180: el merge no trae commits de Expoyer, y lo que entra quedó verificado en el #181.
+- Abierto: el 10 en `lacentral_demo` y `lacentral` (Santi, cuando se le pida; condición para mergear el #181 a `develop`). Lo demás, igual que el bloque del 17/11: Sergio, equipo, Lauti, DoD 10.
+
+## 18/11/2026 · Novedades del 18/11: E10 cerrada, D-S6-17 (P. Final de Fazio), D-S6-19 (Autocor manual, C7 completa), D-S6-18 (HU de nota de crédito de proveedor)
+
+**Instrucción recibida (verbatim):**
+> Novedades del 18/11. Resúmenes en español.
+>
+> 1. Script 10 aplicado en las tres bases (lacentral_test, lacentral_demo y lacentral): s09 = 1 y s10 = 1 en todas. En lacentral también se aplicaron el 08 (ya estaba) y el 09 (TODO OK); el 07 ya estaba aplicado. Anotalo en el ESTADO y en la bitácora. El #181 ya puede entrar a develop cuando Javi lo revise.
+>
+> 2. D-S6-17 (decisión de Santi, cierra la pregunta 5): en Fazio, el costo de la línea es el «P. Final» del proveedor, que es lo que se paga, y no el recálculo desde el precio de lista. Con el PDF real, el total tiene que dar 323.670,44. Va en la rama del lector de Fazio, con rojo primero, verificador acotado y suite.
+>
+> 3. D-S6-19: Autocor entrega las facturas en papel; no hay PDF digital. Un escaneo no sirve: no tiene texto, y el Mandato y el CA-002 de la 029 dejan afuera los escaneados. Autocor se carga por la vía manual (056). La compuerta C7 se cierra COMPLETA el 18/11: tres proveedores con PDF digital y lector (ETMAN, Fazio y Expoyer) y Autocor declarado carga manual. Sacá la factura de Autocor de los pendientes. Donde diga que la consigue Lauti, va que era de Javi.
+>
+> 4. D-S6-18: NOTA DE CRÉDITO DE PROVEEDOR, HU nueva EN EL SPRINT 6 (no en el 8): es parte de la factura de compra y no queremos que quede colgada. El sprint se estira: cierra por entregable. Proforma con número nuevo, issue con milestone «Sprint 6», estimación en SP, INDICE.md y plan.
+>
+>    Reglas de Sergio (18/11), para los CA:
+>    a) La nota de crédito NO cambia el costo de los artículos. Es plata a favor en la cuenta corriente con el proveedor. LÍMITE DE ALCANCE: el sistema no lleva la cuenta corriente con proveedores (el Mandato deja afuera las cuentas a pagar). La HU registra la nota de crédito, sus importes y a qué facturas corresponde; no calcula saldos. Dejalo escrito en la proforma como fuera de alcance.
+>    b) Hay dos clases de nota de crédito:
+>       - por bonificación o diferencia de precio: solo importes, no mueve stock (como la de Expoyer);
+>       - por devolución de mercadería: sí mueve stock. La mercadería sale de la sucursal que la devuelve, o de un depósito especial «Reclamos», que el negocio usa para seguir los reclamos. El origen se elige por línea, como el destino de la factura (D9).
+>       El depósito Reclamos no existe en el sistema. Decidí vos cómo modelarlo y dejá la decisión con fecha en el ESTADO. Es cambio de esquema: va por un script 11 en backend/db/rescaffold/ más re-scaffold, nunca migraciones, con su bloque «PARA SANTI» (backup, lacentral_test primero, después lacentral_demo y lacentral). Pensá también cómo entra la mercadería a Reclamos: si alcanza con una transferencia desde una sucursal o si hace falta otra cosa.
+>    c) Toda nota de crédito referencia SÍ O SÍ al menos una factura de compra del mismo proveedor. La relación es de muchos a muchos: varias notas de crédito sobre una factura, una sobre una, o una sobre varias.
+>    d) Del proveedor hacia nosotros, las notas de crédito son SIEMPRE tipo A, y el número se copia exacto, sin el 99.
+>    e) Llegan en PDF o en papel según el proveedor. La carga manual es obligatoria. La carga desde el PDF reusa el mecanismo de la 029, con el lector de la nota de crédito de Expoyer (~/dev/TESIS/facturas-reales/V20261105NCBA0010-00021495 (1).pdf). Partilo en dos PR: primero la manual, después el PDF.
+>
+>    Preguntas que quedan para Sergio («Lo que vuelve a Sergio»), sin inventar la regla:
+>    - Cuando el proveedor vuelve a mandar el producto después de un reclamo, ¿llega con factura nueva o sin factura? ¿Cómo se carga esa entrada?
+>    - ¿Se puede anular una factura de compra que ya tiene notas de crédito? Propuesta mientras tanto: no, primero se anulan las notas de crédito. Agregalo como CA marcado «a confirmar».
+>    - Una nota de crédito por devolución, ¿se puede anular? ¿Devuelve el stock?
+>
+>    No construyas lo que dependa de esas tres preguntas; lo demás sí. Ojo: el Mandato v3.0 deja las notas de crédito fuera de alcance. Anotá en el ESTADO que el Mandato del documento de tesis (GR-01) se actualiza; eso lo hace Santi.
+>
+> 5. Lo de siempre: TDD con los tres commits, PR por HU, verificadores acotados, suite completa una vez sobre el HEAD, ESTADO al día antes del push. Cuando termines, o si todo lo que queda depende de personas, parás y me pasás el resumen.
+
+**Plan:**
+1. ESTADO: E10 cerrada (script 10 en las tres bases; 07, 08 y 09 en `lacentral`), D-S6-19 y C7 completa, Autocor fuera de pendientes, Lauti → Javi.
+2. D-S6-17 en `feature/13-factura-pdf` (#177): el lector de Fazio toma el «P. Final» como costo; rojo con el sintético, código, prueba a mano con el real (323.670,44); verificador acotado; merge hacia arriba de la pila (#178, #179, #181, #180) y suites.
+3. D-S6-18: proforma nueva (número siguiente), issue con milestone «Sprint 6», SP, INDICE.md, PLAN-SPRINTS; decisión del depósito Reclamos con fecha; preguntas a Sergio; nota del Mandato (GR-01, Santi).
+4. Script 11 (nota de crédito + Reclamos) y bloque «PARA SANTI». Lo que dependa del esquema queda frenado hasta que lo aplique en `lacentral_test`.
+5. PR 1 (carga manual): lo que no dependa del esquema, TDD. PR 2 (PDF de Expoyer): lector con sintético.
+6. Suite completa por HEAD, verificadores acotados, ESTADO antes del push, resumen.
+
+**Estado:** en curso
+- Arranque: `git fetch`; `origin/develop` sin commits nuevos. PR abiertos #176 a #181, apilados (#176 ← #177 ← #178 ← #179 ← #181 ← #180).
+- Punto 2, D-S6-17 en `feature/13-factura-pdf` (#177, worktree en el scratchpad porque la copia principal tiene la bitácora sin commitear): esqueleto `a688cba` (el sintético de Fazio acepta lista, final y total; solo test); rojo `aab80b9` (3 con error por aserción: el lector daba precio de lista 10.000 y descuentos 28+22; el test del total que no cierra pasa desde el principio); código `e0d6004` (precio unitario = P. Final, línea sin descuentos; con más de tres partes ya no se revisa). Filtrado `FacturasCompra`: 211/211. **Real de Fazio** (programa descartable, borrado): 10 líneas, neto **323.670,44**, solo `numero` para revisar. ETMAN igual que antes (98.005,75, nada para revisar).
+
+## 18/11/2026 · Revisión de Javi del #180 (REQUEST CHANGES, tres puntos [DOCS])
+
+**Instrucción recibida (verbatim):**
+> 18/11 · Revisión de Javi del #180 (REQUEST CHANGES, tres puntos [DOCS]). Javi mergeó #176, #177, #178, #179 y #181.
+>
+> 1. Base del #180: cambiala a develop (gh pr edit 180 --base develop) y hacé git merge origin/develop en la rama (nunca rebase).
+> 2. D-S6-20 (Reclamos como fila de sucursal) deja de ser decisión: pasa a PROPUESTA del 18/11, pendiente de aprobación del equipo. El script 11 no se aplica en ninguna base hasta que se apruebe. Corregilo en el ESTADO y en la proforma de la 057.
+> 3. D-S6-18 (la 057 en el Sprint 6) pasa a PROPUESTA pendiente de acuerdo de los tres integrantes y de aviso al tutor, porque cambia el alcance y choca con el Mandato v3.0. El #180 lleva solo lo del lector de Expoyer: lo de la 057 (D-S6-18, D-S6-20 a D-S6-25, la proforma, el índice y el plan) va en la rama de la 057, no en el #180.
+> 4. Respondé en el #180 cada punto de Javi, con el commit que lo arregla.
+> 5. Hubo merge a develop: suite completa sobre develop (momento 2 de la política de pruebas), una vez.
+> 6. Lo de la 057 queda congelado, sin tocar nada más, hasta que el equipo decida. No crees nc057_fuente.
+>
+> Resúmenes en español.
+
+**Plan:**
+1. Suite completa de backend sobre `origin/develop` (`37e8007`), una vez, en un worktree.
+2. #180: base a `develop`, `git merge origin/develop`; sacar del ESTADO todo lo de la 057 (D-S6-18, D-S6-20, E11, fila #182, «Lo que vuelve a Sergio · 18/11», reglas de Sergio, Mandato, PRÓXIMA SESIÓN); push.
+3. Rama de la 057: D-S6-18 y D-S6-20 como PROPUESTA en el ESTADO, la proforma, el índice y el plan; el 11 no se aplica en ninguna base; los bloques PARA SANTI del 11 y de `nc057_fuente`, suspendidos. Traer el #180 corregido sin perder lo de la 057. Después, congelada.
+4. Responder en el #180 punto por punto, con commits.
+
+**Estado:** terminada (lo de la 057 sigue en su rama; espera E11, la plantilla `nc057_fuente`)
+- #180: base cambiada a `develop` (`gh pr edit 180 --base develop`); `git merge origin/develop` → `bf952cf`, sin conflictos.
+- `19b4521`: el ESTADO del #180 sin lo de la 057 (D-S6-18, D-S6-20, E11, fila #182, preguntas y reglas de Sergio, Mandato); D-S6-14, 34 SP y «Fuera del Sprint 6» como en `develop`. Push.
+- Rama de la 057 (ver el bloque en `feature/182-nota-credito`): merge del #180 corregido (`d5ecc6b`, ESTADO con la versión de la 057) y `6f36b7c` D-S6-18 y D-S6-20 **aprobadas por el equipo el 18/11** (ESTADO, proforma v1.2, índice, plan); merge en la rama del PDF `463721d`. Push de las dos.
+- #180: respuesta punto por punto con los commits (comentario 6990438840). Error mío: la primera versión del comentario decía «@javi…», que GitHub puede tomar como mención a otro usuario; se editó en el momento a «Javi».
+- **Suite completa de backend sobre `develop` (`37e8007`)**, en un worktree, una vez: build `--no-incremental` 0 advertencias; `Con error! - Con error: 3, Superado: 669, Omitido: 0, Total: 672, Duración: 1 h 9 m`. Fallaron `ProveedorPostgreSqlTests.ModificarConDireccionVaciaNueva_NoCreaUnaFilaVacia` (1 m 7 s), `PostgreSqlPruebasLimpiezaTests.ConOtraFuente_ElSearchPathResuelveEnEsaFuenteYNoEnPublic` (1 m 12 s) y `HistorialBajaRepositorioTests.UnidadDeTrabajo_DevuelveElResultadoDeLaOperacionYLaEjecutaUnaVez` (53 s). La corrida tardó 15 veces lo normal (~4 m 30 s) y cada fallo, cerca de un minuto: carga del servidor compartido. **No se capturó el mensaje de error** (el filtro de la salida lo dejó afuera). Filtradas las tres después: `Correctas! - Con error: 0, Superado: 4, Omitido: 0, Total: 4, Duración: 1 m 50 s`. No se reprodujeron; no se volvió a correr la suite entera (se pidió una vez). Worktree sacado.

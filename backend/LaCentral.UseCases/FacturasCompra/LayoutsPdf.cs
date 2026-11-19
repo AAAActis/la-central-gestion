@@ -12,7 +12,7 @@ namespace LaCentral.UseCases.FacturasCompra;
 /// </summary>
 public static class LayoutsPdf
 {
-    private static readonly Func<IReadOnlyList<string>, string?, ComprobanteLeido?>[] Layouts = [LeerEtman, LeerFazio];
+    private static readonly Func<IReadOnlyList<string>, string?, ComprobanteLeido?>[] Layouts = [LeerEtman, LeerFazio, LeerExpoyer];
 
     private static readonly Regex Cuit = new(@"\b\d{2}-\d{8}-\d\b");
     private static readonly Regex Fecha = new(@"\b\d{2}/\d{2}/\d{4}\b");
@@ -124,6 +124,60 @@ public static class LayoutsPdf
         if (!afirmable || Math.Abs(calculado - total) > 0.01m + 0.005m * linea.Cantidad)
             revisar.Add($"lineas[{lineas.Count}]");
         lineas.Add(linea);
+    }
+
+    // Expoyer: factura; números en formato de EE. UU.; dos columnas de artículos por hoja, así
+    // que un renglón puede traer dos; los precios ya vienen netos del descuento global de la
+    // cabecera («Descuento: 61.08%+15»), sin descuentos por línea; códigos con espacios y
+    // guiones internos («C 115105 4- F»). El CUIT del cliente viene sin guiones y no se toma.
+    // Las tildes se ignoran: el texto real dice «Código», el sintético no puede escribirlas.
+    private static readonly Regex EncabezadoExpoyer = new(@"Cant\. C.digo Descripci.n P\.Unit\. Total");
+    private static readonly Regex ArticuloExpoyer = new(
+        @"(\d+(?:\.\d+)?) (.+?) (\d{1,3}(?:,\d{3})*\.\d{2}) (\d{1,3}(?:,\d{3})*\.\d{2})");
+
+    private static ComprobanteLeido? LeerExpoyer(IReadOnlyList<string> renglones, string? _)
+    {
+        var encabezado = Indice(renglones, r => EncabezadoExpoyer.IsMatch(r));
+        if (encabezado < 0)
+            return null;
+        var texto = string.Join('\n', renglones);
+        var revisar = new List<string>();
+
+        // Código de comprobante de ARCA, sin el cero: 1 factura A, 6 factura B.
+        var codigo = Regex.Match(texto, @"Comprobante\. C.digo N\S* (\d{1,2})\b");
+        var tipo = codigo.Success ? codigo.Groups[1].Value switch { "1" => "A", "6" => "B", _ => null } : null;
+        var numero = Regex.Match(texto, @"FACTURA N\S* (\d{4}-\d{8})") is { Success: true } n ? n.Groups[1].Value : null;
+        var emision = Regex.Match(texto, @"FECHA: (\d{2}/\d{2}/\d{4})") is { Success: true } f ? AFecha(f.Groups[1].Value) : null;
+
+        var lineas = new List<LineaLeida>();
+        foreach (var renglon in renglones.Skip(encabezado + 1))
+            foreach (Match m in ArticuloExpoyer.Matches(renglon))
+            {
+                var (codigoProveedor, descripcion) = CodigoYDescripcion(m.Groups[2].Value);
+                var linea = new LineaLeida(codigoProveedor, descripcion, Eeuu(m.Groups[1].Value), Eeuu(m.Groups[3].Value), 0m, 0m, 0m);
+                Agregar(lineas, linea, Eeuu(m.Groups[4].Value), afirmable: true, revisar);
+            }
+
+        Revisar(revisar, ("tipoComprobante", tipo), ("numero", numero), ("fechaEmision", emision));
+        // shortcut: no hay una factura real de Expoyer con percepciones; si el texto las menciona,
+        // las dos van a revisión en lugar de quedar en null en silencio. Con una real, leerlas.
+        if (texto.Contains("percep", StringComparison.OrdinalIgnoreCase))
+            revisar.AddRange(["percepcionIva", "percepcionIibb"]);
+        // Sin fecha de vencimiento en el texto («CUENTA CORRIENTE 35 DIAS» no es una fecha): no se calcula.
+        return new ComprobanteLeido(Cuits(texto), tipo, numero, emision, null, null, null, null, null, lineas, revisar);
+    }
+
+    // shortcut: el código es el primer token y los que le siguen mientras tengan un dígito o sean
+    // una sola letra; la descripción empieza en la primera palabra que no. Un código sin
+    // dígitos de dos letras o más se corta mal y la línea queda sin artículo (se resuelve a
+    // mano). Si aparece, leer la columna por su posición en lugar del texto.
+    private static (string Codigo, string Descripcion) CodigoYDescripcion(string texto)
+    {
+        var palabras = texto.Split(' ');
+        var n = 1;
+        while (n < palabras.Length - 1 && (palabras[n].Any(char.IsDigit) || palabras[n].Length == 1))
+            n++;
+        return (string.Join(' ', palabras[..n]), string.Join(' ', palabras[n..]));
     }
 
     private static void Revisar(List<string> revisar, params (string Campo, object? Valor)[] campos)

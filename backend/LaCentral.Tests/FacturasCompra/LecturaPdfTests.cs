@@ -147,6 +147,101 @@ public class LecturaPdfTests
     }
 
     [Fact]
+    public void Expoyer_LeeLaCabecera_SinTomarElCuitDelClienteNiInventarElVencimiento()
+    {
+        var leido = Leer(PdfSintetico.FacturaExpoyer());
+
+        // El CUIT del cliente viene sin guiones: no se toma. «CUENTA CORRIENTE 35 DIAS» no es una fecha.
+        Assert.Equal([PdfSintetico.CuitProveedor], leido.Cuits);
+        Assert.Equal(("A", "0012-00001234"), (leido.TipoComprobante, leido.Numero));
+        Assert.Equal(new DateOnly(2027, 2, 3), leido.FechaEmision);
+        Assert.Null(leido.FechaVencimiento);
+        Assert.Null(leido.PercepcionIva);
+        Assert.Null(leido.PercepcionIibb);
+        Assert.Empty(leido.ParaRevisar);
+    }
+
+    [Fact]
+    public void Expoyer_LeeLasDosColumnas_ConLosPreciosYaNetos_YLosCodigosConEspacios()
+    {
+        var leido = Leer(PdfSintetico.FacturaExpoyer());
+
+        Assert.Equal(
+            [
+                new LineaLeida("AB-100", "PASTILLA FICTICIA", 2m, 1000m, 0m, 0m, 0m),
+                new LineaLeida("C 1234 5- F", "BOMBA FICTICIA 6325", 1m, 1250.50m, 0m, 0m, 0m),
+                new LineaLeida("ZZ9", "FILTRO FICTICIO", 3m, 100m, 0m, 0m, 0m),
+            ],
+            leido.Lineas);
+    }
+
+    [Theory]
+    [InlineData("6", "B")]
+    [InlineData("1", "A")]
+    public void Expoyer_ElTipoSaleDelCodigoDeComprobante(string codigoAfip, string tipo)
+        => Assert.Equal(tipo, Leer(PdfSintetico.FacturaExpoyer(codigoAfip)).TipoComprobante);
+
+    [Fact]
+    public void Expoyer_UnCodigoDeComprobanteQueNoEsAniB_NoAdivinaElTipo_YLoMarcaParaRevisar()
+    {
+        var leido = Leer(PdfSintetico.FacturaExpoyer("3"));
+
+        Assert.Null(leido.TipoComprobante);
+        Assert.Equal(["tipoComprobante"], leido.ParaRevisar);
+    }
+
+    [Fact]
+    public void Expoyer_UnaLineaCuyoTotalNoCierra_SeMarcaParaRevisar()
+        => Assert.Equal(["lineas[2]"], Leer(PdfSintetico.FacturaExpoyer(totalTercera: "310.00")).ParaRevisar);
+
+    [Fact]
+    public void Expoyer_UnaPercepcionQueElLectorNoSabeLeer_MarcaLasPercepcionesParaRevisar()
+    {
+        var leido = Leer(PdfSintetico.FacturaExpoyer(percepcion: "Percepcion IIBB Cordoba 35.50"));
+
+        Assert.Null(leido.PercepcionIibb);
+        Assert.Equal(["percepcionIva", "percepcionIibb"], leido.ParaRevisar);
+    }
+
+    private const string EncabezadoExpoyer = "Cant. Codigo Descripcion P.Unit. Total Cant. Codigo Descripcion P.Unit. Total";
+
+    [Theory]
+    [InlineData("1 ZZ FILTRO 1.00 1.00", "ZZ", "FILTRO")]               // un código sin dígitos es el primer token
+    [InlineData("2 AB-1 6325 100.00 200.00", "AB-1", "6325")]           // siempre queda una palabra de descripción
+    public void Expoyer_ElCodigoEsElPrimerTokenYLosQueSiguenConDigitoOUnaLetra(string renglon, string codigo, string descripcion)
+    {
+        var leido = LayoutsPdf.Leer([EncabezadoExpoyer, renglon]);
+
+        Assert.NotNull(leido);
+        Assert.Equal((codigo, descripcion), (leido.Lineas[0].CodigoProveedor, leido.Lineas[0].Descripcion));
+    }
+
+    [Fact]
+    public void Expoyer_ConElSignoDeNumeroYLasTildesDelTextoReal()
+    {
+        // El PDF sintético no puede escribir «º» ni tildes; el texto real del PDF las trae.
+        var leido = LayoutsPdf.Leer([
+            "FACTURA Nº 0012-00001234",
+            "Código Identificatorio del Tipo de Comprobante. Código Nº 6 FECHA: 03/02/2027",
+            "Cant. Código Descripción P.Unit. Total Cant. Código Descripción P.Unit. Total",
+            "1 AB-1 PASTILLA 1.00 1.00",
+        ]);
+
+        Assert.NotNull(leido);
+        Assert.Equal(("B", "0012-00001234", new DateOnly(2027, 2, 3)), (leido.TipoComprobante, leido.Numero, leido.FechaEmision));
+    }
+
+    [Fact]
+    public void Expoyer_SinNumeroNiFecha_LosMarcaParaRevisar()
+    {
+        var leido = LayoutsPdf.Leer(["Comprobante. Codigo No 1", EncabezadoExpoyer, "1 AB-1 PASTILLA 1.00 1.00"]);
+
+        Assert.NotNull(leido);
+        Assert.Equal(("A", null, null), (leido.TipoComprobante, leido.Numero, leido.FechaEmision));
+        Assert.Equal(["numero", "fechaEmision"], leido.ParaRevisar);
+    }
+
+    [Fact]
     public void Fazio_LeeElPresupuesto_ConLosNumerosEnFormatoArgentino_YElPFinalComoPrecioSinDescuentos()
     {
         var leido = Leer(PdfSintetico.PresupuestoFazio());
