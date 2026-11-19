@@ -93,6 +93,39 @@ public class ConsultarNotasCreditoCompraPostgreSqlTests
         Assert.Equal((e.P2, "N-1"), (Assert.Single(items).ProveedorId, items[0].Numero));
     }
 
+    // Dos notas del mismo día: primero la cargada después (Id mayor), en todas las páginas igual.
+    [PostgreSqlFact]
+    public async Task MismaFechaDeEmision_DesempataPorId_LaMasNuevaPrimero()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var e = await SembrarAsync(fixture);
+        var otra = await fixture.CrearUsuarioAsync("otra.nc");
+        int primera, segunda;
+        await using (var c = fixture.CrearContexto())
+        {
+            global::LaCentral.Data.Models.NotaCreditoCompra Nota(string numero) => new()
+            {
+                ProveedorId = e.P2, Numero = numero, FechaEmision = new DateOnly(2026, 11, 5), Clase = "BONIFICACION",
+                ImporteNeto = 10m, Origen = "MANUAL", UsuarioId = otra, FechaRegistro = DateTime.UtcNow, Estado = "ACTIVA"
+            };
+            var a = Nota("N-A");
+            c.NotaCreditoCompra.Add(a);
+            await c.SaveChangesAsync();
+            var b = Nota("N-B");
+            c.NotaCreditoCompra.Add(b);
+            await c.SaveChangesAsync();
+            (primera, segunda) = (a.Id, b.Id);
+        }
+        Assert.True(segunda > primera);
+
+        var (items, _) = await BuscarAsync(e, new FiltroNotasCreditoCompra(e.P2));
+        var (pagina1, _) = await BuscarAsync(e, new FiltroNotasCreditoCompra(e.P2), pagina: 1, tamano: 1);
+        var (pagina2, _) = await BuscarAsync(e, new FiltroNotasCreditoCompra(e.P2), pagina: 2, tamano: 1);
+
+        Assert.Equal(new[] { "N-B", "N-A", "N-1" }, items.Select(n => n.Numero));
+        Assert.Equal(new[] { "N-B", "N-A" }, pagina1.Concat(pagina2).Select(n => n.Numero));
+    }
+
     // La segunda página trae el resto, y el total es el de todas las páginas.
     [PostgreSqlFact]
     public async Task SinFiltro_PaginaDeTres_LaSegundaTraeLaUltima()
