@@ -141,7 +141,13 @@ export class NotasCreditoRegistradas {
     this.irA(1);
   }
 
-  irA(_pagina: number) {}
+  irA(pagina: number) {
+    this.error.set(null);
+    this.api.notasCreditoCompra(this.buscado, pagina, TAMANO_PAGINA).subscribe({
+      next: r => this.resultado.set(r),
+      error: e => { this.resultado.set(null); this.error.set(mensajeDeError(e)); },
+    });
+  }
 
   abrirAnulacion(n: NotaCreditoCompraResumen) {
     this.aAnular.set(n);
@@ -150,5 +156,20 @@ export class NotasCreditoRegistradas {
     this.anulacionAbierta.set(true);
   }
 
-  anular(_v: ValoresFormulario) {}
+  anular(v: ValoresFormulario) {
+    const n = this.aAnular()!;
+    this.enviando.set(true);
+    this.api.anularNotaCreditoCompra(n.id, {
+      // El caso de uso recorta motivo y usuario; la contraseña va tal cual.
+      motivo: v['motivo'] as string, usuarioAutoriza: v['usuarioAutoriza'] as string, contrasenaAutoriza: v['contrasenaAutoriza'] as string,
+    }).subscribe({
+      next: () => {
+        this.enviando.set(false);
+        this.anulacionAbierta.set(false);
+        this.aviso.set(`Nota de crédito ${n.numero} anulada.`);
+        this.irA(this.resultado()?.pagina ?? 1);
+      },
+      error: e => { this.enviando.set(false); this.errorAnulacion.set(mensajeDeError(e)); },
+    });
+  }
 }

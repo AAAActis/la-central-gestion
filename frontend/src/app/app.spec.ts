@@ -85,7 +85,7 @@ describe('App · marco común y navegación (HU-UI-01)', () => {
       entrarComo('OPERADOR');
       await ir(fixture, '/articulos');
       const enlaces = enlacesDelMenu(fixture);
-      expect(enlaces.map(a => a.textContent?.trim())).toEqual(['Artículos', 'Clientes', 'Proveedores', 'Factura de compra', 'Compras registradas', 'Nota de crédito de proveedor']);
+      expect(enlaces.map(a => a.textContent?.trim())).toEqual(['Artículos', 'Clientes', 'Proveedores', 'Factura de compra', 'Compras registradas', 'Nota de crédito de proveedor', 'Notas de crédito registradas']);
       expect(enlaces.map(a => a.getAttribute('href'))).toEqual(['/articulos', '/clientes', '/proveedores', '/factura-compra', '/compras-registradas', '/nota-credito-compra', '/notas-credito-registradas']);
     });
 
