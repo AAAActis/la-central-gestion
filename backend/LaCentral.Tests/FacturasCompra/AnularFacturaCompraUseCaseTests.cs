@@ -25,6 +25,7 @@ public class AnularFacturaCompraUseCaseTests
     private readonly Mock<IUsuarioRepositorio> _usuarios = new();
     private readonly Mock<IServicioHash> _hash = new();
     private readonly Mock<IPreciosArticuloRepositorio> _precios = new();
+    private readonly Mock<INotaCreditoCompraRepositorio> _notas = new();
     private Mock<IUnidadDeTrabajo> _unidad = DoblesBaja.UnidadQueEjecuta();
     private Mock<IContextoUsuario> _contexto = DoblesBaja.Contexto();
     private AnulacionFacturaCompra? _anulacion;
@@ -38,6 +39,7 @@ public class AnularFacturaCompraUseCaseTests
         _facturas.Setup(f => f.AnularConEfectosAsync(It.IsAny<AnulacionFacturaCompra>(), It.IsAny<CancellationToken>()))
             .Callback((AnulacionFacturaCompra a, CancellationToken _) => _anulacion = a)
             .ReturnsAsync(Result.Success());
+        _notas.Setup(n => n.ObtenerVigentesDeFacturaAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         Usuario("jefa", id: 9, rol: Administrador);
         Usuario("cajero", id: 10, rol: Operador);
         Usuario("ex.jefe", id: 11, rol: Administrador, activo: false);
@@ -53,7 +55,7 @@ public class AnularFacturaCompraUseCaseTests
 
     private AnularFacturaCompraUseCase Caso() =>
         new(_facturas.Object, _usuarios.Object, _hash.Object, _unidad.Object, _contexto.Object,
-            new CalcularPreciosArticuloUseCase(_precios.Object));
+            new CalcularPreciosArticuloUseCase(_precios.Object), _notas.Object);
 
     private static AnularFacturaCompraRequest Pedido(string? motivo = " Cargada dos veces ", string? autoriza = "jefa",
         string? clave = "clave-buena") => new(motivo, autoriza, clave);
@@ -185,5 +187,51 @@ public class AnularFacturaCompraUseCaseTests
         Assert.Equal(TipoError.Invalido, resultado.Tipo);
         Assert.Equal("El stock no entra en su columna.", resultado.Error);
         _precios.Verify(p => p.ObtenerAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // CA-011 (D-S6-22): con notas de crédito vigentes no se anula; el mensaje dice que primero
+    // se anulan las notas y las nombra. Se consulta dentro de la unidad de trabajo (con la
+    // factura bloqueada), con la factura pedida.
+    [Fact]
+    public async Task ConNotasDeCreditoVigentes_ConflictoQueLasNombra()
+    {
+        int? consultada = null;
+        _notas.Setup(n => n.ObtenerVigentesDeFacturaAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Callback((int id, CancellationToken _) => consultada = id)
+            .ReturnsAsync(["0010-00021495", "0010-00021496"]);
+
+        var resultado = await Caso().EjecutarAsync(FacturaActiva, Pedido());
+
+        AssertFallo(resultado, TipoError.Conflicto);
+        Assert.Equal(FacturaActiva, consultada);
+        Assert.Contains("0010-00021495", resultado.Error);
+        Assert.Contains("0010-00021496", resultado.Error);
+        Assert.Contains("primero", resultado.Error);
+        _precios.Verify(p => p.ObtenerAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task LasNotasVigentesSeConsultanDentroDeLaUnidadDeTrabajo()
+    {
+        _unidad = DoblesBaja.UnidadQueNoEjecuta();
+
+        await Caso().EjecutarAsync(FacturaActiva, Pedido());
+
+        _notas.Verify(n => n.ObtenerVigentesDeFacturaAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unidad = DoblesBaja.UnidadQueEjecuta();
+        Assert.True((await Caso().EjecutarAsync(FacturaActiva, Pedido())).IsSuccess);
+        _notas.Verify(n => n.ObtenerVigentesDeFacturaAsync(FacturaActiva, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // CA-011, el borde: con una sola nota vigente ya no se anula.
+    [Fact]
+    public async Task ConUnaSolaNotaVigente_Conflicto()
+    {
+        _notas.Setup(n => n.ObtenerVigentesDeFacturaAsync(FacturaActiva, It.IsAny<CancellationToken>())).ReturnsAsync(["0010-00021495"]);
+
+        var resultado = await Caso().EjecutarAsync(FacturaActiva, Pedido());
+
+        AssertFallo(resultado, TipoError.Conflicto);
+        Assert.Contains("0010-00021495", resultado.Error);
     }
 }

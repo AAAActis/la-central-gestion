@@ -632,4 +632,19 @@ public class RegistrarFacturaCompraUseCaseTests
         Assert.True(resultado.IsSuccess, resultado.Error);
         Assert.Equal(desdePdf, _registrada!.DesdePdf);
     }
+
+    // HU-FCO-07 CA-008: el depósito Reclamos no se acepta como destino de una línea.
+    [Fact]
+    public async Task DestinoReclamos_Invalido_YNoEscribeNada()
+    {
+        _articulos.Setup(a => a.ObtenerSucursalesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new short[] { 1, 2, 3 });
+        _facturas.Setup(f => f.ObtenerIdReclamosAsync(It.IsAny<CancellationToken>())).ReturnsAsync((short)3);
+
+        var resultado = await Caso().EjecutarAsync(Request(new[] { Linea(sucursalId: 1), Linea(articuloId: 200, sucursalId: 3) }));
+
+        AssertFallo(resultado, TipoError.Invalido);
+        Assert.Contains("Reclamos", resultado.Error);
+        NoSeEscribioNada();
+        Assert.True((await Caso().EjecutarAsync(Request(new[] { Linea(sucursalId: 2) }))).IsSuccess);
+    }
 }

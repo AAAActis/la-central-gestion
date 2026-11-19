@@ -6,6 +6,7 @@ using LaCentral.UseCases;
 using LaCentral.UseCases.Articulos;
 using LaCentral.UseCases.Clientes;
 using LaCentral.UseCases.FacturasCompra;
+using LaCentral.UseCases.NotasCreditoCompra;
 using LaCentral.UseCases.Proveedores;
 using LaCentral.UseCases.Puertos;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -29,6 +30,7 @@ builder.Services.AddScoped<IArticuloRepositorio, ArticuloRepositorio>();
 builder.Services.AddScoped<IPreciosArticuloRepositorio, ArticuloRepositorio>();
 builder.Services.AddScoped<IHistorialBajaRepositorio, HistorialBajaRepositorio>();
 builder.Services.AddScoped<IFacturaCompraRepositorio, FacturaCompraRepositorio>();
+builder.Services.AddScoped<INotaCreditoCompraRepositorio, NotaCreditoCompraRepositorio>();
 builder.Services.AddScoped<IUnidadDeTrabajo, UnidadDeTrabajo>();
 builder.Services.AddScoped<IGeneradorToken, GeneradorToken>();
 
@@ -69,7 +71,11 @@ builder.Services.AddScoped<CalcularPreciosArticuloUseCase>();
 builder.Services.AddScoped<RegistrarFacturaCompraUseCase>();
 builder.Services.AddScoped<ConsultarFacturasCompraUseCase>();
 builder.Services.AddScoped<AnularFacturaCompraUseCase>();
+builder.Services.AddScoped<RegistrarNotaCreditoCompraUseCase>();
+builder.Services.AddScoped<AnularNotaCreditoCompraUseCase>();
+builder.Services.AddScoped<ConsultarNotasCreditoCompraUseCase>();
 builder.Services.AddScoped<InterpretarFacturaPdfUseCase>();
+builder.Services.AddScoped<InterpretarNotaCreditoPdfUseCase>();
 builder.Services.AddScoped<ILectorTextoPdf, LaCentral.Api.Pdf.LectorTextoPdf>();
 
 

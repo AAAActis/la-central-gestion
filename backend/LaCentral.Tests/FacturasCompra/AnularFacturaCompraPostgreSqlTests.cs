@@ -104,7 +104,7 @@ public class AnularFacturaCompraPostgreSqlTests
         await using var contexto = e.Fixture.CrearContexto();
         return await new AnularFacturaCompraUseCase(new FacturaCompraRepositorio(contexto), new UsuarioRepositorio(contexto),
                 new ServicioHash(), new UnidadDeTrabajo(contexto), Sesion(e).Object,
-                new CalcularPreciosArticuloUseCase(new ArticuloRepositorio(contexto)))
+                new CalcularPreciosArticuloUseCase(new ArticuloRepositorio(contexto)), new NotaCreditoCompraRepositorio(contexto))
             .EjecutarAsync(factura, new AnularFacturaCompraRequest(motivo, "jefa.fco04", ClaveJefa));
     }
 

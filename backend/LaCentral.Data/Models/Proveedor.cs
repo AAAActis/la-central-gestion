@@ -45,6 +45,8 @@ public partial class Proveedor
 
     public virtual ICollection<FacturaCompra> FacturaCompra { get; set; } = new List<FacturaCompra>();
 
+    public virtual ICollection<NotaCreditoCompra> NotaCreditoCompra { get; set; } = new List<NotaCreditoCompra>();
+
     public virtual ICollection<PrecioProveedor> PrecioProveedor { get; set; } = new List<PrecioProveedor>();
 
     public virtual ProveedorCredencial? ProveedorCredencial { get; set; }

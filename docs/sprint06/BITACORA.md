@@ -1146,9 +1146,171 @@ Para volver atrás una base (solo si hiciera falta): `ssh atiz@arch docker exec 
 5. PR 1 (carga manual): lo que no dependa del esquema, TDD. PR 2 (PDF de Expoyer): lector con sintético.
 6. Suite completa por HEAD, verificadores acotados, ESTADO antes del push, resumen.
 
-**Estado:** en curso
+**Estado:** terminada (lo abierto pasa al bloque «Decisiones del equipo para la 057»)
 - Arranque: `git fetch`; `origin/develop` sin commits nuevos. PR abiertos #176 a #181, apilados (#176 ← #177 ← #178 ← #179 ← #181 ← #180).
 - Punto 2, D-S6-17 en `feature/13-factura-pdf` (#177, worktree en el scratchpad porque la copia principal tiene la bitácora sin commitear): esqueleto `a688cba` (el sintético de Fazio acepta lista, final y total; solo test); rojo `aab80b9` (3 con error por aserción: el lector daba precio de lista 10.000 y descuentos 28+22; el test del total que no cierra pasa desde el principio); código `e0d6004` (precio unitario = P. Final, línea sin descuentos; con más de tres partes ya no se revisa). Filtrado `FacturasCompra`: 211/211. **Real de Fazio** (programa descartable, borrado): 10 líneas, neto **323.670,44**, solo `numero` para revisar. ETMAN igual que antes (98.005,75, nada para revisar).
+- Lo de abajo de la pila se pusheó (`feature/13-factura-pdf`, `-registro`, `51-pantalla-pdf`, `163-cuarto-descuento`) antes de actualizar el ESTADO: el ESTADO va en la rama de arriba (`feature/13-lector-expoyer`, `6277a67`).
+- Merges hacia arriba: `ab699e7` (#178), `fec0fe2` (#179), `925ea6e` (#181), sin conflictos; `465072d` (#180) con conflicto en `LecturaPdfTests.cs` (el nombre del test de Fazio), resuelto a mano. Filtrado `LecturaPdf|InterpretarFacturaPdf`: #181 41/41, #180 52/52.
+- `verificador-tdd` acotado a `a688cba..e0d6004` (#177), lanzado; corre él la suite sobre `e0d6004`.
+- Punto 1 y 3 en el ESTADO (`6277a67`): E10 cerrada, D-S6-17 a D-S6-20, C7 completa (Autocor en papel; era de Javi), preguntas a Sergio del 18/11, nota del Mandato (GR-01, Santi), E11.
+- Punto 4: issue **#182** (milestone «Sprint 6», 13 SP); proforma `057-HU-FCO-07.md` (11 CA, el CA-011 a confirmar); INDICE (54 proformas); plan (D-PL-06, Sprint 6 en 47 SP); script 11 y README del re-scaffold: `d66e68d` en la rama nueva `feature/182-nota-credito`, apilada sobre `feature/13-lector-expoyer`, pusheada. **El 11 no se probó contra un servidor**: no hay cliente de PostgreSQL en esta máquina.
+- **Decisión D-S6-20 (18/11):** Reclamos es una fila de `sucursal` con `es_reclamos` (ver ESTADO). Entra mercadería por transferencia (020).
+
+### PARA SANTI · 18/11/2026 · backup y script 11 (nota de crédito de proveedor y depósito Reclamos, E11)
+
+**Antes de aplicarlo en `lacentral_test`, leé esto:** el 11 crea tablas nuevas. `PostgreSqlPruebas` corta la suite si `public` tiene tablas que el modelo no clona, así que **desde que el 11 esté en `lacentral_test.public`, la suite de toda rama que no tenga el re-scaffold del 11 falla entera** (#176 a #181, y cualquier rama de Javi o Lauti). Dos opciones: aplicarlo después de que Javi mergee la pila, o aplicarlo ya y que cada rama abierta mergee el re-scaffold cuando entre a `develop`. Lo decidís vos. En `lacentral_demo` y `lacentral` va **cuando el PR de la carga manual de la 057 entre a `develop`**: con el 11 en esas bases, la pantalla de la 056 de hoy ofrecería Reclamos como destino (sale de las existencias del artículo).
+
+Desde fish, en tu máquina, parado en la raíz del repo. Requisito: el 10 en cada base (`s10 = 1`).
+
+1 · Backup de las tres bases (cada `.dump` tiene que pesar más de 0 bytes; si uno falla, no sigas):
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+mkdir -p ~/backups-lacentral
+set -l marca (date +%Y%m%d-%H%M)
+for base in lacentral_test lacentral_demo lacentral
+    ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc $base > ~/backups-lacentral/$base-$marca.dump
+    or begin; echo "FALLÓ el backup de $base: no sigas"; break; end
+end
+ls -l ~/backups-lacentral/*-$marca.dump
+```
+
+2 · Estado de cada base, solo lectura (`s10 = 1` es el requisito; `s11 = 0` es el 11 pendiente):
+
+```fish
+for base in lacentral_test lacentral_demo lacentral
+    echo "SELECT current_database() AS base, (SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'factura_compra_detalle' AND column_name = 'descuento_4_porcentaje') AS s10, (SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'nota_credito_compra') AS s11;" | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d $base
+end
+```
+
+3 · El 11, **primero solo en `lacentral_test`**. Tiene que terminar con `NOTICE: 11: TODO OK.` y `COMMIT` (el `WARNING` del `ROLLBACK` inicial es esperado):
+
+```fish
+git fetch origin
+git show origin/feature/182-nota-credito:backend/db/rescaffold/11_Nota_Credito_Compra.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+4 · Si dio `TODO OK`, avisame: sigo con el re-scaffold, el repositorio y las pruebas contra PostgreSQL. `lacentral_demo` y `lacentral`, cuando el PR de la carga manual entre a `develop`, de a una, y repetí el paso 2:
+
+```fish
+git show origin/feature/182-nota-credito:backend/db/rescaffold/11_Nota_Credito_Compra.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_demo -v ON_ERROR_STOP=1
+git show origin/feature/182-nota-credito:backend/db/rescaffold/11_Nota_Credito_Compra.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral -v ON_ERROR_STOP=1
+```
+
+Para volver atrás una base: `ssh atiz@arch docker exec -i lacentral_db pg_restore -U lacentral -d <base> --clean --if-exists < ~/backups-lacentral/<base>-<marca>.dump`.
+- `verificador-tdd` D-S6-17 (#177, `a688cba..e0d6004`): **APTO**. Rojo reproducido (3 por aserción), 8 mutaciones muertas; suite sobre `e0d6004`: `Correctas! - Con error: 0, Superado: 654, Omitido: 0, Total: 654, Duración: 4 m 22 s`. No bloqueantes: `afirmable` queda siempre en `true` (lo usan los otros lectores, se deja) y el comentario de Fazio mezcla la frase vieja con la nueva. El cambio de rama del árbol principal que vio fue mío (`checkout -b` de la 057). `auditor-persistencia`: **APTO** (sin persistencia en el diff; usó la suite del verificador).
+- Suites completas, de a una, en un worktree del scratchpad (`--no-incremental`, 0 advertencias): `ab699e7` (#178; mismo backend que el #179) `Correctas! - Con error: 0, Superado: 657, Omitido: 0, Total: 657, Duración: 17 m`; `925ea6e` (#181) `Correctas! - Con error: 0, Superado: 672, Omitido: 0, Total: 672, Duración: 4 m 35 s`. Frontend sin cambios en la pila: no se corrió.
+- 057, PR 1 (carga manual), lo que no depende del esquema, en `feature/182-nota-credito`:
+  - Núcleo: esqueleto `2caca64` (entidad, DTOs, puerto `INotaCreditoCompraRepositorio`, caso de uso vacío); rojo `a9d67d4` (40 con error por aserción; pasa desde el principio `Devolucion_DeUnArticuloDadoDeBaja_SeRegistra`; dos rojos con NRE y el IVA sin punto medio se corrigieron con `--amend` antes de pushear); código `0ab192d` (41/41). Mutaciones propias: de 13, sobrevivían 4 (proveedor inactivo tapado por «otro proveedor», `DesdePdf`, IIBB y municipal) → `2fdefd3` solo test, con cada una 1 con error; 42/42. Ojo: `dotnet build -q` falla con «Compilando completamente el destino» y `--no-build` corre el binario viejo; las mutaciones se rehicieron con `dotnet build`.
+  - Pantalla: esqueleto `d922eca` (API, módulo «Nota de crédito de proveedor» en el menú, pantalla con la superficie pública vacía); rojo `e84530b` (19 FAILED: 18 por `expectOne`, 1 por aserción); código `6259b1c` (19/19); `26ca848` alinea el total con el de la factura. Mutaciones propias: 12, todas muertas.
+  - **Decisión (18/11):** la devolución acepta un artículo dado de baja (se devuelve lo que se compró). Anotado en la proforma.
+  - **Frenado por E11:** re-scaffold, `NotaCreditoCompraRepositorio` con relectura de la fila y el stock (y que el costo no cambie), la API (`POST /api/notas-credito-compra` y `/calculo`, 401/403), el CA-008 (Reclamos fuera de los destinos de la factura, en la API y en la pantalla) y el PR.
+- Suite completa sobre `465072d` (#180): `Correctas! - Con error: 0, Superado: 683, Omitido: 0, Total: 683, Duración: 4 m 38 s` (0 advertencias). `6277a67` y `f8182d0` encima son solo docs.
+- 057, PR 2 (PDF), en `feature/182-nota-credito-pdf` (apilada sobre `feature/182-nota-credito`):
+  - Lector: esqueleto `8f5258c` (`NotaCreditoLeida`, `LayoutsPdf.LeerNotaCredito` en null, sintético con la forma del texto real); rojo `74de963` (6 con error por aserción; pasan desde el principio que una factura de Expoyer no es nota y que la nota no se lee como factura); código `3b4ac3e`. Mutaciones propias: de 9 sobrevivían 7 → `ff48077` solo test, con cada una 1 con error. **Real** (programa descartable, borrado): `0010-00021495`, 05/11/2026, bonificación, neto 115.040,00, facturas `0011-00044774` y `0011-00044869`, nada para revisar; las tres facturas reales se siguen leyendo igual y ninguna pasa por nota.
+  - Interpretación: esqueleto `781b94a`; rojo `f0659d1` (8 con error por aserción); código `8043b3a` (8/8). Mutaciones: sobrevivían el `break` del CUIT y una guarda inalcanzable → `0395431` borra la guarda (la cubre `SinFacturasAsociadasEnElTexto_…`) y `a705638` agrega el test del `break`; 9/9.
+  - Deuda vista de paso (fuera de este diff): en el lector de ETMAN, sacar `numero` de `Revisar` no pone ningún test en rojo.
+- Verificaciones sobre `261e3cd` (rama del PDF): unitarias de backend (`Base!=PostgreSQL`, `--no-incremental`, 0 advertencias) `Correctas! - Con error: 0, Superado: 508, Omitido: 0, Total: 508`; frontend completo `TOTAL: 1 FAILED, 270 SUCCESS` → el spec del menú con los títulos no se había actualizado en el esqueleto `d922eca` → `261e3cd` solo spec, llevado a la rama de la carga manual como `6085986`; frontend completo después: `TOTAL: 271 SUCCESS`. **No se corrió la suite completa de backend de las ramas de la 057**: no hay PR (se corre antes de abrirlo, con el 11 aplicado).
+- ESTADO (`f8182d0`, rama de Expoyer, mergeado en `74d08e8` y `7dd501d`): tablero con las suites, la 057 y PRÓXIMA SESIÓN. Push de `feature/13-lector-expoyer`, `feature/182-nota-credito` y `feature/182-nota-credito-pdf`. Verificadores de la 057: no se invocaron, van uno por PR al cerrarlo.
+
+**BLOQUEADO EN:** lo que queda de la 057 (re-scaffold, repositorio con relectura contra PostgreSQL, API, CA-008, endpoint del PDF, precarga, verificadores y los dos PR) espera que Santi aplique el script 11 en `lacentral_test` (bitácora, «PARA SANTI · 18/11 · script 11»; él decide cuándo, porque corta la suite de las ramas sin el re-scaffold). El CA-011 y lo que no se construye esperan a Sergio (preguntas del 18/11). Merge de la pila #176 a #181: Javi. Mandato (GR-01): Santi. DoD 10: Javi con Sergio. El sprint no se cierra.
+
+## 18/11/2026 · Decisiones del equipo para la 057 (D-S6-21 a D-S6-25)
+
+**Instrucción recibida (verbatim):**
+> 18/11 · Decisiones del equipo para la 057 (nota de crédito de proveedor), tomadas sobre la práctica de los sistemas de gestión comunes y la RG 4540 de AFIP. Reemplazan los «a confirmar». Sacalas de «Lo que vuelve a Sergio» y anotalas en el ESTADO como D-S6-21 a D-S6-25; si Sergio después corrige alguna, se cambia.
+>
+> - D-S6-21 · Reposición después de un reclamo: el proveedor la manda con factura nueva, que se carga como cualquier factura de compra (056 o 029). La 057 no tiene circuito de reposición.
+> - D-S6-22 · No se puede anular una factura de compra con notas de crédito vigentes: primero se anulan las notas y después la factura. El mensaje lo dice y nombra las notas. Es el CA-011: sacale el «a confirmar».
+> - D-S6-23 · Una nota de crédito se puede anular igual que una factura (028): con motivo y con la autorización de otro ADMINISTRADOR con su contraseña. Si era por devolución, la mercadería vuelve a la misma sucursal o depósito de donde salió, en la misma transacción. Va como CA nuevo. Reusá lo de la 028 donde se pueda.
+> - D-S6-24 · Una devolución que deja el stock de origen en negativo se registra igual, pero la pantalla avisa antes de confirmar: qué artículo, en qué sucursal y cuánto queda.
+> - D-S6-25 · Regla de cantidades: en una nota de crédito por devolución, cada línea es de un artículo que figura en las facturas referenciadas, y la cantidad devuelta acumulada por artículo no supera lo comprado en esas facturas, sin contar las notas anuladas. Un artículo dado de baja se puede devolver, porque viene de la factura. Va como CA nuevo, con prueba contra PostgreSQL de la suma acumulada y de dos devoluciones simultáneas.
+>
+> Todo lo de la 057 sigue frenado por la compuerta E11 (nc057_fuente). Lo que no dependa del esquema, adelantalo. Resúmenes en español.
+
+**Plan:**
+1. ESTADO: D-S6-21 a D-S6-25, sacar las preguntas de «Lo que vuelve a Sergio», E11 con `nc057_fuente`. Proforma de la 057 v1.1 (CA-011 sin «a confirmar», CA nuevos de anulación, aviso de stock negativo y cantidades).
+2. Script 11: columnas de anulación en `nota_credito_compra` (como `factura_compra`) y unicidad del número solo entre vigentes.
+3. Backend sin esquema, TDD con Moq: D-S6-25 en el registro (dentro de la unidad de trabajo, con bloqueo de las facturas); D-S6-22 en la anulación de la factura (028); D-S6-23, caso de uso de anulación de la nota, reusando lo de la 028.
+4. Pantalla: D-S6-24, aviso de stock negativo antes de confirmar.
+5. Merge hacia la rama del PDF, ESTADO, push, resumen.
+
+**Estado:** terminada (queda abierto lo de E11 y CA-011; ver BLOQUEADO EN)
+- Arranque: `git fetch`; `develop` sin novedades; PR #176 a #181 abiertos. Un `merge --ff-only` mío adelantó por error la rama local `feature/182-nota-credito` hasta la del PDF (no se pusheó). No se pudo volver atrás con `reset --hard` (lo bloquea el modo automático): el trabajo sigue en una rama local nueva, `feature/182-nota-credito-manual`, desde `origin/feature/182-nota-credito`, y se pushea a `feature/182-nota-credito` (avance rápido). La rama local vieja queda para borrar a mano.
+- Docs `1f2a175`: ESTADO con D-S6-21 a D-S6-25 (fuera de «Lo que vuelve a Sergio»), E11 con `nc057_fuente`; proforma 057 v1.1 (CA-011 sin «a confirmar», CA-012, CA-013, CA-014); índice con 14 CA; script 11 con la anulación.
+- CA-014 (D-S6-25): esqueleto (puerto `ObtenerCompradoYDevueltoAsync`); rojo (4 con error por aserción); código `6378549`, 48/48; mutaciones propias 7 de 7 muertas.
+- CA-012 (D-S6-23): `refactor(fco04)` saca la doble certificación a `Comun/DobleCertificacion` (028: 17/17 sin cambios); esqueleto `22deaa0`; rojo (10 con error por aserción); código `d50833c`, 10/10; mutaciones 6 de 6 muertas.
+- CA-013 (D-S6-24): rojo (3 con error por aserción); código (pantalla: cada artículo trae su ficha, aviso `aviso alerta` con artículo, origen y cuánto queda); dos guardas sin test borradas (pedir la ficha una sola vez y mostrar el aviso solo con el total); `fd2f0b3` solo test (volver a bonificación), con la mutación 1 con error. Spec 24/24.
+- CA-011 (D-S6-22): **no se hizo**: la anulación de la factura necesita el repositorio de notas en su DI, y sin el 11 no hay tabla. Va con E11.
+- Verificaciones sobre `fd2f0b3`: unitarias de backend (`--no-incremental`, 0 advertencias) `Correctas! - Con error: 0, Superado: 501, Omitido: 0, Total: 501`; frontend completo `TOTAL: 276 SUCCESS`. Suite completa de backend: no, sin PR.
+
+**BLOQUEADO EN:** E11 (Santi aplica el 11 en `lacentral_test`, plantilla `nc057_fuente`): re-scaffold, repositorio de la nota con PostgreSQL (CA-014 suma acumulada y dos devoluciones simultáneas, CA-012 stock al origen y número liberado), CA-011 en la 028, API y PR. Sergio: ver D-S6-21 a 25. La rama local `feature/182-nota-credito` quedó adelantada por error a la del PDF (sin pushear): borrarla a mano (`git branch -D feature/182-nota-credito`) o pedirme que la reponga.
+- Merge de `feature/182-nota-credito` en la rama del PDF: conflictos de solo agregar en la bitácora (la del PDF ya estaba en la manual) y en los DTO (se conservan los dos bloques). Unitarias de backend: 524/524.
+
+## 18/11/2026 · Plantilla nc057_fuente para el script 11
+
+**Instrucción recibida (verbatim):**
+> El bloque «PARA SANTI · 18/11 · script 11» aplica el 11 en lacentral_test.public, y te había pedido la copia nc057_fuente para no cortar las suites de las otras ramas. Dejame en la bitácora el bloque para fish que, después del backup, crea en lacentral_test el esquema nc057_fuente como copia de public (estructura y datos que necesite la suite), le aplica el 11 con ON_ERROR_STOP=1 y lo verifica. Contenedor lacentral_db, superusuario lacentral, sin marcadores. Después la 057 corre su suite con LA_CENTRAL_TEST_SCHEMA=nc057_fuente. El 11 en public, lacentral_demo y lacentral va cuando Javi mergee la pila y el PR de la carga manual de la 057; ahí se borra nc057_fuente. Resúmenes en español.
+
+**Plan:**
+1. SQL versionados en `backend/db/pruebas/`: copia (mismo método que `PostgreSqlPruebas` y que `fco06_fuente`), guarda antes del 11, verificación y borrado.
+2. Ensayarlos en un esquema descartable de `lacentral_test` con el rol de la suite, y correr tests de PostgreSQL con esa copia como plantilla.
+3. Bloque PARA SANTI en fish; ESTADO (E11 y PRÓXIMA SESIÓN); push.
+
+**Estado:** terminada (queda que Santi lo corra)
+- Error mío: el bloque «PARA SANTI · 18/11 · script 11» de arriba aplicaba el 11 en `lacentral_test.public`. **Su paso 3 queda reemplazado por el bloque de abajo**; los pasos 1, 2 y 4 (el 11 en `lacentral_demo` y `lacentral`) siguen valiendo para cuando Javi mergee.
+- SQL en `backend/db/pruebas/`: `nc057_fuente_copia.sql` (tablas con `LIKE … INCLUDING ALL`, índices y PK/UNIQUE con los nombres de `public`, FK redirigidas a la copia, datos solo de `rol` y `sucursal` —lo único que la suite lee de la plantilla—, `similarity()` que llama a la de `public`, SELECT para `lacentral_tests` y `lacentral_santi`; se niega si `nc057_fuente` ya existe), `nc057_fuente_entrar.sql` (pone el `search_path` y corta si la plantilla no existe: el 11 no llega a correr en `public`), `nc057_fuente_verificacion.sql` (solo lectura) y `nc057_fuente_borrado.sql` (solo en `lacentral_test`, sin dependientes fuera del esquema).
+- Ensayo en `lacentral_test`, con `lacentral_santi`, en el esquema descartable `nc057_ensayo_6d7f5e4f` (los mismos archivos, con el nombre reemplazado): copia `copia creada (27 tablas)`; tests de PostgreSQL de la rama (sin el 11) con esa copia como plantilla, filtrados FacturasCompra, BusquedaPaginada, RestriccionesUnicas y ClienteRepositorio: `Correctas! - Con error: 0, Superado: 81, Omitido: 0, Total: 81, Duración: 6 m 13 s`; guarda + 11: **`11: TODO OK.`** (primera vez que el 11 corre contra un servidor); verificación `TODO OK (30 tablas; public: 27)`; el 11 otra vez: `TODO OK` (idempotente); la copia otra vez: se niega; borrado: `public: 27 tablas`; guarda sin plantilla: corta antes del 11; borrado sin plantilla: «nada que borrar». El esquema de ensayo ya no existe.
+
+### PARA SANTI · 18/11/2026 · plantilla nc057_fuente (E11)
+
+Esto **no toca `public`**: las suites de #176 a #181 y de las ramas de Javi y Lauti siguen igual. Desde fish, en tu máquina. Cada paso que falla corta (`ON_ERROR_STOP=1`, y la copia es una sola transacción): si algo da `ERROR`, no sigas y pasame la salida.
+
+1 · Backup de `lacentral_test` (tiene que decir `backup OK`):
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+git fetch origin
+mkdir -p ~/backups-lacentral
+set marca (date +%Y%m%d-%H%M)
+ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc lacentral_test > ~/backups-lacentral/lacentral_test-$marca.dump
+and test -s ~/backups-lacentral/lacentral_test-$marca.dump
+and echo "backup OK"
+or echo "FALLÓ el backup: no sigas"
+```
+
+2 · La copia. Tiene que terminar con `NOTICE: nc057_fuente: copia creada (27 tablas).` y `COMMIT`:
+
+```fish
+git show origin/feature/182-nota-credito:backend/db/pruebas/nc057_fuente_copia.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+3 · El 11 sobre la copia. Tiene que terminar con `NOTICE: 11: TODO OK.` y `COMMIT` (el `WARNING` del `ROLLBACK` inicial es esperado):
+
+```fish
+begin
+    git show origin/feature/182-nota-credito:backend/db/pruebas/nc057_fuente_entrar.sql
+    git show origin/feature/182-nota-credito:backend/db/rescaffold/11_Nota_Credito_Compra.sql
+end | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+4 · Verificación, solo lectura. Tiene que decir `NOTICE: nc057_fuente: TODO OK (30 tablas; public: 27).`:
+
+```fish
+git show origin/feature/182-nota-credito:backend/db/pruebas/nc057_fuente_verificacion.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+5 · Avisame. La 057 sigue con el re-scaffold y corre su suite con `LA_CENTRAL_TEST_SCHEMA=nc057_fuente`.
+
+**Más adelante**, cuando Javi mergee la pila y el PR de la carga manual de la 057: el 11 en `public` de `lacentral_test`, en `lacentral_demo` y en `lacentral` (backup y estado con los pasos 1 y 2 del bloque «script 11» de arriba, y su paso 4 para las dos últimas; para `lacentral_test`, el mismo comando con `-d lacentral_test`). Después se borra la plantilla. Tiene que decir `nc057_fuente borrado; public: …`:
+
+```fish
+git show origin/develop:backend/db/pruebas/nc057_fuente_borrado.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+Si la copia quedara mal: el paso 2 es una transacción (si falla, no queda nada), y para rehacerla, el comando de borrado de arriba con `origin/feature/182-nota-credito` en lugar de `origin/develop`, y de nuevo los pasos 2 a 4.
+
+**BLOQUEADO EN:** que Santi corra los pasos 1 a 4 y diga `nc057_fuente: TODO OK`. Después, la 057 sigue con el re-scaffold, contra la plantilla.
 
 ## 18/11/2026 · Revisión de Javi del #180 (REQUEST CHANGES, tres puntos [DOCS])
 
@@ -1172,7 +1334,176 @@ Para volver atrás una base (solo si hiciera falta): `ssh atiz@arch docker exec 
 
 **Estado:** terminada (lo de la 057 sigue en su rama; espera E11, la plantilla `nc057_fuente`)
 - #180: base cambiada a `develop` (`gh pr edit 180 --base develop`); `git merge origin/develop` → `bf952cf`, sin conflictos.
+- Rama de la 057 (`feature/182-nota-credito-manual` → `origin/feature/182-nota-credito`): merge de `feature/13-lector-expoyer` corregido → `d5ecc6b`. El ESTADO se resolvió con **la versión de la 057** (el #180 le saca lo de la 057, que acá tiene que quedar; `develop` no traía nada nuevo en `docs/`: `git diff f8182d0 bf952cf` vacío). Bitácora: las dos partes.
+
+**Instrucción recibida (verbatim), a mitad de la tarea:**
+> 18/11 · El equipo (Santi, Javi y Lauti) aprobó:
+> - D-S6-18: la 057 entra al Sprint 6 como última HU. El tutor ya está avisado. El Mandato pasa a v3.1; eso lo edita Santi en el GR-01.
+> - D-S6-20: el depósito Reclamos como fila de sucursal, aprobado por el equipo, ya no es propuesta del agente.
+> Sacales el «propuesta» en el ESTADO y en la proforma, con fecha y «aprobado por el equipo».
+>
+> Igual, lo que pidió Javi en el #180: base a develop (gh pr edit 180 --base develop), git merge origin/develop, y que el #180 lleve solo lo de Expoyer; lo de la 057 va en su rama. Respondé cada punto en el #180 con su commit. Suite completa sobre develop, una vez (hubo merge).
+>
+> La 057 se descongela. Para el script 11: dejame en la bitácora el bloque para fish que, con backup primero, crea en lacentral_test el esquema nc057_fuente como copia de public, le aplica el 11 con ON_ERROR_STOP=1 y lo verifica (contenedor lacentral_db, superusuario lacentral, sin marcadores). La 057 corre su suite con LA_CENTRAL_TEST_SCHEMA=nc057_fuente. En public, lacentral_demo y lacentral va cuando entre el PR de la carga manual de la 057, y ahí se borra nc057_fuente.
+>
+> Resúmenes en español.
+
+**Plan corregido:** la D-S6-18 y la D-S6-20 no pasan a propuesta: van como **aprobadas por el equipo el 18/11** (ESTADO, proforma v1.2, índice, plan). La 057 no se congela. El bloque de `nc057_fuente` ya está más arriba en esta bitácora («PARA SANTI · 18/11/2026 · plantilla nc057_fuente (E11)», ensayado el 18/11 en un esquema descartable) y sigue valiendo. **Una corrección a su «Más adelante»:** el 11 en `public`, `lacentral_demo` y `lacentral` va cuando entre a `develop` **el PR de la carga manual de la 057** (la pila ya entró, salvo el #180); el borrado de la plantilla, después de eso, con el mismo comando.
 - `19b4521`: el ESTADO del #180 sin lo de la 057 (D-S6-18, D-S6-20, E11, fila #182, preguntas y reglas de Sergio, Mandato); D-S6-14, 34 SP y «Fuera del Sprint 6» como en `develop`. Push.
 - Rama de la 057 (ver el bloque en `feature/182-nota-credito`): merge del #180 corregido (`d5ecc6b`, ESTADO con la versión de la 057) y `6f36b7c` D-S6-18 y D-S6-20 **aprobadas por el equipo el 18/11** (ESTADO, proforma v1.2, índice, plan); merge en la rama del PDF `463721d`. Push de las dos.
 - #180: respuesta punto por punto con los commits (comentario 6990438840). Error mío: la primera versión del comentario decía «@javi…», que GitHub puede tomar como mención a otro usuario; se editó en el momento a «Javi».
 - **Suite completa de backend sobre `develop` (`37e8007`)**, en un worktree, una vez: build `--no-incremental` 0 advertencias; `Con error! - Con error: 3, Superado: 669, Omitido: 0, Total: 672, Duración: 1 h 9 m`. Fallaron `ProveedorPostgreSqlTests.ModificarConDireccionVaciaNueva_NoCreaUnaFilaVacia` (1 m 7 s), `PostgreSqlPruebasLimpiezaTests.ConOtraFuente_ElSearchPathResuelveEnEsaFuenteYNoEnPublic` (1 m 12 s) y `HistorialBajaRepositorioTests.UnidadDeTrabajo_DevuelveElResultadoDeLaOperacionYLaEjecutaUnaVez` (53 s). La corrida tardó 15 veces lo normal (~4 m 30 s) y cada fallo, cerca de un minuto: carga del servidor compartido. **No se capturó el mensaje de error** (el filtro de la salida lo dejó afuera). Filtradas las tres después: `Correctas! - Con error: 0, Superado: 4, Omitido: 0, Total: 4, Duración: 1 m 50 s`. No se reprodujeron; no se volvió a correr la suite entera (se pidió una vez). Worktree sacado.
+
+## 18/11/2026 · La 057 contra la plantilla nc057_fuente (E11 abierta)
+
+**Instrucción recibida (verbatim):**
+> nc057_fuente: TODO OK (18/11). Seguí con la 057 contra la plantilla: re-scaffold, repositorio con las pruebas contra PostgreSQL, D-S6-22, API, PDF, verificadores y los dos PR.
+>
+> Suite sobre develop: 669/672 no es verde. Cuando termines con la 057 y la netbook esté más tranquila, corré la suite completa sobre develop una sola vez más, sin filtrar la salida de los fallos. Si vuelven a fallar los mismos tres, investigá por qué tardan un minuto en la corrida completa (¿esperan un lock? ¿un timeout?) en vez de asumir que es carga. Resúmenes en español.
+
+**Plan:**
+1. Re-scaffold de `LaCentral.Data/Models/` contra `lacentral_test`, esquema `nc057_fuente` (rama `feature/182-nota-credito-manual`).
+2. `NotaCreditoCompraRepositorio` con TDD y pruebas contra PostgreSQL (fuente `nc057_fuente`): alta releída con contexto nuevo, suma acumulada, dos devoluciones concurrentes, anulación con stock de vuelta al origen y número liberado.
+3. D-S6-22 (CA-011): la 028 no anula una factura con NC vigentes y nombra las notas.
+4. API: controlador, DI, CA-008; suite completa de la rama con `LA_CENTRAL_TEST_SCHEMA=nc057_fuente`; ESTADO; verificadores acotados; PR de la carga manual.
+5. Rama del PDF: endpoint y precarga de la pantalla; suite; verificadores; PR.
+6. Suite completa sobre `develop`, una vez, sin filtrar los fallos; si fallan los mismos tres, investigar la espera de un minuto.
+
+**Estado:** terminada
+- Paso 1, re-scaffold: **no hay esquema `nc057_fuente` en `lacentral_test`**. `dotnet ef dbcontext scaffold … --schema nc057_fuente` → «Unable to find a schema in the database matching the selected schema nc057_fuente» (dejó `LaCentralDbContext.cs` vacío; restaurado con `git checkout`, `Models/` intacto). Consulta de solo lectura con `LACENTRAL_TEST_PG` (servidor 172.19.0.2, PostgreSQL 18.6, `current_user` lacentral_santi, 19/11 01:22 hora del servidor): `pg_namespace` tiene `demo_ensayo_c3`, `information_schema`, `public` (27 tablas) y `staging`, pero no `nc057_fuente`. Ninguna tabla `nota_credito%` ni columna `es_reclamos` en ningún esquema. O sea, en esta base la copia no está (y el 11 tampoco). Puede que se haya corrido contra otro servidor o contenedor, o que la transacción del paso 2 haya vuelto atrás.
+- Mientras tanto, el paso 6 (suite completa sobre `develop`, que no depende del esquema): se adelanta, porque son la 1 de la mañana en el servidor y lo de la 057 está frenado.
+- La suite sobre `develop` que se adelantó (worktree `wt-develop`, `37e8007`) quedó cortada a mitad con la sesión: la salida termina sin resumen (`dev2.txt`, 22:33), sin proceso `dotnet` vivo. No cuenta. Cada test de PostgreSQL tardaba de 46 s a 1 m 10 s, incluso los que pasan.
+
+## 18/11/2026 · La 057 contra nc057_fuente, segunda vez (Santi la verificó a las 22:35)
+
+**Instrucción recibida (verbatim):**
+> nc057_fuente: TODO OK, verificado contra 172.19.0.2 (18/11, 22:35). Copia de 27 tablas, el 11 aplicado sobre la copia (sucursal 3 «Reclamos (depósito)», nota_credito_compra, nota_credito_compra_factura, nota_credito_compra_detalle) y verificación: 30 tablas; public: 27. Seguí con la 057 contra la plantilla: re-scaffold, repositorio con las pruebas contra PostgreSQL, D-S6-22, API, PDF, verificadores y los dos PR. Cuando termine la suite sobre develop, pasame el resultado. Resúmenes en español.
+
+**Plan:**
+1. Confirmar `nc057_fuente` en `lacentral_test` (solo lectura). Si no está, parar.
+2. Re-scaffold contra `nc057_fuente`.
+3. `NotaCreditoCompraRepositorio` con pruebas contra PostgreSQL (`LA_CENTRAL_TEST_SCHEMA=nc057_fuente`).
+4. D-S6-22 (CA-011), API, CA-008; suite de la rama; ESTADO; verificadores; PR de la carga manual.
+5. Rama del PDF: endpoint, precarga, suite, verificadores, PR.
+6. Suite completa sobre `develop` (la anterior quedó cortada), una vez, sin filtrar fallos; resultado a Santi.
+
+**Estado:** terminada
+- Paso 1: `nc057_fuente` presente en `lacentral_test` (172.19.0.2, 01:35 hora del servidor): 30 tablas, sucursal 3 «Reclamos (depósito)». Queda además un esquema `pr110_test_9d4670f6b05140749a0e351312a4b273` (27 tablas), seguramente de la suite cortada.
+- Paso 2, re-scaffold `ddbffae`: contra `nc057_fuente` a un directorio aparte; entra solo lo nuevo (3 tablas, `es_reclamos`, `fc_id_proveedor_unico`, navegaciones), sin el esquema en `ToTable` y conservando los comentarios de tabla de `public` (la copia no los trae) y los fines de línea. Build: 0 advertencias, 0 errores.
+- Paso 3, repositorio: esqueleto `NotaCreditoCompraRepositorio` (valores neutros) y 7 pruebas contra PostgreSQL (`NotaCreditoCompraPostgreSqlTests`: bonificación, devolución con Reclamos en negativo, facturas, CA-014 acumulado y sin anuladas, dos devoluciones simultáneas con espera de bloqueo visible en `pg_stat_activity`, CA-012 anulación y número liberado, stock fuera de rango). Primera corrida con `LA_CENTRAL_TEST_SCHEMA=nc057_fuente`: 7 con error, **pero no por aserción**: 6 cortan en el fixture («No se pudo aparear sin ambigüedad el índice factura_compra.factura_compra_id_proveedor_unico») y 1 por timeout de conexión.
+- **Error mío en el script 11**: el 07 ya creó `factura_compra_id_proveedor_unico UNIQUE (id, proveedor_id)` y el 11 agregaba `fc_id_proveedor_unico`, igual. `c4c5946`: el 11 exige el del 07 y no crea nada en `factura_compra`; el modelo pierde el índice duplicado; `nc057_fuente_verificacion.sql` ahora rechaza índices duplicados. **Hay que rehacer `nc057_fuente`** (la de hoy tiene el duplicado): bloque PARA SANTI más abajo.
+- 01:50 aprox.: `arch` offline en Tailscale (`tailscale status`: «offline, last seen 1m ago»; ping 100 % perdido). El ensayo de los scripts corregidos en `nc057_ensayo_2f673d44` no llegó a conectar (no se creó nada). Sigo con lo que no toca la base.
+- Ensayo de los scripts corregidos en `nc057_ensayo_2f673d44` (lacentral_santi): copia 27 tablas, el 11 `TODO OK`, verificación `TODO OK (30 tablas; public: 27)`. La verificación nueva sobre la `nc057_fuente` de hoy: «Índices duplicados en nc057_fuente: nc057_fuente.factura_compra» (confirma que hay que rehacerla). **Error mío en el ensayo:** el primer intento concatenó `entrar` y el 11 en un solo comando de Npgsql; la transacción implícita hizo que el `ROLLBACK` del 11 deshiciera el `SET search_path` y el `ALTER TABLE sucursal` apuntó a `public`. Lo frenó que `lacentral_santi` no es dueño de `public` (`must be owner of table sucursal`); verificado después: `public` 27 tablas, sin `es_reclamos`. Con psql (el bloque de Santi) no pasa: cada sentencia va sola.
+- CA-011 (D-S6-22), en la anulación de la factura: esqueleto `144fcd4`, rojo `81f3c98` (2 con error por aserción), `c122ffa` solo test (por defecto sin notas), código `ca9145f` (19/19). La consulta va dentro de la unidad de trabajo, con la factura bloqueada.
+- Repositorio: rojo `548d2fa` (9 con error por aserción, contra el ensayo), código `aa29bc7` (9/9), `bef903b` prueba de la carrera nota/anulación de factura (1 con error con la mutación). Mutaciones propias: sin bloqueo en comprado/devuelto (1 con error), sin recomprobar el estado (1), sin `FOR UPDATE` (2), sin bloqueo en notas vigentes (1): todas muertas. Clases afectadas: `Correctas! - Con error: 0, Superado: 99, Omitido: 0, Total: 99`.
+
+### PARA SANTI · 19/11/2026 · rehacer nc057_fuente (el 11 corregido)
+
+La `nc057_fuente` de anoche tiene un índice duplicado en `factura_compra` (error mío en el 11, ya corregido en `c4c5946`) y con eso **ninguna prueba de PostgreSQL de la 057 arranca** contra ella. No toca `public`. Desde fish, en tu máquina, parado en la raíz del repo; cada paso que falla corta. Si algo da `ERROR`, no sigas y pasame la salida.
+
+1 · Backup (tiene que decir `backup OK`):
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+git fetch origin
+mkdir -p ~/backups-lacentral
+set marca (date +%Y%m%d-%H%M)
+ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc lacentral_test > ~/backups-lacentral/lacentral_test-$marca.dump
+and test -s ~/backups-lacentral/lacentral_test-$marca.dump
+and echo "backup OK"
+or echo "FALLÓ el backup: no sigas"
+```
+
+2 · Borrar la plantilla de anoche. Tiene que decir `nc057_fuente borrado; public: 27 tablas` (o parecido):
+
+```fish
+git show origin/feature/182-nota-credito:backend/db/pruebas/nc057_fuente_borrado.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+3 · Los pasos 2, 3 y 4 del bloque «PARA SANTI · 18/11/2026 · plantilla nc057_fuente (E11)» de arriba, iguales (copia, el 11, verificación). La verificación ahora también rechaza índices duplicados; tiene que terminar con `NOTICE: nc057_fuente: TODO OK (30 tablas; public: 27).`
+
+4 · Avisame. La 057 corre su suite completa con `LA_CENTRAL_TEST_SCHEMA=nc057_fuente` antes de cada PR.
+
+Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2f673d44`, en `lacentral_test`, creada con `lacentral_santi`), que borro cuando la tuya esté.
+- CA-008 en la API: esqueleto `c430447` (`ObtenerIdReclamosAsync` en null), rojo `0875428` (1 con error por aserción en el caso de uso, 1 contra PostgreSQL), código `b61bec7` (79/79; contra PostgreSQL 27/27 con el registro de la 056).
+- La ficha marca Reclamos (`EsReclamos` en la existencia): esqueleto `6294fc1`, rojo `d6521fa` (las 3 pruebas de `ArticuloRepositorioTests` suponían 2 sucursales; 3 con error por aserción), código `66dcaa7` (3/3).
+- CA-008 en la pantalla de la factura: rojo `afe79f8` (`3 FAILED, 66 SUCCESS`, uno por cada camino que arma los destinos: carga manual, PDF y PDF con proveedor elegido después), código `b2df72f` (`TOTAL: 69 SUCCESS` en las pantallas de la factura). `esReclamos` opcional en el tipo de la ficha, para no tocar los fixtures tipados de otras pantallas.
+- Suite completa de backend contra el ensayo (cambió el esquema, momento 3), en curso sobre `66dcaa7`. Escritas, sin compilar todavía (la suite usa los binarios): pruebas HTTP `NotasCreditoCompraApiPostgreSqlTests` (6), prueba del 23505 del número, controlador y DTO.
+- Suite completa sobre `66dcaa7` contra el ensayo: `Con error! - Con error: 3, Superado: 752, Omitido: 0, Total: 755, Duración: 5 m 23 s`. Los 3 (`Put_Ubicacion_204…`, `Get_Ficha_ExistenciasPorSucursalYTotal`, `Ficha_TraeLaUbicacionDeCadaSucursal`) esperaban dos sucursales fijas; con el 11 son tres. Arreglados en `test(fco07): con el script 11, la ficha trae también Reclamos…` (solo test).
+- API: rojo (con el controlador y el DTO apartados): 6 pruebas HTTP con 404 y el 23505 del número sin mensaje, 7 con error por aserción (una parseaba el 404 sin mirarlo: se le agregó la aserción del alta y se vio en rojo por ella). Código `1131ec4` (controlador, DTO con la fecha anulable para el 400, DI, mensaje de `ux_nota_credito_compra_numero_activa`): 48/48.
+- **Suite completa de backend sobre `1131ec4`** (`--no-incremental`, 0 advertencias, `LA_CENTRAL_TEST_SCHEMA=nc057_ensayo_2f673d44`): `Correctas! - Con error: 0, Superado: 762, Omitido: 0, Total: 762, Duración: 6 m 11 s`. **Frontend completo:** `TOTAL: 277 SUCCESS`.
+- ESTADO: fila #182, E11 y PRÓXIMA SESIÓN del 19/11.
+- Worktree viejo `wt-develop` (de la suite cortada del 18/11) sacado con `git worktree remove` + `prune`. `verificador-tdd` invocado con alcance `7d05c94..7b39fb4` (sin merges ni docs), con la suite sobre `1131ec4` (762/762) y `LA_CENTRAL_TEST_SCHEMA=nc057_ensayo_2f673d44`. El `auditor-persistencia` va después (no pueden correr a la vez).
+- `verificador-tdd` (alcance `7d05c94..7b39fb4`): **APTO**. 11 rojos reproducidos por aserción, 15 mutaciones muertas, ninguna sobrevive. Usó la suite sobre `1131ec4`. No bloqueantes: (1) el unitario del CA-011 usaba dos notas y sobrevivía a `Count > 1` → `4ec0ac7`, test con una sola nota, que esa mutación pone en rojo (1 con error), 20/20; (2) **error mío**: `ddbffae` commiteó seis `.orig` (restos del `patch` fallido) → `87da0b4` los saca; (3) el rojo de la pantalla (`e84530b`) es real pero poco específico: 15 de 19 caen en el mismo `expectOne`; (4) `c4c5946` retocó a mano `LaCentralDbContext.cs`, que es generado → re-scaffold contra `nc057_ensayo_2f673d44` (con el 11 corregido): **0 diferencias** con el repo; (5) el rojo de la API es un 404 genérico (después lo discriminan M14 y las pruebas de PostgreSQL). Caracterización, para declararla en el PR: `2fdefd3`, `bef903b`, `fd2f0b3`, `6085986`, `4ec0ac7`.
+- **Suite completa de backend sobre `4ec0ac7`** (`--no-incremental`, 0 advertencias, ensayo): `Correctas! - Con error: 0, Superado: 763, Omitido: 0, Total: 763, Duración: 6 m 4 s`. Frontend sin cambios desde `b2df72f` (`277 SUCCESS`).
+- `auditor-persistencia` (alcance `7d05c94..4ec0ac7`, con la suite sobre `4ec0ac7`): **APTO**. Filtrada propia: `Correctas! - Con error: 0, Superado: 36, Omitido: 0, Total: 36`. No bloqueantes: tres respaldos de la base sin prueba propia (el caso de uso corta antes); dos anulaciones simultáneas de una nota, solo en secuencia; el 23505 del número probado hasta `MensajeDeConflicto`, no hasta el 409 por HTTP. Avisa de un esquema huérfano en `lacentral_test`: `pr110_test_9d4670f6b05140749a0e351312a4b273` (de la suite cortada del 18/11).
+- **PR #183** abierto (base `feature/13-lector-expoyer`, porque esta rama trae el #180; cuando el #180 entre, la base pasa a `develop` con `gh pr edit`). Cuerpo: CA uno por uno, suites sobre `4ec0ac7`, verificadores, sin verificar (CA-012 sin pantalla; DoD 10 hasta que el 11 esté en `lacentral_demo`) y cambios en código ajeno. Suite completa sobre `develop` en curso, en el worktree `wt-develop` de este scratchpad.
+- **Suite completa sobre `develop` (`37e8007`)**, una vez, sin filtrar los fallos, 23:51 a 23:56 (hora local): build `--no-incremental` 0 advertencias; `Correctas! - Con error: 0, Superado: 672, Omitido: 0, Total: 672, Duración: 4 m 43 s`. **Los tres que fallaron el 18/11 pasaron.** No hubo nada que investigar: no se repitieron. Lo que se sabe de la corrida del 18/11: tardó 1 h 9 m (15 veces lo normal), cada prueba de PostgreSQL tardaba alrededor de un minuto, también las que pasaban, y a la 01:50 `arch` se cayó de Tailscale. Coincide con un servidor sobrecargado o a punto de caerse, no con un bloqueo de esas tres pruebas. Pero el mensaje de error de entonces no se guardó, así que la causa no está demostrada. Worktree sacado.
+
+**Dónde queda (para retomar):** PR 1 hecho (#183, verificadores APTO). Falta el **PR 2 (PDF de Expoyer, CA-010)** en `feature/182-nota-credito-pdf`: merge de `feature/182-nota-credito`, `POST /api/notas-credito-compra/pdf`, precarga de la pantalla, suite contra la plantilla, verificadores acotados a sus commits y PR con base `feature/182-nota-credito`. Santi rehace `nc057_fuente` (bloque del 19/11). Cuando esté, se borra `nc057_ensayo_2f673d44`. Queda también el huérfano `pr110_test_9d4670f6b05140749a0e351312a4b273`. Equipo: ¿pantalla para anular la nota (CA-012)?
+
+## 19/11/2026 13:22 · La 057: limpieza de esquemas, PR 2 (PDF, CA-010) y PR 3 (anulación, CA-012)
+
+**Instrucción recibida (verbatim):**
+> nc057_fuente rehecha con el 11 corregido: TODO OK (19/11). Borrá tu copia nc057_ensayo_2f673d44 y el esquema huérfano pr110_test_9d4670f6b05140749a0e351312a4b273 de lacentral_test (son esquemas de prueba; public no se toca).
+>
+> Decisión del equipo sobre el CA-012: SÍ entra en la 057. Listado de notas de crédito (filtrable por proveedor y fecha, con las anuladas marcadas) y botón «Anular» con motivo y la autorización de otro ADMINISTRADOR, reusando el patrón de la 026 y la 028. Va en su propio PR, después del PR 2.
+>
+> Seguí en orden: PR 2 (PDF de Expoyer, CA-010) y después PR 3 (pantalla de anulación). TDD, suite contra nc057_fuente, verificadores acotados y ESTADO antes del push. Cuando termines, parás con el resumen. Resúmenes en español.
+
+**Plan:**
+1. Verificar `nc057_fuente` (solo lectura) y borrar `nc057_ensayo_2f673d44` y `pr110_test_9d4670f6b05140749a0e351312a4b273` de `lacentral_test`, sin tocar `public`.
+2. #180 ya entró a `develop` (`fe7e6aa`): base del #183 a `develop`.
+3. PR 2 en `feature/182-nota-credito-pdf` (ya tiene lector e interpretación): lo que falte del CA-010 (endpoint, precarga de la pantalla), TDD, suite contra `nc057_fuente`, verificadores acotados, ESTADO, push, PR.
+4. PR 3 en rama nueva desde la del PDF: listado de NC (proveedor, fecha, anuladas marcadas) y «Anular» con motivo y autorización de otro ADMINISTRADOR (patrón 026/028), TDD, suite, verificadores, ESTADO, push, PR.
+5. Resumen y parar.
+
+**Estado:** terminada
+- Paso 1 (13:20 hora del servidor): `nc057_fuente_verificacion.sql` → `NOTICE: nc057_fuente: TODO OK (30 tablas; public: 27).` Borrados con guarda (solo `lacentral_test`, sin dependencias desde fuera) `nc057_ensayo_2f673d44` (31 objetos) y `pr110_test_9d4670f6b05140749a0e351312a4b273` (27). Después: `public` 27 tablas, `nc057_fuente` 30. Quedan `demo_ensayo_c3` y `staging`, que no son míos.
+- Paso 2: #180 entró a `develop` (`fe7e6aa`); base del #183 → `develop` (`gh pr edit 183 --base develop`).
+- PR 2, rama `feature/182-nota-credito-pdf`: merge de `feature/182-nota-credito-manual` y de `origin/develop` (sin conflictos). Ya tenía lector e interpretación (CA-010). Endpoint: rojo `2bfe202` (2 con error por aserción: 404 en vez de 200 y de 400, contra `nc057_fuente`), caracterización `4a310c6` (desdePdf por HTTP → origen PDF, pasa de entrada), código `POST /api/notas-credito-compra/pdf` + DI: clases de la nota `102/102`.
+- Pantalla (CA-010): esqueleto `cd62cf8` (selector y `interpretarNotaCreditoPdf`), rojo `34ca631` (`TOTAL: 8 FAILED, 24 SUCCESS`, los 8 por aserción), código `f3a1aeb` (`TOTAL: 32 SUCCESS`; la prueba sin proveedor esperaba antes de que `ngModel` escribiera: `whenStable`), `test` de fecha y percepciones después del código (pasa de entrada; mutación de la marca → 1 FAILED).
+- **Suites del PR 2 sobre `7cd1220`** (código igual a `9388cf6`): backend `--no-incremental` 0 advertencias, `LA_CENTRAL_TEST_SCHEMA=nc057_fuente`: `Correctas! - Con error: 0, Superado: 789, Omitido: 0, Total: 789, Duración: 5 m 53 s`. Frontend completo: `TOTAL: 286 SUCCESS`.
+- `verificador-tdd` del PR 2 (alcance `feature/182-nota-credito-manual..7cd1220`, sin merges ni docs, con la suite sobre `7cd1220`): **APTO**. 4 rojos reproducidos por aserción, 18 mutaciones muertas, ninguna sobrevive. Sin mutar (techo de corridas): `RequestSizeLimit`, el `if (archivo is not null)`, regex de subtotal/total, `entrada.value = ''`, el reseteo de `paraRevisar` en `nueva()`. Avisó que el árbol principal cambió de rama mientras corría: fui yo, con el PR 3. `auditor-persistencia` del PR 2 lanzado (mismo alcance y suite).
+- PR 3, rama `feature/182-nota-credito-anulacion` (desde la del PDF). Backend: esqueleto `96b40e8` (GET, caso de uso y `BuscarAsync` neutros), rojo `c2fa23f` del listado (Moq y PostgreSQL contra `nc057_fuente`: `Con error: 9` por aserción, `Superado: 3` los bordes válidos), código `9c7bd07` (12/12), pruebas HTTP del GET después del código `73ecf9e` (pasan; cambiar de lugar las fechas en el controlador → `Con error: 2`).
+- Pantalla: esqueleto `005353e`, rojo `f9b0dc6` (`TOTAL: 17 FAILED, 283 SUCCESS`, todo por aserción), código `6d33adc` (`TOTAL: 300 SUCCESS`; al rojo del menú le faltaba la lista de títulos, agregada).
+- `auditor-persistencia` del PR 2: **APTO** (el endpoint solo lee; releen con contexto nuevo; sin InMemory ni Ids a mano). ESTADO (fila #182, D-S6-26, PRÓXIMA SESIÓN) en `6ef1373`; push de las dos ramas; **PR #184** (base `feature/182-nota-credito`).
+- PR 3: merge de la rama del PDF (`59be2c8`, solo docs). **Suites sobre `59be2c8`**: backend `--no-incremental` 0 advertencias, `nc057_fuente`: `Correctas! - Con error: 0, Superado: 803, Omitido: 0, Total: 803, Duración: 6 m 10 s`; frontend `TOTAL: 300 SUCCESS`. `verificador-tdd` lanzado (alcance `feature/182-nota-credito-pdf..59be2c8`, sin merges ni docs).
+- `verificador-tdd` del PR 3, ronda 1: **NO APTO**. Backend: 12 mutaciones muertas. Frontend: sobreviven F1 (sin `resultado.set(null)` en el error de `irA`, la tabla vieja reaparece mientras va la búsqueda siguiente) y F5 (sin la guarda de vacío en `notasCreditoCompra`, una fecha borrada viaja como `emisionDesde=`). Sin mutar: los roles del módulo (F7). Arreglo: una prueba por cada una, vista en rojo con la mutación, y la mutación de roles a mano.
+- Arreglo de la ronda 1, `bb9d4c8` (solo test): spec de la pantalla `TOTAL: 15 SUCCESS`; con F1 `1 FAILED, 14 SUCCESS`; con F5 `2 FAILED, 13 SUCCESS`. F7 (roles a solo ADMINISTRADOR), mutada a mano: `3 FAILED, 28 SUCCESS` en `acceso.spec` y `app.spec`. Muere sin cambiar nada.
+- `verificador-tdd` del PR 3, ronda 2 (alcance `59be2c8..bb9d4c8`): **APTO**. F1, F5 y F7 reproducidas y muertas, sin suites nuevas (usó 301 sobre `bb9d4c8` y 803 sobre `59be2c8`, que vale porque el diff no toca `backend/`). `auditor-persistencia` del PR 3 lanzado.
+- `auditor-persistencia` del PR 3: **APTO** (`BuscarAsync` solo lee; relectura con contexto nuevo; la siembra pasa los CHECK del 11). Observación no bloqueante: el desempate `ThenByDescending(Id)` no tiene prueba con dos notas del mismo día.
+- ESTADO (fila #182 y PRÓXIMA SESIÓN), push de `feature/182-nota-credito-anulacion` y PR 3 con base `feature/182-nota-credito-pdf`.
+
+**Quedó abierto:** el 11 en `public` de `lacentral_test`, en `lacentral_demo` y en `lacentral` antes del merge del #183 (decide el equipo); DoD 10 de la 057 en `lacentral_demo`, que depende de eso; revisión y merge en orden #183 → #184 → PR 3. Sin prueba propia: el límite de 10 MB y el pedido sin «archivo» del endpoint del PDF, y el desempate por Id del listado. Los bloques del 18/11 se cierran con este: su trabajo está en el #183 y el #184.
+- **PR #185** abierto (base `feature/182-nota-credito-pdf`).
+
+## 19/11/2026 · El 11 aplicado en las tres bases; pruebas que faltaban en el #184 y el #185; cierre de la 057
+
+**Instrucción recibida (verbatim):**
+> Script 11 aplicado en public de lacentral_test, en lacentral_demo y en lacentral (19/11): s11 = 1 en las tres. Anotalo en el ESTADO y en la bitácora, y avisá en el #183 que ya se puede mergear.
+>
+> Antes de que Javi revise, cubrí lo que quedó sin prueba propia: en el #184, el límite de 10 MB del PDF y el pedido sin el campo «archivo»; en el #185, el orden entre dos notas con la misma fecha de emisión (desempate por id). Cada uno con rojo por un camino real y en su rama; si una guarda no es alcanzable, se borra. Verificador acotado a esos commits y suite. Después, merge hacia las ramas de arriba.
+>
+> Cuando Javi mergee los tres: suite completa sobre develop y borrá nc057_fuente con el script de borrado. Resúmenes en español.
+
+**Plan:**
+1. ESTADO y bitácora: el 11 en `public` de las tres bases (19/11). Comentario en el #183: listo para mergear.
+2. #184 (`feature/182-nota-credito-pdf`): pruebas HTTP del límite de 10 MB y del pedido sin «archivo»; rojo por camino real (mutando la guarda), o borrar la guarda si no es alcanzable.
+3. #185 (`feature/182-nota-credito-anulacion`): prueba contra PostgreSQL de dos notas con la misma fecha (desempate por Id), rojo mutando el `ThenByDescending`.
+4. Suite completa sobre el HEAD de cada rama; `verificador-tdd` acotado a esos commits (no toca persistencia nueva: el auditor no se relanza salvo que el test de orden lo amerite).
+5. Merge de la del PDF hacia la de anulación; push; ESTADO antes del push.
+6. Cuando Javi mergee #183, #184, #185: suite completa sobre `develop` y `nc057_fuente_borrado.sql`.
+
+**Estado:** en curso
+- Arranque: `git fetch`; `develop` sin commits nuevos respecto de esta rama.
+- El 11 aplicado por Santi en `public` de `lacentral_test`, `lacentral_demo` y `lacentral` (19/11): `s11 = 1` en las tres (dato de Santi, no lo corrí yo).
+- Comentario en el #183: ya se puede mergear (orden #183 → #184 → #185).
+- #184 (`feature/182-nota-credito-pdf`), `4d134e4` (solo test): `PostPdf_SinElCampoArchivo_400…` y `PostPdf_DeMasDe10MB_400SinLeerElArchivo`. TestServer **no aplica** `[RequestSizeLimit]` (10 MB + 1 llegaba al caso de uso: 400 «no es un PDF»); la guarda es alcanzable en producción (Kestrel), así que la prueba levanta Kestrel real (`UseKestrel(0)`) con `Expect: 100-continue` (sin eso, Kestrel corta y el cliente da *broken pipe*). Lo que devuelve de verdad: **400** (no 413) con «The max request body size is 10485760 bytes»: `[ApiController]` convierte el error de lectura del formulario en validación. Rojos por mutación: sin el atributo → `Assert.Contains` (1 con error de 4); sin el `if (archivo is not null)` → 500 en vez de 400 (1 con error de 4). Verde: 4/4 contra `nc057_fuente`.
+- Merge de la rama del PDF en `feature/182-nota-credito-anulacion` (`1ff49bf`, sin conflictos).
+- #185, `MismaFechaDeEmision_DesempataPorId_LaMasNuevaPrimero` (solo test, commit siguiente a `1ff49bf`): dos notas del mismo día, también paginando de a una. Rojos por mutación: sin `ThenByDescending(Id)` y con `ThenBy(Id)` → `Assert.Equal` de colecciones (1 con error de 5). Verde 5/5 contra `nc057_fuente`.
+- **Suite completa de backend sobre `67a522f`** (#185; `--no-incremental`, 0 advertencias, `LA_CENTRAL_TEST_SCHEMA=nc057_fuente`): `Correctas! - Con error: 0, Superado: 806, Omitido: 0, Total: 806, Duración: 11 m 55 s`. Frontend sin cambios desde `bb9d4c8` (301), no se corre.
+- `verificador-tdd` (alcance `4d134e4` y `67a522f`, con las suites de arriba): **APTO**. 5 mutaciones muertas (las cuatro mías y el límite corrido 1 KB). No bloqueantes: son caracterización (pasan de entrada; se declara en los PR); la prueba del tamaño compara el mensaje en inglés de Kestrel; sin el desempate, el rojo depende del orden de inserción (con `ThenBy(Id)` es determinista). `auditor-persistencia` no relanzado: dos commits solo de test, sin cambio de repositorio ni de esquema.
+- ESTADO (E11 cerrada, fila #182, PRÓXIMA SESIÓN). Push de `feature/182-nota-credito-pdf` y `feature/182-nota-credito-anulacion`; comentario en #184 y #185.
+
+**BLOQUEADO EN:** revisión y merge de #183 → #184 → #185 (Javi). Después: suite completa sobre `develop` y `nc057_fuente_borrado.sql`.

@@ -15,7 +15,9 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
 
   const ficha = (id: number, costo: number | null = 999) => ({
     id, codigoInterno: `A${id}`, nombre: `Artículo ${id}`, activo: true, costoVigente: costo, precios: [], codigos: [],
-    existencias: [{ sucursalId: 1, sucursal: 'Fragueiro', cantidad: 0 }, { sucursalId: 2, sucursal: 'San Vicente', cantidad: 0 }],
+    // CA-008 (057): Reclamos viene en las existencias, pero no es destino de una compra.
+    existencias: [{ sucursalId: 1, sucursal: 'Fragueiro', cantidad: 0 }, { sucursalId: 2, sucursal: 'San Vicente', cantidad: 0 },
+      { sucursalId: 3, sucursal: 'Reclamos (depósito)', cantidad: 0, esReclamos: true }],
   });
   const linea = (codigo: string, articuloId: number | null, cantidad = 2, precio = 4000) => ({
     codigoProveedor: codigo, descripcion: `Descripción ${codigo}`, articuloId, cantidad, precioUnitario: precio,
@@ -102,6 +104,7 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
     expect(fila.map(i => i.valueAsNumber)).toEqual([2, 4000, 0, 5, 20, 0]);
     expect(fila.some(i => i.disabled) || campo('numero').disabled).toBeFalse();
     expect(c.lineas[0].sucursalId).toBe(1);
+    expect(c.sucursales().map(x => x.id)).toEqual([1, 2]);
   });
 
   it('CA-005: al terminar de leer bien el PDF saca el avance y vuelve a habilitar el campo', () => {

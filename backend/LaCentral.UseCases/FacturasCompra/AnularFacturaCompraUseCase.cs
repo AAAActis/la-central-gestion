@@ -14,6 +14,7 @@ public class AnularFacturaCompraUseCase
     private readonly IUnidadDeTrabajo _unidadDeTrabajo;
     private readonly IContextoUsuario _contexto;
     private readonly CalcularPreciosArticuloUseCase _calcularPrecios;
+    private readonly INotaCreditoCompraRepositorio _notas;
 
     public AnularFacturaCompraUseCase(
         IFacturaCompraRepositorio facturas,
@@ -21,8 +22,10 @@ public class AnularFacturaCompraUseCase
         IServicioHash hash,
         IUnidadDeTrabajo unidadDeTrabajo,
         IContextoUsuario contexto,
-        CalcularPreciosArticuloUseCase calcularPrecios)
+        CalcularPreciosArticuloUseCase calcularPrecios,
+        INotaCreditoCompraRepositorio notas)
     {
+        _notas = notas;
         _facturas = facturas;
         _usuarios = usuarios;
         _hash = hash;
@@ -30,11 +33,6 @@ public class AnularFacturaCompraUseCase
         _contexto = contexto;
         _calcularPrecios = calcularPrecios;
     }
-
-    // Valores de la tabla rol: 1 = OPERADOR, 2 = ADMINISTRADOR (ver AuthenticarUsuarioCase).
-    private const int RolAdministrador = 2;
-    // Un solo mensaje para usuario inexistente, inactivo o clave mala: no revela quién existe.
-    private const string AutorizacionInvalida = "La autorización no es válida: revisá el usuario y la contraseña de quien autoriza.";
 
     public async Task<Result> EjecutarAsync(int facturaId, AnularFacturaCompraRequest request, CancellationToken ct = default)
     {
@@ -51,20 +49,18 @@ public class AnularFacturaCompraUseCase
             return Result.Failure(TipoError.Conflicto, $"La factura {factura.Numero} ya está anulada.");
 
         // Doble certificación (B.4 del 07): otra persona, ADMINISTRADOR y activa, con su contraseña.
-        var autoriza = string.IsNullOrWhiteSpace(request.UsuarioAutoriza)
-            ? null
-            : await _usuarios.ObtenerPorNombreAsync(request.UsuarioAutoriza.Trim(), ct);
-        if (autoriza is null || !autoriza.Activo || request.ContrasenaAutoriza is null
-            || !_hash.VerificarClave(request.ContrasenaAutoriza, autoriza.HashContrasena))
-            return Result.Failure(TipoError.Invalido, AutorizacionInvalida);
-        if (autoriza.Id == usuarioId)
-            return Result.Failure(TipoError.Invalido, "La anulación la tiene que autorizar otra persona, no quien la pide.");
-        if (autoriza.RolId != RolAdministrador)
-            return Result.Failure(TipoError.Invalido, "Quien autoriza la anulación tiene que ser ADMINISTRADOR.");
+        var autoriza = await DobleCertificacion.VerificarAsync(_usuarios, _hash, request.UsuarioAutoriza, request.ContrasenaAutoriza, usuarioId, ct);
+        if (!autoriza.IsSuccess)
+            return Result.Failure(autoriza.Tipo, autoriza.Error);
 
-        var anulacion = new AnulacionFacturaCompra(facturaId, request.Motivo.Trim(), usuarioId, autoriza.Id, DateTime.UtcNow);
+        var anulacion = new AnulacionFacturaCompra(facturaId, request.Motivo.Trim(), usuarioId, autoriza.Value, DateTime.UtcNow);
         return await _unidadDeTrabajo.EjecutarAsync(async token =>
         {
+            // CA-011 (D-S6-22): con la factura bloqueada, así no entra una nota entre la consulta y la anulación.
+            var notas = await _notas.ObtenerVigentesDeFacturaAsync(facturaId, token);
+            if (notas.Count > 0)
+                return Result.Failure(TipoError.Conflicto,
+                    $"La factura {factura.Numero} tiene notas de crédito vigentes ({string.Join(", ", notas)}): primero se anulan las notas y después la factura.");
             var anulada = await _facturas.AnularConEfectosAsync(anulacion, token);
             if (!anulada.IsSuccess)
                 return anulada;

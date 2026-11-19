@@ -40,6 +40,7 @@ public sealed class ManejadorExcepcionesGlobal : IExceptionHandler
             ["un_codigo_por_proveedor"] = "El artículo ya tiene un código vigente de ese proveedor.",
             ["ux_factura_compra_numero_activa"] = "Ya existe una factura de compra activa con ese número para el proveedor.",
             ["ux_factura_venta_numero_activa"] = "Ya existe una factura de venta activa con ese número.",
+            ["ux_nota_credito_compra_numero_activa"] = "Ya existe una nota de crédito vigente con ese número para el proveedor.",
             ["cliente_telefono_cliente_id_numero_key"] = "El cliente ya tiene registrado ese teléfono.",
             ["proveedor_telefono_proveedor_id_numero_key"] = "El proveedor ya tiene registrado ese teléfono.",
             ["ux_cliente_hist_abierta"] = "El cliente ya tiene una baja abierta.",

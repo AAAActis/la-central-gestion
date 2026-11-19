@@ -69,6 +69,10 @@ public class RegistrarFacturaCompraUseCase
         var sucursales = await _articulos.ObtenerSucursalesAsync(ct);
         if (lineas.FirstOrDefault(l => !sucursales.Contains(l.SucursalId)) is { } sinDestino)
             return Fallo(TipoError.Invalido, $"La sucursal {sinDestino.SucursalId} de la línea del artículo {sinDestino.ArticuloId} no existe.");
+        // HU-FCO-07 CA-008: a Reclamos se llega por transferencia o devolución, nunca por compra.
+        var reclamos = await _facturas.ObtenerIdReclamosAsync(ct);
+        if (lineas.FirstOrDefault(l => l.SucursalId == reclamos) is { } aReclamos)
+            return Fallo(TipoError.Invalido, $"El depósito Reclamos no es destino de una compra: elegí una sucursal para el artículo {aReclamos.ArticuloId}.");
 
         // CA2: validación previa. Ante dos registros simultáneos decide el índice
         // ux_factura_compra_numero_activa, que el manejador global traduce a 409.

@@ -48,6 +48,12 @@ public partial class Usuario
 
     public virtual ICollection<FacturaVenta> FacturaVentaUsuarioAutorizacion { get; set; } = new List<FacturaVenta>();
 
+    public virtual ICollection<NotaCreditoCompra> NotaCreditoCompraUsuario { get; set; } = new List<NotaCreditoCompra>();
+
+    public virtual ICollection<NotaCreditoCompra> NotaCreditoCompraUsuarioAnulacion { get; set; } = new List<NotaCreditoCompra>();
+
+    public virtual ICollection<NotaCreditoCompra> NotaCreditoCompraUsuarioAutorizacion { get; set; } = new List<NotaCreditoCompra>();
+
     public virtual ICollection<ProveedorHistorialBaja> ProveedorHistorialBajaUsuarioBaja { get; set; } = new List<ProveedorHistorialBaja>();
 
     public virtual ICollection<ProveedorHistorialBaja> ProveedorHistorialBajaUsuarioReactivacion { get; set; } = new List<ProveedorHistorialBaja>();

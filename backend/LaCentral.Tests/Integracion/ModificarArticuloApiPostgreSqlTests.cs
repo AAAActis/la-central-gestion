@@ -277,7 +277,8 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
         var ficha = await cliente.GetFromJsonAsync<JsonElement>($"/api/articulos/{id}");
         var ubicaciones = ficha.GetProperty("existencias").EnumerateArray()
             .ToDictionary(x => x.GetProperty("sucursalId").GetInt32(), x => x.GetProperty("ubicacionDeposito").GetString());
-        Assert.Equal(new Dictionary<int, string?> { [1] = "Estante 4", [2] = null }, ubicaciones);
+        // La 3 es el depósito Reclamos (script 11): una ubicación más de la ficha (HU-FCO-07 CA-008).
+        Assert.Equal(new Dictionary<int, string?> { [1] = "Estante 4", [2] = null, [3] = null }, ubicaciones);
         Assert.False(ficha.TryGetProperty("ubicacionDeposito", out _), "La ubicación ya no es del artículo: es de cada sucursal.");
     }
 

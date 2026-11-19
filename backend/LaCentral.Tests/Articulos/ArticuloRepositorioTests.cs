@@ -157,7 +157,7 @@ public class ArticuloRepositorioTests
             Proveedor = new() { Codigo = "PRV-1", RazonSocial = "Proveedor de prueba", Activo = true }
         });
         var sucursales = await context.Sucursal.AsNoTracking().OrderBy(s => s.Id)
-            .Select(s => new { s.Id, s.Nombre }).ToListAsync();
+            .Select(s => new { s.Id, s.Nombre, s.EsReclamos }).ToListAsync();
         articulo.Stock.Add(new()
         {
             SucursalId = sucursales[0].Id, Cantidad = 1.5m
@@ -178,12 +178,11 @@ public class ArticuloRepositorioTests
         Assert.Equal(" gn-01 ", Assert.Single(detalle.Codigos).CodigoOriginal);
         Assert.Equal("GN-01", detalle.Codigos[0].ClaveNormalizada);
         Assert.Equal("Proveedor de prueba", detalle.Codigos[0].RazonSocial);
-        // HU-STK-01 CA-002: con fila en una sucursal y sin fila en la otra, las dos aparecen.
-        Assert.Equal(new[]
-        {
-            new StockSucursalConsultaDto(sucursales[0].Id, sucursales[0].Nombre, 1.5m),
-            new StockSucursalConsultaDto(sucursales[1].Id, sucursales[1].Nombre, 0m)
-        }, detalle.Existencias);
+        // HU-STK-01 CA-002: con fila en una sucursal y sin fila en las otras, todas aparecen, y
+        // Reclamos marcado (HU-FCO-07 CA-008).
+        Assert.Contains(sucursales, s => s.EsReclamos);
+        Assert.Equal(sucursales.Select(s => new StockSucursalConsultaDto(s.Id, s.Nombre, s.Id == sucursales[0].Id ? 1.5m : 0m,
+            EsReclamos: s.EsReclamos)), detalle.Existencias);
         Assert.Null(await repo.ObtenerDetallePorIdAsync(checked(articulo.Id + 1)));
     }
 
@@ -200,14 +199,14 @@ public class ArticuloRepositorioTests
         await context.SaveChangesAsync();
         await using var lectura = fixture.CrearContexto();
         var sucursales = await lectura.Sucursal.AsNoTracking().OrderBy(s => s.Id)
-            .Select(s => new { s.Id, s.Nombre }).ToListAsync();
-        Assert.Equal(2, sucursales.Count);
+            .Select(s => new { s.Id, s.Nombre, s.EsReclamos }).ToListAsync();
+        Assert.Contains(sucursales, s => s.EsReclamos);
         Assert.False(await lectura.Stock.AnyAsync(s => s.ArticuloId == articulo.Id));
 
         var detalle = await new ArticuloRepositorio(lectura).ObtenerDetallePorIdAsync(articulo.Id);
 
         Assert.NotNull(detalle);
-        Assert.Equal(sucursales.Select(s => new StockSucursalConsultaDto(s.Id, s.Nombre, 0m)), detalle.Existencias);
+        Assert.Equal(sucursales.Select(s => new StockSucursalConsultaDto(s.Id, s.Nombre, 0m, EsReclamos: s.EsReclamos)), detalle.Existencias);
     }
 
     // HU-STK-01 CA-001 y CA-003: cada sucursal por separado, y la existencia negativa (venta
@@ -219,7 +218,7 @@ public class ArticuloRepositorioTests
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
         await using var context = fixture.CrearContexto();
         var sucursales = await context.Sucursal.AsNoTracking().OrderBy(s => s.Id)
-            .Select(s => new { s.Id, s.Nombre }).ToListAsync();
+            .Select(s => new { s.Id, s.Nombre, s.EsReclamos }).ToListAsync();
         var articulo = CrearArticulo("ART-1", "Vendido sin stock");
         articulo.Stock.Add(new() { SucursalId = sucursales[0].Id, Cantidad = 5m });
         articulo.Stock.Add(new() { SucursalId = sucursales[1].Id, Cantidad = -2.5m });
@@ -230,11 +229,9 @@ public class ArticuloRepositorioTests
         var detalle = await new ArticuloRepositorio(lectura).ObtenerDetallePorIdAsync(articulo.Id);
 
         Assert.NotNull(detalle);
-        Assert.Equal(new[]
-        {
-            new StockSucursalConsultaDto(sucursales[0].Id, sucursales[0].Nombre, 5m),
-            new StockSucursalConsultaDto(sucursales[1].Id, sucursales[1].Nombre, -2.5m)
-        }, detalle.Existencias);
+        var cantidades = new Dictionary<short, decimal> { [sucursales[0].Id] = 5m, [sucursales[1].Id] = -2.5m };
+        Assert.Equal(sucursales.Select(s => new StockSucursalConsultaDto(s.Id, s.Nombre, cantidades.GetValueOrDefault(s.Id),
+            EsReclamos: s.EsReclamos)), detalle.Existencias);
     }
 
     [Fact]

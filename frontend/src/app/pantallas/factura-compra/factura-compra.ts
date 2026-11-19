@@ -27,6 +27,10 @@ interface LineaEnCarga {
 
 interface Sucursal { id: number; nombre: string; }
 
+/** Los destinos de una línea: las existencias de la ficha, sin Reclamos (057 CA-008). */
+const destinos = (f: FichaArticulo): Sucursal[] =>
+  f.existencias.filter(e => !e.esReclamos).map(e => ({ id: e.sucursalId, nombre: e.sucursal }));
+
 /** HU-UI-11 (049) CA-003: una línea del PDF cuyo código no tiene artículo. No se registra hasta resolverla. */
 interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { revisar: boolean; revisarDescuento4: boolean; }
 
@@ -349,7 +353,7 @@ export class FacturaCompra {
       next: ({ halladas, fichas }) => {
         if (version !== this.version) return;
         if (fichas.length > 0 && this.sucursales().length === 0)
-          this.sucursales.set(fichas[0].existencias.map(e => ({ id: e.sucursalId, nombre: e.sucursal })));
+          this.sucursales.set(destinos(fichas[0]));
         const porId = new Map(fichas.map(x => [x.id, x]));
         this.sinResolver = this.sinResolver.filter(({ revisar, revisarDescuento4, ...l }) => {
           const ficha = porId.get(halladas.get(l.codigoProveedor)!);
@@ -434,7 +438,7 @@ export class FacturaCompra {
     if (reemplazo === null) this.lineas.push(linea);
     this.api.ficha(articulo.id).subscribe(f => {
       if (this.sucursales().length === 0)
-        this.sucursales.set(f.existencias.map(e => ({ id: e.sucursalId, nombre: e.sucursal })));
+        this.sucursales.set(destinos(f));
       // CA-011: se propone el costo vigente; sin costo no se propone nada (nunca cero, D1).
       if (linea.precioUnitario === null && linea.articulo.id === articulo.id) linea.precioUnitario = f.costoVigente;
     });
@@ -593,7 +597,7 @@ export class FacturaCompra {
           municipal: f.percepcionMunicipal ?? 0, ganancias: f.percepcionGanancias ?? 0,
         };
         if (fichas.length > 0 && this.sucursales().length === 0)
-          this.sucursales.set(fichas[0].existencias.map(e => ({ id: e.sucursalId, nombre: e.sucursal })));
+          this.sucursales.set(destinos(fichas[0]));
         const porId = new Map(fichas.map(x => [x.id, x]));
         f.lineas.forEach(({ articuloId, ...l }, i) => {
           const revisar = f.paraRevisar.includes(`lineas[${i}]`);

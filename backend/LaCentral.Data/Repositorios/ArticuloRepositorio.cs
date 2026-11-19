@@ -280,7 +280,7 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
             // HU-STK-01 CA-002: toda sucursal aparece; sin fila en stock (sin movimientos) es cero, no vacío.
             sucursales.Select(s => new StockSucursalConsultaDto(s.Id, s.Nombre,
                 articulo.Stock.SingleOrDefault(e => e.SucursalId == s.Id)?.Cantidad ?? 0m,
-                articulo.Stock.SingleOrDefault(e => e.SucursalId == s.Id)?.UbicacionDeposito)).ToArray(),
+                articulo.Stock.SingleOrDefault(e => e.SucursalId == s.Id)?.UbicacionDeposito, s.EsReclamos)).ToArray(),
             // D1: precios estampados en articulo_precio_modalidad, sin recalcular.
             // Sin filas, lista vacía: la razón de cada ausencia la arma ObtenerArticuloDetalleUseCase.
             PreciosPorModalidad: articulo.ArticuloPrecioModalidad
