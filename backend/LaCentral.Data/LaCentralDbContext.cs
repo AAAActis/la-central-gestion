@@ -448,8 +448,6 @@ public partial class LaCentralDbContext : DbContext
 
             entity.HasIndex(e => new { e.Id, e.ProveedorId }, "factura_compra_id_proveedor_unico").IsUnique();
 
-            entity.HasIndex(e => new { e.Id, e.ProveedorId }, "fc_id_proveedor_unico").IsUnique();
-
             entity.HasIndex(e => new { e.ProveedorId, e.Numero }, "ux_factura_compra_numero_activa")
                 .IsUnique()
                 .HasFilter("((estado)::text = 'ACTIVA'::text)");
