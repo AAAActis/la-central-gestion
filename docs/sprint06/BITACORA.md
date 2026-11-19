@@ -1503,3 +1503,7 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - Merge de la rama del PDF en `feature/182-nota-credito-anulacion` (`1ff49bf`, sin conflictos).
 - #185, `MismaFechaDeEmision_DesempataPorId_LaMasNuevaPrimero` (solo test, commit siguiente a `1ff49bf`): dos notas del mismo día, también paginando de a una. Rojos por mutación: sin `ThenByDescending(Id)` y con `ThenBy(Id)` → `Assert.Equal` de colecciones (1 con error de 5). Verde 5/5 contra `nc057_fuente`.
 - **Suite completa de backend sobre `67a522f`** (#185; `--no-incremental`, 0 advertencias, `LA_CENTRAL_TEST_SCHEMA=nc057_fuente`): `Correctas! - Con error: 0, Superado: 806, Omitido: 0, Total: 806, Duración: 11 m 55 s`. Frontend sin cambios desde `bb9d4c8` (301), no se corre.
+- `verificador-tdd` (alcance `4d134e4` y `67a522f`, con las suites de arriba): **APTO**. 5 mutaciones muertas (las cuatro mías y el límite corrido 1 KB). No bloqueantes: son caracterización (pasan de entrada; se declara en los PR); la prueba del tamaño compara el mensaje en inglés de Kestrel; sin el desempate, el rojo depende del orden de inserción (con `ThenBy(Id)` es determinista). `auditor-persistencia` no relanzado: dos commits solo de test, sin cambio de repositorio ni de esquema.
+- ESTADO (E11 cerrada, fila #182, PRÓXIMA SESIÓN). Push de `feature/182-nota-credito-pdf` y `feature/182-nota-credito-anulacion`; comentario en #184 y #185.
+
+**BLOQUEADO EN:** revisión y merge de #183 → #184 → #185 (Javi). Después: suite completa sobre `develop` y `nc057_fuente_borrado.sql`.
