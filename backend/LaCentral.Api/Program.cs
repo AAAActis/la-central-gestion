@@ -73,7 +73,9 @@ builder.Services.AddScoped<ConsultarFacturasCompraUseCase>();
 builder.Services.AddScoped<AnularFacturaCompraUseCase>();
 builder.Services.AddScoped<RegistrarNotaCreditoCompraUseCase>();
 builder.Services.AddScoped<AnularNotaCreditoCompraUseCase>();
+builder.Services.AddScoped<ConsultarNotasCreditoCompraUseCase>();
 builder.Services.AddScoped<InterpretarFacturaPdfUseCase>();
+builder.Services.AddScoped<InterpretarNotaCreditoPdfUseCase>();
 builder.Services.AddScoped<ILectorTextoPdf, LaCentral.Api.Pdf.LectorTextoPdf>();
 
 

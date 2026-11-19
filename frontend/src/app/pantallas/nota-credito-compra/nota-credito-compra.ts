@@ -1,6 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, of, switchMap } from 'rxjs';
 import {
   ApiLaCentral, ArticuloResultado, FacturaCompraResumen, NotaCreditoCompraNueva, ProveedorResumen, TotalesNotaCreditoCompra,
   mensajeDeError,
@@ -32,11 +33,19 @@ interface Origen { id: number; nombre: string; }
       <form (ngSubmit)="registrar()" (input)="invalidarTotales()" (change)="invalidarTotales()">
         <section class="tarjeta">
           <h2>Nota de crédito de proveedor</h2>
+          <label>Cargar desde el PDF del proveedor
+            <input type="file" accept="application/pdf" (change)="elegirPdf($event)" [disabled]="leyendoPdf()" />
+          </label>
+          @if (leyendoPdf()) { <p class="aviso info" role="status">Leyendo el PDF…</p> }
+          @if (errorPdf()) { <p class="error" role="alert">{{ errorPdf() }}</p> }
           <p class="ayuda">Es siempre tipo A: el número se copia tal cual, sin 99, y se suma 21 % de IVA. No cambia el costo de los artículos.</p>
           @if (proveedor(); as p) {
             <p>Proveedor: <strong>{{ p.razonSocial }}</strong> <span class="tenue mono">({{ p.codigo }})</span>
               <button type="button" class="secundario" (click)="cambiarProveedor()">Cambiar</button></p>
           } @else {
+            @if (revisar('proveedorId')) {
+              <p><span class="etiqueta revisar">Revisar</span> El PDF no trae un proveedor activo que el sistema reconozca: buscalo.</p>
+            }
             <div class="fila">
               <input name="textoProveedor" [(ngModel)]="textoProveedor" placeholder="Código o nombre del proveedor"
                 aria-label="Código o nombre del proveedor" (keydown.enter)="$event.preventDefault(); buscarProveedor()" />
@@ -48,18 +57,18 @@ interface Origen { id: number; nombre: string; }
             }
           }
           <div class="campos">
-            <label>Número <input name="numero" [(ngModel)]="numero" maxlength="30" required class="mono" /></label>
-            <label>Emisión <input type="date" name="emision" [(ngModel)]="fechaEmision" required /></label>
-            <label>Clase
+            <label>Número @if (revisar('numero')) { <span class="etiqueta revisar">Revisar</span> } <input name="numero" [(ngModel)]="numero" maxlength="30" required class="mono" /></label>
+            <label>Emisión @if (revisar('fechaEmision')) { <span class="etiqueta revisar">Revisar</span> } <input type="date" name="emision" [(ngModel)]="fechaEmision" required /></label>
+            <label>Clase @if (revisar('clase')) { <span class="etiqueta revisar">Revisar</span> }
               <select name="clase" [(ngModel)]="clase">
                 <option value="BONIFICACION">Bonificación o diferencia de precio · no mueve stock</option>
                 <option value="DEVOLUCION">Devolución de mercadería · baja el stock del origen</option>
               </select>
             </label>
-            <label>Importe neto <input type="number" min="0.01" step="0.01" name="importeNeto" [(ngModel)]="importeNeto" required /></label>
+            <label>Importe neto @if (revisar('importeNeto')) { <span class="etiqueta revisar">Revisar</span> } <input type="number" min="0.01" step="0.01" name="importeNeto" [(ngModel)]="importeNeto" required /></label>
           </div>
           <fieldset>
-            <legend>Percepciones del comprobante</legend>
+            <legend>Percepciones del comprobante @if (revisar('percepciones')) { <span class="etiqueta revisar">Revisar</span> }</legend>
             <div class="campos">
               <label>IVA <input type="number" min="0" step="0.01" name="pIva" [(ngModel)]="percepciones.iva" /></label>
               <label>Ingresos Brutos <input type="number" min="0" step="0.01" name="pIibb" [(ngModel)]="percepciones.iibb" /></label>
@@ -72,6 +81,10 @@ interface Origen { id: number; nombre: string; }
         @if (proveedor()) {
           <section class="tarjeta">
             <h2>Facturas a las que corresponde</h2>
+            @if (facturasSinEncontrar().length > 0) {
+              <p data-sin-encontrar><span class="etiqueta revisar">Revisar</span> El PDF nombra facturas que no son facturas activas de este proveedor:
+                <span class="mono">{{ facturasSinEncontrar().join(', ') }}</span>.</p>
+            }
             @if (errorFacturas()) {
               <p class="error">{{ errorFacturas() }}</p>
             } @else if (facturas().length === 0) {
@@ -184,6 +197,56 @@ export class NotaCreditoCompra {
   readonly enviando = signal(false);
   readonly registrada = signal<string | null>(null);
 
+  /** CA-010: la carga desde el PDF precarga este mismo formulario. */
+  readonly leyendoPdf = signal(false);
+  readonly errorPdf = signal<string | null>(null);
+  readonly paraRevisar = signal<string[]>([]);
+  readonly facturasSinEncontrar = signal<string[]>([]);
+
+  private desdePdf = false;
+
+  elegirPdf(evento: Event) {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    // Vaciarlo permite volver a elegir el mismo archivo.
+    entrada.value = '';
+    if (archivo) this.cargarPdf(archivo);
+  }
+
+  /** CA-010: interpreta el PDF y precarga el formulario; nada se guarda hasta registrar. */
+  cargarPdf(archivo: File) {
+    this.errorPdf.set(null);
+    this.leyendoPdf.set(true);
+    this.api.interpretarNotaCreditoPdf(archivo).pipe(
+      switchMap(n => forkJoin({ n: of(n), proveedor: n.proveedorId === null ? of(null) : this.api.fichaTercero('proveedores', n.proveedorId) })),
+    ).subscribe({
+      next: ({ n, proveedor }) => {
+        this.nueva();
+        if (proveedor) {
+          this.elegirProveedor({ id: n.proveedorId!, codigo: proveedor.codigo, razonSocial: proveedor.razonSocial, cuit: proveedor.cuit, activo: proveedor.activo });
+          this.marcadas.set(new Set(n.facturaIds));
+        }
+        this.numero = n.numero ?? '';
+        this.fechaEmision = n.fechaEmision ?? '';
+        if (n.clase) this.clase = n.clase;
+        this.importeNeto = n.importeNeto;
+        this.paraRevisar.set(n.paraRevisar);
+        this.facturasSinEncontrar.set(n.facturasSinEncontrar);
+        this.desdePdf = true;
+        this.leyendoPdf.set(false);
+      },
+      error: e => {
+        this.leyendoPdf.set(false);
+        this.errorPdf.set(mensajeDeError(e));
+      },
+    });
+  }
+
+  /** CA-010: el campo que el PDF no pudo afirmar. */
+  revisar(campo: string) {
+    return this.paraRevisar().includes(campo);
+  }
+
   buscarProveedor() {
     this.errorProveedor.set(null);
     const texto = this.textoProveedor;
@@ -283,6 +346,7 @@ export class NotaCreditoCompra {
       percepcionGanancias: this.percepciones.ganancias,
       facturaIds: [...this.marcadas()],
       lineas: devolucion ? this.lineas.map(l => ({ articuloId: l.articulo.id, sucursalId: l.sucursalId!, cantidad: l.cantidad! })) : [],
+      ...(this.desdePdf ? { desdePdf: true } : {}),
     };
   }
 
@@ -328,5 +392,9 @@ export class NotaCreditoCompra {
     this.importeNeto = null;
     this.percepciones = { iva: null, iibb: null, municipal: null, ganancias: null };
     this.lineas = [];
+    this.paraRevisar.set([]);
+    this.facturasSinEncontrar.set([]);
+    this.desdePdf = false;
+    this.errorPdf.set(null);
   }
 }

@@ -88,6 +88,41 @@ public static class PdfSintetico
         return Generar([.. renglones]);
     }
 
+    /// <summary>
+    /// HU-FCO-07 (057): nota de crédito A de Expoyer por bonificación, con la forma del texto real
+    /// (V20261105NCBA0010-00021495): «[ A ] pv - número», la clase cortada («Bonificac»), las
+    /// facturas en «Doc.Asoc.:» y el precio de la línea con espacios. Sin tildes (fuentes estándar).
+    /// </summary>
+    public static byte[] NotaCreditoExpoyer(string clase = "Bonificac", string docAsoc = "FCA0011-00001111 FCA0011-00002222",
+        string subtotal = "1,000.00", string total = "1,210.00", string? percepcion = null,
+        string numero = "0010 - 00004321", string fecha = "Fecha: 04/02/2027", string? otroRenglon = null,
+        string titulo = "Nota de credito", bool conEncabezado = true)
+    {
+        var renglones = new List<(double, string)[]>
+        {
+            R((20, "EXPOYER S.A."), (300, "[ A ]"), (340, numero)),
+            R((20, "Calle Ficticia 100"), (300, $"{titulo} {clase}")),
+            R((20, "1000 - Ciudad"), (250, "Codigo Nro 003"), (400, fecha)),
+            R((20, "Buenos Aires"), (300, $"CUIT: {CuitProveedor}")),
+            R((20, "CLIENTE DE PRUEBA SAS"), (250, "Cliente: 000001 Vend: 1 Vto: 06/03/2027")),
+            R((20, "Cordoba"), (300, $"C.U.I.T.: {CuitCliente}")),
+            R((20, $"Doc.Asoc.:{docAsoc}")),
+            R((20, "Cond. de Venta: CUENTA CORRIENTE 35 DIAS")),
+            R((20, conEncabezado ? "Codigo Cantidad Descripcion Partida Pr. Unitario %Desc. Importe" : "Codigo Cantidad Descripcion")),
+            R((20, "LP4"), (60, "1"), (100, "BONIFICACION LP4"), (300, "1 , 0 0 0 .00"), (450, subtotal)),
+            R((20, "Subtotal"), (450, subtotal)),
+        };
+        if (percepcion is not null)
+            renglones.Add(R((20, percepcion)));
+        if (otroRenglon is not null)
+            renglones.Add(R((20, otroRenglon)));
+        renglones.Add(R((20, "Subtotal Impuesto SubTotal Iva Insc. Iva No Insc. Total")));
+        renglones.Add(R((300, "21.00%")));
+        renglones.Add(R((20, subtotal), (450, total)));
+        renglones.Add(R((20, "Total"), (450, total)));
+        return Generar([.. renglones]);
+    }
+
     private static (double, string)[] R(params (double, string)[] celdas) => celdas;
 
     /// <summary>

@@ -30,6 +30,15 @@ public sealed record TotalesNotaCreditoCompra(decimal Neto, decimal Iva, decimal
 /// <summary>Lo que hace falta saber de una factura para asociarle una nota de crédito.</summary>
 public sealed record FacturaParaNotaCredito(int Id, int ProveedorId, bool Activa);
 
+/// <summary>
+/// HU-FCO-07 (057) CA-010: la nota de crédito propuesta desde el PDF, para revisar antes de
+/// registrarla por la carga manual. FacturasSinEncontrar: los números de «Doc.Asoc.» que no son
+/// una factura activa del proveedor (la nota no se registra sin al menos una factura).
+/// </summary>
+public sealed record NotaCreditoPdfInterpretada(
+    int? ProveedorId, string? Numero, DateOnly? FechaEmision, string? Clase, decimal? ImporteNeto,
+    IReadOnlyList<int> FacturaIds, IReadOnlyList<string> FacturasSinEncontrar, IReadOnlyList<string> ParaRevisar);
+
 /// <summary>CA-014: de un artículo, lo comprado en las facturas referenciadas y lo devuelto en notas vigentes.</summary>
 public sealed record CompradoYDevuelto(int ArticuloId, decimal Comprado, decimal Devuelto);
 

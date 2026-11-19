@@ -36,9 +36,10 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
     public NotasCreditoCompraApiPostgreSqlTests(WebApplicationFactory<Program> factory, ITestOutputHelper salida)
         => (_factory, _salida) = (factory, salida);
 
-    private HttpClient Cliente(PostgreSqlPruebas fixture, string? rol, int usuarioId = 1)
+    /// <param name="kestrel">Servidor HTTP real: TestServer no aplica <c>[RequestSizeLimit]</c>.</param>
+    private HttpClient Cliente(PostgreSqlPruebas fixture, string? rol, int usuarioId = 1, bool kestrel = false)
     {
-        var cliente = fixture.Liberar(_factory.WithWebHostBuilder(builder =>
+        var fabrica = fixture.Liberar(_factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(ConfiguracionJwt));
             builder.ConfigureTestServices(servicios =>
@@ -47,7 +48,9 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
                 servicios.RemoveAll<IDbContextOptionsConfiguration<LaCentralDbContext>>();
                 servicios.AddDbContext<LaCentralDbContext>(o => o.UseNpgsql(fixture.ConexionAislada));
             });
-        })).CreateClient();
+        }));
+        if (kestrel) fabrica.UseKestrel(0);
+        var cliente = fabrica.CreateClient();
 
         if (rol is not null)
         {
@@ -213,5 +216,153 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
             new { motivo = "x", usuarioAutoriza = "jefa.notas", contrasenaAutoriza = "clave-jefa" })).StatusCode);
         await using var relectura = fixture.CrearContexto();
         Assert.False(await relectura.NotaCreditoCompra.AnyAsync());
+    }
+    // CA-010 · el PDF de Expoyer (sintético, datos inventados) precarga la carga manual; nada se guarda.
+
+    [PostgreSqlFact]
+    public async Task PostPdf_NotaDeExpoyer_200ConLaPropuesta_YNoEscribeNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        await using (var c = fixture.CrearContexto())
+        {
+            (await c.Proveedor.FindAsync(s.ProveedorId))!.Cuit = FacturasCompra.PdfSintetico.CuitProveedor;
+            (await c.FacturaCompra.FindAsync(s.FacturaId))!.Numero = "0011-00001111";
+            await c.SaveChangesAsync();
+        }
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        using var formulario = new MultipartFormDataContent
+        {
+            { new ByteArrayContent(FacturasCompra.PdfSintetico.NotaCreditoExpoyer()), "archivo", "nota.pdf" }
+        };
+
+        var respuesta = await cliente.PostAsync("/api/notas-credito-compra/pdf", formulario);
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        var cuerpo = await respuesta.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(s.ProveedorId, cuerpo.GetProperty("proveedorId").GetInt32());
+        Assert.Equal("0010-00004321", cuerpo.GetProperty("numero").GetString());
+        Assert.Equal("2027-02-04", cuerpo.GetProperty("fechaEmision").GetString());
+        Assert.Equal("BONIFICACION", cuerpo.GetProperty("clase").GetString());
+        Assert.Equal(1000m, cuerpo.GetProperty("importeNeto").GetDecimal());
+        Assert.Equal([s.FacturaId], cuerpo.GetProperty("facturaIds").EnumerateArray().Select(x => x.GetInt32()));
+        Assert.Equal(["0011-00002222"], cuerpo.GetProperty("facturasSinEncontrar").EnumerateArray().Select(x => x.GetString()));
+        Assert.Equal(["facturaIds"], cuerpo.GetProperty("paraRevisar").EnumerateArray().Select(x => x.GetString()));
+        await using var nuevo = fixture.CrearContexto();
+        Assert.Equal(0, await nuevo.NotaCreditoCompra.CountAsync());
+    }
+
+    [PostgreSqlFact]
+    public async Task PostPdf_UnArchivoQueNoEsPdf_400ConElPedidoDeCargaManual()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        using var formulario = new MultipartFormDataContent
+        {
+            { new ByteArrayContent("no soy un PDF"u8.ToArray()), "archivo", "nota.pdf" }
+        };
+
+        var respuesta = await cliente.PostAsync("/api/notas-credito-compra/pdf", formulario);
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Contains("nota de crédito por la vía manual", await respuesta.Content.ReadAsStringAsync());
+    }
+
+    [PostgreSqlFact]
+    public async Task PostPdf_SinElCampoArchivo_400ConElPedidoDeCargaManual()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        using var formulario = new MultipartFormDataContent { { new StringContent("x"), "otro" } };
+
+        var respuesta = await cliente.PostAsync("/api/notas-credito-compra/pdf", formulario);
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Contains("nota de crédito por la vía manual", await respuesta.Content.ReadAsStringAsync());
+    }
+
+    [PostgreSqlFact]
+    public async Task PostPdf_DeMasDe10MB_400SinLeerElArchivo()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId, kestrel: true);
+        // Sin esperar el 100-continue, Kestrel responde 413 y corta mientras el cuerpo todavía sube.
+        cliente.DefaultRequestHeaders.ExpectContinue = true;
+        using var formulario = new MultipartFormDataContent
+        {
+            { new ByteArrayContent(new byte[10 * 1024 * 1024 + 1]), "archivo", "nota.pdf" }
+        };
+
+        var respuesta = await cliente.PostAsync("/api/notas-credito-compra/pdf", formulario);
+
+        // Kestrel corta la lectura del formulario y [ApiController] lo devuelve como 400: el PDF no llega a leerse.
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        var cuerpo = await respuesta.Content.ReadAsStringAsync();
+        Assert.Contains("The max request body size is 10485760 bytes", cuerpo);
+        Assert.DoesNotContain("vía manual", cuerpo);
+    }
+
+    [PostgreSqlFact]
+    public async Task Post_DesdePdf_201_YLaFilaQuedaConOrigenPdf()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        var json = JsonSerializer.SerializeToNode(Devolucion(s))!.AsObject();
+        json["desdePdf"] = true;
+
+        var respuesta = await cliente.PostAsJsonAsync("/api/notas-credito-compra", json);
+
+        Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
+        var id = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        await using var relectura = fixture.CrearContexto();
+        Assert.Equal("PDF", await relectura.NotaCreditoCompra.Where(n => n.Id == id).Select(n => n.Origen).SingleAsync());
+    }
+
+    // CA-012 · el listado por HTTP: proveedor y rango de la query, la anulada marcada.
+    [PostgreSqlFact]
+    public async Task Get_PorProveedorYRango_TraeLaNota_YDespuesDeAnularlaVieneMarcada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        var alta = await cliente.PostAsJsonAsync("/api/notas-credito-compra", Devolucion(s));
+        var id = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        var url = $"/api/notas-credito-compra?proveedorId={s.ProveedorId}&emisionDesde=2026-11-05&emisionHasta=2026-11-05";
+
+        var antes = await cliente.GetFromJsonAsync<JsonElement>(url);
+        Assert.Equal(HttpStatusCode.NoContent, (await cliente.PostAsJsonAsync($"/api/notas-credito-compra/{id}/anulacion",
+            new { motivo = "Mal cargada", usuarioAutoriza = "jefa.notas", contrasenaAutoriza = "clave-jefa" })).StatusCode);
+        var despues = await cliente.GetFromJsonAsync<JsonElement>(url);
+
+        var fila = Assert.Single(antes.GetProperty("items").EnumerateArray());
+        Assert.Equal((id, "0010-00021495", "Proveedor API", "DEVOLUCION", 100m, false),
+            (fila.GetProperty("id").GetInt32(), fila.GetProperty("numero").GetString(), fila.GetProperty("proveedor").GetString(),
+             fila.GetProperty("clase").GetString(), fila.GetProperty("importeNeto").GetDecimal(), fila.GetProperty("anulada").GetBoolean()));
+        Assert.True(Assert.Single(despues.GetProperty("items").EnumerateArray()).GetProperty("anulada").GetBoolean());
+        var fuera = await cliente.GetFromJsonAsync<JsonElement>($"/api/notas-credito-compra?emisionDesde=2026-11-06");
+        Assert.Equal(0, fuera.GetProperty("total").GetInt32());
+        var otro = await cliente.GetFromJsonAsync<JsonElement>($"/api/notas-credito-compra?proveedorId={s.ProveedorId + 1}");
+        Assert.Equal(0, otro.GetProperty("total").GetInt32());
+        var hasta = await cliente.GetFromJsonAsync<JsonElement>($"/api/notas-credito-compra?emisionHasta=2026-11-04");
+        Assert.Equal(0, hasta.GetProperty("total").GetInt32());
+    }
+
+    [PostgreSqlFact]
+    public async Task Get_ConElRangoInvertido_400_YSinTokenEs401()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        using var sinToken = Cliente(fixture, null);
+
+        var respuesta = await cliente.GetAsync("/api/notas-credito-compra?emisionDesde=2026-11-30&emisionHasta=2026-11-01");
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Contains("emisión", await respuesta.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.Unauthorized, (await sinToken.GetAsync("/api/notas-credito-compra")).StatusCode);
     }
 }
