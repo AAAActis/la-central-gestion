@@ -282,4 +282,48 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
         await using var relectura = fixture.CrearContexto();
         Assert.Equal("PDF", await relectura.NotaCreditoCompra.Where(n => n.Id == id).Select(n => n.Origen).SingleAsync());
     }
+
+    // CA-012 · el listado por HTTP: proveedor y rango de la query, la anulada marcada.
+    [PostgreSqlFact]
+    public async Task Get_PorProveedorYRango_TraeLaNota_YDespuesDeAnularlaVieneMarcada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        var alta = await cliente.PostAsJsonAsync("/api/notas-credito-compra", Devolucion(s));
+        var id = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        var url = $"/api/notas-credito-compra?proveedorId={s.ProveedorId}&emisionDesde=2026-11-05&emisionHasta=2026-11-05";
+
+        var antes = await cliente.GetFromJsonAsync<JsonElement>(url);
+        Assert.Equal(HttpStatusCode.NoContent, (await cliente.PostAsJsonAsync($"/api/notas-credito-compra/{id}/anulacion",
+            new { motivo = "Mal cargada", usuarioAutoriza = "jefa.notas", contrasenaAutoriza = "clave-jefa" })).StatusCode);
+        var despues = await cliente.GetFromJsonAsync<JsonElement>(url);
+
+        var fila = Assert.Single(antes.GetProperty("items").EnumerateArray());
+        Assert.Equal((id, "0010-00021495", "Proveedor API", "DEVOLUCION", 100m, false),
+            (fila.GetProperty("id").GetInt32(), fila.GetProperty("numero").GetString(), fila.GetProperty("proveedor").GetString(),
+             fila.GetProperty("clase").GetString(), fila.GetProperty("importeNeto").GetDecimal(), fila.GetProperty("anulada").GetBoolean()));
+        Assert.True(Assert.Single(despues.GetProperty("items").EnumerateArray()).GetProperty("anulada").GetBoolean());
+        var fuera = await cliente.GetFromJsonAsync<JsonElement>($"/api/notas-credito-compra?emisionDesde=2026-11-06");
+        Assert.Equal(0, fuera.GetProperty("total").GetInt32());
+        var otro = await cliente.GetFromJsonAsync<JsonElement>($"/api/notas-credito-compra?proveedorId={s.ProveedorId + 1}");
+        Assert.Equal(0, otro.GetProperty("total").GetInt32());
+        var hasta = await cliente.GetFromJsonAsync<JsonElement>($"/api/notas-credito-compra?emisionHasta=2026-11-04");
+        Assert.Equal(0, hasta.GetProperty("total").GetInt32());
+    }
+
+    [PostgreSqlFact]
+    public async Task Get_ConElRangoInvertido_400_YSinTokenEs401()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        using var sinToken = Cliente(fixture, null);
+
+        var respuesta = await cliente.GetAsync("/api/notas-credito-compra?emisionDesde=2026-11-30&emisionHasta=2026-11-01");
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        Assert.Contains("emisión", await respuesta.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.Unauthorized, (await sinToken.GetAsync("/api/notas-credito-compra")).StatusCode);
+    }
 }
