@@ -306,6 +306,13 @@ export class ApiLaCentral {
     return this.http.post<{ id: number }>('/api/notas-credito-compra', nota);
   }
 
+  /** 057 CA-010: el PDF viaja como formulario, en el campo «archivo». Nada se guarda. */
+  interpretarNotaCreditoPdf(archivo: File): Observable<NotaCreditoPdfInterpretada> {
+    const formulario = new FormData();
+    formulario.append('archivo', archivo);
+    return this.http.post<NotaCreditoPdfInterpretada>('/api/notas-credito-compra/pdf', formulario);
+  }
+
   /** 057 CA-007: neto, 21 % de IVA y percepciones, sin guardar nada. */
   calcularNotaCreditoCompra(nota: NotaCreditoCompraNueva): Observable<TotalesNotaCreditoCompra> {
     return this.http.post<TotalesNotaCreditoCompra>('/api/notas-credito-compra/calculo', nota);
@@ -332,6 +339,21 @@ export interface NotaCreditoCompraNueva {
   percepcionGanancias: number | null;
   facturaIds: number[];
   lineas: LineaNotaCreditoCompra[];
+  /** CA-010: se cargó desde el PDF del proveedor. */
+  desdePdf?: boolean;
+}
+
+/** 057 CA-010: lo que devuelve `POST /api/notas-credito-compra/pdf`. `paraRevisar` nombra lo que el PDF no afirmó. */
+export interface NotaCreditoPdfInterpretada {
+  proveedorId: number | null;
+  numero: string | null;
+  fechaEmision: string | null;
+  clase: 'BONIFICACION' | 'DEVOLUCION' | null;
+  importeNeto: number | null;
+  facturaIds: number[];
+  /** Los números de «Doc.Asoc.» que no son una factura activa del proveedor. */
+  facturasSinEncontrar: string[];
+  paraRevisar: string[];
 }
 
 export interface TotalesNotaCreditoCompra {

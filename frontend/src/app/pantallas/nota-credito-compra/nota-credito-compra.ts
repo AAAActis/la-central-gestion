@@ -32,6 +32,9 @@ interface Origen { id: number; nombre: string; }
       <form (ngSubmit)="registrar()" (input)="invalidarTotales()" (change)="invalidarTotales()">
         <section class="tarjeta">
           <h2>Nota de crédito de proveedor</h2>
+          <label>Cargar desde el PDF del proveedor
+            <input type="file" accept="application/pdf" (change)="elegirPdf($event)" [disabled]="leyendoPdf()" />
+          </label>
           <p class="ayuda">Es siempre tipo A: el número se copia tal cual, sin 99, y se suma 21 % de IVA. No cambia el costo de los artículos.</p>
           @if (proveedor(); as p) {
             <p>Proveedor: <strong>{{ p.razonSocial }}</strong> <span class="tenue mono">({{ p.codigo }})</span>
@@ -183,6 +186,20 @@ export class NotaCreditoCompra {
   readonly error = signal<string | null>(null);
   readonly enviando = signal(false);
   readonly registrada = signal<string | null>(null);
+
+  /** CA-010: la carga desde el PDF precarga este mismo formulario. */
+  readonly leyendoPdf = signal(false);
+  readonly errorPdf = signal<string | null>(null);
+  readonly paraRevisar = signal<string[]>([]);
+  readonly facturasSinEncontrar = signal<string[]>([]);
+
+  elegirPdf(_evento: Event) {}
+
+  cargarPdf(_archivo: File) {}
+
+  revisar(_campo: string) {
+    return false;
+  }
 
   buscarProveedor() {
     this.errorProveedor.set(null);
