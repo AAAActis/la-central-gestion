@@ -1460,3 +1460,5 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 
 **Estado:** en curso
 - Paso 1 (13:20 hora del servidor): `nc057_fuente_verificacion.sql` → `NOTICE: nc057_fuente: TODO OK (30 tablas; public: 27).` Borrados con guarda (solo `lacentral_test`, sin dependencias desde fuera) `nc057_ensayo_2f673d44` (31 objetos) y `pr110_test_9d4670f6b05140749a0e351312a4b273` (27). Después: `public` 27 tablas, `nc057_fuente` 30. Quedan `demo_ensayo_c3` y `staging`, que no son míos.
+- Paso 2: #180 entró a `develop` (`fe7e6aa`); base del #183 → `develop` (`gh pr edit 183 --base develop`).
+- PR 2, rama `feature/182-nota-credito-pdf`: merge de `feature/182-nota-credito-manual` y de `origin/develop` (sin conflictos). Ya tenía lector e interpretación (CA-010). Endpoint: rojo `2bfe202` (2 con error por aserción: 404 en vez de 200 y de 400, contra `nc057_fuente`), caracterización `4a310c6` (desdePdf por HTTP → origen PDF, pasa de entrada), código `POST /api/notas-credito-compra/pdf` + DI: clases de la nota `102/102`.
