@@ -24,7 +24,7 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 | #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | **Construida (17/11/2026), PR abierto** en `feature/51-pantalla-pdf`, apilado sobre el #178. El PDF precarga el formulario de la 056, sin pantalla nueva. `verificador-tdd`: NO APTO en las rondas 1 y 2, APTO en la 3; el auditor no aplica. Frontend 238/238 sobre `43edd66`. Falta el DoD 10 contra `lacentral_demo` con los PDF reales (Javi con Sergio). **Revisión de Santi (17/11):** las percepciones sin leer se señalan, y elegir el proveedor después del PDF resuelve sus códigos; `verificador-tdd` NO APTO en la ronda 1 y APTO en la 2; frontend 248/248 sobre `78ff462`; su backend es el del #178 |
 | #169 | Factura de compra: el mismo artículo a sucursales distintas (D9), observación de Javi del 14/11 | sin estimar | Santi | — | **Hecha:** PR #170, mergeado por Javi el 16/11/2026 (`verificador-tdd` APTO, 203/203 frontend sobre `b7973d6`). Issue cerrada el 17/11 con referencia al #170 |
 
-| #182 | 057 · HU-FCO-07 · registro de nota de crédito de proveedor (D-S6-18) | 13 (estimación) | Santi | E11 | **Entró el 18/11/2026, aprobada por el equipo (D-S6-18).** Proforma `docs/historias/057-HU-FCO-07.md` (14 CA). Dos PR. **PR 1 (carga manual), 19/11:** re-scaffold con el 11, `NotaCreditoCompraRepositorio` con PostgreSQL (CA-014 acumulado y dos devoluciones simultáneas, CA-012, CA-011 con la carrera nota/anulación de factura), CA-008 (API, ficha y pantalla de la factura), API (`/api/notas-credito-compra`, `/calculo`, `/{id}/anulacion`, 401/403). Corre contra una plantilla con el 11 (`LA_CENTRAL_TEST_SCHEMA`). Sin pantalla de anulación de la nota (CA-012 solo por API: lo decide el equipo). **PR 2 (PDF de Expoyer):** lector e interpretación hechos en `feature/182-nota-credito-pdf`; faltan el endpoint, la precarga, verificadores y PR |
+| #182 | 057 · HU-FCO-07 · registro de nota de crédito de proveedor (D-S6-18) | 13 (estimación) | Santi | E11 | **Entró el 18/11/2026, aprobada por el equipo (D-S6-18).** Proforma `docs/historias/057-HU-FCO-07.md` (14 CA). Dos PR. **PR 1 (carga manual), 19/11:** re-scaffold con el 11, `NotaCreditoCompraRepositorio` con PostgreSQL (CA-014 acumulado y dos devoluciones simultáneas, CA-012, CA-011 con la carrera nota/anulación de factura), CA-008 (API, ficha y pantalla de la factura), API (`/api/notas-credito-compra`, `/calculo`, `/{id}/anulacion`, 401/403). Corre contra una plantilla con el 11 (`LA_CENTRAL_TEST_SCHEMA`). PR #183, verificadores APTO, base `develop` desde el 19/11 (#180 mergeado). **PR 2 (PDF de Expoyer, CA-010), 19/11:** lector, interpretación, `POST /api/notas-credito-compra/pdf` y precarga de la pantalla (proveedor, número, fecha, clase, neto, facturas de «Doc.Asoc.»; «Revisar» en lo que el PDF no afirmó; origen PDF), en `feature/182-nota-credito-pdf`; suites sobre `7cd1220` contra `nc057_fuente` 789/789 y frontend 286; verificadores APTO; PR con base `feature/182-nota-credito`. **PR 3 (CA-012 con pantalla, D-S6-26):** listado de notas y «Anular», en `feature/182-nota-credito-anulacion` |
 
 **47 SP** (13 + 13 + 8 + 13; la 057 entró el 18/11, D-PL-06: el sprint se estira). Salieron al Sprint 7 la #126, la #127 y la #128 (21 SP); entraron la
 #13 y la #51 (21 SP). Es un intercambio: el total no cambia.
@@ -161,6 +161,7 @@ anular una devolución, stock negativo) las **decidió el equipo el 18/11: D-S6-
 | D-S6-23 | **Una nota de crédito se anula igual que una factura (028):** con motivo y con la autorización de otro ADMINISTRADOR con su contraseña. Si era por devolución, la mercadería **vuelve al mismo origen** (sucursal o Reclamos) en la misma transacción. | equipo | CA nuevo de la 057 (CA-012). Script 11 con las columnas de anulación y el número único solo entre vigentes |
 | D-S6-24 | **Una devolución que deja el stock del origen en negativo se registra igual**, pero la pantalla avisa antes de confirmar: qué artículo, en qué sucursal y cuánto queda. | equipo | CA nuevo de la 057 (CA-013). Reemplaza el supuesto del 18/11 |
 | D-S6-25 | **Regla de cantidades:** en una devolución, cada línea es de un artículo que figura en las facturas referenciadas, y lo devuelto acumulado por artículo no supera lo comprado en esas facturas, sin contar las notas anuladas. Un artículo dado de baja se puede devolver. | equipo | CA nuevo de la 057 (CA-014), con prueba contra PostgreSQL de la suma acumulada y de dos devoluciones simultáneas |
+| D-S6-26 | **El CA-012 entra en la 057 con pantalla:** listado de notas de crédito (filtrable por proveedor y fecha, con las anuladas marcadas) y botón «Anular» con motivo y la autorización de otro ADMINISTRADOR, reusando el patrón de la 026 y la 028. Va en su propio PR (PR 3), después del PR 2. | equipo, 19/11/2026 | 057: PR 3 en `feature/182-nota-credito-anulacion` |
 
 Las cinco son del equipo, tomadas el 18/11 sobre la práctica de los sistemas de gestión comunes y la
 RG 4540 de AFIP. **Si Sergio corrige alguna, se cambia.**
@@ -350,6 +351,18 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 ---
 
 ## PRÓXIMA SESIÓN
+
+**19/11 (tarde) · la 057: PR 2 (PDF) abierto; el PR 3 (CA-012 con pantalla, D-S6-26) en curso.**
+- `nc057_fuente` rehecha por Santi con el 11 corregido (`TODO OK`, 30 tablas). Borrados de `lacentral_test` la copia
+  descartable `nc057_ensayo_2f673d44` y el huérfano `pr110_test_9d4670f6b05140749a0e351312a4b273`; `public` sigue con 27.
+- #180 mergeado a `develop`: el #183 (PR 1) tiene base `develop`.
+- **PR 2** (`feature/182-nota-credito-pdf`, base `feature/182-nota-credito`): suites sobre `7cd1220` (789/789 contra
+  `nc057_fuente`, frontend 286), `verificador-tdd` APTO (18 mutaciones muertas), `auditor-persistencia` APTO.
+- **PR 3** (`feature/182-nota-credito-anulacion`, base la rama del PDF): `GET /api/notas-credito-compra` (proveedor, rango de
+  emisión, anuladas marcadas) y la pantalla «Notas de crédito registradas» con «Anular» (motivo y otro ADMINISTRADOR).
+  Faltan suites, verificadores, ESTADO y PR.
+- **Orden de merge:** #183 → PR 2 → PR 3. **Antes del merge del #183 a `develop`:** el 11 en `public` de `lacentral_test`,
+  en `lacentral_demo` y en `lacentral` (sin eso, DoD 10 de la 057 no se puede recorrer en `lacentral_demo`).
 
 **19/11 · la 057 tiene el PR 1 (carga manual); el PR 2 (PDF) sigue.**
 - **Santi:** rehacer `nc057_fuente` con el 11 corregido (bitácora, «PARA SANTI · 19/11 · rehacer nc057_fuente»). La de anoche
