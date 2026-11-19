@@ -97,8 +97,9 @@ describe('NotaCreditoCompra · 057 · carga desde PDF', () => {
     expect(aviso?.querySelector('.etiqueta.revisar')).not.toBeNull();
   });
 
-  it('CA-010: sin proveedor reconocido, señala que hay que buscarlo y no pide ficha ni facturas', () => {
+  it('CA-010: sin proveedor reconocido, señala que hay que buscarlo y no pide ficha ni facturas', async () => {
     cargar(interpretada({ proveedorId: null, facturaIds: [], facturasSinEncontrar: ['0011-00001111'], paraRevisar: ['proveedorId', 'facturaIds'] }));
+    await fixture.whenStable();
 
     expect(c().proveedor()).toBeNull();
     expect(raiz.textContent).toContain('El PDF no trae un proveedor activo');
