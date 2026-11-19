@@ -49,7 +49,8 @@ export interface FichaArticulo {
   costoVigente: number | null;
   ultimoProveedorId: number | null;
   codigos: { proveedorId: number; razonSocial: string; codigoOriginal: string; claveNormalizada: string }[];
-  existencias: { sucursalId: number; sucursal: string; cantidad: number; ubicacionDeposito: string | null }[];
+  /** esReclamos (057 CA-008): el depósito Reclamos, que no es destino de una compra. */
+  existencias: { sucursalId: number; sucursal: string; cantidad: number; ubicacionDeposito: string | null; esReclamos?: boolean }[];
   totalExistencias: number;
   precios: PrecioFicha[];
   motivoBaja: string | null;
