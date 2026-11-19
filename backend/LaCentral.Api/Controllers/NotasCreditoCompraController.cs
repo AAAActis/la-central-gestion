@@ -15,9 +15,33 @@ public class NotasCreditoCompraController : ControllerBase
 {
     private readonly RegistrarNotaCreditoCompraUseCase _registrar;
     private readonly AnularNotaCreditoCompraUseCase _anular;
+    private readonly InterpretarNotaCreditoPdfUseCase _interpretar;
 
-    public NotasCreditoCompraController(RegistrarNotaCreditoCompraUseCase registrar, AnularNotaCreditoCompraUseCase anular)
-        => (_registrar, _anular) = (registrar, anular);
+    // Como la factura (029): una nota pesa decenas de KB; 10 MB deja margen sin aceptar cualquier cosa.
+    private const long TamanoMaximoPdf = 10 * 1024 * 1024;
+
+    public NotasCreditoCompraController(RegistrarNotaCreditoCompraUseCase registrar, AnularNotaCreditoCompraUseCase anular,
+        InterpretarNotaCreditoPdfUseCase interpretar)
+        => (_registrar, _anular, _interpretar) = (registrar, anular, interpretar);
+
+    /// <summary>
+    /// CA-010. Interpreta el PDF del proveedor (campo de formulario «archivo») y devuelve la nota
+    /// propuesta para revisar en la carga manual, sin guardar nada. 200; 400 si no es un PDF con
+    /// texto o su formato no se reconoce: se pide la carga manual.
+    /// </summary>
+    [HttpPost("pdf")]
+    [RequestSizeLimit(TamanoMaximoPdf)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> InterpretarPdf(IFormFile? archivo, CancellationToken ct)
+    {
+        using var contenido = new MemoryStream();
+        if (archivo is not null)
+            await archivo.CopyToAsync(contenido, ct);
+        return this.AResultadoHttp(await _interpretar.EjecutarAsync(contenido.ToArray(), ct));
+    }
 
     /// <summary>
     /// HU-FCO-07. Cabecera, facturas y, en una devolución, la resta del stock de cada origen, en
