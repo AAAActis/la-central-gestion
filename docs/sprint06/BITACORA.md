@@ -1579,3 +1579,30 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - #188: arreglo `af94316` (solo test): Enter sobre «Calcular el total», «Registrar» y el select de clase no se cancela; con la guarda en `true`, 3 aserciones rojas. Frontend completo sobre `af94316`: `TOTAL: 305 SUCCESS`. Push y comentario. Ronda 2 acotada a `af94316`.
 - #188 ronda 2 (alcance `af94316`): **APTO**. Guarda en `true`, solo excluir botones y `instanceof HTMLElement`: las tres rojas por aserción. Suites aceptadas (305 / 806).
 - Cierre: **#186, #187 y #188 en APTO** (dos rondas cada uno). Frontend sobre el HEAD de cada uno: #186 `bfb1484` 304, #187 `617b857` 346, #188 `af94316` 305. Backend 806 sobre `9f387c2`. Este commit de documentos queda fuera de la verificación (solo `docs/`).
+
+## 21/11/2026 19:36 · Respuestas de Javi sobre el Fix D y el Fix A
+
+**Instrucción recibida (verbatim):**
+> Fix D: las pantallas de clientes, proveedores y articulos. con rol de operador
+> Fix A: se aceptan - y .
+> si ddmmaaaa de 8 digitos
+> EL vencimineto nunca puede ser anterior a la emision, si se carga mal y da que es anterior, se alerta y bloquea
+
+**Plan:**
+1. Fix D: reproducir en `lacentral_test` la búsqueda de clientes, proveedores y artículos con una sesión OPERADOR. Si falla, test rojo y arreglo en su propia rama; si no falla, informar qué difiere en la demo.
+2. Fix A (#187, `fix/fco-fechas-abreviadas`): tests rojos para `-` y `.` como separadores, `ddmmaaaa` de 8 dígitos y vencimiento anterior a la emisión (aviso y bloqueo del registro). Después producción.
+3. Pruebas filtradas del frontend y la suite de frontend completa sobre el Fix A.
+4. Actualizar ESTADO y bitácora. Commit y push solo con OK de Javi.
+
+**Estado:** terminada
+- Fix D, reproducción de punta a punta (21/11 ~20:00): API de este árbol (`fix/nca-enter-confirma-valor`; backend igual a `develop` `9f387c2`) levantada en `localhost:5199` contra `lacentral_demo` con `lacentral_javi`, solo GET. Token local de OPERADOR (`operador.demo`, id 2) firmado con una clave de diagnóstico, y frontend `ng serve` en `:4299` con proxy a esa API. Resultados:
+  - **Artículos (OPERADOR): funciona.** «aceite» → 3, «bujia» → «Bujía de encendido iridio», «filtro aceite» → 1. Con este código y estos datos no se reproduce el «sin resultados».
+  - **Proveedores: falla con una palabra de la razón social.** «Frenos» → «Sin resultados» con «Frenos y Embragues Córdoba SRL (demo)» activo; «Norte» → 0. «Autopartes» → 1, «Expoyer» → 1. Causa: `similarity(razon_social, texto) > 0,2` compara contra la razón social entera; «Frenos» da 0,19 y «Norte» 0,17. No depende del rol ni de la base: con cualquier dato pasa lo mismo en `lacentral_test`. Clientes usa la misma regla (`ClienteRepositorio.BuscarAsync`).
+  - **Clientes: la demo tiene 0 clientes**, así que toda búsqueda da «sin resultados».
+  - El rol no interviene: ninguna consulta filtra por rol ni por sucursal.
+  Servidores de diagnóstico apagados.
+- Fix A (rama `fix/fco-fechas-abreviadas`, sobre `617b857`, sin commitear): tests primero. `fecha-abreviada.spec.ts`: `-` y `.` como separadores (`20-10`, `20.10`, `5-3-2025`, `20.10.2026`), `ddmmaaaa` (`20102026`, `29022028`), inexistentes `29022027`, `31-04`, `00.10.2026`, inválidas con separadores mezclados (`20-10/2026`, `20.10-2026`, `20/10.2026`), `20,10`, 7 y 9 dígitos. `factura-compra-fechas.spec.ts`, 5 casos de vencimiento anterior a la emisión: aviso y bloqueo, mismo día vale, corregir la emisión saca el aviso, el aviso no tapa un vencimiento mal tipeado, la precarga sin pasar por el campo tampoco se registra. **Rojo:** `TOTAL: 12 FAILED, 50 SUCCESS`, todos por aserción.
+- Fix A, producción: regex con separador `[/.-]` y retro-referencia `\2` (el mismo en toda la fecha), `ddmmaaaa` en la forma sin separador; `revisarOrdenFechas()` al fijar cualquier fecha y antes del registro (`VENCIMIENTO_ANTERIOR` en el vencimiento, sin pisar un error de tipeo). El backend ya lo rechazaba (`RegistrarFacturaCompraUseCase.cs:176`). Filtrada: `TOTAL: 131 SUCCESS`. Frontend completo sobre el árbol sin commitear: `TOTAL: 363 SUCCESS`.
+**BLOQUEADO EN:** OK de Javi para commitear (test y producción por separado) y pushear al #187; decisión de Javi sobre el remedio de búsqueda de proveedores y clientes por palabra (Fix D).
+- OK de Javi («Sí, commiteá»). Commits en `fix/fco-fechas-abreviadas`: `ea7c2f3` (pruebas) y `a580574` (producción), push y comentario en el #187. Frontend 363 corrido sobre el árbol idéntico a `a580574`. ESTADO actualizado (entrada 21/11 noche).
+- Se cerró el bloqueo del commit. Queda abierto: `verificador-tdd` sobre `ea7c2f3..a580574`; decisión de Javi sobre el remedio de búsqueda por palabra (Fix D); merge #186 → #187 y #188.

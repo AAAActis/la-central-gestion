@@ -352,6 +352,19 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
+**21/11 (noche) · respuestas de Javi: Fix A ampliado en el #187; Fix D reproducido.**
+- **Decisiones de Javi (21/11):** las fechas aceptan `-` y `.` como separadores y `ddmmaaaa`; el vencimiento **nunca** es
+  anterior a la emisión: se avisa y bloquea el registro.
+- **#187:** `ea7c2f3` (pruebas, rojo 12 por aserción) y `a580574` (código). Frontend completo **363/363** sobre `a580574`.
+  Mismo separador en toda la fecha; el control de orden también cubre la precarga del PDF; el backend ya lo rechazaba.
+  **Falta `verificador-tdd`** sobre `ea7c2f3..a580574` (lo anterior dio APTO).
+- **Fix D:** reproducido con la API y el frontend de este árbol contra `lacentral_demo`, sesión OPERADOR, solo GET.
+  Artículos **anda** (si en la demo desplegada no, es otra versión desplegada). Proveedores **no encuentra una palabra
+  suelta** de la razón social: «Frenos» → 0 con «Frenos y Embragues Córdoba SRL (demo)» activo, porque
+  `similarity(razon_social, texto) > 0,2` mide contra el nombre entero (0,19). Clientes, misma regla, y la demo tiene
+  0 clientes. El rol no interviene. **Decide Javi:** que proveedores y clientes encuentren por palabra contenida (sin
+  acentos ni mayúsculas, como artículos), con lo parecido después; en su propia rama.
+
 **21/11 (madrugada) · correcciones de cierre (spec de Javi): A, B y C en PR; D diagnosticado sin código.**
 - #183, #184 y #185 mergeados a `develop` (`9f387c2`). Suite completa de backend sobre `9f387c2`: **806/806** (1 h 1 m).
 - PR, uno por fix, base `develop`, con OK de Javi (20/11): **B #186** `fix/fco-layout-detalle` (frontend 302);
