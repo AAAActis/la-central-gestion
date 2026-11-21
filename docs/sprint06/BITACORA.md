@@ -1507,3 +1507,75 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - ESTADO (E11 cerrada, fila #182, PRÓXIMA SESIÓN). Push de `feature/182-nota-credito-pdf` y `feature/182-nota-credito-anulacion`; comentario en #184 y #185.
 
 **BLOQUEADO EN:** revisión y merge de #183 → #184 → #185 (Javi). Después: suite completa sobre `develop` y `nc057_fuente_borrado.sql`.
+
+## 20/11/2026 23:21 · Correcciones de cierre del Sprint 6: fechas y layout de FCO, Enter en NCA, búsquedas
+
+**Instrucción recibida (verbatim):**
+> (Especificación pegada por Javi, completa:) «Especificación: correcciones de FCO, NCA y búsquedas (cierre Sprint 6)». Reglas generales: un fix = una rama `fix/<descripcion>` desde `develop` = un PR; NO commitear ni pushear sin OK de Javi; nunca tocar `lacentral`, persistencia solo contra `lacentral_test`; sin migraciones EF (si hace falta esquema, DETENER); no inventar datos de negocio; al terminar cada fix compilar, correr backend y frontend, actualizar ESTADO y BITACORA, refrescar Graphify e informar.
+> Fix A · `fix/fco-fechas-abreviadas`: imputación arranca con la fecha actual (reloj inyectable); emisión y vencimiento aceptan al Enter o blur: 1–2 dígitos = día (mes y año actuales); 4 dígitos = ddmm (año actual); `dd/mm` = año actual; `dd/mm/aaaa` se conserva; todo lo demás inválido (pendiente de Javi: `-`, `.` y `ddmmaaaa`); fecha inexistente con mensaje claro conservando lo tipeado; Enter interpreta y NO envía; a la API viaja `aaaa-mm-dd`; vencimiento editable; pendiente de Javi: vencimiento anterior a emisión ¿bloquea o avisa? Pruebas con hoy = 19/11/2026: los cuatro ejemplos, 31/02, 29/02 de 2027 y 2028, cambio de año, meses de 30 y 31, inválidas, Enter sin envío.
+> Fix B · `fix/fco-layout-detalle`: orden 1) datos generales, 2) detalle de artículos, 3) percepciones, 4) totales y acciones; sin cambiar operaciones ni validaciones; breakpoints existentes.
+> Fix C · `fix/nca-enter-confirma-valor`: verificar la hipótesis del envío implícito del `<form (ngSubmit)="registrar()">`; Enter en un numérico confirma el valor sin registrar; registrar solo con el botón; mantener CA-007; no guardar sola; pruebas de componente.
+> Fix D · `fix/busquedas-diagnostico`: diagnosticar antes de tocar código (lacentral_test, lacentral_demo con log, GRANTs de `lacentral_javi` y `pg_trgm`, usuario y rol); corregir solo si falla en `lacentral_test`.
+> Fuera de la spec: H1 vencimiento según proveedor, H2 sucursal destinataria en PDF.
+
+**Plan:**
+1. Arranque: el bloque anterior (19/11) quedó en curso esperando el merge de #183→#184→#185, que ya está en `develop` (`9f387c2`). `git fetch`: `develop` = `origin/develop`.
+2. Fix D: diagnóstico sin código (pasos 1 a 3).
+3. Fix C: reproducir, prueba en rojo, arreglo.
+4. Fix A: parseo de fechas con reloj inyectable, pruebas con hoy = 19/11/2026.
+5. Fix B: reordenar bloques del formulario.
+6. Cada fix en su rama, sin commit hasta el OK de Javi; ESTADO, bitácora, Graphify.
+
+**Estado:** terminada (D queda abierto: falta el dato de Javi; ver ESTADO)
+- Arranque: `git fetch --all --prune`; `develop` sin commits nuevos en `origin/develop`. `LACENTRAL_TEST_PG` → `lacentral_test`, usuario `lacentral_javi` (permitido).
+- Fix D, paso 1 (`lacentral_test`): filtrada `Busqueda|BusquedaPaginadaApiPostgreSqlTests|ArticulosApiPostgreSqlTests` sobre `develop` `9f387c2`, `public`: `Correctas! - Con error: 0, Superado: 30, Total: 30`. La búsqueda funciona con datos conocidos: el código no falla ahí.
+- Fix D, paso 2 (`lacentral_demo`, solo lectura con `lacentral_javi`): `pg_trgm` 1.6 en `public` (`similarity()` responde); `lacentral_javi` tiene SELECT e INSERT en las 30 tablas (el `42501` no se reproduce hoy). **Datos de la demo: 31 artículos, 6 proveedores y 0 clientes.** Clientes «sin resultados» en la demo = no hay clientes cargados. Usuarios de la demo: `admin.demo` (ADMINISTRADOR) y `operador.demo` (OPERADOR); los dos pueden buscar artículos. La aproximada compara contra el nombre entero (`similarity > 0,3`): «fltro» da 0 en la demo; es la regla vigente, no se toca. El log de la API contra la demo no lo puedo ver desde acá (la API de la demo no corre en esta máquina).
+- Fix D: sin cambio de código (no falla en `lacentral_test`). No se crea la rama `fix/busquedas-diagnostico`.
+- Fix C (`fix/nca-enter-confirma-valor`, sin commit): hipótesis confirmada en el código. El `<form (ngSubmit)="registrar()">` de la NCA no cancela el Enter de ningún numérico (importe, percepciones, cantidades): el navegador hace envío implícito por el botón submit «Registrar». Con «35» tipeado, el `(input)` ya invalidó el total y el botón está deshabilitado: Enter no hace nada. Con el total a la vista y sin tocar el valor, Enter **registra** sin pasar por el botón. Arreglo: `(keydown.enter)` en el form cancela el Enter que sale de un `<input>` (`noEnviarConEnter`). Tres pruebas de componente (importe con 35, percepción con total a la vista, cantidad de una línea devuelta): rojas sin el arreglo (`defaultPrevented` false, 3 con error de 36), verdes con él: `TOTAL: 36 SUCCESS` (specs de `nota-credito-compra`). Guardado en `git stash` «fix C» hasta el OK.
+- Fix A (`fix/fco-fechas-abreviadas`, sin commit): parser puro `compartido/fecha-abreviada.ts` (`interpretarFecha`, `hoyIso` con la fecha LOCAL, `aTextoFecha`) y reloj `RELOJ` (`InjectionToken` con fábrica `() => new Date()`). Emisión, vencimiento **e imputación** pasan a texto `dd/mm/aaaa` (la spec nombra los tres como inputs a pasar a texto; la imputación usa el mismo parser); el modelo sigue en `aaaa-mm-dd`. Enter cancela el envío e interpreta; blur interpreta. Fecha inexistente o formato fuera de la tabla: mensaje en el campo (`aria-invalid`, `aria-describedby`), se conserva lo tipeado, el campo queda sin fecha y `factura()` no pide el total («Corregí las fechas señaladas»): un 31/02 en vencimiento no viaja como null en silencio. Imputación = hoy al abrir y en `nueva()` (también al cargar un PDF).
+- Fix A, pruebas: tabla del parser con hoy = 19/11/2026 23:30 (33: los cuatro ejemplos, 31/02, 29/02 de 2026/2027 vs 2028, enero con hoy = 02/01/2027, 30/04 vs 31/04, 31 de noviembre, inválidas `123`, `201026`, `20102026`, `20/10/26`, `20-10`, `20.10.2026`…). Cinco mutaciones del parser, cada una roja (sin bisiesto, todos de 31, `toISOString`, sin `ddmm`, aceptar `-`). Componente (`factura-compra-fechas.spec.ts`, 7) y cinco mutaciones del cableado, 1 roja cada una (sin guarda, sin `preventDefault`, `nueva()` sin hoy, PDF sin mostrar, error que conserva el ISO viejo). Expectativa cambiada (no aflojada) en `factura-compra-pdf.spec.ts`: la emisión y el vencimiento del PDF se muestran `03/02/2027` y `10/03/2027` y viajan `aaaa-mm-dd`. Frontend completo: `TOTAL: 341 SUCCESS`; `ng build` sin errores. Guardado en `git stash` «fix A».
+- Fix A, pendiente de Javi (no implementado): `-` y `.` como separadores; `ddmmaaaa` de 8 dígitos; vencimiento anterior a emisión ¿bloquea o avisa?
+- Fix B (`fix/fco-layout-detalle`, sin commit): movimiento puro del `<fieldset>` de percepciones, sin cambiarlo por dentro, a su propia `section.tarjeta` entre «Artículos comprados» y los totales y acciones. Orden: datos generales → detalle → percepciones → totales y acciones. La app no tiene breakpoints de ancho (solo `login` a 760 px y `prefers-reduced-motion`); los bloques usan `flex-wrap` y `.tabla-caja` con scroll: no se agregó ninguno. Prueba `factura-compra-orden.spec.ts` (orden en el DOM): roja antes del movimiento («bloque 2 antes del 3»), verde después. Frontend completo: `TOTAL: 302 SUCCESS`. El diff del A aplica limpio sobre el B (`git apply --check`). Sin ver en el navegador. Guardado en `git stash` «fix B».
+- Fix C, frontend completo con solo el C aplicado: `TOTAL: 304 SUCCESS`.
+
+## 20/11/2026 · Commit y PR de los fixes A, B y C
+
+**Instrucción recibida (verbatim):**
+> OK, commiteá y abrí los PR de A, B y C
+
+**Plan:**
+1. Esperar la suite completa de backend sobre `develop` `9f387c2` (los tres fixes son solo de frontend).
+2. Por fix, en su rama: `stash pop`, commit del test y commit de producción por separado (rojo visible), push, PR contra `develop`.
+3. Bitácora y ESTADO en el PR del C (uno solo, para que los tres PR no choquen en los documentos). Graphify.
+
+**Estado:** terminada (falta la revisión de Javi y el `verificador-tdd` de cada PR)
+- `git fetch`: `origin/develop` sin commits nuevos.
+- **Suite completa de backend sobre `develop` `9f387c2`** (`public` de `lacentral_test`, base de las tres ramas, que no tocan `backend/`): `Correctas! - Con error: 0, Superado: 806, Omitido: 0, Total: 806, Duración: 1 h 1 m`. Cierra también la suite sobre `develop` pendiente del bloque del 19/11. Tardó 5 veces más que contra `nc057_fuente` (11 m 55 s): copiar `public` para cada prueba lleva entre 5 y 28 s por esquema (visto en `pg_stat_activity`).
+- Commits: C `32891b5` (test) y `a0f2d6e`; A `9af8f96` (test) y `5c94c56`; B `b173692` (test) y `cad5ba6`. Frontend: mismo contenido que las corridas de arriba (C 304, A 341, B 302).
+- PR: B #186, A #187 (cita al #186; el diff del A aplica limpio sobre el B), C con este commit de documentos. `verificador-tdd` no invocado todavía; `auditor-persistencia` no aplica (solo frontend).
+- PR del C: #188. Abiertos: #186 (B), #187 (A), #188 (C).
+
+## 21/11/2026 · verificador-tdd sobre #186, #187 y #188
+
+**Instrucción recibida (verbatim):**
+> Sí, lanzalo
+
+(Respuesta a «¿Lanzo el verificador-tdd sobre los tres PR, de a uno?».)
+
+**Plan:**
+1. Sacar worktrees (R1 de los verificadores).
+2. `verificador-tdd` de a uno: #186 (B), #187 (A), #188 (C), cada uno acotado a sus dos commits, con la suite de backend sobre `9f387c2` y la de frontend de cada rama.
+3. NO APTO → arreglo y re-verificación acotada al arreglo (hasta 3 rondas). Resultados en cada PR, bitácora y ESTADO.
+
+**Estado:** terminada (los tres APTO; falta la revisión y el merge de Javi, orden #186 → #187)
+- Worktrees: solo el principal. `verificador-tdd` lanzado sobre #186 (alcance `b173692`, `cad5ba6`; backend 806 sobre `9f387c2`, frontend 302).
+- #186 ronda 1: **NO APTO**. Rojo real en `b173692` (razón correcta) y verde en `cad5ba6`, movimiento puro confirmado (`diff -w`), frontend 302 corrido por el verificador sobre `cad5ba6`. Sobreviven dos mutaciones: devolver solo «Ganancias» a datos generales, y quitar la `section.tarjeta` propia. Arreglo: el test exige los cuatro inputs de percepciones dentro de una `section.tarjeta` propia, distinta de la de datos generales y de la del detalle.
+- #186: arreglo `bfb1484` (solo test): las cuatro percepciones en su tarjeta propia, distinta de generales y detalle, y en orden también con el total a la vista. M6 → 1 rojo, M7 → 3 rojos, producción de `9f387c2` → 3 rojos. Frontend completo sobre `bfb1484`: `TOTAL: 304 SUCCESS`. Push y comentario en el #186. Ronda 2 acotada a `bfb1484`.
+- #186 ronda 2 (alcance `bfb1484`): **APTO**. 3 rojos con la producción de `9f387c2`, 8 mutaciones muertas, suites aceptadas (304 / 806). No bloqueante: `enOrden` no distingue «después» de «anidado dentro». `verificador-tdd` lanzado sobre #187 (alcance `9af8f96`, `5c94c56`).
+- #187 ronda 1: **NO APTO**. Rojo real por aserción (con stub neutro: 40 con error de 71; en crudo no compila, módulo nuevo). Sobreviven: (1) `bisiesto` sin la regla del siglo (29/02/2100 pasaría); (2) `mostrarFechas()` sin `errorFecha.set({})` (un 31/02 seguido de «Cargar otra» o de un PDF deja el aviso y bloquea el total); (3) `[required]` de emisión en `false`. No bloqueante: el test de hora local solo discrimina al oeste de UTC. Arreglo, solo test: años de siglo, error y después `nueva()`, `required` solo en emisión, y hoy a las 00:30 además de las 23:30.
+- #187: arreglo `617b857` (solo test): 29/02/2100 y 1900 inexistentes, 2000 válido; 31/02 y después `nueva()` deja pedir el total; `required` solo en emisión; hoy también a las 00:30. Mutaciones: siglo → 2 rojos, 400 → 1, sin limpiar errores → 1, `required` → 1, `getUTCDate` → 4. Frontend completo sobre `617b857`: `TOTAL: 346 SUCCESS`. Push y comentario. Ronda 2 acotada a `617b857`.
+- #187 ronda 2 (alcance `617b857`): **APTO**. Mutaciones de siglo, 400, limpiar errores, `required` (false y true) y `getUTCDate`: todas rojas por aserción. Suites aceptadas (346 / 806). `verificador-tdd` lanzado sobre #188 (alcance `32891b5`, `a0f2d6e`).
+- #188 ronda 1: **NO APTO**. Rojo real en `32891b5` (3 por aserción), 8 de 9 mutaciones muertas, frontend 304 corrido por el verificador sobre `0c864b4`. Sobrevive la guarda en `true` (cancelar el Enter de cualquier elemento): nada prueba que un Enter sobre un botón o un `<select>` del form NO se cancele, y eso le quitaría al teclado activar «Calcular el total» o «Registrar». Arreglo, solo test.
+- #188: arreglo `af94316` (solo test): Enter sobre «Calcular el total», «Registrar» y el select de clase no se cancela; con la guarda en `true`, 3 aserciones rojas. Frontend completo sobre `af94316`: `TOTAL: 305 SUCCESS`. Push y comentario. Ronda 2 acotada a `af94316`.
+- #188 ronda 2 (alcance `af94316`): **APTO**. Guarda en `true`, solo excluir botones y `instanceof HTMLElement`: las tres rojas por aserción. Suites aceptadas (305 / 806).
+- Cierre: **#186, #187 y #188 en APTO** (dos rondas cada uno). Frontend sobre el HEAD de cada uno: #186 `bfb1484` 304, #187 `617b857` 346, #188 `af94316` 305. Backend 806 sobre `9f387c2`. Este commit de documentos queda fuera de la verificación (solo `docs/`).

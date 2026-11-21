@@ -30,7 +30,7 @@ interface Origen { id: number; nombre: string; }
         <button type="button" (click)="nueva()">Cargar otra nota de crédito</button>
       </section>
     } @else {
-      <form (ngSubmit)="registrar()" (input)="invalidarTotales()" (change)="invalidarTotales()">
+      <form (ngSubmit)="registrar()" (input)="invalidarTotales()" (change)="invalidarTotales()" (keydown.enter)="noEnviarConEnter($event)">
         <section class="tarjeta">
           <h2>Nota de crédito de proveedor</h2>
           <label>Cargar desde el PDF del proveedor
@@ -364,6 +364,11 @@ export class NotaCreditoCompra {
   /** CA-007: cambiar algo después de ver el total obliga a recalcularlo. */
   invalidarTotales() {
     this.totales.set(null);
+  }
+
+  /** Enter en un campo deja el valor tipeado (el modelo ya lo tiene) y no envía el form: registra solo el botón. */
+  noEnviarConEnter(evento: Event) {
+    if (evento.target instanceof HTMLInputElement) evento.preventDefault();
   }
 
   registrar() {
