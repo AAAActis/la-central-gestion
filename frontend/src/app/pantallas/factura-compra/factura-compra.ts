@@ -115,19 +115,6 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
               </select>
             </label>
           }
-          <fieldset>
-            <legend>Percepciones del comprobante</legend>
-            <div class="campos">
-              <label>IVA @if (revisar('percepcionIva')) { <span class="etiqueta revisar">Revisar</span> }
-                <input type="number" min="0" step="0.01" name="pIva" [(ngModel)]="percepciones.iva" [attr.aria-invalid]="revisar('percepcionIva') || null" /></label>
-              <label>Ingresos Brutos @if (revisar('percepcionIibb')) { <span class="etiqueta revisar">Revisar</span> }
-                <input type="number" min="0" step="0.01" name="pIibb" [(ngModel)]="percepciones.iibb" [attr.aria-invalid]="revisar('percepcionIibb') || null" /></label>
-              <label>Municipal @if (revisar('percepcionMunicipal')) { <span class="etiqueta revisar">Revisar</span> }
-                <input type="number" min="0" step="0.01" name="pMunicipal" [(ngModel)]="percepciones.municipal" [attr.aria-invalid]="revisar('percepcionMunicipal') || null" /></label>
-              <label>Ganancias @if (revisar('percepcionGanancias')) { <span class="etiqueta revisar">Revisar</span> }
-                <input type="number" min="0" step="0.01" name="pGanancias" [(ngModel)]="percepciones.ganancias" [attr.aria-invalid]="revisar('percepcionGanancias') || null" /></label>
-            </div>
-          </fieldset>
         </section>
 
         <section class="tarjeta">
@@ -211,6 +198,22 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
           @for (a of articulos(); track a.id) {
             <button type="button" class="opcion" (click)="elegirArticulo(a)"><span class="mono">{{ a.codigoInterno }}</span> {{ a.nombre }}</button>
           }
+        </section>
+
+        <section class="tarjeta">
+          <fieldset>
+            <legend>Percepciones del comprobante</legend>
+            <div class="campos">
+              <label>IVA @if (revisar('percepcionIva')) { <span class="etiqueta revisar">Revisar</span> }
+                <input type="number" min="0" step="0.01" name="pIva" [(ngModel)]="percepciones.iva" [attr.aria-invalid]="revisar('percepcionIva') || null" /></label>
+              <label>Ingresos Brutos @if (revisar('percepcionIibb')) { <span class="etiqueta revisar">Revisar</span> }
+                <input type="number" min="0" step="0.01" name="pIibb" [(ngModel)]="percepciones.iibb" [attr.aria-invalid]="revisar('percepcionIibb') || null" /></label>
+              <label>Municipal @if (revisar('percepcionMunicipal')) { <span class="etiqueta revisar">Revisar</span> }
+                <input type="number" min="0" step="0.01" name="pMunicipal" [(ngModel)]="percepciones.municipal" [attr.aria-invalid]="revisar('percepcionMunicipal') || null" /></label>
+              <label>Ganancias @if (revisar('percepcionGanancias')) { <span class="etiqueta revisar">Revisar</span> }
+                <input type="number" min="0" step="0.01" name="pGanancias" [(ngModel)]="percepciones.ganancias" [attr.aria-invalid]="revisar('percepcionGanancias') || null" /></label>
+            </div>
+          </fieldset>
         </section>
 
         @if (errorRegistro()) { <p class="error">{{ errorRegistro() }}</p> }
