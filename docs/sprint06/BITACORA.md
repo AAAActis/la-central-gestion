@@ -1606,3 +1606,17 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 **BLOQUEADO EN:** OK de Javi para commitear (test y producción por separado) y pushear al #187; decisión de Javi sobre el remedio de búsqueda de proveedores y clientes por palabra (Fix D).
 - OK de Javi («Sí, commiteá»). Commits en `fix/fco-fechas-abreviadas`: `ea7c2f3` (pruebas) y `a580574` (producción), push y comentario en el #187. Frontend 363 corrido sobre el árbol idéntico a `a580574`. ESTADO actualizado (entrada 21/11 noche).
 - Se cerró el bloqueo del commit. Queda abierto: `verificador-tdd` sobre `ea7c2f3..a580574`; decisión de Javi sobre el remedio de búsqueda por palabra (Fix D); merge #186 → #187 y #188.
+
+## 21/11/2026 · verificador-tdd sobre el Fix A ampliado (#187)
+
+**Instrucción recibida (verbatim):**
+> Sí, lanzalo
+
+**Plan:**
+1. `verificador-tdd` sobre `ea7c2f3..a580574` del #187, solo esos commits (lo anterior ya dio APTO), con la suite de frontend 363 sobre `a580574` y la de backend 806 sobre `9f387c2`.
+2. Si da NO APTO, arreglar y re-verificar acotado al arreglo (hasta 3 rondas).
+3. Anotar el resultado en el PR, la bitácora y el ESTADO.
+
+**Estado:** terminada
+- `verificador-tdd` (alcance `ea7c2f3..a580574`): **APTO**. Rojo reproducido `TOTAL: 12 FAILED, 50 SUCCESS`, todo por aserción; 13 mutaciones, todas muertas, ninguna sobrevive. Suites aceptadas (363 / 806). Sin hallazgos no bloqueantes. Comentado en el #187.
+- Queda abierto: decisión de Javi sobre la búsqueda por palabra (Fix D); merge #186 → #187 y #188.

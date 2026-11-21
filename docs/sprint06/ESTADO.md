@@ -357,7 +357,7 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
   anterior a la emisión: se avisa y bloquea el registro.
 - **#187:** `ea7c2f3` (pruebas, rojo 12 por aserción) y `a580574` (código). Frontend completo **363/363** sobre `a580574`.
   Mismo separador en toda la fecha; el control de orden también cubre la precarga del PDF; el backend ya lo rechazaba.
-  **Falta `verificador-tdd`** sobre `ea7c2f3..a580574` (lo anterior dio APTO).
+  `verificador-tdd` sobre `ea7c2f3..a580574`: **APTO** (21/11, 13 mutaciones muertas).
 - **Fix D:** reproducido con la API y el frontend de este árbol contra `lacentral_demo`, sesión OPERADOR, solo GET.
   Artículos **anda** (si en la demo desplegada no, es otra versión desplegada). Proveedores **no encuentra una palabra
   suelta** de la razón social: «Frenos» → 0 con «Frenos y Embragues Córdoba SRL (demo)» activo, porque
