@@ -198,6 +198,12 @@ describe('NotaCreditoCompra · 057', () => {
     expect(boton('registrar')?.disabled).toBeFalse();
   });
 
+  it('Enter sobre un botón o un desplegable del form no se cancela: el teclado sigue activándolos', () => {
+    conTotal();
+    for (const elemento of [boton('calcular'), boton('registrar'), raiz.querySelector('select[name="clase"]')])
+      expect(enter(elemento as unknown as HTMLInputElement).defaultPrevented).withContext(elemento!.outerHTML.slice(0, 40)).toBeFalse();
+  });
+
   it('Enter en la cantidad de una línea devuelta no envía', () => {
     conProveedorYFacturas();
     c().clase = 'DEVOLUCION';
