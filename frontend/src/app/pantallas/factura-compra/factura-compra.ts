@@ -8,6 +8,7 @@ import {
   mensajeDeError,
 } from '../../nucleo/api';
 import { SesionActual } from '../../nucleo/sesion';
+import { RELOJ, aTextoFecha, hoyIso, interpretarFecha } from '../../compartido/fecha-abreviada';
 
 interface LineaEnCarga {
   articulo: ArticuloResultado;
@@ -26,6 +27,7 @@ interface LineaEnCarga {
 }
 
 interface Sucursal { id: number; nombre: string; }
+type CampoFecha = 'fechaEmision' | 'fechaVencimiento' | 'fechaImputacion';
 
 /** Los destinos de una línea: las existencias de la ficha, sin Reclamos (057 CA-008). */
 const destinos = (f: FichaArticulo): Sucursal[] =>
@@ -102,12 +104,16 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
             </label>
             <label>Número @if (revisar('numero')) { <span class="etiqueta revisar">Revisar</span> }
               <input name="numero" [(ngModel)]="numero" maxlength="30" required class="mono" [attr.aria-invalid]="revisar('numero') || null" /></label>
-            <label>Emisión @if (revisar('fechaEmision')) { <span class="etiqueta revisar">Revisar</span> }
-              <input type="date" name="emision" [(ngModel)]="fechaEmision" required [attr.aria-invalid]="revisar('fechaEmision') || null" /></label>
-            <label>Vencimiento <input type="date" name="vencimiento" [(ngModel)]="fechaVencimiento" /></label>
-            <label>Imputación <input type="date" name="imputacion" [(ngModel)]="fechaImputacion" /></label>
+            @for (f of camposFecha; track f.campo) {
+              <label>{{ f.etiqueta }} @if (revisar(f.campo)) { <span class="etiqueta revisar">Revisar</span> }
+                <input [name]="f.nombre" [attr.name]="f.nombre" [(ngModel)]="textoFecha[f.campo]" placeholder="dd/mm/aaaa" inputmode="numeric" class="mono"
+                  [required]="f.campo === 'fechaEmision'" (keydown.enter)="$event.preventDefault(); fijarFecha(f.campo)" (blur)="fijarFecha(f.campo)"
+                  [attr.aria-invalid]="revisar(f.campo) || !!errorFecha()[f.campo] || null" [attr.aria-describedby]="errorFecha()[f.campo] ? 'error-' + f.nombre : null" />
+                @if (errorFecha()[f.campo]; as e) { <span class="error" [id]="'error-' + f.nombre">{{ e }}</span> }
+              </label>
+            }
           </div>
-          <p class="ayuda">El tipo se propone según lo que suele emitir el proveedor; se puede cambiar. El B lleva 99 en el primer tramo; el A se copia tal cual. Sin imputación, va la emisión.</p>
+          <p class="ayuda">El tipo se propone según lo que suele emitir el proveedor; se puede cambiar. El B lleva 99 en el primer tramo; el A se copia tal cual. Fechas: 5 es el día 5 de este mes; 2010, el 20/10 de este año. La imputación arranca en hoy; sin imputación, va la emisión.</p>
           @if (sucursales().length > 0) {
             <label>Destino de las líneas nuevas
               <select name="sucursalCabecera" [(ngModel)]="sucursalCabecera">
@@ -251,11 +257,21 @@ export class FacturaCompra {
   readonly proveedor = signal<ProveedorResumen | null>(null);
   readonly errorProveedor = signal<string | null>(null);
 
+  private readonly reloj = inject(RELOJ);
+
   tipoComprobante = '';
   numero = '';
+  /** Las fechas viajan a la API como aaaa-mm-dd; en pantalla se tipean abreviadas (Fix A). */
   fechaEmision = '';
   fechaVencimiento = '';
-  fechaImputacion = '';
+  fechaImputacion = hoyIso(this.reloj());
+  readonly camposFecha = [
+    { campo: 'fechaEmision', nombre: 'emision', etiqueta: 'Emisión' },
+    { campo: 'fechaVencimiento', nombre: 'vencimiento', etiqueta: 'Vencimiento' },
+    { campo: 'fechaImputacion', nombre: 'imputacion', etiqueta: 'Imputación' },
+  ] as const;
+  textoFecha: Record<CampoFecha, string> = { fechaEmision: '', fechaVencimiento: '', fechaImputacion: aTextoFecha(this.fechaImputacion) };
+  readonly errorFecha = signal<Partial<Record<CampoFecha, string>>>({});
   percepciones = { iva: 0, iibb: 0, municipal: 0, ganancias: 0 };
 
   textoArticulo = '';
@@ -488,10 +504,33 @@ export class FacturaCompra {
     this.totales.set(null);
   }
 
+  /** Fix A: interpreta lo tipeado; si no es una fecha, lo deja como está, lo dice y el campo queda sin fecha. */
+  fijarFecha(campo: CampoFecha) {
+    const r = interpretarFecha(this.textoFecha[campo], this.reloj());
+    this.errorFecha.update(e => ({ ...e, [campo]: 'error' in r ? r.error : undefined }));
+    this[campo] = 'iso' in r ? r.iso : '';
+    if ('iso' in r) this.textoFecha[campo] = aTextoFecha(r.iso);
+  }
+
+  /** Lo que muestra cada campo de fecha, a partir de las fechas de la factura (precarga del PDF y formulario nuevo). */
+  private mostrarFechas() {
+    this.textoFecha = {
+      fechaEmision: aTextoFecha(this.fechaEmision),
+      fechaVencimiento: aTextoFecha(this.fechaVencimiento),
+      fechaImputacion: aTextoFecha(this.fechaImputacion),
+    };
+    this.errorFecha.set({});
+  }
+
   private factura(): FacturaCompraNueva | null {
     const proveedor = this.proveedor();
     if (!proveedor) {
       this.errorRegistro.set('Elegí el proveedor de la factura.');
+      return null;
+    }
+    // Una fecha mal tipeada no viaja vacía en silencio: se corrige antes.
+    if (this.camposFecha.some(f => this.errorFecha()[f.campo])) {
+      this.errorRegistro.set('Corregí las fechas señaladas.');
       return null;
     }
     if (this.sinResolver.length > 0) {
@@ -592,6 +631,7 @@ export class FacturaCompra {
         this.cambiarTipo(f.tipoComprobante ?? '');
         this.fechaEmision = f.fechaEmision ?? '';
         this.fechaVencimiento = f.fechaVencimiento ?? '';
+        this.mostrarFechas();
         this.percepciones = {
           iva: f.percepcionIva ?? 0, iibb: f.percepcionIibb ?? 0,
           municipal: f.percepcionMunicipal ?? 0, ganancias: f.percepcionGanancias ?? 0,
@@ -643,7 +683,8 @@ export class FacturaCompra {
     this.numero = '';
     this.fechaEmision = '';
     this.fechaVencimiento = '';
-    this.fechaImputacion = '';
+    this.fechaImputacion = hoyIso(this.reloj());
+    this.mostrarFechas();
     this.percepciones = { iva: 0, iibb: 0, municipal: 0, ganancias: 0 };
     this.lineas = [];
     this.totales.set(null);
