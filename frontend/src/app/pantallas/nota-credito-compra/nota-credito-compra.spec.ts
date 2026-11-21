@@ -167,6 +167,48 @@ describe('NotaCreditoCompra · 057', () => {
     expect(boton('registrar')?.disabled).toBeTrue();
   });
 
+  /** Enter en un campo: un keydown cancelable, como el del navegador. Si nadie lo cancela, el navegador envía el form. */
+  function enter(campo: HTMLInputElement) {
+    const evento = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    campo.dispatchEvent(evento);
+    fixture.detectChanges();
+    return evento;
+  }
+
+  it('Enter en el importe confirma el valor, invalida el total y no registra', async () => {
+    conTotal();
+    await fixture.whenStable(); // NgForm registra los controles en una microtarea.
+    const registrar = spyOn(c(), 'registrar').and.callThrough();
+    const importe = raiz.querySelector('input[name="importeNeto"]') as HTMLInputElement;
+    importe.value = '35';
+    importe.dispatchEvent(new Event('input', { bubbles: true }));
+
+    expect(enter(importe).defaultPrevented).withContext('sin cancelar, el navegador envía el form').toBeTrue();
+    expect(c().importeNeto).toBe(35);
+    expect(raiz.querySelector('[data-totales]')).toBeNull();
+    expect(registrar).not.toHaveBeenCalled();
+  });
+
+  it('Enter en un campo con el total a la vista no registra: solo el botón registra', () => {
+    conTotal();
+    const percepcion = raiz.querySelector('input[name="pIva"]') as HTMLInputElement;
+
+    expect(enter(percepcion).defaultPrevented).toBeTrue();
+    expect(raiz.querySelector('[data-totales]')).not.toBeNull();
+    expect(boton('registrar')?.disabled).toBeFalse();
+  });
+
+  it('Enter en la cantidad de una línea devuelta no envía', () => {
+    conProveedorYFacturas();
+    c().clase = 'DEVOLUCION';
+    c().agregarArticulo(articulo);
+    servidor.expectOne('/api/articulos/100').flush({ id: 100, existencias: [] });
+    fixture.detectChanges();
+    const cantidad = raiz.querySelector('input[aria-label="Cantidad"]') as HTMLInputElement;
+
+    expect(enter(cantidad).defaultPrevented).toBeTrue();
+  });
+
   it('registrar manda la nota, deshabilita el botón mientras tanto y muestra que quedó registrada', () => {
     conTotal();
     boton('registrar')?.click();
