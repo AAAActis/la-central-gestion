@@ -18,18 +18,25 @@ describe('interpretarFecha', () => {
     ['31/10', '2026-10-31'],
     ['15/01', '2026-01-15'], // año actual: no se adivina el siguiente
     [' 20/10 ', '2026-10-20'],
+    // Respuesta de Javi (21/11): también - y . como separadores, y ddmmaaaa.
+    ['20-10', '2026-10-20'],
+    ['20.10', '2026-10-20'],
+    ['5-3-2025', '2025-03-05'],
+    ['20.10.2026', '2026-10-20'],
+    ['20102026', '2026-10-20'],
+    ['29022028', '2028-02-29'],
   ];
   for (const [texto, iso] of validas) {
     it(`«${texto}» es ${iso}`, () => expect(interpretarFecha(texto, hoy)).toEqual({ iso }));
   }
 
-  const inexistentes = ['31', '31/04', '31/02', '29/02', '29/02/2027', '00/10', '0', '20/13', '3200', '29/02/2100', '29/02/1900'];
+  const inexistentes = ['31', '31/04', '31/02', '29/02', '29/02/2027', '00/10', '0', '20/13', '3200', '29/02/2100', '29/02/1900', '29022027', '31-04', '00.10.2026'];
   for (const texto of inexistentes) {
     it(`«${texto}» es una fecha que no existe`, () =>
       expect(interpretarFecha(texto, hoy)).toEqual({ error: jasmine.stringContaining('no existe') }));
   }
 
-  const invalidas = ['123', '201026', '20102026', '20/10/26', '20-10', '20.10.2026', '20/10/2026/1', 'hoy', '1a'];
+  const invalidas = ['123', '201026', '2010202', '201020261', '20/10/26', '20-10/2026', '20.10-2026', '20/10.2026', '20,10', '20/10/2026/1', 'hoy', '1a'];
   for (const texto of invalidas) {
     it(`«${texto}» no es un formato aceptado`, () =>
       expect(interpretarFecha(texto, hoy)).toEqual({ error: jasmine.stringContaining('dd/mm/aaaa') }));

@@ -123,4 +123,62 @@ describe('FacturaCompra · fechas abreviadas', () => {
     expect(c().fechaImputacion).toBe('2026-11-19');
     expect(await mostrado('imputacion')).toBe('19/11/2026');
   });
+  // Respuesta de Javi (21/11): el vencimiento nunca es anterior a la emisión; se avisa y no se registra.
+  const ORDEN = 'El vencimiento no puede ser anterior a la emisión.';
+  const expoyer = { id: 3, codigo: 'PRV-3', razonSocial: 'Expoyer', cuit: null, activo: true };
+  const raiz = () => fixture.nativeElement as HTMLElement;
+
+  it('un vencimiento anterior a la emisión se avisa en el vencimiento y no se pide el total', () => {
+    c().proveedor.set(expoyer);
+    tipear('emision', '20/10');
+    enter('emision');
+    tipear('vencimiento', '19/10');
+    enter('vencimiento');
+    expect(raiz().querySelector('#error-vencimiento')?.textContent).toContain(ORDEN);
+    expect(campo('vencimiento').getAttribute('aria-invalid')).toBe('true');
+    c().registrar();
+    fixture.detectChanges();
+    expect(raiz().textContent).toContain('Corregí las fechas señaladas.');
+    servidor.expectNone('/api/facturas-compra/calculo');
+  });
+
+  it('el vencimiento el mismo día de la emisión vale', () => {
+    c().proveedor.set(expoyer);
+    tipear('emision', '20/10');
+    enter('emision');
+    tipear('vencimiento', '20/10');
+    enter('vencimiento');
+    expect(raiz().querySelector('#error-vencimiento')).toBeNull();
+    c().registrar();
+    expect(servidor.expectOne('/api/facturas-compra/calculo').request.body.fechaVencimiento).toBe('2026-10-20');
+  });
+
+  it('corregir la emisión saca el aviso del vencimiento', () => {
+    tipear('vencimiento', '19/10');
+    enter('vencimiento');
+    tipear('emision', '20/10');
+    enter('emision');
+    expect(raiz().querySelector('#error-vencimiento')?.textContent).withContext('cargada la emisión después').toContain(ORDEN);
+    tipear('emision', '18/10');
+    enter('emision');
+    expect(raiz().querySelector('#error-vencimiento')).toBeNull();
+  });
+
+  it('el aviso de orden no tapa un vencimiento mal tipeado', () => {
+    tipear('vencimiento', '123');
+    enter('vencimiento');
+    tipear('emision', '5');
+    enter('emision');
+    expect(raiz().querySelector('#error-vencimiento')?.textContent).toContain('dd/mm/aaaa');
+  });
+
+  it('fechas fuera de orden que no pasaron por el campo (precarga del PDF) tampoco se registran', () => {
+    c().proveedor.set(expoyer);
+    c().fechaEmision = '2027-02-03';
+    c().fechaVencimiento = '2027-02-01';
+    c().registrar();
+    fixture.detectChanges();
+    expect(raiz().querySelector('#error-vencimiento')?.textContent).toContain(ORDEN);
+    servidor.expectNone('/api/facturas-compra/calculo');
+  });
 });
