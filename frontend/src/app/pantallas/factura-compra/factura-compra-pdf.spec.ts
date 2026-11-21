@@ -93,8 +93,12 @@ describe('FacturaCompra · HU-UI-11 · carga desde PDF', () => {
     expect(raiz().textContent).toContain('Repuestos Ficticios');
     expect(c.tipoComprobante).toBe('A'); // el del PDF, no el habitual del proveedor (B)
     expect(campo('numero').value).toBe('0042-00001234');
-    expect(campo('emision').value).toBe('2027-02-03');
-    expect(campo('vencimiento').value).toBe('2027-03-10');
+    // Fix A: se muestran como dd/mm/aaaa y viajan como aaaa-mm-dd; el vencimiento del PDF sigue editable.
+    expect(campo('emision').value).toBe('03/02/2027');
+    expect(campo('vencimiento').value).toBe('10/03/2027');
+    expect(campo('vencimiento').readOnly).toBeFalse();
+    expect(c.fechaEmision).toBe('2027-02-03');
+    expect(c.fechaVencimiento).toBe('2027-03-10');
     expect(campo('pIva').valueAsNumber).toBe(2000.25);
     expect(campo('pIibb').valueAsNumber).toBe(1000.5);
     expect(campo('pMunicipal').valueAsNumber).toBe(0);
