@@ -12,6 +12,7 @@ describe('interpretarFecha', () => {
     ['5/3', '2026-03-05'],
     ['20/10/2025', '2025-10-20'],
     ['29/02/2028', '2028-02-29'],
+    ['29/02/2000', '2000-02-29'], // divisible por 400: bisiesto
     ['30', '2026-11-30'],
     ['30/04', '2026-04-30'],
     ['31/10', '2026-10-31'],
@@ -22,7 +23,7 @@ describe('interpretarFecha', () => {
     it(`«${texto}» es ${iso}`, () => expect(interpretarFecha(texto, hoy)).toEqual({ iso }));
   }
 
-  const inexistentes = ['31', '31/04', '31/02', '29/02', '29/02/2027', '00/10', '0', '20/13', '3200'];
+  const inexistentes = ['31', '31/04', '31/02', '29/02', '29/02/2027', '00/10', '0', '20/13', '3200', '29/02/2100', '29/02/1900'];
   for (const texto of inexistentes) {
     it(`«${texto}» es una fecha que no existe`, () =>
       expect(interpretarFecha(texto, hoy)).toEqual({ error: jasmine.stringContaining('no existe') }));
@@ -40,7 +41,9 @@ describe('interpretarFecha', () => {
     expect(interpretarFecha('5', new Date(2027, 0, 2))).toEqual({ iso: '2027-01-05' }));
 
   it('hoy y el texto salen de la fecha local, no de UTC', () => {
+    // Una de las dos cruza el día en UTC en cualquier huso distinto de UTC+0.
     expect(hoyIso(hoy)).toBe('2026-11-19');
+    expect(hoyIso(new Date(2026, 10, 19, 0, 30))).toBe('2026-11-19');
     expect(aTextoFecha('2026-03-05')).toBe('05/03/2026');
     expect(aTextoFecha('')).toBe('');
   });

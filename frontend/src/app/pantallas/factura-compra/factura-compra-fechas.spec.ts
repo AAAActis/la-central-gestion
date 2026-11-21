@@ -98,6 +98,23 @@ describe('FacturaCompra · fechas abreviadas', () => {
     expect(cuerpo.fechaImputacion).toBe('2026-11-19');
   });
 
+  it('cargar otra factura después de una fecha mal tipeada saca el aviso y deja pedir el total', () => {
+    tipear('emision', '31/02');
+    enter('emision');
+    c().nueva();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('#error-emision')).toBeNull();
+    c().proveedor.set({ id: 3, codigo: 'PRV-3', razonSocial: 'Expoyer', cuit: null, activo: true });
+    c().registrar();
+    servidor.expectOne('/api/facturas-compra/calculo');
+  });
+
+  it('la emisión es obligatoria; el vencimiento y la imputación, no', () => {
+    expect(campo('emision').required).toBeTrue();
+    expect(campo('vencimiento').required).toBeFalse();
+    expect(campo('imputacion').required).toBeFalse();
+  });
+
   it('cargar otra factura vuelve a poner hoy en la imputación', async () => {
     tipear('imputacion', '01/11');
     enter('imputacion');
