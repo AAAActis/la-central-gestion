@@ -356,8 +356,9 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 - #183, #184 y #185 mergeados a `develop` (`9f387c2`). Suite completa de backend sobre `9f387c2`: **806/806** (1 h 1 m).
 - PR, uno por fix, base `develop`, con OK de Javi (20/11): **B #186** `fix/fco-layout-detalle` (frontend 302);
   **A #187** `fix/fco-fechas-abreviadas` (341); **C #188** `fix/nca-enter-confirma-valor` (304; lleva este ESTADO y la bitácora).
-  A y B tocan `factura-compra.ts`; el diff del A aplica limpio sobre el B. Falta: revisión de Javi y `verificador-tdd`
-  (uno por PR); `auditor-persistencia` no aplica.
+  A y B tocan `factura-compra.ts`; el diff del A aplica limpio sobre el B. **`verificador-tdd`: APTO los tres** (21/11, NO APTO
+  en la ronda 1 de cada uno, arreglado solo con tests: #186 `bfb1484` 304, #187 `617b857` 346, #188 `af94316` 305).
+  `auditor-persistencia` no aplica. **Sigue:** revisión y merge de Javi, orden #186 → #187; #188 independiente.
 - **Deuda:** la suite contra `public` de `lacentral_test` tarda 1 h 1 m (contra `nc057_fuente`, 11 m 55 s): copiar `public`
   para cada prueba lleva 5 a 28 s por esquema. Lo ve el equipo.
 - **Fix D:** en `lacentral_test` la búsqueda anda (30/30 filtradas). En `lacentral_demo`: `pg_trgm` 1.6, `lacentral_javi`

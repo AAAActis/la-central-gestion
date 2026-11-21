@@ -1554,3 +1554,28 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - Commits: C `32891b5` (test) y `a0f2d6e`; A `9af8f96` (test) y `5c94c56`; B `b173692` (test) y `cad5ba6`. Frontend: mismo contenido que las corridas de arriba (C 304, A 341, B 302).
 - PR: B #186, A #187 (cita al #186; el diff del A aplica limpio sobre el B), C con este commit de documentos. `verificador-tdd` no invocado todavía; `auditor-persistencia` no aplica (solo frontend).
 - PR del C: #188. Abiertos: #186 (B), #187 (A), #188 (C).
+
+## 21/11/2026 · verificador-tdd sobre #186, #187 y #188
+
+**Instrucción recibida (verbatim):**
+> Sí, lanzalo
+
+(Respuesta a «¿Lanzo el verificador-tdd sobre los tres PR, de a uno?».)
+
+**Plan:**
+1. Sacar worktrees (R1 de los verificadores).
+2. `verificador-tdd` de a uno: #186 (B), #187 (A), #188 (C), cada uno acotado a sus dos commits, con la suite de backend sobre `9f387c2` y la de frontend de cada rama.
+3. NO APTO → arreglo y re-verificación acotada al arreglo (hasta 3 rondas). Resultados en cada PR, bitácora y ESTADO.
+
+**Estado:** terminada (los tres APTO; falta la revisión y el merge de Javi, orden #186 → #187)
+- Worktrees: solo el principal. `verificador-tdd` lanzado sobre #186 (alcance `b173692`, `cad5ba6`; backend 806 sobre `9f387c2`, frontend 302).
+- #186 ronda 1: **NO APTO**. Rojo real en `b173692` (razón correcta) y verde en `cad5ba6`, movimiento puro confirmado (`diff -w`), frontend 302 corrido por el verificador sobre `cad5ba6`. Sobreviven dos mutaciones: devolver solo «Ganancias» a datos generales, y quitar la `section.tarjeta` propia. Arreglo: el test exige los cuatro inputs de percepciones dentro de una `section.tarjeta` propia, distinta de la de datos generales y de la del detalle.
+- #186: arreglo `bfb1484` (solo test): las cuatro percepciones en su tarjeta propia, distinta de generales y detalle, y en orden también con el total a la vista. M6 → 1 rojo, M7 → 3 rojos, producción de `9f387c2` → 3 rojos. Frontend completo sobre `bfb1484`: `TOTAL: 304 SUCCESS`. Push y comentario en el #186. Ronda 2 acotada a `bfb1484`.
+- #186 ronda 2 (alcance `bfb1484`): **APTO**. 3 rojos con la producción de `9f387c2`, 8 mutaciones muertas, suites aceptadas (304 / 806). No bloqueante: `enOrden` no distingue «después» de «anidado dentro». `verificador-tdd` lanzado sobre #187 (alcance `9af8f96`, `5c94c56`).
+- #187 ronda 1: **NO APTO**. Rojo real por aserción (con stub neutro: 40 con error de 71; en crudo no compila, módulo nuevo). Sobreviven: (1) `bisiesto` sin la regla del siglo (29/02/2100 pasaría); (2) `mostrarFechas()` sin `errorFecha.set({})` (un 31/02 seguido de «Cargar otra» o de un PDF deja el aviso y bloquea el total); (3) `[required]` de emisión en `false`. No bloqueante: el test de hora local solo discrimina al oeste de UTC. Arreglo, solo test: años de siglo, error y después `nueva()`, `required` solo en emisión, y hoy a las 00:30 además de las 23:30.
+- #187: arreglo `617b857` (solo test): 29/02/2100 y 1900 inexistentes, 2000 válido; 31/02 y después `nueva()` deja pedir el total; `required` solo en emisión; hoy también a las 00:30. Mutaciones: siglo → 2 rojos, 400 → 1, sin limpiar errores → 1, `required` → 1, `getUTCDate` → 4. Frontend completo sobre `617b857`: `TOTAL: 346 SUCCESS`. Push y comentario. Ronda 2 acotada a `617b857`.
+- #187 ronda 2 (alcance `617b857`): **APTO**. Mutaciones de siglo, 400, limpiar errores, `required` (false y true) y `getUTCDate`: todas rojas por aserción. Suites aceptadas (346 / 806). `verificador-tdd` lanzado sobre #188 (alcance `32891b5`, `a0f2d6e`).
+- #188 ronda 1: **NO APTO**. Rojo real en `32891b5` (3 por aserción), 8 de 9 mutaciones muertas, frontend 304 corrido por el verificador sobre `0c864b4`. Sobrevive la guarda en `true` (cancelar el Enter de cualquier elemento): nada prueba que un Enter sobre un botón o un `<select>` del form NO se cancele, y eso le quitaría al teclado activar «Calcular el total» o «Registrar». Arreglo, solo test.
+- #188: arreglo `af94316` (solo test): Enter sobre «Calcular el total», «Registrar» y el select de clase no se cancela; con la guarda en `true`, 3 aserciones rojas. Frontend completo sobre `af94316`: `TOTAL: 305 SUCCESS`. Push y comentario. Ronda 2 acotada a `af94316`.
+- #188 ronda 2 (alcance `af94316`): **APTO**. Guarda en `true`, solo excluir botones y `instanceof HTMLElement`: las tres rojas por aserción. Suites aceptadas (305 / 806).
+- Cierre: **#186, #187 y #188 en APTO** (dos rondas cada uno). Frontend sobre el HEAD de cada uno: #186 `bfb1484` 304, #187 `617b857` 346, #188 `af94316` 305. Backend 806 sobre `9f387c2`. Este commit de documentos queda fuera de la verificación (solo `docs/`).
