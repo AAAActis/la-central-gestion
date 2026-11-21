@@ -28,6 +28,7 @@ interface LineaEnCarga {
 
 interface Sucursal { id: number; nombre: string; }
 type CampoFecha = 'fechaEmision' | 'fechaVencimiento' | 'fechaImputacion';
+const VENCIMIENTO_ANTERIOR = 'El vencimiento no puede ser anterior a la emisión.';
 
 /** Los destinos de una línea: las existencias de la ficha, sin Reclamos (057 CA-008). */
 const destinos = (f: FichaArticulo): Sucursal[] =>
@@ -510,6 +511,15 @@ export class FacturaCompra {
     this.errorFecha.update(e => ({ ...e, [campo]: 'error' in r ? r.error : undefined }));
     this[campo] = 'iso' in r ? r.iso : '';
     if ('iso' in r) this.textoFecha[campo] = aTextoFecha(r.iso);
+    this.revisarOrdenFechas();
+  }
+
+  /** El vencimiento nunca es anterior a la emisión (Javi, 21/11): se avisa en el vencimiento y bloquea el registro. */
+  private revisarOrdenFechas() {
+    const actual = this.errorFecha().fechaVencimiento;
+    if (actual && actual !== VENCIMIENTO_ANTERIOR) return; // lo mal tipeado se corrige primero
+    const fuera = !!this.fechaEmision && !!this.fechaVencimiento && this.fechaVencimiento < this.fechaEmision;
+    this.errorFecha.update(e => ({ ...e, fechaVencimiento: fuera ? VENCIMIENTO_ANTERIOR : undefined }));
   }
 
   /** Lo que muestra cada campo de fecha, a partir de las fechas de la factura (precarga del PDF y formulario nuevo). */
@@ -528,7 +538,8 @@ export class FacturaCompra {
       this.errorRegistro.set('Elegí el proveedor de la factura.');
       return null;
     }
-    // Una fecha mal tipeada no viaja vacía en silencio: se corrige antes.
+    // Una fecha mal tipeada no viaja vacía en silencio: se corrige antes. La precarga del PDF no pasa por los campos.
+    this.revisarOrdenFechas();
     if (this.camposFecha.some(f => this.errorFecha()[f.campo])) {
       this.errorRegistro.set('Corregí las fechas señaladas.');
       return null;

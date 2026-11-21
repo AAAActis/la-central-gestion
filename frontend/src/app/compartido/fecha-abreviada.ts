@@ -15,14 +15,15 @@ const bisiesto = (a: number) => a % 4 === 0 && (a % 100 !== 0 || a % 400 === 0);
 const diasDelMes = (a: number, m: number) => m === 2 ? (bisiesto(a) ? 29 : 28) : [4, 6, 9, 11].includes(m) ? 30 : 31;
 
 /**
- * Fix A: d o dd (día; mes y año actuales), ddmm (año actual), dd/mm (año actual) o dd/mm/aaaa.
- * Cualquier otra forma es inválida. Vacío es «sin fecha».
+ * Fix A: d o dd (día; mes y año actuales), ddmm (año actual), ddmmaaaa, dd/mm (año actual) o dd/mm/aaaa.
+ * El separador puede ser /, - o ., el mismo en toda la fecha. Cualquier otra forma es inválida. Vacío es «sin fecha».
  */
 export function interpretarFecha(texto: string, hoy: Date): { iso: string } | { error: string } {
   const t = texto.trim();
   if (!t) return { iso: '' };
-  const partes = /^(\d{1,2})$/.exec(t) ?? /^(\d{2})(\d{2})$/.exec(t) ?? /^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?$/.exec(t);
-  if (!partes) return { error: `«${t}» no es una fecha: escribí d, ddmm, dd/mm o dd/mm/aaaa.` };
+  const partes = /^(\d{1,2})$/.exec(t) ?? /^(\d{2})(\d{2})(\d{4})?$/.exec(t)
+    ?? /^(\d{1,2})([/.-])(\d{1,2})(?:\2(\d{4}))?$/.exec(t)?.filter((_, i) => i !== 2);
+  if (!partes) return { error: `«${t}» no es una fecha: escribí d, ddmm, ddmmaaaa, dd/mm o dd/mm/aaaa (con /, - o .).` };
   const d = Number(partes[1]);
   const m = partes[2] ? Number(partes[2]) : hoy.getMonth() + 1;
   const a = partes[3] ? Number(partes[3]) : hoy.getFullYear();
