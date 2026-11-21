@@ -1526,7 +1526,7 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 5. Fix B: reordenar bloques del formulario.
 6. Cada fix en su rama, sin commit hasta el OK de Javi; ESTADO, bitácora, Graphify.
 
-**Estado:** en curso
+**Estado:** terminada (D queda abierto: falta el dato de Javi; ver ESTADO)
 - Arranque: `git fetch --all --prune`; `develop` sin commits nuevos en `origin/develop`. `LACENTRAL_TEST_PG` → `lacentral_test`, usuario `lacentral_javi` (permitido).
 - Fix D, paso 1 (`lacentral_test`): filtrada `Busqueda|BusquedaPaginadaApiPostgreSqlTests|ArticulosApiPostgreSqlTests` sobre `develop` `9f387c2`, `public`: `Correctas! - Con error: 0, Superado: 30, Total: 30`. La búsqueda funciona con datos conocidos: el código no falla ahí.
 - Fix D, paso 2 (`lacentral_demo`, solo lectura con `lacentral_javi`): `pg_trgm` 1.6 en `public` (`similarity()` responde); `lacentral_javi` tiene SELECT e INSERT en las 30 tablas (el `42501` no se reproduce hoy). **Datos de la demo: 31 artículos, 6 proveedores y 0 clientes.** Clientes «sin resultados» en la demo = no hay clientes cargados. Usuarios de la demo: `admin.demo` (ADMINISTRADOR) y `operador.demo` (OPERADOR); los dos pueden buscar artículos. La aproximada compara contra el nombre entero (`similarity > 0,3`): «fltro» da 0 en la demo; es la regla vigente, no se toca. El log de la API contra la demo no lo puedo ver desde acá (la API de la demo no corre en esta máquina).
@@ -1548,8 +1548,9 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 2. Por fix, en su rama: `stash pop`, commit del test y commit de producción por separado (rojo visible), push, PR contra `develop`.
 3. Bitácora y ESTADO en el PR del C (uno solo, para que los tres PR no choquen en los documentos). Graphify.
 
-**Estado:** en curso
+**Estado:** terminada (falta la revisión de Javi y el `verificador-tdd` de cada PR)
 - `git fetch`: `origin/develop` sin commits nuevos.
 - **Suite completa de backend sobre `develop` `9f387c2`** (`public` de `lacentral_test`, base de las tres ramas, que no tocan `backend/`): `Correctas! - Con error: 0, Superado: 806, Omitido: 0, Total: 806, Duración: 1 h 1 m`. Cierra también la suite sobre `develop` pendiente del bloque del 19/11. Tardó 5 veces más que contra `nc057_fuente` (11 m 55 s): copiar `public` para cada prueba lleva entre 5 y 28 s por esquema (visto en `pg_stat_activity`).
 - Commits: C `32891b5` (test) y `a0f2d6e`; A `9af8f96` (test) y `5c94c56`; B `b173692` (test) y `cad5ba6`. Frontend: mismo contenido que las corridas de arriba (C 304, A 341, B 302).
 - PR: B #186, A #187 (cita al #186; el diff del A aplica limpio sobre el B), C con este commit de documentos. `verificador-tdd` no invocado todavía; `auditor-persistencia` no aplica (solo frontend).
+- PR del C: #188. Abiertos: #186 (B), #187 (A), #188 (C).

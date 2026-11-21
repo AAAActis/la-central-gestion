@@ -355,7 +355,7 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 **21/11 (madrugada) · correcciones de cierre (spec de Javi): A, B y C en PR; D diagnosticado sin código.**
 - #183, #184 y #185 mergeados a `develop` (`9f387c2`). Suite completa de backend sobre `9f387c2`: **806/806** (1 h 1 m).
 - PR, uno por fix, base `develop`, con OK de Javi (20/11): **B #186** `fix/fco-layout-detalle` (frontend 302);
-  **A #187** `fix/fco-fechas-abreviadas` (341); **C** `fix/nca-enter-confirma-valor` (304; lleva este ESTADO y la bitácora).
+  **A #187** `fix/fco-fechas-abreviadas` (341); **C #188** `fix/nca-enter-confirma-valor` (304; lleva este ESTADO y la bitácora).
   A y B tocan `factura-compra.ts`; el diff del A aplica limpio sobre el B. Falta: revisión de Javi y `verificador-tdd`
   (uno por PR); `auditor-persistencia` no aplica.
 - **Deuda:** la suite contra `public` de `lacentral_test` tarda 1 h 1 m (contra `nc057_fuente`, 11 m 55 s): copiar `public`
