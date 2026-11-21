@@ -352,6 +352,21 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
+**21/11 (madrugada) · correcciones de cierre (spec de Javi): A, B y C en PR; D diagnosticado sin código.**
+- #183, #184 y #185 mergeados a `develop` (`9f387c2`). Suite completa de backend sobre `9f387c2`: **806/806** (1 h 1 m).
+- PR, uno por fix, base `develop`, con OK de Javi (20/11): **B #186** `fix/fco-layout-detalle` (frontend 302);
+  **A #187** `fix/fco-fechas-abreviadas` (341); **C** `fix/nca-enter-confirma-valor` (304; lleva este ESTADO y la bitácora).
+  A y B tocan `factura-compra.ts`; el diff del A aplica limpio sobre el B. Falta: revisión de Javi y `verificador-tdd`
+  (uno por PR); `auditor-persistencia` no aplica.
+- **Deuda:** la suite contra `public` de `lacentral_test` tarda 1 h 1 m (contra `nc057_fuente`, 11 m 55 s): copiar `public`
+  para cada prueba lleva 5 a 28 s por esquema. Lo ve el equipo.
+- **Fix D:** en `lacentral_test` la búsqueda anda (30/30 filtradas). En `lacentral_demo`: `pg_trgm` 1.6, `lacentral_javi`
+  con todos los permisos, **0 clientes**, 31 artículos, 6 proveedores. Falta de Javi: qué pantalla, qué texto y qué usuario
+  dieron «sin resultados», y con qué rol de PostgreSQL conecta la API de la demo (el `42501`).
+- **Pendientes de Javi (Fix A):** `-` y `.` como separadores; `ddmmaaaa`; vencimiento anterior a emisión ¿bloquea o avisa?
+- Abierto del 19/11: borrar `nc057_fuente` (`backend/db/pruebas/nc057_fuente_borrado.sql`) y el DoD 10 de la 057 en
+  `lacentral_demo`.
+
 **19/11 (noche) · el 11 está en las tres bases (E11 cerrada); #183, #184 y #185 esperan la revisión de Javi.**
 - El 11 en `public` de `lacentral_test`, `lacentral_demo` y `lacentral` (Santi, 19/11; `s11 = 1` en las tres). Avisado en el #183.
 - Pruebas que faltaban, solo test, rojas por mutación de producción: #184 `4d134e4` (pedido sin «archivo» → 400; PDF de más
