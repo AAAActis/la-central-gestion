@@ -370,7 +370,7 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 - **Queda:**
   - Javi mergea el #189.
   - Santi corre la suite completa en `develop` después del merge.
-  - Javi decide sobre el borrador de la issue de timeouts (`docs/sprint06/BORRADOR-ISSUE-TIMEOUTS-PG.md`, sin abrir).
+  - Issue de timeouts de la base compartida abierta: #190 (22/11).
   - Recorrido a mano en `lacentral_demo`.
   - Rendimiento del filtro por palabra: recorre la tabla entera, sin medir.
 

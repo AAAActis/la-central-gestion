@@ -1661,3 +1661,13 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - `verificador-tdd` ronda 2 sobre `c5ef0ff..764c56e`: **APTO**. 6 mutaciones de acentos muertas (Ó, Á, Ü en proveedores; Ó, É, Ú en clientes), incluidas las equivalentes a M6 y C4; verde `Superado: 3`. Puntuación cerrada por lectura (`ConsultarProveedoresUseCase.cs:22`, `ConsultarClientesUseCase.cs:21`). La suite completa sobre `764c56e` no corrió: el permiso del subagente la rechazó y no la eludió; la última completa sigue siendo la de `c5ef0ff`. Lanzo `auditor-persistencia` sobre `9f387c2..764c56e`.
 - `auditor-persistencia` sobre `9f387c2..764c56e`: **APTO**. Suite completa sobre `764c56e` corrida por el auditor: `Correctas! - Con error: 0, Superado: 809, Omitido: 0, Total: 809, Duración: 16 m 30 s`. ctype `en_US.utf8` en `lacentral`, `lacentral_demo` y `lacentral_test`; `%` y `_` no son comodines; 0 esquemas `pr110_test_%` huérfanos. Riesgo sin medir: el filtro por palabra no usa el índice GIN.
 - Cuerpo del PR #189 actualizado con los dos veredictos y la suite verde. ESTADO actualizado. El borrador de la issue suma la tercera corrida.
+
+## 22/11/2026 · Abrir la issue de timeouts de la base compartida
+
+**Instrucción recibida (verbatim):**
+> Sí, abrila
+
+**Plan:** 1. Abrir la issue con el borrador `docs/sprint06/BORRADOR-ISSUE-TIMEOUTS-PG.md`. 2. ESTADO y bitácora.
+
+**Estado:** terminada. Nada abierto en esta tarea.
+- Issue #190 abierta (https://github.com/AAAActis/la-central-gestion/issues/190) con el texto del borrador, sin cambios. Borrador local borrado: su contenido está en la issue.
