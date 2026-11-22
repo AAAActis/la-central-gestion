@@ -352,6 +352,28 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
+**21/11 (noche, 2) · Fix D en PR: `fix/busquedas-por-palabra`.**
+- Javi eligió (21/11) que proveedores y clientes encuentren la razón social que contiene cada palabra escrita, sin
+  acentos ni mayúsculas, como artículos. Lo parecido (pg_trgm) sale después.
+- Commits: `cd1c48f` (3 tests contra PostgreSQL, rojo por aserción) y `c5ef0ff` (código).
+- **Suite completa: ninguna de las dos corridas dio verde.**
+  - Sobre los cambios sin commitear: 807/809.
+  - Sobre `c5ef0ff`: 804/809.
+  - Todos los fallos son `TimeoutException` de lectura de Npgsql y ninguno se repite entre corridas. Filtrados, pasan.
+  - **Excepción autorizada por Javi**: el PR se abre igual. Santi corre la suite completa en `develop` después del merge.
+- **`764c56e`** (solo test): una palabra suelta por cada letra acentuada (á é í ó ú ü). Arregla el NO APTO de la
+  ronda 1 del `verificador-tdd`: sin la normalización de acentos, ningún test daba rojo porque pg_trgm encontraba igual.
+- **Suite completa sobre `764c56e`: 809/809 verde en 16 m 30 s**, sin timeouts. La corrió el `auditor-persistencia`.
+- **Verificadores:**
+  - `verificador-tdd`: NO APTO en la ronda 1 y APTO en la ronda 2.
+  - `auditor-persistencia`: APTO. Las tres bases tienen ctype `en_US.utf8`; `%` y `_` no actúan como comodines.
+- **Queda:**
+  - Javi mergea el #189.
+  - Santi corre la suite completa en `develop` después del merge.
+  - Javi decide sobre el borrador de la issue de timeouts (`docs/sprint06/BORRADOR-ISSUE-TIMEOUTS-PG.md`, sin abrir).
+  - Recorrido a mano en `lacentral_demo`.
+  - Rendimiento del filtro por palabra: recorre la tabla entera, sin medir.
+
 **21/11 (noche) · respuestas de Javi: Fix A ampliado en el #187; Fix D reproducido.**
 - **Decisiones de Javi (21/11):** las fechas aceptan `-` y `.` como separadores y `ddmmaaaa`; el vencimiento **nunca** es
   anterior a la emisión: se avisa y bloquea el registro.
