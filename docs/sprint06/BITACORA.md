@@ -1507,3 +1507,167 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - ESTADO (E11 cerrada, fila #182, PRÓXIMA SESIÓN). Push de `feature/182-nota-credito-pdf` y `feature/182-nota-credito-anulacion`; comentario en #184 y #185.
 
 **BLOQUEADO EN:** revisión y merge de #183 → #184 → #185 (Javi). Después: suite completa sobre `develop` y `nc057_fuente_borrado.sql`.
+
+## 20/11/2026 23:21 · Correcciones de cierre del Sprint 6: fechas y layout de FCO, Enter en NCA, búsquedas
+
+**Instrucción recibida (verbatim):**
+> (Especificación pegada por Javi, completa:) «Especificación: correcciones de FCO, NCA y búsquedas (cierre Sprint 6)». Reglas generales: un fix = una rama `fix/<descripcion>` desde `develop` = un PR; NO commitear ni pushear sin OK de Javi; nunca tocar `lacentral`, persistencia solo contra `lacentral_test`; sin migraciones EF (si hace falta esquema, DETENER); no inventar datos de negocio; al terminar cada fix compilar, correr backend y frontend, actualizar ESTADO y BITACORA, refrescar Graphify e informar.
+> Fix A · `fix/fco-fechas-abreviadas`: imputación arranca con la fecha actual (reloj inyectable); emisión y vencimiento aceptan al Enter o blur: 1–2 dígitos = día (mes y año actuales); 4 dígitos = ddmm (año actual); `dd/mm` = año actual; `dd/mm/aaaa` se conserva; todo lo demás inválido (pendiente de Javi: `-`, `.` y `ddmmaaaa`); fecha inexistente con mensaje claro conservando lo tipeado; Enter interpreta y NO envía; a la API viaja `aaaa-mm-dd`; vencimiento editable; pendiente de Javi: vencimiento anterior a emisión ¿bloquea o avisa? Pruebas con hoy = 19/11/2026: los cuatro ejemplos, 31/02, 29/02 de 2027 y 2028, cambio de año, meses de 30 y 31, inválidas, Enter sin envío.
+> Fix B · `fix/fco-layout-detalle`: orden 1) datos generales, 2) detalle de artículos, 3) percepciones, 4) totales y acciones; sin cambiar operaciones ni validaciones; breakpoints existentes.
+> Fix C · `fix/nca-enter-confirma-valor`: verificar la hipótesis del envío implícito del `<form (ngSubmit)="registrar()">`; Enter en un numérico confirma el valor sin registrar; registrar solo con el botón; mantener CA-007; no guardar sola; pruebas de componente.
+> Fix D · `fix/busquedas-diagnostico`: diagnosticar antes de tocar código (lacentral_test, lacentral_demo con log, GRANTs de `lacentral_javi` y `pg_trgm`, usuario y rol); corregir solo si falla en `lacentral_test`.
+> Fuera de la spec: H1 vencimiento según proveedor, H2 sucursal destinataria en PDF.
+
+**Plan:**
+1. Arranque: el bloque anterior (19/11) quedó en curso esperando el merge de #183→#184→#185, que ya está en `develop` (`9f387c2`). `git fetch`: `develop` = `origin/develop`.
+2. Fix D: diagnóstico sin código (pasos 1 a 3).
+3. Fix C: reproducir, prueba en rojo, arreglo.
+4. Fix A: parseo de fechas con reloj inyectable, pruebas con hoy = 19/11/2026.
+5. Fix B: reordenar bloques del formulario.
+6. Cada fix en su rama, sin commit hasta el OK de Javi; ESTADO, bitácora, Graphify.
+
+**Estado:** terminada (D queda abierto: falta el dato de Javi; ver ESTADO)
+- Arranque: `git fetch --all --prune`; `develop` sin commits nuevos en `origin/develop`. `LACENTRAL_TEST_PG` → `lacentral_test`, usuario `lacentral_javi` (permitido).
+- Fix D, paso 1 (`lacentral_test`): filtrada `Busqueda|BusquedaPaginadaApiPostgreSqlTests|ArticulosApiPostgreSqlTests` sobre `develop` `9f387c2`, `public`: `Correctas! - Con error: 0, Superado: 30, Total: 30`. La búsqueda funciona con datos conocidos: el código no falla ahí.
+- Fix D, paso 2 (`lacentral_demo`, solo lectura con `lacentral_javi`): `pg_trgm` 1.6 en `public` (`similarity()` responde); `lacentral_javi` tiene SELECT e INSERT en las 30 tablas (el `42501` no se reproduce hoy). **Datos de la demo: 31 artículos, 6 proveedores y 0 clientes.** Clientes «sin resultados» en la demo = no hay clientes cargados. Usuarios de la demo: `admin.demo` (ADMINISTRADOR) y `operador.demo` (OPERADOR); los dos pueden buscar artículos. La aproximada compara contra el nombre entero (`similarity > 0,3`): «fltro» da 0 en la demo; es la regla vigente, no se toca. El log de la API contra la demo no lo puedo ver desde acá (la API de la demo no corre en esta máquina).
+- Fix D: sin cambio de código (no falla en `lacentral_test`). No se crea la rama `fix/busquedas-diagnostico`.
+- Fix C (`fix/nca-enter-confirma-valor`, sin commit): hipótesis confirmada en el código. El `<form (ngSubmit)="registrar()">` de la NCA no cancela el Enter de ningún numérico (importe, percepciones, cantidades): el navegador hace envío implícito por el botón submit «Registrar». Con «35» tipeado, el `(input)` ya invalidó el total y el botón está deshabilitado: Enter no hace nada. Con el total a la vista y sin tocar el valor, Enter **registra** sin pasar por el botón. Arreglo: `(keydown.enter)` en el form cancela el Enter que sale de un `<input>` (`noEnviarConEnter`). Tres pruebas de componente (importe con 35, percepción con total a la vista, cantidad de una línea devuelta): rojas sin el arreglo (`defaultPrevented` false, 3 con error de 36), verdes con él: `TOTAL: 36 SUCCESS` (specs de `nota-credito-compra`). Guardado en `git stash` «fix C» hasta el OK.
+- Fix A (`fix/fco-fechas-abreviadas`, sin commit): parser puro `compartido/fecha-abreviada.ts` (`interpretarFecha`, `hoyIso` con la fecha LOCAL, `aTextoFecha`) y reloj `RELOJ` (`InjectionToken` con fábrica `() => new Date()`). Emisión, vencimiento **e imputación** pasan a texto `dd/mm/aaaa` (la spec nombra los tres como inputs a pasar a texto; la imputación usa el mismo parser); el modelo sigue en `aaaa-mm-dd`. Enter cancela el envío e interpreta; blur interpreta. Fecha inexistente o formato fuera de la tabla: mensaje en el campo (`aria-invalid`, `aria-describedby`), se conserva lo tipeado, el campo queda sin fecha y `factura()` no pide el total («Corregí las fechas señaladas»): un 31/02 en vencimiento no viaja como null en silencio. Imputación = hoy al abrir y en `nueva()` (también al cargar un PDF).
+- Fix A, pruebas: tabla del parser con hoy = 19/11/2026 23:30 (33: los cuatro ejemplos, 31/02, 29/02 de 2026/2027 vs 2028, enero con hoy = 02/01/2027, 30/04 vs 31/04, 31 de noviembre, inválidas `123`, `201026`, `20102026`, `20/10/26`, `20-10`, `20.10.2026`…). Cinco mutaciones del parser, cada una roja (sin bisiesto, todos de 31, `toISOString`, sin `ddmm`, aceptar `-`). Componente (`factura-compra-fechas.spec.ts`, 7) y cinco mutaciones del cableado, 1 roja cada una (sin guarda, sin `preventDefault`, `nueva()` sin hoy, PDF sin mostrar, error que conserva el ISO viejo). Expectativa cambiada (no aflojada) en `factura-compra-pdf.spec.ts`: la emisión y el vencimiento del PDF se muestran `03/02/2027` y `10/03/2027` y viajan `aaaa-mm-dd`. Frontend completo: `TOTAL: 341 SUCCESS`; `ng build` sin errores. Guardado en `git stash` «fix A».
+- Fix A, pendiente de Javi (no implementado): `-` y `.` como separadores; `ddmmaaaa` de 8 dígitos; vencimiento anterior a emisión ¿bloquea o avisa?
+- Fix B (`fix/fco-layout-detalle`, sin commit): movimiento puro del `<fieldset>` de percepciones, sin cambiarlo por dentro, a su propia `section.tarjeta` entre «Artículos comprados» y los totales y acciones. Orden: datos generales → detalle → percepciones → totales y acciones. La app no tiene breakpoints de ancho (solo `login` a 760 px y `prefers-reduced-motion`); los bloques usan `flex-wrap` y `.tabla-caja` con scroll: no se agregó ninguno. Prueba `factura-compra-orden.spec.ts` (orden en el DOM): roja antes del movimiento («bloque 2 antes del 3»), verde después. Frontend completo: `TOTAL: 302 SUCCESS`. El diff del A aplica limpio sobre el B (`git apply --check`). Sin ver en el navegador. Guardado en `git stash` «fix B».
+- Fix C, frontend completo con solo el C aplicado: `TOTAL: 304 SUCCESS`.
+
+## 20/11/2026 · Commit y PR de los fixes A, B y C
+
+**Instrucción recibida (verbatim):**
+> OK, commiteá y abrí los PR de A, B y C
+
+**Plan:**
+1. Esperar la suite completa de backend sobre `develop` `9f387c2` (los tres fixes son solo de frontend).
+2. Por fix, en su rama: `stash pop`, commit del test y commit de producción por separado (rojo visible), push, PR contra `develop`.
+3. Bitácora y ESTADO en el PR del C (uno solo, para que los tres PR no choquen en los documentos). Graphify.
+
+**Estado:** terminada (falta la revisión de Javi y el `verificador-tdd` de cada PR)
+- `git fetch`: `origin/develop` sin commits nuevos.
+- **Suite completa de backend sobre `develop` `9f387c2`** (`public` de `lacentral_test`, base de las tres ramas, que no tocan `backend/`): `Correctas! - Con error: 0, Superado: 806, Omitido: 0, Total: 806, Duración: 1 h 1 m`. Cierra también la suite sobre `develop` pendiente del bloque del 19/11. Tardó 5 veces más que contra `nc057_fuente` (11 m 55 s): copiar `public` para cada prueba lleva entre 5 y 28 s por esquema (visto en `pg_stat_activity`).
+- Commits: C `32891b5` (test) y `a0f2d6e`; A `9af8f96` (test) y `5c94c56`; B `b173692` (test) y `cad5ba6`. Frontend: mismo contenido que las corridas de arriba (C 304, A 341, B 302).
+- PR: B #186, A #187 (cita al #186; el diff del A aplica limpio sobre el B), C con este commit de documentos. `verificador-tdd` no invocado todavía; `auditor-persistencia` no aplica (solo frontend).
+- PR del C: #188. Abiertos: #186 (B), #187 (A), #188 (C).
+
+## 21/11/2026 · verificador-tdd sobre #186, #187 y #188
+
+**Instrucción recibida (verbatim):**
+> Sí, lanzalo
+
+(Respuesta a «¿Lanzo el verificador-tdd sobre los tres PR, de a uno?».)
+
+**Plan:**
+1. Sacar worktrees (R1 de los verificadores).
+2. `verificador-tdd` de a uno: #186 (B), #187 (A), #188 (C), cada uno acotado a sus dos commits, con la suite de backend sobre `9f387c2` y la de frontend de cada rama.
+3. NO APTO → arreglo y re-verificación acotada al arreglo (hasta 3 rondas). Resultados en cada PR, bitácora y ESTADO.
+
+**Estado:** terminada (los tres APTO; falta la revisión y el merge de Javi, orden #186 → #187)
+- Worktrees: solo el principal. `verificador-tdd` lanzado sobre #186 (alcance `b173692`, `cad5ba6`; backend 806 sobre `9f387c2`, frontend 302).
+- #186 ronda 1: **NO APTO**. Rojo real en `b173692` (razón correcta) y verde en `cad5ba6`, movimiento puro confirmado (`diff -w`), frontend 302 corrido por el verificador sobre `cad5ba6`. Sobreviven dos mutaciones: devolver solo «Ganancias» a datos generales, y quitar la `section.tarjeta` propia. Arreglo: el test exige los cuatro inputs de percepciones dentro de una `section.tarjeta` propia, distinta de la de datos generales y de la del detalle.
+- #186: arreglo `bfb1484` (solo test): las cuatro percepciones en su tarjeta propia, distinta de generales y detalle, y en orden también con el total a la vista. M6 → 1 rojo, M7 → 3 rojos, producción de `9f387c2` → 3 rojos. Frontend completo sobre `bfb1484`: `TOTAL: 304 SUCCESS`. Push y comentario en el #186. Ronda 2 acotada a `bfb1484`.
+- #186 ronda 2 (alcance `bfb1484`): **APTO**. 3 rojos con la producción de `9f387c2`, 8 mutaciones muertas, suites aceptadas (304 / 806). No bloqueante: `enOrden` no distingue «después» de «anidado dentro». `verificador-tdd` lanzado sobre #187 (alcance `9af8f96`, `5c94c56`).
+- #187 ronda 1: **NO APTO**. Rojo real por aserción (con stub neutro: 40 con error de 71; en crudo no compila, módulo nuevo). Sobreviven: (1) `bisiesto` sin la regla del siglo (29/02/2100 pasaría); (2) `mostrarFechas()` sin `errorFecha.set({})` (un 31/02 seguido de «Cargar otra» o de un PDF deja el aviso y bloquea el total); (3) `[required]` de emisión en `false`. No bloqueante: el test de hora local solo discrimina al oeste de UTC. Arreglo, solo test: años de siglo, error y después `nueva()`, `required` solo en emisión, y hoy a las 00:30 además de las 23:30.
+- #187: arreglo `617b857` (solo test): 29/02/2100 y 1900 inexistentes, 2000 válido; 31/02 y después `nueva()` deja pedir el total; `required` solo en emisión; hoy también a las 00:30. Mutaciones: siglo → 2 rojos, 400 → 1, sin limpiar errores → 1, `required` → 1, `getUTCDate` → 4. Frontend completo sobre `617b857`: `TOTAL: 346 SUCCESS`. Push y comentario. Ronda 2 acotada a `617b857`.
+- #187 ronda 2 (alcance `617b857`): **APTO**. Mutaciones de siglo, 400, limpiar errores, `required` (false y true) y `getUTCDate`: todas rojas por aserción. Suites aceptadas (346 / 806). `verificador-tdd` lanzado sobre #188 (alcance `32891b5`, `a0f2d6e`).
+- #188 ronda 1: **NO APTO**. Rojo real en `32891b5` (3 por aserción), 8 de 9 mutaciones muertas, frontend 304 corrido por el verificador sobre `0c864b4`. Sobrevive la guarda en `true` (cancelar el Enter de cualquier elemento): nada prueba que un Enter sobre un botón o un `<select>` del form NO se cancele, y eso le quitaría al teclado activar «Calcular el total» o «Registrar». Arreglo, solo test.
+- #188: arreglo `af94316` (solo test): Enter sobre «Calcular el total», «Registrar» y el select de clase no se cancela; con la guarda en `true`, 3 aserciones rojas. Frontend completo sobre `af94316`: `TOTAL: 305 SUCCESS`. Push y comentario. Ronda 2 acotada a `af94316`.
+- #188 ronda 2 (alcance `af94316`): **APTO**. Guarda en `true`, solo excluir botones y `instanceof HTMLElement`: las tres rojas por aserción. Suites aceptadas (305 / 806).
+- Cierre: **#186, #187 y #188 en APTO** (dos rondas cada uno). Frontend sobre el HEAD de cada uno: #186 `bfb1484` 304, #187 `617b857` 346, #188 `af94316` 305. Backend 806 sobre `9f387c2`. Este commit de documentos queda fuera de la verificación (solo `docs/`).
+
+## 21/11/2026 19:36 · Respuestas de Javi sobre el Fix D y el Fix A
+
+**Instrucción recibida (verbatim):**
+> Fix D: las pantallas de clientes, proveedores y articulos. con rol de operador
+> Fix A: se aceptan - y .
+> si ddmmaaaa de 8 digitos
+> EL vencimineto nunca puede ser anterior a la emision, si se carga mal y da que es anterior, se alerta y bloquea
+
+**Plan:**
+1. Fix D: reproducir en `lacentral_test` la búsqueda de clientes, proveedores y artículos con una sesión OPERADOR. Si falla, test rojo y arreglo en su propia rama; si no falla, informar qué difiere en la demo.
+2. Fix A (#187, `fix/fco-fechas-abreviadas`): tests rojos para `-` y `.` como separadores, `ddmmaaaa` de 8 dígitos y vencimiento anterior a la emisión (aviso y bloqueo del registro). Después producción.
+3. Pruebas filtradas del frontend y la suite de frontend completa sobre el Fix A.
+4. Actualizar ESTADO y bitácora. Commit y push solo con OK de Javi.
+
+**Estado:** terminada
+- Fix D, reproducción de punta a punta (21/11 ~20:00): API de este árbol (`fix/nca-enter-confirma-valor`; backend igual a `develop` `9f387c2`) levantada en `localhost:5199` contra `lacentral_demo` con `lacentral_javi`, solo GET. Token local de OPERADOR (`operador.demo`, id 2) firmado con una clave de diagnóstico, y frontend `ng serve` en `:4299` con proxy a esa API. Resultados:
+  - **Artículos (OPERADOR): funciona.** «aceite» → 3, «bujia» → «Bujía de encendido iridio», «filtro aceite» → 1. Con este código y estos datos no se reproduce el «sin resultados».
+  - **Proveedores: falla con una palabra de la razón social.** «Frenos» → «Sin resultados» con «Frenos y Embragues Córdoba SRL (demo)» activo; «Norte» → 0. «Autopartes» → 1, «Expoyer» → 1. Causa: `similarity(razon_social, texto) > 0,2` compara contra la razón social entera; «Frenos» da 0,19 y «Norte» 0,17. No depende del rol ni de la base: con cualquier dato pasa lo mismo en `lacentral_test`. Clientes usa la misma regla (`ClienteRepositorio.BuscarAsync`).
+  - **Clientes: la demo tiene 0 clientes**, así que toda búsqueda da «sin resultados».
+  - El rol no interviene: ninguna consulta filtra por rol ni por sucursal.
+  Servidores de diagnóstico apagados.
+- Fix A (rama `fix/fco-fechas-abreviadas`, sobre `617b857`, sin commitear): tests primero. `fecha-abreviada.spec.ts`: `-` y `.` como separadores (`20-10`, `20.10`, `5-3-2025`, `20.10.2026`), `ddmmaaaa` (`20102026`, `29022028`), inexistentes `29022027`, `31-04`, `00.10.2026`, inválidas con separadores mezclados (`20-10/2026`, `20.10-2026`, `20/10.2026`), `20,10`, 7 y 9 dígitos. `factura-compra-fechas.spec.ts`, 5 casos de vencimiento anterior a la emisión: aviso y bloqueo, mismo día vale, corregir la emisión saca el aviso, el aviso no tapa un vencimiento mal tipeado, la precarga sin pasar por el campo tampoco se registra. **Rojo:** `TOTAL: 12 FAILED, 50 SUCCESS`, todos por aserción.
+- Fix A, producción: regex con separador `[/.-]` y retro-referencia `\2` (el mismo en toda la fecha), `ddmmaaaa` en la forma sin separador; `revisarOrdenFechas()` al fijar cualquier fecha y antes del registro (`VENCIMIENTO_ANTERIOR` en el vencimiento, sin pisar un error de tipeo). El backend ya lo rechazaba (`RegistrarFacturaCompraUseCase.cs:176`). Filtrada: `TOTAL: 131 SUCCESS`. Frontend completo sobre el árbol sin commitear: `TOTAL: 363 SUCCESS`.
+**BLOQUEADO EN:** OK de Javi para commitear (test y producción por separado) y pushear al #187; decisión de Javi sobre el remedio de búsqueda de proveedores y clientes por palabra (Fix D).
+- OK de Javi («Sí, commiteá»). Commits en `fix/fco-fechas-abreviadas`: `ea7c2f3` (pruebas) y `a580574` (producción), push y comentario en el #187. Frontend 363 corrido sobre el árbol idéntico a `a580574`. ESTADO actualizado (entrada 21/11 noche).
+- Se cerró el bloqueo del commit. Queda abierto: `verificador-tdd` sobre `ea7c2f3..a580574`; decisión de Javi sobre el remedio de búsqueda por palabra (Fix D); merge #186 → #187 y #188.
+
+## 21/11/2026 · verificador-tdd sobre el Fix A ampliado (#187)
+
+**Instrucción recibida (verbatim):**
+> Sí, lanzalo
+
+**Plan:**
+1. `verificador-tdd` sobre `ea7c2f3..a580574` del #187, solo esos commits (lo anterior ya dio APTO), con la suite de frontend 363 sobre `a580574` y la de backend 806 sobre `9f387c2`.
+2. Si da NO APTO, arreglar y re-verificar acotado al arreglo (hasta 3 rondas).
+3. Anotar el resultado en el PR, la bitácora y el ESTADO.
+
+**Estado:** terminada
+- `verificador-tdd` (alcance `ea7c2f3..a580574`): **APTO**. Rojo reproducido `TOTAL: 12 FAILED, 50 SUCCESS`, todo por aserción; 13 mutaciones, todas muertas, ninguna sobrevive. Suites aceptadas (363 / 806). Sin hallazgos no bloqueantes. Comentado en el #187.
+- Queda abierto: decisión de Javi sobre la búsqueda por palabra (Fix D); merge #186 → #187 y #188.
+
+## 21/11/2026 · Fix D: búsqueda por palabra en proveedores y clientes
+
+**Instrucción recibida (verbatim):**
+> Sí, arreglala
+
+(Responde a: «¿Arreglo la búsqueda por palabra de proveedores y clientes (Fix D)?». Propuesta aceptada: que proveedores y clientes encuentren la razón social que contiene cada palabra escrita, sin acentos ni mayúsculas, como artículos; lo parecido sigue apareciendo, después.)
+
+**Plan:**
+1. Rama `fix/busquedas-por-palabra` desde `origin/develop`, en un worktree del scratchpad (el árbol principal sigue en la rama del #188 con los documentos).
+2. Tests rojos contra PostgreSQL real: «Frenos» encuentra «Frenos y Embragues Córdoba SRL»; palabras en otro orden, sin acento y en minúscula; lo contenido antes que lo parecido; lo que no contiene ni se parece no aparece. Para proveedores (las dos ramas: con y sin `porCuit`) y clientes.
+3. Producción en `ProveedorRepositorio` y `ClienteRepositorio`.
+4. Filtradas y suite completa de backend; frontend no se toca.
+5. Commit, PR, verificadores (`verificador-tdd` y `auditor-persistencia`) con OK de Javi para el PR.
+
+**Estado:** terminada (rama, tests y PR #189; lo que sigue está en el bloque siguiente)
+- Worktree `scratchpad/wt-fixd`, rama `fix/busquedas-por-palabra` desde `origin/develop` `9f387c2`.
+- Tests primero: `backend/LaCentral.Tests/Data/BusquedaPorPalabraPostgreSqlTests.cs` (PostgreSQL real, 3 casos: proveedores con y sin `porCuit`, clientes). «wqyz» encuentra «Frenos Wqyz y Embragues Córdoba SRL»; «córdoba WQYZ» y «cordoba wqyz» también; «wqyz norte» no; con «Xvbnk», lo que contiene la palabra va antes que lo que solo se parece («Xvbnq»). **Rojo:** `Con error: 3, Superado: 0`, los tres por `Assert.Contains() Failure` (línea del primer «wqyz»).
+- Producción: `ProveedorRepositorio` (las dos ramas de razón social) y `ClienteRepositorio`: `Id IN (los que contienen cada palabra, con ToUpper + reemplazo de acentos y NormalizacionArticulo.Palabras)` OR la similitud de siempre; orden: código exacto (proveedores sin `porCuit`), después lo contenido, después la similitud. Filtrada: `Correctas! - Con error: 0, Superado: 3`. Suite completa de backend en curso.
+- Suite completa de backend en el worktree (HEAD `9f387c2` + cambios sin commitear): `Con error! - Con error: 2, Superado: 807, Omitido: 0, Total: 809, Duración: 1 h 3 m`. Fallaron `ConsultarNotasCreditoCompraPostgreSqlTests.PorRangoDeEmision_IncluyeLosBordes_DeTodosLosProveedores` (1 m 5 s) y `RegistrarFacturaCompraPostgreSqlTests.PrecioRecalculadoQueNoEntraEnSuColumna_InvalidoYNoQuedaNada` (1 m 8 s): NCA y FCO, código que el Fix D no toca. Filtrados los dos: `Correctas! - Con error: 0, Superado: 2, Total: 2, Duración: 49 s`. El mensaje del fallo no quedó (la salida estaba filtrada); por la duración, carga de la base compartida.
+**BLOQUEADO EN:** OK de Javi para commitear (test y producción por separado), correr la suite completa una vez sobre el commit y abrir el PR del Fix D.
+- OK de Javi («Sí, commiteá»). En `fix/busquedas-por-palabra`: `cd1c48f` test, `c5ef0ff` producción. `origin/develop` sin commits nuevos. Suite completa sobre `c5ef0ff` en curso.
+- Suite completa sobre `c5ef0ff`: `Con error! - Con error: 5, Superado: 804, Omitido: 0, Total: 809, Duración: 53 m 9 s`. Los 5 con `Npgsql.NpgsqlException : Exception while reading from stream ---- System.TimeoutException : Timeout during reading attempt` (56 s a 1 m 16 s cada uno): NCA `DosDevolucionesSimultaneas_…`, `PostgreSqlPruebasLimpiezaTests.FuenteConUnaTablaParticionada…`, `ProveedorDetalleApi…Detalle_DeUnProveedorDadoDeBaja…`, `ProveedorPostgreSqlTests.ModificarConDireccionVaciaNueva…`, `ArticulosApi…Post_RolSinPermiso_403…`. Ninguno usa la búsqueda. Filtrados: `Correctas! - Con error: 0, Superado: 6, Total: 6, Duración: 34 s` (un filtro trae dos tests).
+**BLOQUEADO EN:** decisión de Javi: tercera corrida completa (la política pide una al final y la base compartida viene dando timeouts) o abrir el PR declarando estas dos corridas.
+- Preguntas de Javi sobre los timeouts. (1) Carga concurrente: no se puede saber por la base. Cada test crea su esquema `pr110_test_*` y lo borra al terminar (quedan 0); `pg_stat_activity` solo muestra el presente (una conexión, la de la consulta) y `pg_stat_database` no guarda historia por hora. En esta máquina no hay otra sesión de Claude de La Central corriendo, no hay ningún `testhost`, y el único worktree extra es `wt-fixd`. Lo que hayan corrido los otros dos del equipo, o los otros siete contenedores de la netbook, no se ve desde acá. (2) Los fallos de las dos corridas no se repiten. Corrida 1 (`9f387c2` + cambios): `PorRangoDeEmision_…` (NCA) y `PrecioRecalculadoQueNoEntra…` (FCO). Corrida 2 (`c5ef0ff`): otros 5. No hay ninguno en común; todos cortan cerca del minuto, y la corrida 2 muestra `TimeoutException : Timeout during reading attempt`.
+
+## 21/11/2026 · Fix D: PR, verificadores y borrador de issue de infraestructura
+
+**Instrucción recibida (verbatim):**
+> Visto. Abrí el PR con la frase tal cual, las dos corridas, la excepción autorizada por Javi y el pedido de la suite completa a Santi en develop. Pusheá, corré los dos verificadores solo sobre estos dos commits y creá el borrador de la issue de infraestructura (no la abras todavía, mostrámela)
+
+**Plan:** 1. Push de `fix/busquedas-por-palabra` y PR contra `develop` con la frase, las dos corridas, la excepción y el pedido a Santi. 2. Sacar el worktree. 3. `verificador-tdd` y `auditor-persistencia` sobre `cd1c48f..c5ef0ff`, uno por vez. 4. Borrador de la issue en un archivo, sin abrirla. 5. ESTADO y bitácora.
+
+**Estado:** terminada. Abierto: merge del #189 (Javi), suite completa en `develop` (Santi), decidir si se abre la issue de timeouts, recorrido a mano en `lacentral_demo`, rendimiento del filtro por palabra sin medir.
+- Push de `fix/busquedas-por-palabra` y PR #189 contra `develop` (https://github.com/AAAActis/la-central-gestion/pull/189). ESTADO con la entrada del Fix D. Worktree `wt-fixd` sacado; `git worktree list` muestra solo el principal.
+- Borrador de la issue de infraestructura en `docs/sprint06/BORRADOR-ISSUE-TIMEOUTS-PG.md`, sin abrir en GitHub y sin commitear. `verificador-tdd` lanzado sobre `cd1c48f..c5ef0ff` con hash, línea y conteo de la suite.
+- `verificador-tdd` ronda 1 sobre `cd1c48f..c5ef0ff`: **NO APTO**. Sobreviven M6 (`ProveedorRepositorio.cs:61`, sin `.Replace("Ó","O")`) y C4 (`ClienteRepositorio.cs:105`, ídem): «cordoba wqyz» encuentra igual por pg_trgm. Los Replace de Á, É, Í, Ú y Ü no tienen dato que los pruebe. 12 mutaciones muertas. Hallazgo sin verificar: texto de pura puntuación → `Palabras` vacío → podrían entrar todas las filas. Arreglo: test donde el trigrama no rescate, una vocal acentuada por vez, y revisar la puntuación.
+- Arreglo ronda 1: `764c56e` (solo test, pusheado). Razón social con una palabra suelta por letra (á é í ó ú ü) donde el trigrama no alcanza; se busca cada una sin acento. Rojo sin los 12 `Replace` de acentos: `Con error: 3, Superado: 0` («xjqa» no encontró…); rojo sin solo el de Ü: `Con error: 3, Superado: 0` («gwhu» no encontró…); verde con el código: `Correctas! - Con error: 0, Superado: 3`. Puntuación: inalcanzable, el caso de uso rechaza texto vacío o en blanco (`ConsultarProveedoresUseCase.cs:22`, ídem clientes) y `Palabras` corta solo por espacios, así que «...» es una palabra, no una lista vacía. Suite completa no repetida para un commit que solo toca esta clase de test. Worktree sacado.
+- `verificador-tdd` ronda 2 sobre `c5ef0ff..764c56e`: **APTO**. 6 mutaciones de acentos muertas (Ó, Á, Ü en proveedores; Ó, É, Ú en clientes), incluidas las equivalentes a M6 y C4; verde `Superado: 3`. Puntuación cerrada por lectura (`ConsultarProveedoresUseCase.cs:22`, `ConsultarClientesUseCase.cs:21`). La suite completa sobre `764c56e` no corrió: el permiso del subagente la rechazó y no la eludió; la última completa sigue siendo la de `c5ef0ff`. Lanzo `auditor-persistencia` sobre `9f387c2..764c56e`.
+- `auditor-persistencia` sobre `9f387c2..764c56e`: **APTO**. Suite completa sobre `764c56e` corrida por el auditor: `Correctas! - Con error: 0, Superado: 809, Omitido: 0, Total: 809, Duración: 16 m 30 s`. ctype `en_US.utf8` en `lacentral`, `lacentral_demo` y `lacentral_test`; `%` y `_` no son comodines; 0 esquemas `pr110_test_%` huérfanos. Riesgo sin medir: el filtro por palabra no usa el índice GIN.
+- Cuerpo del PR #189 actualizado con los dos veredictos y la suite verde. ESTADO actualizado. El borrador de la issue suma la tercera corrida.
+
+## 22/11/2026 · Abrir la issue de timeouts de la base compartida
+
+**Instrucción recibida (verbatim):**
+> Sí, abrila
+
+**Plan:** 1. Abrir la issue con el borrador `docs/sprint06/BORRADOR-ISSUE-TIMEOUTS-PG.md`. 2. ESTADO y bitácora.
+
+**Estado:** terminada. Nada abierto en esta tarea.
+- Issue #190 abierta (https://github.com/AAAActis/la-central-gestion/issues/190) con el texto del borrador, sin cambios. Borrador local borrado: su contenido está en la issue.

@@ -352,6 +352,57 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
+**21/11 (noche, 2) · Fix D en PR: `fix/busquedas-por-palabra`.**
+- Javi eligió (21/11) que proveedores y clientes encuentren la razón social que contiene cada palabra escrita, sin
+  acentos ni mayúsculas, como artículos. Lo parecido (pg_trgm) sale después.
+- Commits: `cd1c48f` (3 tests contra PostgreSQL, rojo por aserción) y `c5ef0ff` (código).
+- **Suite completa: ninguna de las dos corridas dio verde.**
+  - Sobre los cambios sin commitear: 807/809.
+  - Sobre `c5ef0ff`: 804/809.
+  - Todos los fallos son `TimeoutException` de lectura de Npgsql y ninguno se repite entre corridas. Filtrados, pasan.
+  - **Excepción autorizada por Javi**: el PR se abre igual. Santi corre la suite completa en `develop` después del merge.
+- **`764c56e`** (solo test): una palabra suelta por cada letra acentuada (á é í ó ú ü). Arregla el NO APTO de la
+  ronda 1 del `verificador-tdd`: sin la normalización de acentos, ningún test daba rojo porque pg_trgm encontraba igual.
+- **Suite completa sobre `764c56e`: 809/809 verde en 16 m 30 s**, sin timeouts. La corrió el `auditor-persistencia`.
+- **Verificadores:**
+  - `verificador-tdd`: NO APTO en la ronda 1 y APTO en la ronda 2.
+  - `auditor-persistencia`: APTO. Las tres bases tienen ctype `en_US.utf8`; `%` y `_` no actúan como comodines.
+- **Queda:**
+  - Javi mergea el #189.
+  - Santi corre la suite completa en `develop` después del merge.
+  - Issue de timeouts de la base compartida abierta: #190 (22/11).
+  - Recorrido a mano en `lacentral_demo`.
+  - Rendimiento del filtro por palabra: recorre la tabla entera, sin medir.
+
+**21/11 (noche) · respuestas de Javi: Fix A ampliado en el #187; Fix D reproducido.**
+- **Decisiones de Javi (21/11):** las fechas aceptan `-` y `.` como separadores y `ddmmaaaa`; el vencimiento **nunca** es
+  anterior a la emisión: se avisa y bloquea el registro.
+- **#187:** `ea7c2f3` (pruebas, rojo 12 por aserción) y `a580574` (código). Frontend completo **363/363** sobre `a580574`.
+  Mismo separador en toda la fecha; el control de orden también cubre la precarga del PDF; el backend ya lo rechazaba.
+  `verificador-tdd` sobre `ea7c2f3..a580574`: **APTO** (21/11, 13 mutaciones muertas).
+- **Fix D:** reproducido con la API y el frontend de este árbol contra `lacentral_demo`, sesión OPERADOR, solo GET.
+  Artículos **anda** (si en la demo desplegada no, es otra versión desplegada). Proveedores **no encuentra una palabra
+  suelta** de la razón social: «Frenos» → 0 con «Frenos y Embragues Córdoba SRL (demo)» activo, porque
+  `similarity(razon_social, texto) > 0,2` mide contra el nombre entero (0,19). Clientes, misma regla, y la demo tiene
+  0 clientes. El rol no interviene. **Decide Javi:** que proveedores y clientes encuentren por palabra contenida (sin
+  acentos ni mayúsculas, como artículos), con lo parecido después; en su propia rama.
+
+**21/11 (madrugada) · correcciones de cierre (spec de Javi): A, B y C en PR; D diagnosticado sin código.**
+- #183, #184 y #185 mergeados a `develop` (`9f387c2`). Suite completa de backend sobre `9f387c2`: **806/806** (1 h 1 m).
+- PR, uno por fix, base `develop`, con OK de Javi (20/11): **B #186** `fix/fco-layout-detalle` (frontend 302);
+  **A #187** `fix/fco-fechas-abreviadas` (341); **C #188** `fix/nca-enter-confirma-valor` (304; lleva este ESTADO y la bitácora).
+  A y B tocan `factura-compra.ts`; el diff del A aplica limpio sobre el B. **`verificador-tdd`: APTO los tres** (21/11, NO APTO
+  en la ronda 1 de cada uno, arreglado solo con tests: #186 `bfb1484` 304, #187 `617b857` 346, #188 `af94316` 305).
+  `auditor-persistencia` no aplica. **Sigue:** revisión y merge de Javi, orden #186 → #187; #188 independiente.
+- **Deuda:** la suite contra `public` de `lacentral_test` tarda 1 h 1 m (contra `nc057_fuente`, 11 m 55 s): copiar `public`
+  para cada prueba lleva 5 a 28 s por esquema. Lo ve el equipo.
+- **Fix D:** en `lacentral_test` la búsqueda anda (30/30 filtradas). En `lacentral_demo`: `pg_trgm` 1.6, `lacentral_javi`
+  con todos los permisos, **0 clientes**, 31 artículos, 6 proveedores. Falta de Javi: qué pantalla, qué texto y qué usuario
+  dieron «sin resultados», y con qué rol de PostgreSQL conecta la API de la demo (el `42501`).
+- **Pendientes de Javi (Fix A):** `-` y `.` como separadores; `ddmmaaaa`; vencimiento anterior a emisión ¿bloquea o avisa?
+- Abierto del 19/11: borrar `nc057_fuente` (`backend/db/pruebas/nc057_fuente_borrado.sql`) y el DoD 10 de la 057 en
+  `lacentral_demo`.
+
 **19/11 (noche) · el 11 está en las tres bases (E11 cerrada); #183, #184 y #185 esperan la revisión de Javi.**
 - El 11 en `public` de `lacentral_test`, `lacentral_demo` y `lacentral` (Santi, 19/11; `s11 = 1` en las tres). Avisado en el #183.
 - Pruebas que faltaban, solo test, rojas por mutación de producción: #184 `4d134e4` (pedido sin «archivo» → 400; PDF de más
