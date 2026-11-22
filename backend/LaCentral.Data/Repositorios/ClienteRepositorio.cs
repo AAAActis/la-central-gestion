@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using LaCentral.Data.Models; // La base de datos
+using LaCentral.UseCases.Articulos;
 using LaCentral.UseCases.Puertos;
 
 namespace LaCentral.Data.Repositorios;
@@ -95,9 +96,19 @@ public class ClienteRepositorio : IClienteRepositorio
         {
             // Búsqueda difusa por Razón Social, usando el índice GIN
             // ix_cliente_razon_social_trgm ya existente en la base.
+            // Fix D (Javi, 21/11): también la que contiene cada palabra escrita, sin acentos ni mayúsculas,
+            // como artículos; primero esas. La similitud sola mide contra el nombre entero y se pierde «Frenos».
+            var conPalabras = query;
+            foreach (var palabra in NormalizacionArticulo.Palabras(texto))
+                conPalabras = conPalabras.Where(c => c.RazonSocial.ToUpper()
+                    .Replace("Á", "A").Replace("É", "E").Replace("Í", "I")
+                    .Replace("Ó", "O").Replace("Ú", "U").Replace("Ü", "U").Contains(palabra));
+            var ids = conPalabras.Select(c => c.Id);
             query = query
-                .Where(c => EF.Functions.TrigramsSimilarity(c.RazonSocial, texto) > UmbralSimilitudRazonSocial)
-                .OrderByDescending(c => EF.Functions.TrigramsSimilarity(c.RazonSocial, texto))
+                .Where(c => ids.Contains(c.Id) ||
+                    EF.Functions.TrigramsSimilarity(c.RazonSocial, texto) > UmbralSimilitudRazonSocial)
+                .OrderBy(c => ids.Contains(c.Id) ? 0 : 1)
+                .ThenByDescending(c => EF.Functions.TrigramsSimilarity(c.RazonSocial, texto))
                 .ThenBy(c => c.Id);
         }
 

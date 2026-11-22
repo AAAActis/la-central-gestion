@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using LaCentral.Data.Models; 
+using LaCentral.UseCases.Articulos;
 using LaCentral.UseCases.Puertos;
 
 namespace LaCentral.Data.Repositorios;
@@ -50,6 +51,17 @@ public class ProveedorRepositorio : IProveedorRepositorio
     // --- MÉTODO FALTANTE QUE ROMPÍA LA INTERFAZ ---
     private const double UmbralSimilitudRazonSocial = 0.2;
 
+    // Fix D (Javi, 21/11): la razón social que contiene cada palabra escrita, sin acentos ni mayúsculas, como
+    // artículos. La similitud mide contra el nombre entero: «Frenos» no llegaba a «Frenos y Embragues Córdoba SRL».
+    private static IQueryable<Proveedor> ConTodasLasPalabras(IQueryable<Proveedor> query, string texto)
+    {
+        foreach (var palabra in NormalizacionArticulo.Palabras(texto))
+            query = query.Where(p => p.RazonSocial.ToUpper()
+                .Replace("Á", "A").Replace("É", "E").Replace("Í", "I")
+                .Replace("Ó", "O").Replace("Ú", "U").Replace("Ü", "U").Contains(palabra));
+        return query;
+    }
+
     public async Task<(IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor> Items, int Total)> BuscarAsync(
         string texto, bool incluirInactivos, int pagina, int tamanoPagina, bool porCuit, CancellationToken ct = default)
     {
@@ -71,18 +83,22 @@ public class ProveedorRepositorio : IProveedorRepositorio
             // HU-FCO-06 CA-001 a CA-003: código (sin ceros a la izquierda: 35 encuentra 00035)
             // o razón social; el código exacto primero. Sin CUIT.
             var codigo = texto.TrimStart('0');
+            var conPalabras = ConTodasLasPalabras(query, texto).Select(p => p.Id);
             query = query
-                .Where(p => p.Codigo.TrimStart('0') == codigo ||
+                .Where(p => p.Codigo.TrimStart('0') == codigo || conPalabras.Contains(p.Id) ||
                     EF.Functions.TrigramsSimilarity(p.RazonSocial, texto) > UmbralSimilitudRazonSocial)
-                .OrderBy(p => p.Codigo.TrimStart('0') == codigo ? 0 : 1)
+                .OrderBy(p => p.Codigo.TrimStart('0') == codigo ? 0 : conPalabras.Contains(p.Id) ? 1 : 2)
                 .ThenByDescending(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto))
                 .ThenBy(p => p.Id);
         }
         else
         {
+            var conPalabras = ConTodasLasPalabras(query, texto).Select(p => p.Id);
             query = query
-                .Where(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto) > UmbralSimilitudRazonSocial)
-                .OrderByDescending(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto))
+                .Where(p => conPalabras.Contains(p.Id) ||
+                    EF.Functions.TrigramsSimilarity(p.RazonSocial, texto) > UmbralSimilitudRazonSocial)
+                .OrderBy(p => conPalabras.Contains(p.Id) ? 0 : 1)
+                .ThenByDescending(p => EF.Functions.TrigramsSimilarity(p.RazonSocial, texto))
                 .ThenBy(p => p.Id);
         }
 
