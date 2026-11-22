@@ -20,6 +20,9 @@ public class BusquedaPorPalabraPostgreSqlTests
     private const string Contiene = "Frenos Wqyz y Embragues Córdoba SRL";
     private const string Lejano = "Distribuidora Mayorista Xvbnk del Sur SA";
     private const string Parecido = "Xvbnq";
+    // Una palabra acentuada por vocal, sueltas en un nombre largo: el trigrama no las rescata, solo el filtro sin acentos.
+    private const string Acentos = "Comercial Xjqá Bvtké Plní Rztó Mqvú Gwhü del Litoral Norte SA";
+    private static readonly string[] SinAcento = { "xjqa", "bvtke", "plni", "rzto", "mqvu", "gwhu" };
 
     [PostgreSqlFact]
     public Task Proveedores_PorRazonSocialOCodigo_EncuentranPorPalabraContenida_YLoContenidoVaAntesQueLoParecido()
@@ -37,7 +40,8 @@ public class BusquedaPorPalabraPostgreSqlTests
             setup.Proveedor.AddRange(
                 new Proveedor { Codigo = "PAL-1", RazonSocial = Contiene, Activo = true },
                 new Proveedor { Codigo = "PAL-2", RazonSocial = Parecido, Activo = true },
-                new Proveedor { Codigo = "PAL-3", RazonSocial = Lejano, Activo = true });
+                new Proveedor { Codigo = "PAL-3", RazonSocial = Lejano, Activo = true },
+                new Proveedor { Codigo = "PAL-4", RazonSocial = Acentos, Activo = true });
             await setup.SaveChangesAsync();
         }
 
@@ -53,6 +57,8 @@ public class BusquedaPorPalabraPostgreSqlTests
         Assert.Contains(Contiene, await Buscar("cordoba wqyz"));
         Assert.DoesNotContain(Contiene, await Buscar("wqyz norte"));
         Assert.Equal(new[] { Lejano, Parecido }, await Buscar("Xvbnk"));
+        foreach (var palabra in SinAcento)
+            Assert.True((await Buscar(palabra)).Contains(Acentos), $"«{palabra}» no encontró «{Acentos}».");
     }
 
     [PostgreSqlFact]
@@ -64,7 +70,8 @@ public class BusquedaPorPalabraPostgreSqlTests
             setup.Cliente.AddRange(
                 new Cliente { Codigo = "PAL-1", RazonSocial = Contiene, Activo = true },
                 new Cliente { Codigo = "PAL-2", RazonSocial = Parecido, Activo = true },
-                new Cliente { Codigo = "PAL-3", RazonSocial = Lejano, Activo = true });
+                new Cliente { Codigo = "PAL-3", RazonSocial = Lejano, Activo = true },
+                new Cliente { Codigo = "PAL-4", RazonSocial = Acentos, Activo = true });
             await setup.SaveChangesAsync();
         }
 
@@ -80,5 +87,7 @@ public class BusquedaPorPalabraPostgreSqlTests
         Assert.Contains(Contiene, await Buscar("cordoba wqyz"));
         Assert.DoesNotContain(Contiene, await Buscar("wqyz norte"));
         Assert.Equal(new[] { Lejano, Parecido }, await Buscar("Xvbnk"));
+        foreach (var palabra in SinAcento)
+            Assert.True((await Buscar(palabra)).Contains(Acentos), $"«{palabra}» no encontró «{Acentos}».");
     }
 }
