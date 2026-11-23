@@ -13,12 +13,13 @@ de EF se regenera desde la base. **Prohibido `dotnet ef migrations`.**
 | `03_Limpieza_Columnas_Fantasma.sql` | Elimina `articulo.codigo`, `descripcion` y `cantidad`, que solo existían en `lacentral_test` (deriva, no esquema). |
 | `04_Modalidades_Base_Calculo.sql` | Base de cálculo de las modalidades de precio. |
 | `05_rol_tests.sql` | Rol con el que corre la suite (no es esquema de `public`). |
-| — | **06 reservado para C2** (`proveedor_articulo`). |
+| — | 06 quedó sin usar: C2 entró como 12 (23/11/2026). |
 | `07_Normalizacion_3FN_y_Reportes.sql` | Normalización a 3FN (N-3, N-5, N-7, N-9, N-11; N-6 salió) y columnas de reportes. Llegó como 05. |
 | `08_Ubicacion_Deposito_60.sql` | `stock.ubicacion_deposito` de 30 a 60. |
 | `09_Factura_Compra_Mecanica.sql` | HU-FCO-06 (056): tipo de comprobante habitual del proveedor, tipo de comprobante y fecha de imputación de la factura, segundo y tercer descuento por línea. Idempotente. |
 | `10_Cuarto_Descuento.sql` | HU-FCO-06 (056) CA-012, D-S6-15: cuarto descuento sucesivo por línea de factura de compra. Requiere el 09. Idempotente. |
 | `11_Nota_Credito_Compra.sql` | HU-FCO-07 (057), D-S6-18 y D-S6-20: depósito Reclamos (`sucursal.es_reclamos`, su fila y su stock en 0), `nota_credito_compra`, su relación muchos a muchos con `factura_compra` (mismo proveedor por FK compuesta) y sus líneas de devolución. Requiere el 10. Idempotente. |
+| `12_Catalogo_Proveedores.sql` | C2 · HU-CMP-08 (055), D-S7-01: `scrape_corrida`, `proveedor_articulo` (catálogo actual por proveedor, único por proveedor y código), `proveedor_articulo_historial` (precio y stock por corrida, RF-016) y el rol `lacentral_n8n` (SELECT, INSERT y UPDATE en esas tres, SELECT en `proveedor`; sin clave). El SQL que usa n8n está en `../n8n/`. Requiere el 11. Idempotente. |
 
 Cada script corre en una transacción y no es idempotente. Se aplica a mano: primero
 en `lacentral_test`, se verifica, después en `lacentral`.

@@ -1,0 +1,12 @@
+-- 03 · Incorporar un renglón del catálogo · contrato de n8n con el script 12 (HU-CMP-08, 055; D-S7-01)
+-- $1 corrida_id · $2 código del proveedor · $3 id externo · $4 código de barras · $5 nombre
+-- $6 descripción · $7 detalle técnico («CLAVE: valor | CLAVE: valor») · $8 marca
+-- $9 precio neto sin IVA · $10 precio de lista · $11 stock · $12 alícuota de IVA (21 = 21 %)
+-- $13 URL de la imagen · $14 fecha de origen del dato
+-- Upsert por (proveedor_id, código): no duplica, y la vinculación (articulo_codigo_alternativo, por
+-- proveedor y código) no se toca (CA-001). Deja la fila activa (si estaba vencida, vuelve) y escribe su
+-- precio y stock en el historial de la corrida (RF-016), una fila por renglón y corrida, en la misma
+-- sentencia. Solo sobre una corrida RUNNING: sin filas = la corrida ya está cerrada. Desconocido es
+-- NULL, nunca cero.
+-- shortcut: esqueleto, sin implementar todavía.
+SELECT NULL::integer AS proveedor_articulo_id WHERE $1::integer IS NULL AND $2::text IS NULL AND $3::text IS NULL AND $4::text IS NULL AND $5::text IS NULL AND $6::text IS NULL AND $7::text IS NULL AND $8::text IS NULL AND $9::numeric IS NULL AND $10::numeric IS NULL AND $11::numeric IS NULL AND $12::numeric IS NULL AND $13::text IS NULL AND $14::timestamptz IS NULL;
