@@ -1705,3 +1705,23 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - Frontend sobre `develop` (mismo código que esta rama, que solo toca `docs/`): `npx ng test --watch=false --browsers=ChromeHeadless` → `TOTAL: 370 SUCCESS` (370 de 370). Confirma la cifra que dice el ESTADO.
 **BLOQUEADO EN:** OK de Javi para commitear y pushear el PR 1 (docs); el PR 2 (`fix/fecha-rango-anios`) arranca después, desde `develop`.
 - 23/11: respuestas de Sergio (vía Javi) a las consultas: IVA por alícuota con desplegable (21 y 10,5; suma por alícuota), costo a mano se respeta, el mismo administrador puede anular y autorizarse (contradice CA-006: decide el equipo), devoluciones (motivos, alerta siempre visible, sin NC parcial). Registradas en `docs/sprint07/ESTADO.md` (C7-01 a C7-04). H1/H2 (punto 5) sin respuesta. Código sin cambios.
+
+## 23/11/2026 · Conflicto del #191 y correcciones del cierre documental (`docs/sprint06-cierre-correcciones`)
+
+**Instrucción recibida (verbatim):**
+> 1. El #191 tiene conflicto con develop después del merge del #192: los dos agregaron un bloque al final de docs/sprint06/BITACORA.md. En fix/fecha-rango-anios: git merge origin/develop (nunca rebase). Resolvé conservando los dos bloques en orden cronológico, sin reescribir ninguno (la bitácora solo se agrega). Frontend completo una vez y push. No hace falta relanzar el verificador: el merge no cambia código.
+>
+> 2. El #192 se mergeó con tres correcciones pendientes. Van en un PR aparte, solo de docs, desde develop (rama docs/sprint06-cierre-correcciones):
+>    a) docs/sprint06/ESTADO.md, «Lo que falta para cerrar el Sprint 6», punto 2: la suite completa de backend sobre develop ya se corrió, 809/809 sobre ca11be2 el 22/11/2026 (18 m 33 s), y está comentada en el #189. Sacala de lo pendiente y actualizá la «última verde» (también en PRÓXIMA SESIÓN).
+>    b) Mismo apartado, punto nuevo: punto 6 del relevamiento de Sergio, la búsqueda de artículos que no devolvía nada. El #189 arregló proveedores y clientes; artículos no se reprodujo. Va al recorrido DoD 10, buscando lo mismo que buscó Sergio; si falla, candidata del Sprint 7.
+>    c) docs/sprint07/ESTADO.md, C7-04 (devoluciones): agregá a las preguntas abiertas el depósito «Vélez», que Sergio nombró como origen y que no existe en el sistema.
+>    d) Punto 3 de «Lo que falta»: nc057_fuente ya se borró (lo hizo Santi el 23/11). Sacalo de lo pendiente.
+>
+> Resúmenes en español.
+
+**Plan:** 1. En `fix/fecha-rango-anios`: `git merge origin/develop`, conflicto de la bitácora con los dos bloques en orden, frontend completo, push. 2. Rama `docs/sprint06-cierre-correcciones` desde `origin/develop` (`d783ea2`): a) a d) en los dos ESTADO, esta entrada, PR.
+
+**Estado:** terminada
+- Merge `864b89d` en `fix/fecha-rango-anios`: primero el bloque del cierre documental (#192, commit de las 16:38), después el del fix (#191, 16:42); los dos quedaron idénticos a sus originales (comparados con `diff`). Frontend completo: `TOTAL: 377 SUCCESS`. Pusheado.
+- a) y d): «Lo que falta» queda con el recorrido DoD 10 y el punto de artículos; la suite 809/809 sobre `ca11be2` (22/11, 18 m 33 s, comentario en el #189, verificado) y el borrado de `nc057_fuente` pasan a «ya hecho». «Última verde» actualizada también en PRÓXIMA SESIÓN. b) punto 2 nuevo. c) «Vélez» en las preguntas abiertas de C7-04.
+- Abierto: el bloque del cierre documental (#192) quedó con `**Estado:** en curso` y el del fix (#191) tiene dos líneas de Estado («en curso» y «terminada»); no se tocaron. Este bloque y el del #191 se agregan al mismo final: el que se mergee segundo vuelve a tener el mismo conflicto.

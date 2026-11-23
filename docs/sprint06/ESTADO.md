@@ -38,9 +38,13 @@ entregable (§1 de `CLAUDE.md`) y el entregable todavía no se recorrió a mano.
    Expoyer; cuarto descuento; notas de crédito; Compras registradas y anulación; fechas abreviadas; Enter en la
    nota de crédito; búsqueda por palabra en proveedores y clientes (**la demo tiene 0 clientes: cargar uno
    antes**); layout de la factura de compra. Cierra las issues #163, #13 y #51, que siguen abiertas hasta entonces.
-2. **Suite completa de backend sobre `develop` (Santi),** con la base sin otra carga. Última verde: 809/809 sobre
-   `764c56e` (`auditor-persistencia`, 16 m 30 s). Issue #190 (timeouts de la base compartida): abierta.
-3. **Borrar `nc057_fuente` (Santi):** `backend/db/pruebas/nc057_fuente_borrado.sql`.
+2. **Punto 6 del relevamiento de Sergio: la búsqueda de artículos que no devolvía nada.** El #189 arregló proveedores y
+   clientes; en artículos no se reprodujo. Entra al recorrido DoD 10 del punto 1, buscando lo mismo que buscó Sergio;
+   si falla, es candidata del Sprint 7.
+
+Ya hecho: suite completa de backend sobre `develop`, **809/809 sobre `ca11be2` el 22/11/2026 (18 m 33 s)**, comentada
+en el #189. `nc057_fuente` borrada por Santi el 23/11/2026. Issue #190 (timeouts de la base
+compartida): abierta.
 
 Frontend sobre `develop` mergeado: build limpio y 370/370 en verde.
 
@@ -386,12 +390,14 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 - **Mergeados en `develop` (`ca11be2`), en este orden:** #186 (layout de la FCO), #189 (búsqueda por palabra), #187
   (fechas abreviadas) y #188 (Enter en la nota de crédito). También están mergeados #181, #179, #178, #177, #180, #183,
   #184 y #185: las filas del tablero ya no dicen «PR abierto».
-- Frontend sobre `develop`: build limpio y 370/370. Backend: última suite completa verde 809/809 sobre `764c56e`.
+- Frontend sobre `develop`: build limpio y 370/370. Backend: última suite completa verde 809/809 sobre `ca11be2` (22/11, 18 m 33 s;
+  comentada en el #189).
 - Decisiones D-S6-27 a D-S6-29 de Sergio (23/11) cargadas arriba. Lo que abre trabajo se registró en
   `docs/sprint07/ESTADO.md`, «Candidatas desde el cierre del Sprint 6», y el CA-002 de la 028 en
   `docs/historias/028-HU-FCO-04.md`. Sin código.
-- **Queda:** recorrido DoD 10 en `lacentral_demo` (Javi con Sergio), suite completa de backend sobre `develop` (Santi),
-  borrar `nc057_fuente` (Santi) y el fix de rango de años en las fechas abreviadas (`fix/fecha-rango-anios`).
+- **Queda:** recorrido DoD 10 en `lacentral_demo` (Javi con Sergio), con la búsqueda de artículos del punto 6 de Sergio,
+  y el fix de rango de años en las fechas abreviadas (`fix/fecha-rango-anios`, #191). La suite completa sobre `develop`
+  ya corrió (809/809 sobre `ca11be2`) y `nc057_fuente` ya se borró (Santi, 23/11).
 
 **21/11 (noche, 2) · Fix D: `fix/busquedas-por-palabra` (PR #189, mergeado).**
 - Javi eligió (21/11) que proveedores y clientes encuentren la razón social que contiene cada palabra escrita, sin

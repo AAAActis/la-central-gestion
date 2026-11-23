@@ -118,7 +118,8 @@ equipo las decida. Se registran; no se implementan.
   - la alerta la ve el ADMINISTRADOR y se muestra siempre: desde 0 días sin nota de crédito hasta que se cargue;
   - **no se cierra con una nota de crédito parcial:** es una devolución y se espera la nota de crédito.
 - **Todavía abiertas para la proforma:** estados exactos; qué es el PDF (remito de devolución o pedido de reclamo), con qué
-  datos y cómo se envía.
+  datos y cómo se envía; el depósito **«Vélez»**, que Sergio nombró como origen de las devoluciones y que no existe en
+  el sistema (¿es una sucursal, otro nombre de un depósito existente o un depósito nuevo?).
 
 ### C7-05 · H1 · vencimiento según proveedor y H2 · reconocimiento de proveedor y sucursal en PDF
 
