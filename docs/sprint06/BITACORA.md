@@ -1774,3 +1774,50 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 
 **Estado:** en curso
 - Arranque: `git fetch`; `origin/develop` = `d783ea2`; #191 y #193 abiertos (sin merge). Sin worktrees extra. El último bloque «en curso» real es el de #192 (Estado mal puesto, punto 1 de esta instrucción). Rama `docs/sprint07-apertura` creada desde `e8b0670` (#193).
+
+### PARA SANTI · 23/11/2026 · script 12 (C2, catálogo de proveedores y rol de n8n)
+
+Desde fish, en tu máquina, parado en la raíz del repo. El script se lee de la rama pusheada con `git show`. Cada paso que falla corta: si algo da `ERROR`, no sigas y pasame la salida.
+
+**Por qué no va a `public` de `lacentral_test` todavía:** `PostgreSqlPruebas` corta si la plantilla tiene tablas que el modelo no conoce («Re-scaffold antes de correr los tests»). Con el 12 en `public`, las suites de todas las otras ramas se caen hasta que entre este PR. Por eso en `lacentral_test` va a una copia, `c2_fuente`, como `nc057_fuente`. En `lacentral_demo` y `lacentral` **no rompe nada**: solo agrega tablas, y la API no mira las que no conoce. **Para destrabar n8n alcanza con `lacentral_demo`.** `lacentral` (datos reales) va después del merge, como el 11.
+
+1 · Backup de las tres bases (tiene que decir `backup OK` tres veces):
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+git fetch origin
+mkdir -p ~/backups-lacentral
+set marca (date +%Y%m%d-%H%M)
+for base in lacentral_test lacentral_demo lacentral
+    ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc $base > ~/backups-lacentral/$base-$marca.dump
+    and test -s ~/backups-lacentral/$base-$marca.dump
+    and echo "backup OK: $base"
+    or begin; echo "FALLÓ el backup de $base: no sigas"; break; end
+end
+```
+
+2 · `lacentral_test`: la copia `c2_fuente` y el 12 sobre ella (tiene que terminar con `NOTICE: 12: TODO OK.`):
+
+```fish
+git show origin/feature/128-catalogo-scrape:backend/db/pruebas/nc057_fuente_copia.sql | sed 's/nc057_fuente/c2_fuente/g' | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+and begin; echo "SET search_path = c2_fuente, public;"; git show origin/feature/128-catalogo-scrape:backend/db/rescaffold/12_Catalogo_Proveedores.sql; end | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+3 · `lacentral_demo`: el 12 en `public` (tiene que terminar con `NOTICE: 12: TODO OK.`):
+
+```fish
+git show origin/feature/128-catalogo-scrape:backend/db/rescaffold/12_Catalogo_Proveedores.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_demo -v ON_ERROR_STOP=1
+```
+
+4 · La clave de `lacentral_n8n` (el rol es de todo el servidor; te la pide dos veces y no queda en ningún archivo ni en el historial):
+
+```fish
+ssh -t atiz@arch docker exec -it lacentral_db psql -U lacentral -d lacentral_demo -c '\password lacentral_n8n'
+```
+
+En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, usuario `lacentral_n8n`. Las sentencias para los nodos están en `backend/db/n8n/` (parámetros `$1`, `$2`…, en el orden del encabezado de cada archivo). El flujo, en la proforma de la 055 (§ 4).
+
+5 · Avisame. La suite de esta rama corre con `LA_CENTRAL_TEST_SCHEMA=c2_fuente`. **Después del merge:** el 12 en `public` de `lacentral_test` y en `lacentral`, re-scaffold contra `public` y se borra `c2_fuente` (`nc057_fuente_borrado.sql` con el mismo `sed`).
+
+**Ojo:** el 23/11 `nc057_fuente` todavía existe en `lacentral_test` (lo vi al listar los esquemas). Si ya la borraste en otra base, falta en esta.
+- C2 en `feature/128-catalogo-scrape`: esqueleto `8043ff5` (script 12, modelo de las tres tablas tomado de un scaffold contra la copia descartable `c2_ensayo_7a51e2c7`, sentencias de n8n vacías), rojo `19e8947` (`CatalogoProveedorPostgreSqlTests`: 5 con error por aserción), código `45b2aea` (5/5). Script 12 aplicado dos veces sobre la copia: idempotente. Suite completa sobre `45b2aea` (`--no-incremental`, 0 advertencias, `LA_CENTRAL_TEST_SCHEMA=c2_ensayo_7a51e2c7`): `Correctas! - Con error: 0, Superado: 814, Omitido: 0, Total: 814, Duración: 16 m 1 s`. Proforma 055 v2.0 y bloque «PARA SANTI · 23/11 · script 12». `nc057_fuente` sigue en `lacentral_test`.
