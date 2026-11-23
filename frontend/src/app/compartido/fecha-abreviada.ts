@@ -27,6 +27,8 @@ export function interpretarFecha(texto: string, hoy: Date): { iso: string } | { 
   const d = Number(partes[1]);
   const m = partes[2] ? Number(partes[2]) : hoy.getMonth() + 1;
   const a = partes[3] ? Number(partes[3]) : hoy.getFullYear();
+  // Un año de 4 dígitos como 0999 daría un ISO mal armado (999-10-20) que viajaría a la API.
+  if (a < 2000 || a > 2100) return { error: 'El año tiene que estar entre 2000 y 2100.' };
   if (m < 1 || m > 12 || d < 1 || d > diasDelMes(a, m)) return { error: `El ${dos(d)}/${dos(m)}/${a} no existe.` };
   return { iso: `${a}-${dos(m)}-${dos(d)}` };
 }
