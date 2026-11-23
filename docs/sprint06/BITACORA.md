@@ -1671,3 +1671,19 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 
 **Estado:** terminada. Nada abierto en esta tarea.
 - Issue #190 abierta (https://github.com/AAAActis/la-central-gestion/issues/190) con el texto del borrador, sin cambios. Borrador local borrado: su contenido está en la issue.
+
+## 23/11/2026 · Fix: rango de años en fechas abreviadas (`fix/fecha-rango-anios`)
+
+**Instrucción recibida (verbatim):**
+> 2000 a 2100
+
+(Responde a la pregunta del PR 2 de la especificación del cierre del Sprint 6: «confirmar con Javi el rango 2000–2100».)
+
+**Plan:** 1. Rama desde `origin/develop`. 2. Test rojo por aserción (años fuera de 2000 a 2100, bordes, bisiesto 2000 y 2100). 3. Producción: acotar el año en `interpretarFecha`. 4. `[name]` duplicado de `factura-compra.ts`. 5. Frontend completo y `ng build`. 6. Diff, OK de Javi, dos commits, push, PR, `verificador-tdd`.
+
+**Estado:** en curso
+- Rojo: `fecha-abreviada.spec.ts` con 6 casos fuera de rango (`20/10/0000`, `0999`, `1999`, `2101`, `20102101`, `29/02/1900`) → `TOTAL: 6 FAILED, 49 SUCCESS`. `29/02/1900` salió de «no existe»: ahora es año fuera de rango.
+- Producción: `if (a < 2000 || a > 2100)` en `interpretarFecha`, antes de validar el día. Frontend completo `TOTAL: 377 SUCCESS` (370 + 7 casos nuevos); `ng build` limpio.
+- **El `[name]` NO se quitó:** `[name]` alimenta al `NgModel` (registro en `NgForm` como `emision`, `vencimiento`, `imputacion`) y NO deja el atributo en el DOM; `[attr.name]` deja el atributo, que los tests buscan con `input[name=…]`. Sin `[attr.name]`: 15 fallos de 377 (`Cannot read properties of null`). No es un duplicado: son dos efectos distintos. Revertido; el archivo no cambia.
+**BLOQUEADO EN:** OK de Javi para commitear (test y producción en dos commits) y pushear.
+- OK de Javi («Sí, commiteá»). Commits en `fix/fecha-rango-anios`: test y producción por separado (hashes en `git log`).
