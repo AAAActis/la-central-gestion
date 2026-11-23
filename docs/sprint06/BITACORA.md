@@ -1736,3 +1736,41 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 **Estado:** terminada
 - C7-04 movido entero (respuestas de Sergio y preguntas abiertas, con «Vélez») a `docs/sprint07/ESTADO.md`, sección final «Fuera de la tesis · Sprint 9 · post-tesis», como S9-01. C7-05 y C7-06 no se renumeran.
 - D-S6-30 (equipo, 23/11/2026) en la tabla de decisiones del 23/11 de `docs/sprint06/ESTADO.md`; el párrafo de «abre trabajo» ya no manda las devoluciones al Sprint 7.
+
+## 23/11/2026 · Cierre del Sprint 6 y apertura del Sprint 7 (C2, D-S7-01 a D-S7-04)
+
+**Instrucción recibida (verbatim):**
+> 23/11/2026 · Sprint 6 al cierre y arranque del Sprint 7. Leé CLAUDE.md, la bitácora (último bloque «en curso»), docs/sprint06/ESTADO.md, docs/sprint07/ESTADO.md y docs/PLAN-SPRINTS-6-7-8.md antes de empezar. Resúmenes en español.
+>
+> ## 1 · Merges pendientes
+> - Santi mergea primero el #191 (fecha 2000–2100). Cuando entre: en la rama del #193, git merge origin/develop (nunca rebase), resolvé la bitácora conservando los bloques en orden, y corregí las dos líneas **Estado:** mal puestas (bloque del #192 → «terminada»; bloque del #191 → una sola línea, «terminada»). Es la única línea de un bloque que se reescribe. Push y avisá en el #193.
+>
+> ## 2 · Cierre del Sprint 6
+> Javi hizo el recorrido DoD 10 con Sergio contra lacentral_demo. Cuando Santi te pase el detalle (qué se probó, con qué usuario y datos, y si anduvo, búsqueda de artículos incluida), completá la tabla «Recorrido en el navegador» del ESTADO, cerrá las issues #163, #13, #51 y #182 con su referencia, abrí el PR de develop a main y poné la etiqueta sprint-6, como en el Sprint 5. Si el recorrido encontró algo roto, eso va primero, antes que todo el Sprint 7. Sin el detalle de Javi, no lo des por cerrado.
+>
+> ## 3 · Decisiones del equipo para el Sprint 7 (anotalas en docs/sprint07/ESTADO.md, con fecha 23/11/2026)
+> - D-S7-01 · Scrapes: los arma el equipo en n8n y n8n ESCRIBE DIRECTO en la base. Responde «qué entrega un scrape».
+> - D-S7-02 · IVA por alícuota (cierra C7-01, ENTRA): 21 % y 10,5 % son tipos de alícuota. La alícuota suele ser del artículo (valor por defecto), pero en cada línea de la factura de compra se puede cambiar con un desplegable. El IVA se discrimina y se suma por alícuota en el total. Más alícuotas las pasa Sergio después: el diseño no tiene que suponer solo dos. La nota de crédito hereda la alícuota de la línea de la factura original. Hoy está fija en 21 % en RegistrarFacturaCompraUseCase, RegistrarNotaCreditoCompraUseCase, el lector de ETMAN y el control del neto de Expoyer.
+> - D-S7-03 · Costo al anular (cierra C7-02, ENTRA): al anular una factura, el costo del artículo vuelve al que tenía justo antes de esa factura. Si entre la factura y la anulación alguien cambió el costo a mano, queda el de a mano. Exige guardar el costo previo en cada línea al registrarla. Reemplaza la interpretación del CA-002 de la 028 y el CA-004 de la 016.
+> - D-S7-04 · Anulación con UN administrador (cierra C7-03, ENTRA): la doble certificación se saca. Anula un ADMINISTRADOR con motivo obligatorio, y queda registrado quién anuló. Cambia el CA-006 de la 028 y el CA-012 de la 057, y la pieza Comun/DobleCertificacion. Anotá que revierte el pedido del 02/11/2026; Santi avisa a quien lo pidió.
+> - Revisá si la D-S6-29 (la mercadería entra a la sucursal que compró, definido en la carga de la factura) responde la P7-01 de la 027 (#34). Si la responde, la 027 se desbloquea; si no, decí qué falta.
+> - PENDIENTE del equipo: CA3 de la 054 (#127) contra D2. No construyas la 054 hasta que se decida.
+>
+> ## 4 · Qué hacer y en qué orden
+> 1. Abrí el Sprint 7 en docs/sprint07/ESTADO.md: entregable en una línea («al cerrar este sprint, una persona puede entrar al sistema y ... sobre lacentral_demo»), tablero con las issues del milestone «Sprint 7» y sus SP, compuertas y las decisiones de arriba. Las HU nuevas o cambiadas por D-S7-02 a 04 van con su proforma (o su versión nueva), issue en el milestone y SP. Si la suma supera la capacidad, el sprint se estira; no se recorta.
+> 2. Compuerta C2, primero, porque destraba los scrapes de Santi. Esquema del catálogo de proveedores sobre la metodología de referencia, probada en otro proyecto sobre MySQL y que hay que llevar a PostgreSQL:
+>    - catálogo actual por proveedor, con unicidad (proveedor_id, código del proveedor) para reingestar sin duplicar ni perder vinculaciones: código, id externo, código de barras, nombre, descripción, detalle técnico aplanado «CLAVE: valor | CLAVE: valor», marca, precio neto sin IVA, precio de lista, stock, alícuota de IVA, URL de imagen (no se descargan imágenes), última lectura, fecha de origen y activo;
+>    - historial de precio y stock por corrida (RF-016);
+>    - corridas: estado RUNNING, SUCCESS o FAILED; cantidad de ítems; id de la ejecución de n8n; fin.
+>    Decí qué se reusa de lo que ya existe (precio_proveedor, articulo_codigo_alternativo) y qué es nuevo. Upsert con ON CONFLICT. En el mismo script, un rol de PostgreSQL para n8n con permisos mínimos: INSERT, UPDATE y SELECT solo en catálogo, historial y corridas, y SELECT en proveedor. La clave no va al repo: la pone Santi. Script 12 + re-scaffold + bloque «PARA SANTI» (backup, lacentral_test primero, con una copia aparte como nc057_fuente si el esquema corta las suites de otras ramas). Y la proforma de la 055 reescrita: «incorporar al catálogo del proveedor el resultado de un scrape», con los cuatro CA que sobreviven (no duplicar ni perder vinculaciones, registro de cada corrida, lo que no vino se marca vencido y no se borra, proveedor dado de baja se rechaza), y decí cuáles los garantiza la base y cuáles n8n.
+> 3. D-S7-04 (un administrador): chico y destraba el uso diario.
+> 4. D-S7-03 (costo al anular).
+> 5. D-S7-02 (IVA por alícuota). Los cambios de esquema de 3 a 5 pueden ir en el mismo script o en scripts separados: decidilo vos y decí por qué.
+> 6. Después, el comparador (030 a 034, 053, 050) sobre las filas del catálogo, a medida que Santi cargue scrapes.
+>
+> Reglas de siempre: TDD con los tres commits, un PR por HU, persistencia contra PostgreSQL real releyendo con contexto nuevo, verificadores acotados a los commits de la HU, suite completa una vez sobre el HEAD, ESTADO antes del push. Los workflows de n8n de Expoyer, Autocor, Nafazio (Fazio) y ETMAN no son tuyos: los arma Santi. Parás cuando todo lo que quede dependa de personas, o cuando un esquema espere que Santi lo aplique, y pasás el resumen.
+
+**Plan:** 1. Merges (#191 → #193 con las dos líneas de Estado): espera a que Santi mergee el #191. 2. Cierre del Sprint 6: espera el detalle del recorrido de Javi. 3. Rama `docs/sprint07-apertura` (sobre `docs/sprint06-cierre-correcciones`, #193, para no chocar con la sección Sprint 9): decisiones D-S7-01 a 04, P7-01 contra D-S6-29, entregable, tablero, compuertas; proformas e issues de lo que cambian D-S7-02 a 04. 4. C2: script 12 (catálogo, historial, corridas, rol n8n), ensayo en un esquema descartable de `lacentral_test`, bloque «PARA SANTI», proforma 055. 5. D-S7-04 (código, sin esquema si alcanza). 6. D-S7-03 y D-S7-02: scripts y HU. 7. Parar donde quede esperando a Santi o a personas.
+
+**Estado:** en curso
+- Arranque: `git fetch`; `origin/develop` = `d783ea2`; #191 y #193 abiertos (sin merge). Sin worktrees extra. El último bloque «en curso» real es el de #192 (Estado mal puesto, punto 1 de esta instrucción). Rama `docs/sprint07-apertura` creada desde `e8b0670` (#193).

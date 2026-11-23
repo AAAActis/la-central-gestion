@@ -1,8 +1,86 @@
 # ESTADO · Sprint 7
 
-**Entregable:** sin escribir. Lo define el equipo al abrir el sprint (§1 de `CLAUDE.md`). Este
-archivo se creó el 14/11/2026 solo para dejar la pregunta de la 027. El estado de lo adelantado
-del Sprint 7 (028, 026) está abajo, en «Construido antes de tiempo».
+**Entregable (23/11/2026):** al cerrar este sprint, una persona puede entrar al sistema y comparar los precios de un
+repuesto entre todos sus proveedores —a partir del catálogo que n8n incorpora desde cada scrape y de la vinculación de
+sus renglones con los artículos propios—, en la vista de compra o de venta y con el sitio del proveedor a un clic, y
+consultar, corregir y anular facturas de compra (anula un administrador, y el costo vuelve al de antes de la factura),
+con el IVA discriminado por alícuota, sobre `lacentral_demo`.
+
+Abierto el 23/11/2026. El Sprint 6 **todavía no está cerrado**: falta el detalle del recorrido DoD 10 (Javi con
+Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
+
+---
+
+## Tablero · Sprint 7 (milestone «Sprint 7») · 23/11/2026
+
+| Issue | HU | SP | Espera | Estado |
+|---|---|---|---|---|
+| #128 | 055 · HU-CMP-08 · incorporar al catálogo del proveedor el resultado de un scrape (proforma reescrita, v2.0) | 5 | C2 (script 12, Santi) | Script 12 escrito; PR de esquema y pruebas |
+| #126 | 053 · HU-CMP-06 · candidatos por aproximación entre catálogos | 8 | C2, C5, C6 | Sin proforma (C5) |
+| #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | C2, C5 y **el CA3 contra D2 (equipo)** | Sin proforma (C5). **No se construye** hasta que el equipo decida el CA3 |
+| #16 | 030 · HU-CMP-01 · búsqueda comparativa por nombre | 5 | C2 y filas de catálogo | Pendiente |
+| #18 | 031 · HU-CMP-02 · consulta en vivo a los sitios de proveedores | 13 | C2 | Pendiente. Los workflows de n8n los arma Santi, fuera de SP (D-PL-02) |
+| #19 | 032 · HU-CMP-03 · vista Compra | 3 | C1 | Pendiente |
+| #20 | 033 · HU-CMP-04 · vista Venta | 3 | C1 | Pendiente |
+| #35 | 034 · HU-CMP-05 · redirección al sitio del proveedor | 1 | — | Pendiente |
+| #52 | 050 · HU-UI-12 · pantalla del comparador | 8 | 031; su CA-004, C1 | Pendiente. No se parte (D-PL-03) |
+| #34 | 027 · HU-FCO-03 · modificación acotada de factura de compra | 2 | P7-01 (Sergio) | **Sigue bloqueada:** la D-S6-29 no responde la P7-01 (abajo) |
+| #9 (y #23) | 028 · HU-FCO-04 CA-002 y 016 · HU-ART-06 CA-004 · costo al anular (D-S7-03) | 3 | Script 13 | 028 v1.2 y 016 v1.1. #9 y #23 siguen abiertas hasta este cambio |
+| #195 | D-S7-04 · anulación con un administrador (028 CA-006 y CA-007, 057 CA-012) | 2 | Script 13 | 028 v1.2 y 057 v1.3 |
+| #194 | 058 · HU-FCO-08 · IVA por alícuota en la factura de compra y la nota de crédito (D-S7-02) | 8 | Script 14 y una pregunta a Sergio (abajo) | Proforma v1.0 |
+
+**69 SP** (los 56 del plan + 3 + 2 + 8). Contra unos 34 por sprint: **el sprint se estira, no se recorta** (§1 de
+`CLAUDE.md`, D-PL-01). Los SP de la 053, la 054, la 058 y de los cambios de D-S7-03 y D-S7-04 son estimación.
+
+## Compuertas · cada una bloquea solo las HU de su fila
+
+| Compuerta | Bloquea | Estado |
+|---|---|---|
+| ~~Qué entrega un scrape~~ | 055 | **Cerrada el 23/11/2026 por la D-S7-01:** n8n escribe directo en la base |
+| **C2** · catálogo de proveedores (script 12: `scrape_corrida`, `proveedor_articulo`, `proveedor_articulo_historial`, rol `lacentral_n8n`) | 055, 053, 054, 030, 031, 050 | Script escrito y ensayado; **lo aplica Santi** (bitácora, «PARA SANTI · 23/11 · script 12») |
+| C5 · proformas de la 053 y la 054 (con la pantalla de vinculación) | 053, 054 | Sin escribir. El CA3 de la 054 choca con la D2: lo decide el equipo antes |
+| C6 · medición sobre 50 artículos | 053 | Con los primeros scrapes de Santi |
+| C1 · modalidad L2 y retiro de Tarjeta3/6 | 032, 033 y el CA-004 de la 050 | **Propuesta (para el equipo):** no va en el 12. El plan la ponía junto con C2, pero C2 destraba los scrapes y no tiene que esperar el cambio de modalidades, que además toca código de precios. Script propio cuando arranquen la 032 y la 033 |
+| E13 · script 13 (costo previo por línea, D-S7-03; anulación sin doble certificación, D-S7-04) | #9, #23, #195 | Pendiente de escribir |
+| E14 · script 14 (alícuotas, D-S7-02) | #194 | Pendiente de escribir; espera la pregunta P7-02 a Sergio |
+
+**Por qué tres scripts (12, 13 y 14) y no uno:** el 12 solo crea tablas nuevas y destraba a Santi hoy; no espera a
+nadie. El 13 junta dos cambios chicos y ya definidos sobre las tablas de la anulación (`factura_compra_detalle`,
+`nota_credito_compra`), con un solo re-scaffold. El 14 (alícuotas) toca artículo, líneas, nota de crédito, lectores de
+PDF y pantallas, y tiene una pregunta abierta sobre la nota de crédito: meterlo en el 13 frenaría lo que ya está
+decidido. El número 06, reservado para C2 desde el Sprint 4, queda sin usar.
+
+## Decisiones · 23/11/2026
+
+| # | Decisión | Quién | Impacto |
+|---|---|---|---|
+| D-S7-01 | **Scrapes:** los arma el equipo en n8n, y n8n **escribe directo en la base**. Responde «qué entrega un scrape». | Equipo, 23/11/2026 | Cierra esa compuerta. C2 (script 12) da las tablas y un rol `lacentral_n8n` con permisos mínimos. La 055 se reescribe (v2.0). Los workflows de Expoyer, Autocor, Nafazio (Fazio) y ETMAN los arma Santi |
+| D-S7-02 | **IVA por alícuota** (cierra C7-01, entra): 21 % y 10,5 % son tipos de alícuota. La alícuota suele ser del artículo (valor por defecto), pero en cada línea de la factura de compra se puede cambiar con un desplegable. El IVA se discrimina y se suma por alícuota en el total. Sergio pasa más alícuotas después: el diseño no supone solo dos. La nota de crédito hereda la alícuota de la línea de la factura original. | Equipo, 23/11/2026 | 058 nueva (#194). Hoy está fija en 21 % en `RegistrarFacturaCompraUseCase`, `RegistrarNotaCreditoCompraUseCase`, el lector de ETMAN y el control del neto de Expoyer. Script 14 |
+| D-S7-03 | **Costo al anular** (cierra C7-02, entra): al anular una factura, el costo del artículo vuelve al que tenía justo antes de esa factura. Si entre la factura y la anulación alguien lo cambió a mano, queda el de a mano. Exige guardar el costo previo en cada línea al registrarla. | Equipo, 23/11/2026 | Reemplaza la interpretación del CA-002 de la 028 (v1.2) y el CA-004 de la 016 (v1.1). Script 13. #9 y #23 |
+| D-S7-04 | **Anulación con UN administrador** (cierra C7-03, entra): se saca la doble certificación. Anula un ADMINISTRADOR, con motivo obligatorio, y queda registrado quién anuló. **Revierte el pedido de la Dirección del 02/11/2026 (B.4 del script 07); Santi avisa a quien lo pidió.** | Equipo, 23/11/2026 | Cambia el CA-006 y el CA-007 de la 028 (v1.2: un OPERADOR ya no pide la anulación), el CA-012 de la 057 (v1.3) y `Comun/DobleCertificacion`. Script 13 (el CHECK `ncc_anulacion_coherente` hoy exige quien autoriza). #195 |
+
+**Pendiente del equipo:** el CA3 de la 054 (#127) contra la D2 (dos códigos del mismo proveedor para el mismo
+artículo). **La 054 no se construye hasta que se decida.**
+
+### P7-01 contra la D-S6-29 · revisión del 23/11/2026
+
+La D-S6-29 dice que la mercadería entra al depósito de la sucursal que compró, y que eso se define **en la carga** de
+la factura. Confirma la interpretación (a) de la P7-01 —la «ubicación de ingreso» es la sucursal de destino— **pero no
+responde la pregunta**, que es sobre **corregirla después** de registrada. **La 027 sigue bloqueada.** Falta que Sergio
+diga:
+
+1. si se corrige línea por línea o una sucursal para toda la factura;
+2. si en la sucursal original ya se vendió parte, si se permite que quede en negativo (como en la anulación, 028 CA-003);
+3. quién la corrige: ¿alcanza con OPERADOR, o solo ADMINISTRADOR? (Con la D-S7-04 ya no hay doble certificación.)
+
+Con (a), corregir mueve stock entre sucursales: la 027 hay que reestimarla (hoy 2 SP).
+
+### P7-02 · 058 · nota de crédito por bonificación con dos alícuotas · 23/11/2026 · abierta
+
+La nota de crédito guarda un solo importe neto, sin precios por línea (la de devolución tiene artículos y cantidades,
+no importes). «Hereda la alícuota de la línea de la factura original» se resuelve en una devolución, pero no en una
+**bonificación** sobre una factura con líneas al 21 % y al 10,5 %: **¿cómo se reparte el neto entre las alícuotas?**
+¿El comprobante del proveedor ya trae el neto discriminado por alícuota? Sin esa respuesta el script 14 no se escribe.
 
 ---
 
@@ -66,9 +144,10 @@ Si es la (a), la 027 hay que reestimarla.
 
 Salen de lo que Sergio contestó (relevado por Javi el 23/11/2026) y de lo que quedó pendiente al
 cerrar el Sprint 6. **Ninguna está decidida ni estimada**: no tienen SP, y no entran al sprint hasta que el
-equipo las decida. Se registran; no se implementan.
+equipo las decida. Se registran; no se implementan. **C7-01, C7-02 y C7-03 las decidió el equipo el 23/11/2026 (D-S7-02 a D-S7-04)
+y entran al sprint**; C7-05 y C7-06 siguen como candidatas.
 
-### C7-01 · IVA 10,5 % (artículos de electricidad)
+### C7-01 · IVA 10,5 % (artículos de electricidad) · **cerrada por la D-S7-02 (23/11/2026): entra como 058, #194**
 
 - **Qué dijo Sergio:** hay artículos de electricidad con IVA 10,5 %.
 - **Hoy:** la tasa 21 % está fija en el código (`TasaIva = 0.21m` en `RegistrarFacturaCompraUseCase` y en
@@ -82,7 +161,7 @@ equipo las decida. Se registran; no se implementan.
   se usan 21 y 10,5: **Sergio pasa las otras cuando las tenga**. Sigue pendiente la decisión de equipo (artículo con
   posibilidad de cambiarla en la línea, o solo línea) y el script 12.
 
-### C7-02 · Costo al anular una factura
+### C7-02 · Costo al anular una factura · **cerrada por la D-S7-03 (23/11/2026): entra, #9 y #23**
 
 - **Qué dijo Sergio:** al anular, el costo vuelve al anterior a la factura. Ejemplo: costo 1450, factura a 1500, se
   anula: 1450.
@@ -96,7 +175,7 @@ equipo las decida. Se registran; no se implementan.
 - Reemplaza la «interpretación pendiente» del CA-002 de la 028 (`docs/historias/028-HU-FCO-04.md`, actualizado el
   23/11 con la respuesta; el código no cambia). El CA-004 de la 016 (#23) tenía la misma interpretación.
 
-### C7-03 · Anulación con un solo administrador
+### C7-03 · Anulación con un solo administrador · **cerrada por la D-S7-04 (23/11/2026): entra, #195**
 
 - **Qué dijo Sergio:** «con uno solo sí se puede anular».
 - **Choque:** el CA-006 de la 028 exige que autorice **otra** persona con rol ADMINISTRADOR, distinta de quien pide: rechaza la
