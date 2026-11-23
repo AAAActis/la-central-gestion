@@ -60,6 +60,7 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 055 | HU-CMP-08 | Incorporar al catálogo del proveedor el resultado de un scrape | Alto | 5 | Sprint 7 | — | [`055-HU-CMP-08.md`](./055-HU-CMP-08.md) | #128 | Sprint 7 | En desarrollo · v2.0 (23/11/2026, D-S7-01): n8n escribe directo en la base; script 12 (C2) |
 | 056 | HU-FCO-06 | Carga de factura de compra con la mecánica del negocio | Alto | 13 | Sprint 6 | 15 | [`056-HU-FCO-06.md`](./056-HU-FCO-06.md) | #163 | Sprint 6 | Construida · PR #166 (esquema y backend) y #167 (frontend), mergeados 16/11/2026, más el #170 (#169). Abierta: falta el recorrido DoD 10 contra `lacentral_demo` (Javi con Sergio) |
 | 057 | HU-FCO-07 | Registro de nota de crédito de proveedor | Alto | 13 | Sprint 6 | 14 | [`057-HU-FCO-07.md`](./057-HU-FCO-07.md) | #182 | Sprint 6 | Pendiente · entró el 18/11/2026 (D-S6-18, aprobada por el equipo; última HU del Sprint 6). Dos PR: carga manual, después PDF de Expoyer. Necesita el script 11 (E11). CA-011 a CA-014 por decisión del equipo (D-S6-21 a 25, 18/11) |
+| 058 | HU-FCO-08 | IVA por alícuota en la factura de compra y la nota de crédito | Alto | 8 | Sprint 7 | — | [`058-HU-FCO-08.md`](./058-HU-FCO-08.md) | #194 | Sprint 7 | Pendiente · desde la D-S7-02 (23/11/2026); espera el script 14 y la P7-02 |
 
 **Total: 55 historias con proforma** (las 52 del Excel, la 055 v2.0, la 056 y la 057).
 
