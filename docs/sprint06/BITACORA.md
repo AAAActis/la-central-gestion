@@ -1725,3 +1725,14 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - Merge `864b89d` en `fix/fecha-rango-anios`: primero el bloque del cierre documental (#192, commit de las 16:38), después el del fix (#191, 16:42); los dos quedaron idénticos a sus originales (comparados con `diff`). Frontend completo: `TOTAL: 377 SUCCESS`. Pusheado.
 - a) y d): «Lo que falta» queda con el recorrido DoD 10 y el punto de artículos; la suite 809/809 sobre `ca11be2` (22/11, 18 m 33 s, comentario en el #189, verificado) y el borrado de `nc057_fuente` pasan a «ya hecho». «Última verde» actualizada también en PRÓXIMA SESIÓN. b) punto 2 nuevo. c) «Vélez» en las preguntas abiertas de C7-04.
 - Abierto: el bloque del cierre documental (#192) quedó con `**Estado:** en curso` y el del fix (#191) tiene dos líneas de Estado («en curso» y «terminada»); no se tocaron. Este bloque y el del #191 se agregan al mismo final: el que se mergee segundo vuelve a tener el mismo conflicto.
+
+## 23/11/2026 · Devoluciones a proveedor fuera de la tesis (`docs/sprint06-cierre-correcciones`, #193)
+
+**Instrucción recibida (verbatim):**
+> c) docs/sprint07/ESTADO.md: C7-04 (módulo de devoluciones a proveedor) sale de las candidatas del Sprint 7. Decisión del equipo (Javi y Santi, 23/11/2026): queda FUERA DE LA TESIS, como «Sprint 9 · post-tesis», para construirlo después de la defensa como mejora para el negocio. Movelo a una sección nueva «Fuera de la tesis · Sprint 9» con lo que ya dijo Sergio y las preguntas abiertas (estados, qué es el PDF, el depósito «Vélez» que no existe en el sistema). Anotá la decisión con fecha en el ESTADO del Sprint 6.
+
+**Plan:** 1. Mover C7-04 a «Fuera de la tesis · Sprint 9» (S9-01), sin perder contenido. 2. D-S6-30 en el ESTADO del Sprint 6. 3. Commit y push al #193.
+
+**Estado:** terminada
+- C7-04 movido entero (respuestas de Sergio y preguntas abiertas, con «Vélez») a `docs/sprint07/ESTADO.md`, sección final «Fuera de la tesis · Sprint 9 · post-tesis», como S9-01. C7-05 y C7-06 no se renumeran.
+- D-S6-30 (equipo, 23/11/2026) en la tabla de decisiones del 23/11 de `docs/sprint06/ESTADO.md`; el párrafo de «abre trabajo» ya no manda las devoluciones al Sprint 7.

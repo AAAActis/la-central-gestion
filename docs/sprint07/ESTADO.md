@@ -106,21 +106,6 @@ equipo las decida. Se registran; no se implementan.
   CA-006 y el pedido de la Dirección del 02/11/2026 (doble certificación): **lo decide el equipo/Dirección** antes de tocar
   el CA-006 y su código.
 
-### C7-04 · Módulo de devoluciones a proveedor (Reclamos, alerta de pendientes, PDF)
-
-- HU nueva, con esquema nuevo. Depende de la 020 (transferencias, Sprint 8): la mercadería entra a Reclamos con una
-  transferencia (D-S6-20).
-- **Ya existen:** el depósito Reclamos, la nota de crédito con líneas devueltas, su anulación y la reposición con factura
-  nueva (D-S6-21).
-- **Respuestas de Sergio (vía Javi, 23/11/2026):**
-  - motivos: el proveedor mandó roto o mal; nosotros pedimos mal; el cliente pidió mal;
-  - dos salidas: **devolución** y **nota de crédito**;
-  - la alerta la ve el ADMINISTRADOR y se muestra siempre: desde 0 días sin nota de crédito hasta que se cargue;
-  - **no se cierra con una nota de crédito parcial:** es una devolución y se espera la nota de crédito.
-- **Todavía abiertas para la proforma:** estados exactos; qué es el PDF (remito de devolución o pedido de reclamo), con qué
-  datos y cómo se envía; el depósito **«Vélez»**, que Sergio nombró como origen de las devoluciones y que no existe en
-  el sistema (¿es una sucursal, otro nombre de un depósito existente o un depósito nuevo?).
-
 ### C7-05 · H1 · vencimiento según proveedor y H2 · reconocimiento de proveedor y sucursal en PDF
 
 Ya descriptas en la spec de correcciones del Sprint 6. Quedan como candidatas. **Sergio todavía no contestó (23/11); falta:**
@@ -137,3 +122,23 @@ Ya descriptas en la spec de correcciones del Sprint 6. Quedan como candidatas. *
   común.
 - Limitar los intentos de contraseña en el login y en la anulación.
 - Unificar el parser de fechas abreviadas en las demás pantallas con fechas.
+
+## Fuera de la tesis · Sprint 9 · post-tesis
+
+**Decisión del equipo (Javi y Santi, 23/11/2026), D-S6-30:** lo de esta sección queda **fuera de la tesis**. Se construye
+después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni 8.
+
+### S9-01 · Módulo de devoluciones a proveedor (Reclamos, alerta de pendientes, PDF) · antes C7-04
+
+- HU nueva, con esquema nuevo. Depende de la 020 (transferencias, Sprint 8): la mercadería entra a Reclamos con una
+  transferencia (D-S6-20).
+- **Ya existen:** el depósito Reclamos, la nota de crédito con líneas devueltas, su anulación y la reposición con factura
+  nueva (D-S6-21).
+- **Respuestas de Sergio (vía Javi, 23/11/2026):**
+  - motivos: el proveedor mandó roto o mal; nosotros pedimos mal; el cliente pidió mal;
+  - dos salidas: **devolución** y **nota de crédito**;
+  - la alerta la ve el ADMINISTRADOR y se muestra siempre: desde 0 días sin nota de crédito hasta que se cargue;
+  - **no se cierra con una nota de crédito parcial:** es una devolución y se espera la nota de crédito.
+- **Todavía abiertas para la proforma:** estados exactos; qué es el PDF (remito de devolución o pedido de reclamo), con qué
+  datos y cómo se envía; el depósito **«Vélez»**, que Sergio nombró como origen de las devoluciones y que no existe en
+  el sistema (¿es una sucursal, otro nombre de un depósito existente o un depósito nuevo?).

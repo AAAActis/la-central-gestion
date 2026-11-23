@@ -209,9 +209,11 @@ Lo relevó Javi con Sergio el 23/11/2026. Las tres **confirman lo ya implementad
 | D-S6-27 | **Descuentos sucesivos:** 10 % + 5 % = 14,5 % acumulado es como lo piensa el negocio. | Sergio vía Javi, 23/11/2026 | Confirma lo implementado (056 y cuarto descuento, D-S6-15) |
 | D-S6-28 | **Notas de crédito:** Sergio confirma D-S6-21 a D-S6-26 tal como están. | Sergio vía Javi, 23/11/2026 | Cierra el «si Sergio corrige alguna, se cambia» del 18/11. Sin cambios |
 | D-S6-29 | **Depósito de ingreso de una compra:** la mercadería entra al depósito de la sucursal que compró, y eso se define en la carga de la factura. | Sergio vía Javi, 23/11/2026 | Confirma lo implementado (destino por línea o por cabecera, D9) |
+| D-S6-30 | **Devoluciones a proveedor fuera de la tesis:** el módulo (Reclamos, alerta de pendientes, PDF; antes C7-04) sale de las candidatas del Sprint 7 y queda como «Sprint 9 · post-tesis», para después de la defensa. | Equipo (Javi y Santi), 23/11/2026 | `docs/sprint07/ESTADO.md`, «Fuera de la tesis · Sprint 9» (S9-01), con lo que dijo Sergio y las preguntas abiertas. No es de Sergio: es del equipo |
 
-Lo que Sergio dijo y **abre trabajo** (IVA 10,5 %, costo al anular, anulación con un solo administrador,
-devoluciones a proveedor) no está acá: queda como candidata en `docs/sprint07/ESTADO.md`, sin decidir.
+Lo que Sergio dijo y **abre trabajo** (IVA 10,5 %, costo al anular, anulación con un solo administrador) no está acá:
+queda como candidata en `docs/sprint07/ESTADO.md`, sin decidir. Las devoluciones a proveedor quedan fuera de la tesis
+(D-S6-30, Sprint 9).
 
 ## Respuestas de Sergio · 17/11/2026
 
