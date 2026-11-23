@@ -59,3 +59,80 @@ mercadería a San Vicente […] no modifica la existencia de Fragueiro».
 **Lectura del agente:** la (a), porque la nota remite a la 018. Pero la D9 la vuelve un movimiento
 de stock, más cerca de la 020 (transferencia entre ubicaciones, 8 SP) que de los 2 SP de la 027.
 Si es la (a), la 027 hay que reestimarla.
+
+---
+
+## Candidatas desde el cierre del Sprint 6 · 23/11/2026
+
+Salen de lo que Sergio contestó (relevado por Javi el 23/11/2026) y de lo que quedó pendiente al
+cerrar el Sprint 6. **Ninguna está decidida ni estimada**: no tienen SP, y no entran al sprint hasta que el
+equipo las decida. Se registran; no se implementan.
+
+### C7-01 · IVA 10,5 % (artículos de electricidad)
+
+- **Qué dijo Sergio:** hay artículos de electricidad con IVA 10,5 %.
+- **Hoy:** la tasa 21 % está fija en el código (`TasaIva = 0.21m` en `RegistrarFacturaCompraUseCase` y en
+  `RegistrarNotaCreditoCompraUseCase`). El lector de ETMAN y el control del neto de la nota de crédito de Expoyer
+  también asumen 21 %. El esquema **no tiene alícuota** por artículo ni por línea.
+- **Decisión de equipo pendiente:** dónde vive la alícuota, en el artículo o en la línea de la factura. Lleva un
+  script 12 (esquema + re-scaffold). La nota de crédito tendría que heredar la alícuota de la factura original.
+- **Respuesta de Sergio (vía Javi, 23/11/2026):** la alícuota suele ser del producto, pero siempre puede variar, así que
+  tiene que haber un desplegable con los tipos de alícuota. Si la factura tiene dos artículos, uno con la general (21 %) y
+  otro con la diferencial (10,5 %), el IVA de ambos se suma en el total (se discrimina por alícuota). Hay más tipos, pero hoy
+  se usan 21 y 10,5: **Sergio pasa las otras cuando las tenga**. Sigue pendiente la decisión de equipo (artículo con
+  posibilidad de cambiarla en la línea, o solo línea) y el script 12.
+
+### C7-02 · Costo al anular una factura
+
+- **Qué dijo Sergio:** al anular, el costo vuelve al anterior a la factura. Ejemplo: costo 1450, factura a 1500, se
+  anula: 1450.
+- **Hoy:** `AnularConEfectosAsync` vuelve al costo del último registro válido de `articulo_historial_compra`; si no hay
+  registro anterior (valor importado o cambio manual), conserva el actual.
+- **Para cumplir el ejemplo en todos los casos** habría que guardar el costo previo en cada línea de la factura al
+  registrarla (script 12).
+- **Respuesta de Sergio (23/11/2026) sobre el cambio a mano:** si el costo se cambió a mano entre la factura y la anulación,
+  **queda el que se puso a mano** (no se vuelve al anterior a la factura).
+- **Pendiente:** el esquema (la regla ya está completa).
+- Reemplaza la «interpretación pendiente» del CA-002 de la 028 (`docs/historias/028-HU-FCO-04.md`, actualizado el
+  23/11 con la respuesta; el código no cambia). El CA-004 de la 016 (#23) tenía la misma interpretación.
+
+### C7-03 · Anulación con un solo administrador
+
+- **Qué dijo Sergio:** «con uno solo sí se puede anular».
+- **Choque:** el CA-006 de la 028 exige que autorice **otra** persona con rol ADMINISTRADOR, distinta de quien pide: rechaza la
+  autoautorización (pedido de la Dirección del 02/11/2026). Con un solo administrador, la anulación no se puede hacer.
+- **No se cambia el código en esta tarea.**
+- **Respuesta de Sergio (vía Javi, 23/11/2026):** **el mismo administrador puede anular y autorizarse solo.** Contradice el
+  CA-006 y el pedido de la Dirección del 02/11/2026 (doble certificación): **lo decide el equipo/Dirección** antes de tocar
+  el CA-006 y su código.
+
+### C7-04 · Módulo de devoluciones a proveedor (Reclamos, alerta de pendientes, PDF)
+
+- HU nueva, con esquema nuevo. Depende de la 020 (transferencias, Sprint 8): la mercadería entra a Reclamos con una
+  transferencia (D-S6-20).
+- **Ya existen:** el depósito Reclamos, la nota de crédito con líneas devueltas, su anulación y la reposición con factura
+  nueva (D-S6-21).
+- **Respuestas de Sergio (vía Javi, 23/11/2026):**
+  - motivos: el proveedor mandó roto o mal; nosotros pedimos mal; el cliente pidió mal;
+  - dos salidas: **devolución** y **nota de crédito**;
+  - la alerta la ve el ADMINISTRADOR y se muestra siempre: desde 0 días sin nota de crédito hasta que se cargue;
+  - **no se cierra con una nota de crédito parcial:** es una devolución y se espera la nota de crédito.
+- **Todavía abiertas para la proforma:** estados exactos; qué es el PDF (remito de devolución o pedido de reclamo), con qué
+  datos y cómo se envía.
+
+### C7-05 · H1 · vencimiento según proveedor y H2 · reconocimiento de proveedor y sucursal en PDF
+
+Ya descriptas en la spec de correcciones del Sprint 6. Quedan como candidatas. **Sergio todavía no contestó (23/11); falta:**
+
+- la tabla de condiciones de pago pasada a texto;
+- qué significa «quincena», y la fecha base;
+- cómo se marca el vencimiento manual (Fric-Rot, Etman);
+- los PDF reales de Fragueiro y San Vicente, y los números de cuenta.
+
+### C7-06 · Deuda técnica menor
+
+- Mover `LectorTextoPdf` (PdfPig) de `Api` a `Data` y loguear su `catch`.
+- Mover `NormalizacionArticulo.Palabras` y la cadena de `Replace` de acentos (repetida en tres repositorios) a un lugar
+  común.
+- Limitar los intentos de contraseña en el login y en la anulación.
+- Unificar el parser de fechas abreviadas en las demás pantallas con fechas.
