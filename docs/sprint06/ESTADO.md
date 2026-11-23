@@ -19,32 +19,15 @@ El tablero y esta tabla son la misma verdad. Si uno cambia, el otro cambia en el
 
 | Issue | HU | SP | Asignado | La bloquea | Estado |
 |---|---|---|---|---|---|
-| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | — | **Construida y mergeada.** PR #166 (esquema y backend) y #167 (frontend), aprobados y mergeados por Javi el 16/11/2026, con `verificador-tdd` y `auditor-persistencia` APTO (ver la historia abajo). **Issue abierta:** falta el recorrido DoD 10 contra `lacentral_demo`, que hace Javi con Sergio (tabla armada abajo). El 09 en `lacentral`: lo aplica Santi (bitácora, bloque «PARA SANTI» del 17/11). **Cuarto descuento (D-S6-15, 17/11):** rama `feature/163-cuarto-descuento`, apilada sobre la 049: **construida (18/11/2026), PR #181 mergeado en `develop`** (base `feature/51-pantalla-pdf`): script 10, re-scaffold, núcleo, repositorio, API, pantalla y precarga del PDF. `verificador-tdd` NO APTO en la ronda 1 (sobrevivía el regex decimal de «Pago Contado») y APTO en la 2; `auditor-persistencia` APTO. Backend 670/670 sobre `4125c24`; frontend 252/252 sobre `da0412c` (sin cambios después). **E10 cerrada el 18/11/2026** (el 10 en las tres bases): **#181 mergeado (ver `git log`)**; la issue sigue abierta hasta el recorrido DoD 10 con Sergio |
-| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | **Construida (17/11/2026), en dos PR apilados.** **Parte 1, interpretación (CA-001 a CA-004): PR #177, mergeado**: `verificador-tdd` NO APTO en las rondas 1 y 2 y APTO en la 3; `auditor-persistencia` APTO; 637/637 sobre `87456be`. **Parte 2, `origen = 'PDF'` (CA-006): PR #178, mergeado** (`feature/13-factura-pdf-registro`): `verificador-tdd` APTO en la ronda 1, auditor APTO, 640/640 sobre `61e4ebb`. CA-005: el backend rechaza una línea sin artículo y la pantalla la bloquea (049). Falta el DoD 10 con los PDF reales. **Revisión de Santi (17/11), arreglos en el #177:** percepciones de ETMAN (la que no se lee va a revisión), número del presupuesto de Fazio desde el nombre del archivo (D-S6-13), proveedor elegido a mano (sus códigos se buscan en él). **Lector de Expoyer:** rama `feature/13-lector-expoyer`, PR #180, mergeado. Arreglos del #177: `verificador-tdd` NO APTO en la ronda 1 y APTO en la 2, `auditor-persistencia` APTO; backend 652/652 sobre `b0cf239`. #178: 655/655 sobre `5be9f56`. Expoyer: `verificador-tdd` y auditor APTO en la ronda 1; 678/678 sobre `d89a06a`. **D-S6-17 (18/11):** el lector de Fazio toma el «P. Final» como costo; con el real, 323.670,44 (en el #177, mergeado hacia arriba). `verificador-tdd` y `auditor-persistencia` APTO en la ronda 1; backend 654/654 sobre `e0d6004` (#177), 657/657 sobre `ab699e7` (#178; mismo backend que el #179), 672/672 sobre `925ea6e` (#181), 683/683 sobre `465072d` (#180) |
-| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | **Construida (17/11/2026), PR #179 mergeado** (`feature/51-pantalla-pdf`). El PDF precarga el formulario de la 056, sin pantalla nueva. `verificador-tdd`: NO APTO en las rondas 1 y 2, APTO en la 3; el auditor no aplica. Frontend 238/238 sobre `43edd66`. Falta el DoD 10 contra `lacentral_demo` con los PDF reales (Javi con Sergio). **Revisión de Santi (17/11):** las percepciones sin leer se señalan, y elegir el proveedor después del PDF resuelve sus códigos; `verificador-tdd` NO APTO en la ronda 1 y APTO en la 2; frontend 248/248 sobre `78ff462`; su backend es el del #178 |
+| #163 | 056 · HU-FCO-06 · carga de factura de compra con la mecánica del negocio | 13 (estimación) | Santi | — | **Construida y mergeada.** PR #166 (esquema y backend) y #167 (frontend), aprobados y mergeados por Javi el 16/11/2026, con `verificador-tdd` y `auditor-persistencia` APTO (ver la historia abajo). **Issue abierta:** falta el recorrido DoD 10 contra `lacentral_demo`, que hace Javi con Sergio (tabla armada abajo). El 09 en `lacentral`: lo aplica Santi (bitácora, bloque «PARA SANTI» del 17/11). **Cuarto descuento (D-S6-15, 17/11):** rama `feature/163-cuarto-descuento`, apilada sobre la 049: **construida (18/11/2026), PR abierto** con base `feature/51-pantalla-pdf`: script 10, re-scaffold, núcleo, repositorio, API, pantalla y precarga del PDF. `verificador-tdd` NO APTO en la ronda 1 (sobrevivía el regex decimal de «Pago Contado») y APTO en la 2; `auditor-persistencia` APTO. Backend 670/670 sobre `4125c24`; frontend 252/252 sobre `da0412c` (sin cambios después). **E10 cerrada el 18/11/2026** (el 10 en las tres bases): **el #181 puede entrar a `develop` cuando Javi lo revise** |
+| #13 | 029 · HU-FCO-05 · carga de factura desde PDF | 13 | Santi | la 056 · C7 | **Construida (17/11/2026), en dos PR apilados.** **Parte 1, interpretación (CA-001 a CA-004): PR #177**: `verificador-tdd` NO APTO en las rondas 1 y 2 y APTO en la 3; `auditor-persistencia` APTO; 637/637 sobre `87456be`. **Parte 2, `origen = 'PDF'` (CA-006): PR abierto** en `feature/13-factura-pdf-registro`: `verificador-tdd` APTO en la ronda 1, auditor APTO, 640/640 sobre `61e4ebb`. CA-005: el backend rechaza una línea sin artículo y la pantalla la bloquea (049). Falta el DoD 10 con los PDF reales. **Revisión de Santi (17/11), arreglos en el #177:** percepciones de ETMAN (la que no se lee va a revisión), número del presupuesto de Fazio desde el nombre del archivo (D-S6-13), proveedor elegido a mano (sus códigos se buscan en él). **Lector de Expoyer:** rama `feature/13-lector-expoyer`, PR propio apilado sobre el del cuarto descuento. Arreglos del #177: `verificador-tdd` NO APTO en la ronda 1 y APTO en la 2, `auditor-persistencia` APTO; backend 652/652 sobre `b0cf239`. #178: 655/655 sobre `5be9f56`. Expoyer: `verificador-tdd` y auditor APTO en la ronda 1; 678/678 sobre `d89a06a`. **D-S6-17 (18/11):** el lector de Fazio toma el «P. Final» como costo; con el real, 323.670,44 (en el #177, mergeado hacia arriba). `verificador-tdd` y `auditor-persistencia` APTO en la ronda 1; backend 654/654 sobre `e0d6004` (#177), 657/657 sobre `ab699e7` (#178; mismo backend que el #179), 672/672 sobre `925ea6e` (#181), 683/683 sobre `465072d` (#180) |
+| #51 | 049 · HU-UI-11 · pantalla de carga desde PDF | 8 | Santi | la 029 | **Construida (17/11/2026), PR abierto** en `feature/51-pantalla-pdf`, apilado sobre el #178. El PDF precarga el formulario de la 056, sin pantalla nueva. `verificador-tdd`: NO APTO en las rondas 1 y 2, APTO en la 3; el auditor no aplica. Frontend 238/238 sobre `43edd66`. Falta el DoD 10 contra `lacentral_demo` con los PDF reales (Javi con Sergio). **Revisión de Santi (17/11):** las percepciones sin leer se señalan, y elegir el proveedor después del PDF resuelve sus códigos; `verificador-tdd` NO APTO en la ronda 1 y APTO en la 2; frontend 248/248 sobre `78ff462`; su backend es el del #178 |
 | #169 | Factura de compra: el mismo artículo a sucursales distintas (D9), observación de Javi del 14/11 | sin estimar | Santi | — | **Hecha:** PR #170, mergeado por Javi el 16/11/2026 (`verificador-tdd` APTO, 203/203 frontend sobre `b7973d6`). Issue cerrada el 17/11 con referencia al #170 |
 
-| #182 | 057 · HU-FCO-07 · registro de nota de crédito de proveedor (D-S6-18) | 13 (estimación) | Santi | E11 | **Entró el 18/11/2026, aprobada por el equipo (D-S6-18).** Proforma `docs/historias/057-HU-FCO-07.md` (14 CA). Dos PR. **PR 1 (carga manual), 19/11:** re-scaffold con el 11, `NotaCreditoCompraRepositorio` con PostgreSQL (CA-014 acumulado y dos devoluciones simultáneas, CA-012, CA-011 con la carrera nota/anulación de factura), CA-008 (API, ficha y pantalla de la factura), API (`/api/notas-credito-compra`, `/calculo`, `/{id}/anulacion`, 401/403). Corre contra una plantilla con el 11 (`LA_CENTRAL_TEST_SCHEMA`). PR #183, verificadores APTO, base `develop` desde el 19/11 (#180 mergeado). **PR 2 (PDF de Expoyer, CA-010), 19/11:** lector, interpretación, `POST /api/notas-credito-compra/pdf` y precarga de la pantalla (proveedor, número, fecha, clase, neto, facturas de «Doc.Asoc.»; «Revisar» en lo que el PDF no afirmó; origen PDF), en `feature/182-nota-credito-pdf`; suites sobre `7cd1220` contra `nc057_fuente` 789/789 y frontend 286; verificadores APTO; PR con base `feature/182-nota-credito`. **PR 3 (CA-012 con pantalla, D-S6-26), 19/11:** `GET /api/notas-credito-compra` y la pantalla «Notas de crédito registradas» (proveedor, fecha, anuladas marcadas, «Anular» con motivo y otro ADMINISTRADOR), en `feature/182-nota-credito-anulacion`; backend 803/803 sobre `59be2c8` contra `nc057_fuente`, frontend 301 sobre `bb9d4c8`; `verificador-tdd` APTO en la ronda 2 (la 1 dio NO APTO por dos mutaciones de la pantalla, arregladas en `bb9d4c8`), `auditor-persistencia` APTO; PR #185 con base `feature/182-nota-credito-pdf`. **19/11 (noche):** pruebas que faltaban, solo test — #184 `4d134e4` (sin «archivo», más de 10 MB con Kestrel real; 791/791), #185 `67a522f` (desempate por Id; 806/806). **Mergeados el 20/11/2026: #183, #184 y #185 (`9f387c2`).** Falta el DoD 10 de la 057 en `lacentral_demo` |
+| #182 | 057 · HU-FCO-07 · registro de nota de crédito de proveedor (D-S6-18) | 13 (estimación) | Santi | E11 | **Entró el 18/11/2026, aprobada por el equipo (D-S6-18).** Proforma `docs/historias/057-HU-FCO-07.md` (14 CA). Dos PR. **PR 1 (carga manual), 19/11:** re-scaffold con el 11, `NotaCreditoCompraRepositorio` con PostgreSQL (CA-014 acumulado y dos devoluciones simultáneas, CA-012, CA-011 con la carrera nota/anulación de factura), CA-008 (API, ficha y pantalla de la factura), API (`/api/notas-credito-compra`, `/calculo`, `/{id}/anulacion`, 401/403). Corre contra una plantilla con el 11 (`LA_CENTRAL_TEST_SCHEMA`). PR #183, verificadores APTO, base `develop` desde el 19/11 (#180 mergeado). **PR 2 (PDF de Expoyer, CA-010), 19/11:** lector, interpretación, `POST /api/notas-credito-compra/pdf` y precarga de la pantalla (proveedor, número, fecha, clase, neto, facturas de «Doc.Asoc.»; «Revisar» en lo que el PDF no afirmó; origen PDF), en `feature/182-nota-credito-pdf`; suites sobre `7cd1220` contra `nc057_fuente` 789/789 y frontend 286; verificadores APTO; PR con base `feature/182-nota-credito`. **PR 3 (CA-012 con pantalla, D-S6-26), 19/11:** `GET /api/notas-credito-compra` y la pantalla «Notas de crédito registradas» (proveedor, fecha, anuladas marcadas, «Anular» con motivo y otro ADMINISTRADOR), en `feature/182-nota-credito-anulacion`; backend 803/803 sobre `59be2c8` contra `nc057_fuente`, frontend 301 sobre `bb9d4c8`; `verificador-tdd` APTO en la ronda 2 (la 1 dio NO APTO por dos mutaciones de la pantalla, arregladas en `bb9d4c8`), `auditor-persistencia` APTO; PR #185 con base `feature/182-nota-credito-pdf`. **19/11 (noche):** pruebas que faltaban, solo test — #184 `4d134e4` (sin «archivo», más de 10 MB con Kestrel real; 791/791), #185 `67a522f` (desempate por Id; 806/806) |
 
 **47 SP** (13 + 13 + 8 + 13; la 057 entró el 18/11, D-PL-06: el sprint se estira). Salieron al Sprint 7 la #126, la #127 y la #128 (21 SP); entraron la
 #13 y la #51 (21 SP). Es un intercambio: el total no cambia.
-
-## Lo que falta para cerrar el Sprint 6 · 23/11/2026
-
-Todo el código está mergeado en `develop` (`ca11be2`). El sprint **no está cerrado**: se cierra por
-entregable (§1 de `CLAUDE.md`) y el entregable todavía no se recorrió a mano.
-
-1. **Recorrido manual en `lacentral_demo` (Javi con Sergio), DoD 10:** factura desde PDF ETMAN, Fazio y
-   Expoyer; cuarto descuento; notas de crédito; Compras registradas y anulación; fechas abreviadas; Enter en la
-   nota de crédito; búsqueda por palabra en proveedores y clientes (**la demo tiene 0 clientes: cargar uno
-   antes**); layout de la factura de compra. Cierra las issues #163, #13 y #51, que siguen abiertas hasta entonces.
-2. **Suite completa de backend sobre `develop` (Santi),** con la base sin otra carga. Última verde: 809/809 sobre
-   `764c56e` (`auditor-persistencia`, 16 m 30 s). Issue #190 (timeouts de la base compartida): abierta.
-3. **Borrar `nc057_fuente` (Santi):** `backend/db/pruebas/nc057_fuente_borrado.sql`.
-
-Frontend sobre `develop` mergeado: build limpio y 370/370 en verde.
-
----
 
 ## Compuertas · cada una bloquea solo las HU de su fila
 
@@ -195,19 +178,6 @@ Expoyer), en un segundo PR.
 
 **Mandato:** el Mandato v3.0 deja las notas de crédito fuera de alcance. Con la D-S6-18 aprobada por el
 equipo el 18/11/2026 (tutor avisado), **el Mandato pasa a v3.1; lo edita Santi en el GR-01.**
-
-## Decisiones · 23/11/2026 · confirmadas por Sergio
-
-Lo relevó Javi con Sergio el 23/11/2026. Las tres **confirman lo ya implementado**: no cambian código.
-
-| # | Decisión | Quién | Impacto |
-|---|---|---|---|
-| D-S6-27 | **Descuentos sucesivos:** 10 % + 5 % = 14,5 % acumulado es como lo piensa el negocio. | Sergio vía Javi, 23/11/2026 | Confirma lo implementado (056 y cuarto descuento, D-S6-15) |
-| D-S6-28 | **Notas de crédito:** Sergio confirma D-S6-21 a D-S6-26 tal como están. | Sergio vía Javi, 23/11/2026 | Cierra el «si Sergio corrige alguna, se cambia» del 18/11. Sin cambios |
-| D-S6-29 | **Depósito de ingreso de una compra:** la mercadería entra al depósito de la sucursal que compró, y eso se define en la carga de la factura. | Sergio vía Javi, 23/11/2026 | Confirma lo implementado (destino por línea o por cabecera, D9) |
-
-Lo que Sergio dijo y **abre trabajo** (IVA 10,5 %, costo al anular, anulación con un solo administrador,
-devoluciones a proveedor) no está acá: queda como candidata en `docs/sprint07/ESTADO.md`, sin decidir.
 
 ## Respuestas de Sergio · 17/11/2026
 
@@ -382,18 +352,7 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
-**23/11 · cierre documental del Sprint 6 (`docs/sprint06-cierre`).**
-- **Mergeados en `develop` (`ca11be2`), en este orden:** #186 (layout de la FCO), #189 (búsqueda por palabra), #187
-  (fechas abreviadas) y #188 (Enter en la nota de crédito). También están mergeados #181, #179, #178, #177, #180, #183,
-  #184 y #185: las filas del tablero ya no dicen «PR abierto».
-- Frontend sobre `develop`: build limpio y 370/370. Backend: última suite completa verde 809/809 sobre `764c56e`.
-- Decisiones D-S6-27 a D-S6-29 de Sergio (23/11) cargadas arriba. Lo que abre trabajo se registró en
-  `docs/sprint07/ESTADO.md`, «Candidatas desde el cierre del Sprint 6», y el CA-002 de la 028 en
-  `docs/historias/028-HU-FCO-04.md`. Sin código.
-- **Queda:** recorrido DoD 10 en `lacentral_demo` (Javi con Sergio), suite completa de backend sobre `develop` (Santi),
-  borrar `nc057_fuente` (Santi) y el fix de rango de años en las fechas abreviadas (`fix/fecha-rango-anios`).
-
-**21/11 (noche, 2) · Fix D: `fix/busquedas-por-palabra` (PR #189, mergeado).**
+**21/11 (noche, 2) · Fix D en PR: `fix/busquedas-por-palabra`.**
 - Javi eligió (21/11) que proveedores y clientes encuentren la razón social que contiene cada palabra escrita, sin
   acentos ni mayúsculas, como artículos. Lo parecido (pg_trgm) sale después.
 - Commits: `cd1c48f` (3 tests contra PostgreSQL, rojo por aserción) y `c5ef0ff` (código).
@@ -409,7 +368,7 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
   - `verificador-tdd`: NO APTO en la ronda 1 y APTO en la ronda 2.
   - `auditor-persistencia`: APTO. Las tres bases tienen ctype `en_US.utf8`; `%` y `_` no actúan como comodines.
 - **Queda:**
-  - ~~Javi mergea el #189~~ → mergeado (23/11).
+  - Javi mergea el #189.
   - Santi corre la suite completa en `develop` después del merge.
   - Issue de timeouts de la base compartida abierta: #190 (22/11).
   - Recorrido a mano en `lacentral_demo`.
@@ -428,13 +387,13 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
   0 clientes. El rol no interviene. **Decide Javi:** que proveedores y clientes encuentren por palabra contenida (sin
   acentos ni mayúsculas, como artículos), con lo parecido después; en su propia rama.
 
-**21/11 (madrugada) · correcciones de cierre (spec de Javi): A, B y C mergeados (#186, #187, #188); D diagnosticado sin código y resuelto en el #189.**
+**21/11 (madrugada) · correcciones de cierre (spec de Javi): A, B y C en PR; D diagnosticado sin código.**
 - #183, #184 y #185 mergeados a `develop` (`9f387c2`). Suite completa de backend sobre `9f387c2`: **806/806** (1 h 1 m).
 - PR, uno por fix, base `develop`, con OK de Javi (20/11): **B #186** `fix/fco-layout-detalle` (frontend 302);
   **A #187** `fix/fco-fechas-abreviadas` (341); **C #188** `fix/nca-enter-confirma-valor` (304; lleva este ESTADO y la bitácora).
   A y B tocan `factura-compra.ts`; el diff del A aplica limpio sobre el B. **`verificador-tdd`: APTO los tres** (21/11, NO APTO
   en la ronda 1 de cada uno, arreglado solo con tests: #186 `bfb1484` 304, #187 `617b857` 346, #188 `af94316` 305).
-  `auditor-persistencia` no aplica. **Mergeados (23/11):** #186, #189, #187 y #188, en ese orden; `develop` en `ca11be2`.
+  `auditor-persistencia` no aplica. **Sigue:** revisión y merge de Javi, orden #186 → #187; #188 independiente.
 - **Deuda:** la suite contra `public` de `lacentral_test` tarda 1 h 1 m (contra `nc057_fuente`, 11 m 55 s): copiar `public`
   para cada prueba lleva 5 a 28 s por esquema. Lo ve el equipo.
 - **Fix D:** en `lacentral_test` la búsqueda anda (30/30 filtradas). En `lacentral_demo`: `pg_trgm` 1.6, `lacentral_javi`
@@ -463,7 +422,7 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
   emisión, anuladas marcadas) y la pantalla «Notas de crédito registradas» con «Anular» (motivo y otro ADMINISTRADOR).
   Backend 803/803 sobre `59be2c8` (`nc057_fuente`), frontend 301 sobre `bb9d4c8`. `verificador-tdd`: NO APTO en la ronda 1
   (la tabla vieja reaparecía después de un error y una fecha borrada viajaba vacía), APTO en la ronda 2 con `bb9d4c8`.
-  `auditor-persistencia` APTO. PR #185, mergeado el 20/11.
+  `auditor-persistencia` APTO. PR abierto.
 - **La 057 queda completa en tres PR (14 CA).** Falta revisarlos y mergearlos, y el DoD 10 en `lacentral_demo` cuando esté el 11.
 - **Orden de merge:** #183 → PR 2 → PR 3. **Antes del merge del #183 a `develop`:** el 11 en `public` de `lacentral_test`,
   en `lacentral_demo` y en `lacentral` (sin eso, DoD 10 de la 057 no se puede recorrer en `lacentral_demo`).
@@ -496,7 +455,7 @@ base `develop` y lleva solo lo de Expoyer; #176 a #179 y #181 están en `develop
 **18/11 · novedades del 18/11 hechas; lo que queda es de personas o espera el script 11.**
 Orden de merge de la pila: #176 → #177 → #178 → #179 → #181 → #180; la 057 va arriba (`feature/182-nota-credito`, y encima
 `feature/182-nota-credito-pdf`).
-- **E10 cerrada:** el #181 se mergeó a `develop` (ver `git log`).
+- **E10 cerrada:** el #181 puede entrar a `develop` cuando Javi lo revise.
 - **D-S6-17 (Fazio, P. Final):** en el #177, verificadores APTO, mergeada hacia arriba con suites sobre cada HEAD (tablero).
 - **C7 cerrada completa (D-S6-19).** Autocor, carga manual.
 - **057 (#182):** proforma, issue, índice, plan (D-PL-06), decisión de Reclamos (D-S6-20) y script 11. Lo que no depende del
@@ -515,7 +474,7 @@ Orden de merge de la pila: #176 → #177 → #178 → #179 → #181 → #180; la
 
 **18/11 · el cuarto descuento cerró con verificadores APTO y tiene PR; Expoyer lo tiene mergeado.**
 Orden de merge: #176 → #177 → #178 → #179 → cuarto descuento → Expoyer (#180).
-- **Cuarto descuento (D-S6-15):** PR #181 (mergeado), base `feature/51-pantalla-pdf` (tablero). **Antes del merge a `develop`:** Santi
+- **Cuarto descuento (D-S6-15):** PR #181 abierto, base `feature/51-pantalla-pdf` (tablero). **Antes del merge a `develop`:** Santi
   aplica el 10 en `lacentral_demo` y en `lacentral` (E10, paso 4 del bloque «PARA SANTI · 17/11 · script 10»).
 - **Expoyer (#180):** `feature/163-cuarto-descuento` mergeada en `feature/13-lector-expoyer` (`3e8358c`); backend 681/681 sobre `3e8358c`.
 - Lo demás, igual que el 17/11 (abajo): Sergio (preguntas 4 y 5), equipo (notas de crédito), Lauti (Autocor), Javi con
@@ -530,7 +489,7 @@ hacia arriba (nunca rebase).
   (`FacturaCompraRepositorio`), rojo y verde contra PostgreSQL con relectura de la fila (y el CHECK
   `fcd_descuento_4_valido` rechazando 101), los dos verificadores acotados a la rama, y su PR. Hasta entonces el costo usa el
   cuarto descuento pero la fila no lo guarda: **no se mergea**.
-- **Expoyer, `feature/13-lector-expoyer`:** PR #180, apilado sobre el del cuarto descuento; mergeado.
+- **Expoyer, `feature/13-lector-expoyer`:** PR abierto, apilado sobre el del cuarto descuento. Se revisa ya; se mergea después.
 - **Sergio:** pregunta 4 (028 y 016) y 5 (2 centavos de Fazio) de «Lo que vuelve a Sergio · 17/11».
 - **Equipo:** la HU de notas de crédito de proveedor (D-S6-14), contra el Mandato v3.0; propuesta Sprint 8.
 - **Lauti:** la factura de Autocor (lo único que falta de la C7).
