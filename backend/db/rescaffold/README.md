@@ -19,7 +19,7 @@ de EF se regenera desde la base. **Prohibido `dotnet ef migrations`.**
 | `09_Factura_Compra_Mecanica.sql` | HU-FCO-06 (056): tipo de comprobante habitual del proveedor, tipo de comprobante y fecha de imputación de la factura, segundo y tercer descuento por línea. Idempotente. |
 | `10_Cuarto_Descuento.sql` | HU-FCO-06 (056) CA-012, D-S6-15: cuarto descuento sucesivo por línea de factura de compra. Requiere el 09. Idempotente. |
 | `11_Nota_Credito_Compra.sql` | HU-FCO-07 (057), D-S6-18 y D-S6-20: depósito Reclamos (`sucursal.es_reclamos`, su fila y su stock en 0), `nota_credito_compra`, su relación muchos a muchos con `factura_compra` (mismo proveedor por FK compuesta) y sus líneas de devolución. Requiere el 10. Idempotente. |
-| `12_Catalogo_Proveedores.sql` | C2 · HU-CMP-08 (055), D-S7-01: `scrape_corrida`, `proveedor_articulo` (catálogo actual por proveedor, único por proveedor y código), `proveedor_articulo_historial` (precio y stock por corrida, RF-016) y el rol `lacentral_n8n` (SELECT, INSERT y UPDATE en esas tres, SELECT en `proveedor`; sin clave). El SQL que usa n8n está en `../n8n/`. Requiere el 11. Idempotente. |
+| `12_Catalogo_Proveedores.sql` | C2 · HU-CMP-08 (055), D-S7-01: `scrape_corrida`, `proveedor_articulo` (catálogo actual por proveedor, único por proveedor y código), `proveedor_articulo_historial` (precio y stock por corrida, RF-016) y el rol `lacentral_n8n` (SELECT, INSERT y UPDATE en esas tres, SELECT en `proveedor`; sin clave). El SQL que usa n8n está en `docs/sprint07/CONTRATO-N8N.md`. Requiere el 11. Idempotente. |
 
 Cada script corre en una transacción y no es idempotente. Se aplica a mano: primero
 en `lacentral_test`, se verifica, después en `lacentral`.
