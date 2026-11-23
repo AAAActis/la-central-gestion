@@ -38,17 +38,21 @@ public class CatalogoProveedorPostgreSqlTests
         Assert.NotNull(await n8n.RenglonAsync(primera, "X-1", "Pastilla delantera", 101m)); // página reenviada
         await n8n.CerrarAsync(primera, "SUCCESS");
         var segunda = await n8n.AbrirAsync(proveedorId);
-        Assert.NotNull(await n8n.RenglonAsync(segunda, "X-1", "Pastilla delantera cerámica", 120m));
+        Assert.NotNull(await n8n.RenglonAsync(segunda, "X-1", "  Pastilla delantera cerámica ", 120m));
         await n8n.CerrarAsync(segunda, "SUCCESS");
 
         await using var lectura = fixture.CrearContexto();
         var renglon = Assert.Single(await lectura.ProveedorArticulo.Where(p => p.ProveedorId == proveedorId).ToListAsync());
         Assert.Equal(("X-1", "Pastilla delantera cerámica", 120m, true, segunda),
             (renglon.Codigo, renglon.Nombre, renglon.PrecioNeto, renglon.Activo, renglon.UltimaCorridaId));
+        Assert.Equal(("ext-120", "779120", "Descripción 120", "MARCA: Fras-le | EJE: 120", "Marca 120", 156m, 12m, 24m,
+                "https://img/120.jpg", new DateTime(2026, 11, 9, 0, 0, 0, DateTimeKind.Utc)),
+            (renglon.IdExterno, renglon.CodigoBarras, renglon.Descripcion, renglon.DetalleTecnico, renglon.Marca, renglon.PrecioLista,
+                renglon.Stock, renglon.AlicuotaIva, renglon.UrlImagen, renglon.FechaOrigen));
         var historial = await lectura.ProveedorArticuloHistorial.Where(h => h.ProveedorArticuloId == renglon.Id)
-            .OrderBy(h => h.CorridaId).Select(h => new { h.CorridaId, h.PrecioNeto }).ToListAsync();
-        Assert.Equal(new[] { (primera, (decimal?)101m), (segunda, (decimal?)120m) },
-            historial.Select(h => (h.CorridaId, h.PrecioNeto)).ToArray());
+            .OrderBy(h => h.CorridaId).Select(h => new { h.CorridaId, h.PrecioNeto, h.PrecioLista, h.Stock }).ToListAsync();
+        Assert.Equal(new (int, decimal?, decimal?, decimal?)[] { (primera, 101m, 131.3m, 10.1m), (segunda, 120m, 156m, 12m) },
+            historial.Select(h => (h.CorridaId, h.PrecioNeto, h.PrecioLista, h.Stock)).ToArray());
         // La vinculación es por proveedor y código: sigue encontrando el artículo propio.
         Assert.Equal(articuloId, await lectura.ArticuloCodigoAlternativo
             .Where(v => v.ProveedorId == renglon.ProveedorId && v.Codigo == renglon.Codigo).Select(v => v.ArticuloId).SingleAsync());
@@ -70,6 +74,7 @@ public class CatalogoProveedorPostgreSqlTests
         Assert.Equal((exitosa, 2, 0L), await n8n.CerrarAsync(exitosa, "SUCCESS"));
         Assert.Null(await n8n.CerrarFilaAsync(exitosa, "FAILED", "tarde")); // ya cerrada: no cambia
         Assert.Null(await n8n.RenglonAsync(exitosa, "C", "Tres", 30m));    // ya cerrada: no escribe
+        Assert.Null(await n8n.EscalarAsync("02_total_informado.sql", exitosa, 99)); // ya cerrada: no cambia el total
 
         var fallida = await n8n.AbrirAsync(proveedorId, "ejec-43");
         await n8n.RenglonAsync(fallida, "A", "Uno", 11m);
@@ -91,11 +96,13 @@ public class CatalogoProveedorPostgreSqlTests
         var otroId = await CrearProveedorAsync(fixture, "SCR-3B");
         await using var n8n = await N8n.ConectarAsync(fixture);
 
+        var vencidos = new List<long>();
         async Task<int> Corrida(int proveedor, string estado, params string[] codigos)
         {
             var id = await n8n.AbrirAsync(proveedor);
             foreach (var codigo in codigos) await n8n.RenglonAsync(id, codigo, "Renglón " + codigo, 50m);
-            await n8n.CerrarAsync(id, estado);
+            var (_, _, cuantos) = await n8n.CerrarAsync(id, estado);
+            vencidos.Add(cuantos);
             return id;
         }
         async Task<Dictionary<string, bool>> Activos()
@@ -120,8 +127,11 @@ public class CatalogoProveedorPostgreSqlTests
             Assert.NotEqual(sinB, b.UltimaCorridaId);
         }
 
+        await Corrida(proveedorId, "SUCCESS", "A");                    // B ya estaba vencido: no se cuenta otra vez
         await Corrida(proveedorId, "SUCCESS", "A", "B");
         Assert.Equal(new Dictionary<string, bool> { ["A"] = true, ["B"] = true, ["Z"] = true }, await Activos());
+        // Lo que devuelve 04: cuántos renglones venció cada cierre (solo el que dejó afuera a B por primera vez).
+        Assert.Equal(new long[] { 0, 0, 0, 0, 1, 0, 0 }, vencidos.ToArray());
     }
 
     [PostgreSqlFact]
@@ -183,8 +193,13 @@ public class CatalogoProveedorPostgreSqlTests
                 ?? throw new Xunit.Sdk.XunitException("01_abrir_corrida.sql no devolvió la corrida."));
 
         public Task<object?> RenglonAsync(int corrida, string codigo, string nombre, decimal precioNeto)
-            => EscalarAsync("03_renglon.sql", corrida, codigo, null, null, nombre, null, "MARCA: Fras-le | EJE: delantero",
-                "Fras-le", precioNeto, precioNeto * 1.3m, 4m, 21m, null, null);
+        {
+            // Cada campo cambia con el precio: así una reingesta que no actualice una columna se nota.
+            var v = ((int)precioNeto).ToString();
+            return EscalarAsync("03_renglon.sql", corrida, codigo, "ext-" + v, "779" + v, nombre, "Descripción " + v,
+                "MARCA: Fras-le | EJE: " + v, "Marca " + v, precioNeto, precioNeto * 1.3m, precioNeto / 10m, precioNeto / 5m,
+                "https://img/" + v + ".jpg", new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc).AddDays((int)precioNeto % 28));
+        }
 
         public async Task<(int, int, long)> CerrarAsync(int corrida, string estado, string? mensaje = null)
             => await CerrarFilaAsync(corrida, estado, mensaje)
