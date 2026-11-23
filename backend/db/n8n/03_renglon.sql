@@ -8,5 +8,27 @@
 -- precio y stock en el historial de la corrida (RF-016), una fila por renglón y corrida, en la misma
 -- sentencia. Solo sobre una corrida RUNNING: sin filas = la corrida ya está cerrada. Desconocido es
 -- NULL, nunca cero.
--- shortcut: esqueleto, sin implementar todavía.
-SELECT NULL::integer AS proveedor_articulo_id WHERE $1::integer IS NULL AND $2::text IS NULL AND $3::text IS NULL AND $4::text IS NULL AND $5::text IS NULL AND $6::text IS NULL AND $7::text IS NULL AND $8::text IS NULL AND $9::numeric IS NULL AND $10::numeric IS NULL AND $11::numeric IS NULL AND $12::numeric IS NULL AND $13::text IS NULL AND $14::timestamptz IS NULL;
+WITH corrida AS (
+    SELECT id, proveedor_id FROM scrape_corrida WHERE id = $1::integer AND estado = 'RUNNING'
+), renglon AS (
+    INSERT INTO proveedor_articulo AS pa (proveedor_id, codigo, id_externo, codigo_barras, nombre, descripcion,
+        detalle_tecnico, marca, precio_neto, precio_lista, stock, alicuota_iva, url_imagen, fecha_origen,
+        ultima_corrida_id, ultima_lectura, activo)
+    SELECT c.proveedor_id, btrim($2::text), $3::text, $4::text, btrim($5::text), $6::text, $7::text, $8::text,
+           $9::numeric, $10::numeric, $11::numeric, $12::numeric, $13::text, $14::timestamptz,
+           c.id, now(), TRUE
+    FROM   corrida c
+    ON CONFLICT (proveedor_id, codigo) DO UPDATE SET
+        id_externo = EXCLUDED.id_externo, codigo_barras = EXCLUDED.codigo_barras, nombre = EXCLUDED.nombre,
+        descripcion = EXCLUDED.descripcion, detalle_tecnico = EXCLUDED.detalle_tecnico, marca = EXCLUDED.marca,
+        precio_neto = EXCLUDED.precio_neto, precio_lista = EXCLUDED.precio_lista, stock = EXCLUDED.stock,
+        alicuota_iva = EXCLUDED.alicuota_iva, url_imagen = EXCLUDED.url_imagen, fecha_origen = EXCLUDED.fecha_origen,
+        ultima_corrida_id = EXCLUDED.ultima_corrida_id, ultima_lectura = EXCLUDED.ultima_lectura, activo = TRUE
+    RETURNING pa.id, pa.proveedor_id, pa.ultima_corrida_id, pa.precio_neto, pa.precio_lista, pa.stock
+)
+INSERT INTO proveedor_articulo_historial (proveedor_articulo_id, corrida_id, proveedor_id, precio_neto, precio_lista, stock)
+SELECT id, ultima_corrida_id, proveedor_id, precio_neto, precio_lista, stock FROM renglon
+ON CONFLICT (proveedor_articulo_id, corrida_id) DO UPDATE SET
+    precio_neto = EXCLUDED.precio_neto, precio_lista = EXCLUDED.precio_lista, stock = EXCLUDED.stock,
+    fecha_lectura = now()
+RETURNING proveedor_articulo_id;
