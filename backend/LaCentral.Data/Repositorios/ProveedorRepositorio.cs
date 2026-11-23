@@ -144,6 +144,11 @@ public class ProveedorRepositorio : IProveedorRepositorio
         };
     }
 
+    // Andamiaje del Fix E: todavía sin comportamiento.
+    public Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarActivosPorRazonSocialAsync(
+        string texto, int limite, CancellationToken ct = default)
+        => Task.FromResult<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>>([]);
+
     public async Task<LaCentral.UseCases.Entidades.Proveedor?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default)
     {
         var bd = await _context.Proveedor.FirstOrDefaultAsync(p => p.Cuit == cuit, ct);
