@@ -69,7 +69,15 @@ public static class LayoutsPdf
         Revisar(revisar, ("tipoComprobante", tipo), ("numero", numero), ("fechaEmision", emision),
             ("percepcionIva", percepcionIva), ("percepcionIibb", percepcionIibb));
         return new ComprobanteLeido(Cuits(texto), tipo, numero, emision, vencimiento,
-            percepcionIva, percepcionIibb, null, null, lineas, revisar);
+            percepcionIva, percepcionIibb, null, null, lineas, revisar, "ETMAN", DestinatarioEtman(renglones, cliente));
+    }
+
+    // Fix E: la «Dir. Entrega» es adonde va la mercadería y manda; el domicilio del cliente (a veces de la otra
+    // sucursal) solo se usa si no hay. El encabezado lista las agencias de ETMAN: no se lee.
+    private static string? DestinatarioEtman(IReadOnlyList<string> renglones, int cliente)
+    {
+        var entrega = renglones.Select(r => Regex.Match(r, @"Dir\. Entrega:(.*)")).FirstOrDefault(m => m.Success);
+        return entrega is not null ? entrega.Groups[1].Value : cliente < 0 ? null : string.Join(' ', renglones.Skip(cliente).Take(3));
     }
 
     // Fazio (Badaloni): presupuesto, compra en negro; números en formato argentino (27.396,12);
@@ -108,7 +116,17 @@ public static class LayoutsPdf
             is { Success: true } n ? $"99-{n.Groups[1].Value}" : null;
         revisar.Add("numero");
         Revisar(revisar, ("fechaEmision", emision));
-        return new ComprobanteLeido(Cuits(texto), "B", numero, emision, null, null, null, null, null, lineas, revisar);
+        return new ComprobanteLeido(Cuits(texto), "B", numero, emision, null, null, null, null, null, lineas, revisar,
+            "Fazio", DestinatarioFazio(renglones));
+    }
+
+    // Fix E: el cliente y su domicilio, entre «Cliente:» y «Tipo Operación»; después ya no es el destinatario.
+    private static string? DestinatarioFazio(IReadOnlyList<string> renglones)
+    {
+        var cliente = Indice(renglones, r => r.StartsWith("Cliente:"));
+        if (cliente < 0)
+            return null;
+        return string.Join(' ', renglones.Skip(cliente).Take(6).TakeWhile((r, i) => i == 0 || !r.StartsWith("Tipo Oper")));
     }
 
     /// <summary>
@@ -164,7 +182,16 @@ public static class LayoutsPdf
         if (texto.Contains("percep", StringComparison.OrdinalIgnoreCase))
             revisar.AddRange(["percepcionIva", "percepcionIibb"]);
         // Sin fecha de vencimiento en el texto («CUENTA CORRIENTE 35 DIAS» no es una fecha): no se calcula.
-        return new ComprobanteLeido(Cuits(texto), tipo, numero, emision, null, null, null, null, null, lineas, revisar);
+        return new ComprobanteLeido(Cuits(texto), tipo, numero, emision, null, null, null, null, null, lineas, revisar,
+            "Expoyer", DestinatarioExpoyer(renglones));
+    }
+
+    // Fix E: el bloque del cliente: desde «Sres.:» (nombre, ingresos brutos, domicilio, localidad, condición de IVA),
+    // sin pasar de seis renglones ni del encabezado de artículos.
+    private static string? DestinatarioExpoyer(IReadOnlyList<string> renglones)
+    {
+        var cliente = Indice(renglones, r => r.StartsWith("Sres.:"));
+        return cliente < 0 ? null : string.Join(' ', renglones.Skip(cliente).Take(6).TakeWhile(r => !EncabezadoExpoyer.IsMatch(r)));
     }
 
     // shortcut: el código es el primer token y los que le siguen mientras tengan un dígito o sean
