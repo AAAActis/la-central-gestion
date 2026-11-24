@@ -15,7 +15,7 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 
 | Issue | HU | SP | Espera | Estado |
 |---|---|---|---|---|
-| #128 | 055 · HU-CMP-08 · incorporar al catálogo del proveedor el resultado de un scrape (proforma reescrita, v2.0) | 5 | C2 (script 12, Santi) | Script 12 escrito; PR de esquema y pruebas |
+| #128 | 055 · HU-CMP-08 · incorporar al catálogo del proveedor el resultado de un scrape (proforma reescrita, v2.0) | 5 | C2 (script 12, Santi) | Script 12 (con los datos reales de Expoyer) y `CONTRATO-N8N.md` en `feature/128-catalogo-scrape`; pruebas contra una copia descartable. PR en curso |
 | #126 | 053 · HU-CMP-06 · candidatos por aproximación entre catálogos | 8 | C2, C5, C6 | Sin proforma (C5) |
 | #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | C2, C5 y **el CA3 contra D2 (equipo)** | Sin proforma (C5). **No se construye** hasta que el equipo decida el CA3 |
 | #16 | 030 · HU-CMP-01 · búsqueda comparativa por nombre | 5 | C2 y filas de catálogo | Pendiente |
@@ -37,7 +37,7 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 | Compuerta | Bloquea | Estado |
 |---|---|---|
 | ~~Qué entrega un scrape~~ | 055 | **Cerrada el 23/11/2026 por la D-S7-01:** n8n escribe directo en la base |
-| **C2** · catálogo de proveedores (script 12: `scrape_corrida`, `proveedor_articulo`, `proveedor_articulo_historial`, rol `lacentral_n8n`) | 055, 053, 054, 030, 031, 050 | Script escrito y ensayado; **lo aplica Santi** (bitácora, «PARA SANTI · 23/11 · script 12») |
+| **C2** · catálogo de proveedores (script 12: `scrape_corrida`, `proveedor_articulo`, `proveedor_articulo_historial`, rol `lacentral_n8n`) | 055, 053, 054, 030, 031, 050 | Script escrito con los datos de Expoyer y ensayado; contrato en `docs/sprint07/CONTRATO-N8N.md`; **lo aplica Santi** (bitácora, «PARA SANTI · 23/11 · script 12») |
 | C5 · proformas de la 053 y la 054 (con la pantalla de vinculación) | 053, 054 | Sin escribir. El CA3 de la 054 choca con la D2: lo decide el equipo antes |
 | C6 · medición sobre 50 artículos | 053 | Con los primeros scrapes de Santi |
 | C1 · modalidad L2 y retiro de Tarjeta3/6 | 032, 033 y el CA-004 de la 050 | **Propuesta (para el equipo):** no va en el 12. El plan la ponía junto con C2, pero C2 destraba los scrapes y no tiene que esperar el cambio de modalidades, que además toca código de precios. Script propio cuando arranquen la 032 y la 033 |
@@ -58,6 +58,33 @@ decidido. El número 06, reservado para C2 desde el Sprint 4, queda sin usar.
 | D-S7-02 | **IVA por alícuota** (cierra C7-01, entra): 21 % y 10,5 % son tipos de alícuota. La alícuota suele ser del artículo (valor por defecto), pero en cada línea de la factura de compra se puede cambiar con un desplegable. El IVA se discrimina y se suma por alícuota en el total. Sergio pasa más alícuotas después: el diseño no supone solo dos. La nota de crédito hereda la alícuota de la línea de la factura original. | Equipo, 23/11/2026 | 058 nueva (#194). Hoy está fija en 21 % en `RegistrarFacturaCompraUseCase`, `RegistrarNotaCreditoCompraUseCase`, el lector de ETMAN y el control del neto de Expoyer. Script 14 |
 | D-S7-03 | **Costo al anular** (cierra C7-02, entra): al anular una factura, el costo del artículo vuelve al que tenía justo antes de esa factura. Si entre la factura y la anulación alguien lo cambió a mano, queda el de a mano. Exige guardar el costo previo en cada línea al registrarla. | Equipo, 23/11/2026 | Reemplaza la interpretación del CA-002 de la 028 (v1.2) y el CA-004 de la 016 (v1.1). Script 13. #9 y #23 |
 | D-S7-04 | **Anulación con UN administrador** (cierra C7-03, entra): se saca la doble certificación. Anula un ADMINISTRADOR, con motivo obligatorio, y queda registrado quién anuló. **Revierte el pedido de la Dirección del 02/11/2026 (B.4 del script 07); Santi avisa a quien lo pidió.** | Equipo, 23/11/2026 | Cambia el CA-006 y el CA-007 de la 028 (v1.2: un OPERADOR ya no pide la anulación), el CA-012 de la 057 (v1.3) y `Comun/DobleCertificacion`. Script 13 (el CHECK `ncc_anulacion_coherente` hoy exige quien autoriza). #195 |
+
+### Primer scrape · Expoyer · relevado el 23/11/2026
+
+Portal con API JSON y token Bearer. Lo que entró al diseño de C2 (script 12 y `CONTRATO-N8N.md`):
+
+- **Volumen:** unos 103.900 productos en 194 rubros. El buscador corta en 10.000 por consulta: n8n baja rubro por
+  rubro, de a 500 (unos 400 pedidos por corrida); el único rubro de más de 10.000 se baja ordenado en los dos sentidos
+  y el upsert absorbe los repetidos. **Unos 100.000 renglones por proveedor.** Todo lo que corre por renglón usa la
+  clave `(proveedor_id, codigo)` o el id; el vencimiento recorre el catálogo del proveedor una vez por corrida.
+- **Stock:** no viene cantidad, viene un **estado por depósito** del proveedor (CASEROS y CORDOBA): 1 = hay, 3 = no hay,
+  2 = a confirmar. Se guarda el de **CORDOBA** como `HAY`, `NO_HAY` o `A_CONFIRMAR`; la cantidad queda NULL.
+- **Precios:** lista (`basePrice`) y neto con el descuento del cliente (`discountedPrice`), validado contra la factura
+  real: lista × (1 − 61,08 %) × (1 − 15 %). Pago anticipado (`earlyPaymentPrice`), opcional. **`salePrice` (neto + 80 %
+  de la vista cliente) no se guarda.**
+- **Códigos:** `commercialCode` («C 000100 14 E», el de las facturas) es el código y se cruza con
+  `articulo_codigo_alternativo`; `internalCode` («C00010014E») es el id externo.
+- **Además:** número original (`familyCode`, varios con « / »), marca del producto (`supplier.name`; `brandName` es la
+  marca del vehículo), rubro del proveedor (`category.name`), URL de imagen, IVA (`vatRate` viene null: queda NULL y
+  el comparador usa la alícuota del artículo o 21 %, D-S7-02).
+
+**P7-03 · para Sergio · 23/11/2026 · abierta:** ¿qué quiere decir el estado 2 de stock de Expoyer? ¿«pocas»? Hasta que
+conteste se guarda como `A_CONFIRMAR`.
+
+**Riesgo (para el equipo):** el historial crece unos 100.000 registros por corrida y por proveedor (RF-016 pide uno por
+corrida). Con varios proveedores y corridas nocturnas son decenas de millones por año en una base que corre en una
+netbook. No se resuelve en C2: se mide con los primeros scrapes. Opción si hace falta: registrar solo cuando cambian el
+precio o el stock.
 
 **Pendiente del equipo:** el CA3 de la 054 (#127) contra la D2 (dos códigos del mismo proveedor para el mismo
 artículo). **La 054 no se construye hasta que se decida.**

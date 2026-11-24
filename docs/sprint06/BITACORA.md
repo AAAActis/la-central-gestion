@@ -1821,3 +1821,40 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 
 **Ojo:** el 23/11 `nc057_fuente` todavía existe en `lacentral_test` (lo vi al listar los esquemas). Si ya la borraste en otra base, falta en esta.
 - C2 en `feature/128-catalogo-scrape`: esqueleto `8043ff5` (script 12, modelo de las tres tablas tomado de un scaffold contra la copia descartable `c2_ensayo_7a51e2c7`, sentencias de n8n vacías), rojo `19e8947` (`CatalogoProveedorPostgreSqlTests`: 5 con error por aserción), código `45b2aea` (5/5). Script 12 aplicado dos veces sobre la copia: idempotente. Suite completa sobre `45b2aea` (`--no-incremental`, 0 advertencias, `LA_CENTRAL_TEST_SCHEMA=c2_ensayo_7a51e2c7`): `Correctas! - Con error: 0, Superado: 814, Omitido: 0, Total: 814, Duración: 16 m 1 s`. Proforma 055 v2.0 y bloque «PARA SANTI · 23/11 · script 12». `nc057_fuente` sigue en `lacentral_test`.
+
+## 23/11/2026 · C2 con los datos reales del primer scrape (Expoyer)
+
+**Instrucción recibida (verbatim):**
+> 23/11/2026 · Datos reales del primer scrape (Expoyer), para diseñar la compuerta C2 y el script 12. Va junto con lo que ya te pedí del Sprint 7. Anotalo en docs/sprint07/ESTADO.md. Resúmenes en español.
+>
+> ## Lo que se relevó del portal (API JSON con token Bearer)
+> - Volumen: unos 103.900 productos en 194 rubros del proveedor. El buscador corta en 10.000 por consulta, así que n8n baja rubro por rubro, de a 500, unos 400 pedidos por corrida. El único rubro de más de 10.000 se baja ordenado en los dos sentidos, y el upsert absorbe los repetidos. El catálogo de UN proveedor ronda los 100.000 registros: los índices y el upsert tienen que bancarlo.
+> - Stock: NO viene cantidad, viene un ESTADO por depósito del proveedor (CASEROS y CORDOBA): 1 = hay, 3 = no hay, 2 = a confirmar con Sergio (probablemente «pocas»). Se guarda el estado del depósito que le sirve a La Central (CORDOBA). La cantidad tiene que poder quedar null, para los proveedores que no la informan.
+> - Precios: lista (basePrice) y costo neto con el descuento del cliente (discountedPrice). El neto se validó contra la factura real de Expoyer: lista × (1 − 61,08 %) × (1 − 15 %). El de pago anticipado (earlyPaymentPrice) es opcional. El precio que muestra la web (salePrice) es el neto + 80 % de margen de la «vista cliente» y NO se guarda.
+> - Códigos: commercialCode («C 000100 14 E») es el que viene en las facturas y el que se cruza con articulo_codigo_alternativo; internalCode («C00010014E») es el id externo.
+> - Además: número original (familyCode, puede traer varios separados por « / »), marca del producto (supplier.name; brandName es la marca del VEHÍCULO), rubro del proveedor (category.name), URL de imagen e IVA (vatRate viene null: por defecto 21, o la alícuota de la D-S7-02).
+>
+> ## Lo que te pido para C2 (además de lo que ya está en el pedido del Sprint 7)
+> 1. Diseñá el catálogo, el historial y las corridas con estos datos: estado de stock (y cantidad null), lista y neto, código comercial e id externo, número original, marca, rubro, imagen, alícuota, activo, última lectura y vencido (lo que no vino en la última corrida completa se marca vencido y no se borra: CA de la 055).
+> 2. Rol de PostgreSQL para n8n con permisos mínimos (ya pedido). La clave la pone Santi.
+> 3. Un archivo docs/sprint07/CONTRATO-N8N.md con las sentencias SQL EXACTAS que va a usar n8n, cada una en UNA sola línea (el editor de n8n borra los saltos), parametrizadas con $1, $2…, y con qué parámetro es cada cosa:
+>    a) abrir una corrida (devuelve su id);
+>    b) upsert de un producto con ON CONFLICT;
+>    c) registrar el historial de precio y estado de stock de ese producto en esa corrida;
+>    d) cerrar la corrida en SUCCESS contando lo registrado, o en FAILED con el motivo;
+>    e) marcar vencido lo que no vino en una corrida SUCCESS;
+>    f) rechazar la corrida si el proveedor está dado de baja.
+>    Probalas contra PostgreSQL real con un test que haga lo mismo que va a hacer n8n.
+> 4. El bloque «PARA SANTI» del script 12 (backup, lacentral_test primero, después lacentral_demo y lacentral), igual que el 10 y el 11.
+> El workflow de n8n no es tuyo: lo arma Santi con ese contrato.
+>
+> Si el esquema de C2 ya está hecho o tiene PR abierto, ajustalo con estos datos en commits nuevos del mismo PR (rojo primero), sin abrir otro. Si cambia el esquema, avisá antes de que Santi aplique el script 12.
+
+**Plan:** 1. Cortar la suite en curso (el HEAD cambia). 2. Script 12 con los datos de Expoyer, copia descartable nueva, re-scaffold. 3. `CONTRATO-N8N.md` (reemplaza `backend/db/n8n/`): esqueleto, rojo, código. 4. Mutaciones propias; suite completa; verificadores acotados; ESTADO; push y PR.
+
+**Estado:** en curso
+- Antes de esto, `verificador-tdd` sobre `8043ff5..45b2aea`: **NO APTO** (sobrevivían M2, M13 y M14: total sobre corrida cerrada y el conteo de vencidos). Arreglado solo en test en `4aa87a0` (más una mutación por cada columna del upsert: las 11 mueren). Ese diseño queda reemplazado por el de abajo; la ronda 2 se hace sobre el diseño nuevo.
+- La suite completa sobre `4aa87a0` se cortó a mano (el HEAD iba a cambiar). Lo hice con `pgrep -f`, que mató también mi shell (exit 144): el error que advierte la memoria del proyecto. Los esquemas `pr110_test_*` que dejó los limpiaron las propias pruebas.
+- **El esquema del 12 cambió. Todavía no estaba pusheado: Santi no lo pudo aplicar.** Si lo aplicó desde otra copia, la verificación nueva del 12 corta («versión anterior del 12 (sin vencido)»).
+- Esqueleto `c8d4c0f` (12 con `numero_original`, `rubro`, `precio_pago_anticipado`, `estado_stock`, `vencido` aparte de `activo`; modelo re-scaffoldeado contra `c2_ensayo_e6807bae`; contrato en esqueleto). Rojo `042db40`: 7 con error por aserción de 8 (la que pasa, `Contrato_TieneLasSieteSentencias…`, es caracterización). Dos corridas previas del rojo tuvieron cortes de conexión (#190); la tercera, limpia. Código `126a3c5`: 8/8 (4 m 36 s: la base está lenta).
+- Mutaciones propias sobre el contrato (11: guardas de f, a, c, d, e, el `vencido = FALSE` y el `activo` de b, y el NULLIF del neto): las 11 ponen 1 prueba en rojo de 8. El resumen no distingue aserción de corte de conexión: lo mira el verificador. Contrato restaurado (sin diff).
