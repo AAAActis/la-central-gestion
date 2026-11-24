@@ -44,9 +44,19 @@ public class CatalogoProveedorPostgreSqlTests
 
         await using var n8n = await N8n.ConectarAsync(fixture);
         var primera = await n8n.AbrirAsync(proveedorId);
-        await n8n.ProductoAsync(primera, Producto.Expoyer(" C 000100 14 E ", 100m, "Pastilla delantera"));
-        await n8n.ProductoAsync(primera, Producto.Expoyer("C 000100 14 E", 101m, "Pastilla delantera")); // repetido en la corrida
+        // La primera trae lo que Expoyer no informa (código de barras, cantidad, alícuota); la segunda no: tiene que quedar NULL.
+        var conTodo = Producto.Expoyer(" C 000100 14 E ", 100m, "Pastilla delantera") with { CodigoBarras = "7790100", Stock = "3", AlicuotaIva = "10.5" };
+        await n8n.ProductoAsync(primera, conTodo);
+        await n8n.ProductoAsync(primera, Producto.Expoyer("C 000100 14 E", 101m, "Pastilla delantera")   // repetido en la corrida
+            with { CodigoBarras = "7790100", Stock = "5", AlicuotaIva = "10.5", EstadoStock = "A_CONFIRMAR" });
         await n8n.CerrarAsync(primera, "SUCCESS");
+        DateTime lecturaPrimera;
+        await using (var intermedia = fixture.CrearContexto())
+        {
+            var leido = await intermedia.ProveedorArticulo.SingleAsync(p => p.ProveedorId == proveedorId);
+            Assert.Equal(("7790100", (decimal?)5m, (decimal?)10.5m), (leido.CodigoBarras, leido.Stock, leido.AlicuotaIva));
+            lecturaPrimera = leido.UltimaLectura;
+        }
         var segunda = await n8n.AbrirAsync(proveedorId);
         var ultimo = Producto.Expoyer("C 000100 14 E", 120m, "  Pastilla delantera cerámica ") with { EstadoStock = "NO_HAY", Activo = "false" };
         await n8n.ProductoAsync(segunda, ultimo);
@@ -60,10 +70,11 @@ public class CatalogoProveedorPostgreSqlTests
             (r.PrecioLista, r.PrecioNeto, r.PrecioPagoAnticipado, r.EstadoStock, r.Stock, r.AlicuotaIva));
         Assert.Equal(("https://img/120.jpg", new DateTime(2026, 11, 9, 0, 0, 0, DateTimeKind.Utc), false, false, segunda),
             (r.UrlImagen, r.FechaOrigen!.Value, r.Activo, r.Vencido, r.UltimaCorridaId));
+        Assert.True(r.UltimaLectura > lecturaPrimera, "La reingesta tiene que actualizar la última lectura.");
         var historial = await lectura.ProveedorArticuloHistorial.Where(h => h.ProveedorArticuloId == r.Id).OrderBy(h => h.CorridaId)
             .Select(h => new { h.CorridaId, h.PrecioLista, h.PrecioNeto, h.PrecioPagoAnticipado, h.EstadoStock, h.Stock }).ToListAsync();
         Assert.Equal(new (int, decimal?, decimal?, decimal?, string?, decimal?)[]
-            { (primera, 252.5m, 101m, 95.95m, "HAY", null), (segunda, 300m, 120m, 114m, "NO_HAY", null) },
+            { (primera, 252.5m, 101m, 95.95m, "A_CONFIRMAR", 5m), (segunda, 300m, 120m, 114m, "NO_HAY", null) },
             historial.Select(h => (h.CorridaId, h.PrecioLista, h.PrecioNeto, h.PrecioPagoAnticipado, h.EstadoStock, h.Stock)).ToArray());
         // La vinculación es por proveedor y código: sigue encontrando el artículo propio.
         Assert.Equal(articuloId, await lectura.ArticuloCodigoAlternativo
@@ -108,13 +119,13 @@ public class CatalogoProveedorPostgreSqlTests
         Assert.Null(await n8n.EscalarAsync("b", Producto.Expoyer("C", 30m).Parametros(exitosa)));
         Assert.Null(await n8n.EscalarAsync("c", exitosa, a));
 
-        var fallida = await n8n.AbrirAsync(proveedorId, "ejec-43");
+        var fallida = await n8n.AbrirAsync(proveedorId, "");            // sin id de ejecución: queda NULL
         await n8n.ProductoAsync(fallida, Producto.Expoyer("A", 11m));
         Assert.Equal((fallida, 1), await n8n.CerrarAsync(fallida, "FAILED", "login rechazado"));
 
         await using var lectura = fixture.CrearContexto();
         var corridas = await lectura.ScrapeCorrida.Where(c => c.ProveedorId == proveedorId).OrderBy(c => c.Id).ToListAsync();
-        Assert.Equal(new (int, string, string?, int?, int?, string?)[] { (exitosa, "SUCCESS", "ejec-41", 2, 2, null), (fallida, "FAILED", "ejec-43", null, 1, "login rechazado") },
+        Assert.Equal(new (int, string, string?, int?, int?, string?)[] { (exitosa, "SUCCESS", "ejec-41", 2, 2, null), (fallida, "FAILED", null, null, 1, "login rechazado") },
             corridas.Select(c => (c.Id, c.Estado, c.EjecucionN8n, c.TotalInformado, c.CantidadItems, c.MensajeError)).ToArray());
         Assert.All(corridas, c => Assert.True(c.Fin >= c.Inicio));
         Assert.False(await lectura.ProveedorArticulo.AnyAsync(p => p.Codigo == "C"));
@@ -135,12 +146,14 @@ public class CatalogoProveedorPostgreSqlTests
         var delOtro = await n8n.AbrirAsync(otroId);
         var ajeno = await n8n.ProductoAsync(delOtro, Producto.Expoyer("Z", 10m));
         var nueva = await n8n.AbrirAsync(proveedorId);
+        var leido = await n8n.ProductoAsync(nueva, Producto.Expoyer("L", 20m)); // la corrida sí leyó otro renglón
 
         Assert.Null(await n8n.EscalarAsync("c", nueva, noLeido)); // no lo leyó esta corrida
         Assert.Null(await n8n.EscalarAsync("c", nueva, ajeno));   // es de otro proveedor
 
         await using var lectura = fixture.CrearContexto();
-        Assert.False(await lectura.ProveedorArticuloHistorial.AnyAsync(h => h.CorridaId == nueva));
+        Assert.Equal(new[] { leido }, await lectura.ProveedorArticuloHistorial.Where(h => h.CorridaId == nueva)
+            .Select(h => h.ProveedorArticuloId).ToArrayAsync());
     }
 
     [PostgreSqlFact]
@@ -233,7 +246,7 @@ public class CatalogoProveedorPostgreSqlTests
     private sealed record Producto(string Codigo, string Nombre)
     {
         public string IdExterno { get; init; } = "";
-        public string? CodigoBarras { get; init; }
+        public string CodigoBarras { get; init; } = "";
         public string NumeroOriginal { get; init; } = "";
         public string Descripcion { get; init; } = "";
         public string DetalleTecnico { get; init; } = "";
