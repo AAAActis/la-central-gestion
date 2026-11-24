@@ -145,7 +145,7 @@ Cuenta lo registrado en el historial de la corrida. Devuelve `id` y `cantidad_it
 ### e) Marcar vencido lo que no vino
 
 ```sql
-WITH v AS (UPDATE proveedor_articulo pa SET vencido = TRUE FROM scrape_corrida c WHERE c.id = $1::integer AND c.estado = 'SUCCESS' AND c.cantidad_items > 0 AND pa.proveedor_id = c.proveedor_id AND pa.ultima_corrida_id <> c.id AND NOT pa.vencido RETURNING pa.id) SELECT count(*) AS vencidos FROM v;
+WITH v AS (UPDATE proveedor_articulo pa SET vencido = TRUE FROM scrape_corrida c WHERE c.id = $1::integer AND c.estado = 'SUCCESS' AND c.cantidad_items > 0 AND pa.proveedor_id = c.proveedor_id AND pa.ultima_corrida_id <> c.id AND NOT pa.vencido AND NOT EXISTS (SELECT 1 FROM scrape_corrida n WHERE n.proveedor_id = c.proveedor_id AND n.id > c.id) RETURNING pa.id) SELECT count(*) AS vencidos FROM v;
 ```
 
 | Parámetro | Valor |
@@ -153,7 +153,8 @@ WITH v AS (UPDATE proveedor_articulo pa SET vencido = TRUE FROM scrape_corrida c
 | `$1` | id de la corrida, ya cerrada con d) en SUCCESS |
 
 Devuelve `vencidos` (cuántos renglones quedaron vencidos). No borra nada. Sobre una corrida FAILED, RUNNING o sin
-ítems devuelve 0.
+ítems devuelve 0, y también si ya se abrió otra corrida del proveedor después de esta (un e) que llega tarde, por un
+reintento tras un corte, no vence lo que la nueva acaba de leer).
 
 ## Lo que garantiza la base aunque el workflow esté mal hecho
 

@@ -26,7 +26,7 @@
 --   articulo_codigo_alternativo); el interno del portal es id_externo.
 -- 4. El rol lacentral_n8n, sin clave (la pone Santi, nunca en el repo): SELECT, INSERT y
 --    UPDATE en las tres tablas de arriba, SELECT en proveedor, y nada más. Sin DELETE: lo
---    que no vino en una corrida se marca activo = false, no se borra.
+--    que no vino en una corrida se marca vencido = true, no se borra.
 --
 -- QUÉ SE REUSA
 -- - proveedor: tal cual. n8n lo lee para saber a quién scrapea y si está activo.
