@@ -27,7 +27,7 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 | #34 | 027 · HU-FCO-03 · modificación acotada de factura de compra | 2 | P7-01 (Sergio) | **Sigue bloqueada:** la D-S6-29 no responde la P7-01 (abajo) |
 | #9 (y #23) | 028 · HU-FCO-04 CA-002 y 016 · HU-ART-06 CA-004 · costo al anular (D-S7-03) | 3 | Script 13 | 028 v1.2 y 016 v1.1. #9 y #23 siguen abiertas hasta este cambio |
 | #195 | D-S7-04 · anulación con un administrador (028 CA-006 y CA-007, 057 CA-012) | 2 | Script 13 | 028 v1.2 y 057 v1.3 |
-| #194 | 058 · HU-FCO-08 · IVA por alícuota en la factura de compra y la nota de crédito (D-S7-02) | 8 | Script 14 y una pregunta a Sergio (abajo) | Proforma v1.0 |
+| #194 | 058 · HU-FCO-08 · IVA por alícuota en la factura de compra y la nota de crédito (D-S7-02) | 8 | Script 15 y una pregunta a Sergio (abajo) | Proforma v1.0 |
 
 **69 SP** (los 56 del plan + 3 + 2 + 8). Contra unos 34 por sprint: **el sprint se estira, no se recorta** (§1 de
 `CLAUDE.md`, D-PL-01). Los SP de la 053, la 054, la 058 y de los cambios de D-S7-03 y D-S7-04 son estimación.
@@ -42,11 +42,12 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 | C6 · medición sobre 50 artículos | 053 | Con los primeros scrapes de Santi |
 | C1 · modalidad L2 y retiro de Tarjeta3/6 | 032, 033 y el CA-004 de la 050 | **Propuesta (para el equipo):** no va en el 12. El plan la ponía junto con C2, pero C2 destraba los scrapes y no tiene que esperar el cambio de modalidades, que además toca código de precios. Script propio cuando arranquen la 032 y la 033 |
 | E13 · script 13 (costo previo por línea, D-S7-03; anulación sin doble certificación, D-S7-04) | #9, #23, #195 | Pendiente de escribir |
-| E14 · script 14 (alícuotas, D-S7-02) | #194 | Pendiente de escribir; espera la pregunta P7-02 a Sergio |
+| E15 · script 15 (alícuotas, D-S7-02) | #194 | Pendiente de escribir; espera la pregunta P7-02 a Sergio |
+| E14 · script 14 (vencimiento de facturas por proveedor, Fix F) | #197 | Borrador; lo aplica Santi. Era el «12» del #197, renumerado el 24/11/2026 (decisión de Santi: el 12 es C2) |
 
-**Por qué tres scripts (12, 13 y 14) y no uno:** el 12 solo crea tablas nuevas y destraba a Santi hoy; no espera a
+**Por qué tres scripts (12, 13 y 15) y no uno:** (el 14 es el Fix F del #197, otro tema) el 12 solo crea tablas nuevas y destraba a Santi hoy; no espera a
 nadie. El 13 junta dos cambios chicos y ya definidos sobre las tablas de la anulación (`factura_compra_detalle`,
-`nota_credito_compra`), con un solo re-scaffold. El 14 (alícuotas) toca artículo, líneas, nota de crédito, lectores de
+`nota_credito_compra`), con un solo re-scaffold. El 15 (alícuotas) toca artículo, líneas, nota de crédito, lectores de
 PDF y pantallas, y tiene una pregunta abierta sobre la nota de crédito: meterlo en el 13 frenaría lo que ya está
 decidido. El número 06, reservado para C2 desde el Sprint 4, queda sin usar.
 
@@ -55,9 +56,10 @@ decidido. El número 06, reservado para C2 desde el Sprint 4, queda sin usar.
 | # | Decisión | Quién | Impacto |
 |---|---|---|---|
 | D-S7-01 | **Scrapes:** los arma el equipo en n8n, y n8n **escribe directo en la base**. Responde «qué entrega un scrape». | Equipo, 23/11/2026 | Cierra esa compuerta. C2 (script 12) da las tablas y un rol `lacentral_n8n` con permisos mínimos. La 055 se reescribe (v2.0). Los workflows de Expoyer, Autocor, Nafazio (Fazio) y ETMAN los arma Santi |
-| D-S7-02 | **IVA por alícuota** (cierra C7-01, entra): 21 % y 10,5 % son tipos de alícuota. La alícuota suele ser del artículo (valor por defecto), pero en cada línea de la factura de compra se puede cambiar con un desplegable. El IVA se discrimina y se suma por alícuota en el total. Sergio pasa más alícuotas después: el diseño no supone solo dos. La nota de crédito hereda la alícuota de la línea de la factura original. | Equipo, 23/11/2026 | 058 nueva (#194). Hoy está fija en 21 % en `RegistrarFacturaCompraUseCase`, `RegistrarNotaCreditoCompraUseCase`, el lector de ETMAN y el control del neto de Expoyer. Script 14 |
+| D-S7-02 | **IVA por alícuota** (cierra C7-01, entra): 21 % y 10,5 % son tipos de alícuota. La alícuota suele ser del artículo (valor por defecto), pero en cada línea de la factura de compra se puede cambiar con un desplegable. El IVA se discrimina y se suma por alícuota en el total. Sergio pasa más alícuotas después: el diseño no supone solo dos. La nota de crédito hereda la alícuota de la línea de la factura original. | Equipo, 23/11/2026 | 058 nueva (#194). Hoy está fija en 21 % en `RegistrarFacturaCompraUseCase`, `RegistrarNotaCreditoCompraUseCase`, el lector de ETMAN y el control del neto de Expoyer. Script 15 |
 | D-S7-03 | **Costo al anular** (cierra C7-02, entra): al anular una factura, el costo del artículo vuelve al que tenía justo antes de esa factura. Si entre la factura y la anulación alguien lo cambió a mano, queda el de a mano. Exige guardar el costo previo en cada línea al registrarla. | Equipo, 23/11/2026 | Reemplaza la interpretación del CA-002 de la 028 (v1.2) y el CA-004 de la 016 (v1.1). Script 13. #9 y #23 |
 | D-S7-04 | **Anulación con UN administrador** (cierra C7-03, entra): se saca la doble certificación. Anula un ADMINISTRADOR, con motivo obligatorio, y queda registrado quién anuló. **Revierte el pedido de la Dirección del 02/11/2026 (B.4 del script 07); Santi avisa a quien lo pidió.** | Equipo, 23/11/2026 | Cambia el CA-006 y el CA-007 de la 028 (v1.2: un OPERADOR ya no pide la anulación), el CA-012 de la 057 (v1.3) y `Comun/DobleCertificacion`. Script 13 (el CHECK `ncc_anulacion_coherente` hoy exige quien autoriza). #195 |
+| D-S7-05 | **Numeración de los scripts** (choque de dos «12»): el **12** es el catálogo de proveedores (C2, #199), que está verificado y es el que necesita el scrape. El **13** es la anulación (D-S7-03 y D-S7-04). El Fix F del #197 (vencimiento de facturas por proveedor) pasa a ser el **14**: C2 no lo cubre, porque su `vencido` es del renglón del catálogo, no de la factura. Las alícuotas (D-S7-02) pasan al **15**. | Santi, 24/11/2026 | #197 renumerado en `3eef61b`; comentario en el #197 |
 
 ### Primer scrape · Expoyer · relevado el 23/11/2026
 
@@ -107,7 +109,7 @@ Con (a), corregir mueve stock entre sucursales: la 027 hay que reestimarla (hoy 
 La nota de crédito guarda un solo importe neto, sin precios por línea (la de devolución tiene artículos y cantidades,
 no importes). «Hereda la alícuota de la línea de la factura original» se resuelve en una devolución, pero no en una
 **bonificación** sobre una factura con líneas al 21 % y al 10,5 %: **¿cómo se reparte el neto entre las alícuotas?**
-¿El comprobante del proveedor ya trae el neto discriminado por alícuota? Sin esa respuesta el script 14 no se escribe.
+¿El comprobante del proveedor ya trae el neto discriminado por alícuota? Sin esa respuesta el script 15 no se escribe.
 
 ---
 
