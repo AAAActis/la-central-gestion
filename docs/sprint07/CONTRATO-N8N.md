@@ -57,7 +57,7 @@ FAILED, RUNNING o sin ítems.
 ### f) Verificar que el proveedor esté activo
 
 ```sql
-SELECT NULL::integer AS id WHERE $1::text IS NULL;
+SELECT p.id FROM proveedor p WHERE p.id = $1::integer AND p.activo;
 ```
 
 | Parámetro | Valor |
@@ -69,7 +69,7 @@ Devuelve `id`. **Sin filas = el proveedor no existe o está dado de baja: se rec
 ### a) Abrir una corrida
 
 ```sql
-SELECT NULL::integer AS id WHERE $1::text IS NULL AND $2::text IS NULL;
+INSERT INTO scrape_corrida (proveedor_id, ejecucion_n8n) SELECT p.id, NULLIF($2::text, '') FROM proveedor p WHERE p.id = $1::integer AND p.activo RETURNING id;
 ```
 
 | Parámetro | Valor |
@@ -82,7 +82,7 @@ Devuelve `id` (la corrida, en RUNNING). Sin filas = proveedor dado de baja (vuel
 ### g) Informar el total del sondeo (opcional)
 
 ```sql
-SELECT NULL::integer AS id WHERE $1::text IS NULL AND $2::text IS NULL;
+UPDATE scrape_corrida SET total_informado = $2::integer WHERE id = $1::integer AND estado = 'RUNNING' RETURNING id;
 ```
 
 | Parámetro | Valor |
@@ -95,7 +95,7 @@ Devuelve `id`. Sin filas = la corrida ya está cerrada.
 ### b) Upsert de un producto
 
 ```sql
-SELECT NULL::integer AS id WHERE $1::text IS NULL AND $2::text IS NULL AND $3::text IS NULL AND $4::text IS NULL AND $5::text IS NULL AND $6::text IS NULL AND $7::text IS NULL AND $8::text IS NULL AND $9::text IS NULL AND $10::text IS NULL AND $11::text IS NULL AND $12::text IS NULL AND $13::text IS NULL AND $14::text IS NULL AND $15::text IS NULL AND $16::text IS NULL AND $17::text IS NULL AND $18::text IS NULL AND $19::text IS NULL;
+WITH c AS (SELECT id, proveedor_id FROM scrape_corrida WHERE id = $1::integer AND estado = 'RUNNING') INSERT INTO proveedor_articulo AS pa (proveedor_id, codigo, id_externo, codigo_barras, numero_original, nombre, descripcion, detalle_tecnico, marca, rubro, precio_lista, precio_neto, precio_pago_anticipado, estado_stock, stock, alicuota_iva, url_imagen, fecha_origen, activo, vencido, ultima_corrida_id, ultima_lectura) SELECT c.proveedor_id, btrim($2::text), NULLIF($3::text, ''), NULLIF($4::text, ''), NULLIF($5::text, ''), btrim($6::text), NULLIF($7::text, ''), NULLIF($8::text, ''), NULLIF($9::text, ''), NULLIF($10::text, ''), NULLIF($11::text, '')::numeric, NULLIF($12::text, '')::numeric, NULLIF($13::text, '')::numeric, NULLIF($14::text, ''), NULLIF($15::text, '')::numeric, NULLIF($16::text, '')::numeric, NULLIF($17::text, ''), NULLIF($18::text, '')::timestamptz, COALESCE(NULLIF($19::text, '')::boolean, TRUE), FALSE, c.id, now() FROM c ON CONFLICT (proveedor_id, codigo) DO UPDATE SET id_externo = EXCLUDED.id_externo, codigo_barras = EXCLUDED.codigo_barras, numero_original = EXCLUDED.numero_original, nombre = EXCLUDED.nombre, descripcion = EXCLUDED.descripcion, detalle_tecnico = EXCLUDED.detalle_tecnico, marca = EXCLUDED.marca, rubro = EXCLUDED.rubro, precio_lista = EXCLUDED.precio_lista, precio_neto = EXCLUDED.precio_neto, precio_pago_anticipado = EXCLUDED.precio_pago_anticipado, estado_stock = EXCLUDED.estado_stock, stock = EXCLUDED.stock, alicuota_iva = EXCLUDED.alicuota_iva, url_imagen = EXCLUDED.url_imagen, fecha_origen = EXCLUDED.fecha_origen, activo = EXCLUDED.activo, vencido = FALSE, ultima_corrida_id = EXCLUDED.ultima_corrida_id, ultima_lectura = EXCLUDED.ultima_lectura RETURNING pa.id;
 ```
 
 | Parámetro | Valor | Parámetro | Valor |
@@ -117,7 +117,7 @@ vinculación con el artículo propio es por proveedor y código, así que no se 
 ### c) Historial de precio y stock de ese producto en esa corrida
 
 ```sql
-SELECT NULL::integer AS proveedor_articulo_id WHERE $1::text IS NULL AND $2::text IS NULL;
+INSERT INTO proveedor_articulo_historial (proveedor_articulo_id, corrida_id, proveedor_id, precio_lista, precio_neto, precio_pago_anticipado, estado_stock, stock) SELECT pa.id, c.id, c.proveedor_id, pa.precio_lista, pa.precio_neto, pa.precio_pago_anticipado, pa.estado_stock, pa.stock FROM scrape_corrida c JOIN proveedor_articulo pa ON pa.proveedor_id = c.proveedor_id AND pa.ultima_corrida_id = c.id WHERE c.id = $1::integer AND c.estado = 'RUNNING' AND pa.id = $2::integer ON CONFLICT (proveedor_articulo_id, corrida_id) DO UPDATE SET precio_lista = EXCLUDED.precio_lista, precio_neto = EXCLUDED.precio_neto, precio_pago_anticipado = EXCLUDED.precio_pago_anticipado, estado_stock = EXCLUDED.estado_stock, stock = EXCLUDED.stock, fecha_lectura = now() RETURNING proveedor_articulo_id;
 ```
 
 | Parámetro | Valor |
@@ -131,7 +131,7 @@ cerrada o b) no corrió para ese renglón en esta corrida.
 ### d) Cerrar la corrida
 
 ```sql
-SELECT NULL::integer AS id, NULL::integer AS cantidad_items WHERE $1::text IS NULL AND $2::text IS NULL AND $3::text IS NULL;
+UPDATE scrape_corrida SET estado = $2::text, fin = now(), mensaje_error = NULLIF($3::text, ''), cantidad_items = (SELECT count(*) FROM proveedor_articulo_historial h WHERE h.corrida_id = $1::integer) WHERE id = $1::integer AND estado = 'RUNNING' RETURNING id, cantidad_items;
 ```
 
 | Parámetro | Valor |
@@ -145,7 +145,7 @@ Cuenta lo registrado en el historial de la corrida. Devuelve `id` y `cantidad_it
 ### e) Marcar vencido lo que no vino
 
 ```sql
-SELECT 0::bigint AS vencidos WHERE $1::text IS NULL;
+WITH v AS (UPDATE proveedor_articulo pa SET vencido = TRUE FROM scrape_corrida c WHERE c.id = $1::integer AND c.estado = 'SUCCESS' AND c.cantidad_items > 0 AND pa.proveedor_id = c.proveedor_id AND pa.ultima_corrida_id <> c.id AND NOT pa.vencido RETURNING pa.id) SELECT count(*) AS vencidos FROM v;
 ```
 
 | Parámetro | Valor |

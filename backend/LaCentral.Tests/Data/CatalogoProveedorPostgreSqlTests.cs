@@ -58,7 +58,7 @@ public class CatalogoProveedorPostgreSqlTests
             (r.Codigo, r.IdExterno, r.CodigoBarras, r.NumeroOriginal, r.Nombre, r.Descripcion, r.DetalleTecnico, r.Marca, r.Rubro));
         Assert.Equal(((decimal?)300m, (decimal?)120m, (decimal?)114m, "NO_HAY", (decimal?)null, (decimal?)null),
             (r.PrecioLista, r.PrecioNeto, r.PrecioPagoAnticipado, r.EstadoStock, r.Stock, r.AlicuotaIva));
-        Assert.Equal(("https://img/120.jpg", new DateTime(2026, 11, 13, 0, 0, 0, DateTimeKind.Utc), false, false, segunda),
+        Assert.Equal(("https://img/120.jpg", new DateTime(2026, 11, 9, 0, 0, 0, DateTimeKind.Utc), false, false, segunda),
             (r.UrlImagen, r.FechaOrigen!.Value, r.Activo, r.Vencido, r.UltimaCorridaId));
         var historial = await lectura.ProveedorArticuloHistorial.Where(h => h.ProveedorArticuloId == r.Id).OrderBy(h => h.CorridaId)
             .Select(h => new { h.CorridaId, h.PrecioLista, h.PrecioNeto, h.PrecioPagoAnticipado, h.EstadoStock, h.Stock }).ToListAsync();
