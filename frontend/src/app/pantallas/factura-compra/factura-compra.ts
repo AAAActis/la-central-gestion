@@ -78,6 +78,10 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
           @if (errorPdf()) { <p class="error" role="alert">{{ errorPdf() }}</p> }
           @if (proveedor(); as p) {
             <p>Proveedor: <strong>{{ p.razonSocial }}</strong> <span class="tenue mono">({{ p.codigo }})</span>
+              @if (revisar('proveedorId')) {
+                <span class="etiqueta revisar">Revisar</span> <span class="tenue">El PDF no trae el CUIT: se reconoció por el nombre.</span>
+                <button type="button" class="secundario" (click)="confirmarProveedor()">Es este</button>
+              }
               <button type="button" class="secundario" (click)="proveedor.set(null)">Cambiar</button></p>
           } @else {
             @if (revisar('proveedorId')) {
@@ -116,8 +120,8 @@ interface LineaSinResolver extends Omit<LineaPdfInterpretada, 'articuloId'> { re
           </div>
           <p class="ayuda">El tipo se propone según lo que suele emitir el proveedor; se puede cambiar. El B lleva 99 en el primer tramo; el A se copia tal cual. Fechas: 5 es el día 5 de este mes; 2010, el 20/10 de este año. La imputación arranca en hoy; sin imputación, va la emisión.</p>
           @if (sucursales().length > 0) {
-            <label>Destino de las líneas nuevas
-              <select name="sucursalCabecera" [(ngModel)]="sucursalCabecera">
+            <label>Destino de las líneas nuevas @if (revisar('sucursalSugeridaId')) { <span class="etiqueta revisar">Revisar</span> }
+              <select name="sucursalCabecera" [(ngModel)]="sucursalCabecera" (ngModelChange)="quitarRevisar('sucursalSugeridaId')">
                 @for (s of sucursales(); track s.id) { <option [ngValue]="s.id">{{ s.nombre }}</option> }
               </select>
             </label>
@@ -349,7 +353,17 @@ export class FacturaCompra {
     });
   }
 
+  /** Fix E: el proveedor reconocido por su razón social lo confirma el operador; nunca queda confirmado solo. */
+  confirmarProveedor() {
+    this.quitarRevisar('proveedorId');
+  }
+
+  quitarRevisar(campo: string) {
+    this.paraRevisar.update(r => r.filter(x => x !== campo));
+  }
+
   elegirProveedor(p: ProveedorResumen) {
+    this.quitarRevisar('proveedorId');
     this.proveedor.set(p);
     this.proveedores.set([]);
     // CA-004: solo una propuesta; el usuario la cambia cuando quiera. Con el formulario del PDF
@@ -636,6 +650,8 @@ export class FacturaCompra {
     ).subscribe({
       next: ({ f, proveedor, fichas }) => {
         this.nueva();
+        // Fix E: la sucursal sugerida por el PDF es el destino de las líneas; el operador la cambia.
+        if (f.sucursalSugeridaId != null) this.sucursalCabecera = f.sucursalSugeridaId;
         if (proveedor) this.proveedor.set({
           id: f.proveedorId!, codigo: proveedor.codigo, razonSocial: proveedor.razonSocial, cuit: proveedor.cuit,
           activo: proveedor.activo, tipoComprobanteHabitual: proveedor.tipoComprobanteHabitual ?? null,
