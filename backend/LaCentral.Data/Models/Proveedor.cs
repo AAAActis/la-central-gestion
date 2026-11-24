@@ -49,6 +49,8 @@ public partial class Proveedor
 
     public virtual ICollection<PrecioProveedor> PrecioProveedor { get; set; } = new List<PrecioProveedor>();
 
+    public virtual ICollection<ProveedorArticulo> ProveedorArticulo { get; set; } = new List<ProveedorArticulo>();
+
     public virtual ProveedorCredencial? ProveedorCredencial { get; set; }
 
     public virtual ICollection<ProveedorDireccion> ProveedorDireccion { get; set; } = new List<ProveedorDireccion>();
@@ -56,4 +58,6 @@ public partial class Proveedor
     public virtual ProveedorHistorialBaja? ProveedorHistorialBaja { get; set; }
 
     public virtual ICollection<ProveedorTelefono> ProveedorTelefono { get; set; } = new List<ProveedorTelefono>();
+
+    public virtual ICollection<ScrapeCorrida> ScrapeCorrida { get; set; } = new List<ScrapeCorrida>();
 }

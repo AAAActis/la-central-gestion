@@ -1767,6 +1767,44 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - C7-04 movido entero (respuestas de Sergio y preguntas abiertas, con «Vélez») a `docs/sprint07/ESTADO.md`, sección final «Fuera de la tesis · Sprint 9 · post-tesis», como S9-01. C7-05 y C7-06 no se renumeran.
 - D-S6-30 (equipo, 23/11/2026) en la tabla de decisiones del 23/11 de `docs/sprint06/ESTADO.md`; el párrafo de «abre trabajo» ya no manda las devoluciones al Sprint 7.
 
+## 23/11/2026 · Cierre del Sprint 6 y apertura del Sprint 7 (C2, D-S7-01 a D-S7-04)
+
+**Instrucción recibida (verbatim):**
+> 23/11/2026 · Sprint 6 al cierre y arranque del Sprint 7. Leé CLAUDE.md, la bitácora (último bloque «en curso»), docs/sprint06/ESTADO.md, docs/sprint07/ESTADO.md y docs/PLAN-SPRINTS-6-7-8.md antes de empezar. Resúmenes en español.
+>
+> ## 1 · Merges pendientes
+> - Santi mergea primero el #191 (fecha 2000–2100). Cuando entre: en la rama del #193, git merge origin/develop (nunca rebase), resolvé la bitácora conservando los bloques en orden, y corregí las dos líneas **Estado:** mal puestas (bloque del #192 → «terminada»; bloque del #191 → una sola línea, «terminada»). Es la única línea de un bloque que se reescribe. Push y avisá en el #193.
+>
+> ## 2 · Cierre del Sprint 6
+> Javi hizo el recorrido DoD 10 con Sergio contra lacentral_demo. Cuando Santi te pase el detalle (qué se probó, con qué usuario y datos, y si anduvo, búsqueda de artículos incluida), completá la tabla «Recorrido en el navegador» del ESTADO, cerrá las issues #163, #13, #51 y #182 con su referencia, abrí el PR de develop a main y poné la etiqueta sprint-6, como en el Sprint 5. Si el recorrido encontró algo roto, eso va primero, antes que todo el Sprint 7. Sin el detalle de Javi, no lo des por cerrado.
+>
+> ## 3 · Decisiones del equipo para el Sprint 7 (anotalas en docs/sprint07/ESTADO.md, con fecha 23/11/2026)
+> - D-S7-01 · Scrapes: los arma el equipo en n8n y n8n ESCRIBE DIRECTO en la base. Responde «qué entrega un scrape».
+> - D-S7-02 · IVA por alícuota (cierra C7-01, ENTRA): 21 % y 10,5 % son tipos de alícuota. La alícuota suele ser del artículo (valor por defecto), pero en cada línea de la factura de compra se puede cambiar con un desplegable. El IVA se discrimina y se suma por alícuota en el total. Más alícuotas las pasa Sergio después: el diseño no tiene que suponer solo dos. La nota de crédito hereda la alícuota de la línea de la factura original. Hoy está fija en 21 % en RegistrarFacturaCompraUseCase, RegistrarNotaCreditoCompraUseCase, el lector de ETMAN y el control del neto de Expoyer.
+> - D-S7-03 · Costo al anular (cierra C7-02, ENTRA): al anular una factura, el costo del artículo vuelve al que tenía justo antes de esa factura. Si entre la factura y la anulación alguien cambió el costo a mano, queda el de a mano. Exige guardar el costo previo en cada línea al registrarla. Reemplaza la interpretación del CA-002 de la 028 y el CA-004 de la 016.
+> - D-S7-04 · Anulación con UN administrador (cierra C7-03, ENTRA): la doble certificación se saca. Anula un ADMINISTRADOR con motivo obligatorio, y queda registrado quién anuló. Cambia el CA-006 de la 028 y el CA-012 de la 057, y la pieza Comun/DobleCertificacion. Anotá que revierte el pedido del 02/11/2026; Santi avisa a quien lo pidió.
+> - Revisá si la D-S6-29 (la mercadería entra a la sucursal que compró, definido en la carga de la factura) responde la P7-01 de la 027 (#34). Si la responde, la 027 se desbloquea; si no, decí qué falta.
+> - PENDIENTE del equipo: CA3 de la 054 (#127) contra D2. No construyas la 054 hasta que se decida.
+>
+> ## 4 · Qué hacer y en qué orden
+> 1. Abrí el Sprint 7 en docs/sprint07/ESTADO.md: entregable en una línea («al cerrar este sprint, una persona puede entrar al sistema y ... sobre lacentral_demo»), tablero con las issues del milestone «Sprint 7» y sus SP, compuertas y las decisiones de arriba. Las HU nuevas o cambiadas por D-S7-02 a 04 van con su proforma (o su versión nueva), issue en el milestone y SP. Si la suma supera la capacidad, el sprint se estira; no se recorta.
+> 2. Compuerta C2, primero, porque destraba los scrapes de Santi. Esquema del catálogo de proveedores sobre la metodología de referencia, probada en otro proyecto sobre MySQL y que hay que llevar a PostgreSQL:
+>    - catálogo actual por proveedor, con unicidad (proveedor_id, código del proveedor) para reingestar sin duplicar ni perder vinculaciones: código, id externo, código de barras, nombre, descripción, detalle técnico aplanado «CLAVE: valor | CLAVE: valor», marca, precio neto sin IVA, precio de lista, stock, alícuota de IVA, URL de imagen (no se descargan imágenes), última lectura, fecha de origen y activo;
+>    - historial de precio y stock por corrida (RF-016);
+>    - corridas: estado RUNNING, SUCCESS o FAILED; cantidad de ítems; id de la ejecución de n8n; fin.
+>    Decí qué se reusa de lo que ya existe (precio_proveedor, articulo_codigo_alternativo) y qué es nuevo. Upsert con ON CONFLICT. En el mismo script, un rol de PostgreSQL para n8n con permisos mínimos: INSERT, UPDATE y SELECT solo en catálogo, historial y corridas, y SELECT en proveedor. La clave no va al repo: la pone Santi. Script 12 + re-scaffold + bloque «PARA SANTI» (backup, lacentral_test primero, con una copia aparte como nc057_fuente si el esquema corta las suites de otras ramas). Y la proforma de la 055 reescrita: «incorporar al catálogo del proveedor el resultado de un scrape», con los cuatro CA que sobreviven (no duplicar ni perder vinculaciones, registro de cada corrida, lo que no vino se marca vencido y no se borra, proveedor dado de baja se rechaza), y decí cuáles los garantiza la base y cuáles n8n.
+> 3. D-S7-04 (un administrador): chico y destraba el uso diario.
+> 4. D-S7-03 (costo al anular).
+> 5. D-S7-02 (IVA por alícuota). Los cambios de esquema de 3 a 5 pueden ir en el mismo script o en scripts separados: decidilo vos y decí por qué.
+> 6. Después, el comparador (030 a 034, 053, 050) sobre las filas del catálogo, a medida que Santi cargue scrapes.
+>
+> Reglas de siempre: TDD con los tres commits, un PR por HU, persistencia contra PostgreSQL real releyendo con contexto nuevo, verificadores acotados a los commits de la HU, suite completa una vez sobre el HEAD, ESTADO antes del push. Los workflows de n8n de Expoyer, Autocor, Nafazio (Fazio) y ETMAN no son tuyos: los arma Santi. Parás cuando todo lo que quede dependa de personas, o cuando un esquema espere que Santi lo aplique, y pasás el resumen.
+
+**Plan:** 1. Merges (#191 → #193 con las dos líneas de Estado): espera a que Santi mergee el #191. 2. Cierre del Sprint 6: espera el detalle del recorrido de Javi. 3. Rama `docs/sprint07-apertura` (sobre `docs/sprint06-cierre-correcciones`, #193, para no chocar con la sección Sprint 9): decisiones D-S7-01 a 04, P7-01 contra D-S6-29, entregable, tablero, compuertas; proformas e issues de lo que cambian D-S7-02 a 04. 4. C2: script 12 (catálogo, historial, corridas, rol n8n), ensayo en un esquema descartable de `lacentral_test`, bloque «PARA SANTI», proforma 055. 5. D-S7-04 (código, sin esquema si alcanza). 6. D-S7-03 y D-S7-02: scripts y HU. 7. Parar donde quede esperando a Santi o a personas.
+
+**Estado:** en curso
+- Arranque: `git fetch`; `origin/develop` = `d783ea2`; #191 y #193 abiertos (sin merge). Sin worktrees extra. El último bloque «en curso» real es el de #192 (Estado mal puesto, punto 1 de esta instrucción). Rama `docs/sprint07-apertura` creada desde `e8b0670` (#193).
+
 ## 23/11/2026 · Fix E (proveedor y sucursal en la lectura de PDF) y Fix F (vencimiento por proveedor)
 
 **Instrucción recibida (especificación pegada por Javi, «reconocimiento de proveedor y sucursal en PDF, y vencimiento automático por proveedor»; condensada, conserva reglas y cifras):**
@@ -1827,3 +1865,159 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - Merge `d748fe3`: 18 commits de `origin/develop` incorporados (Fix E #196, cierre de Sprint 6 #193, siembra de ETMAN y Fazio). Único conflicto: `docs/sprint06/BITACORA.md`, resuelto conservando los bloques de ambos lados; se sacó la línea duplicada y los tres marcadores. Diff de la bitácora contra `origin/develop`: +14/−0. 41 líneas `Estado` y 41 bloques.
 - El renumerado del script del Fix F de 12 a 14 está en `3eef61b`; no se corrigió en el bloque del 23/11, va en este.
 - Abierto: el #197 sigue borrador y frenado por Santi; Fix F.3–F.5 espera el 14 aplicado y el re-scaffold; la suite completa sobre el último commit, todavía sin correr (si salta un timeout de Npgsql, #190, se filtra); el bloque `23/11 · Fix E y Fix F` quedó «en curso» y probablemente viejo (de otra sesión, no se tocó).
+
+### PARA SANTI · 23/11/2026 · script 12 (C2, catálogo de proveedores y rol de n8n)
+
+Desde fish, en tu máquina, parado en la raíz del repo. El script se lee de la rama pusheada con `git show`. Cada paso que falla corta: si algo da `ERROR`, no sigas y pasame la salida.
+
+**Por qué no va a `public` de `lacentral_test` todavía:** `PostgreSqlPruebas` corta si la plantilla tiene tablas que el modelo no conoce («Re-scaffold antes de correr los tests»). Con el 12 en `public`, las suites de todas las otras ramas se caen hasta que entre este PR. Por eso en `lacentral_test` va a una copia, `c2_fuente`, como `nc057_fuente`. En `lacentral_demo` y `lacentral` **no rompe nada**: solo agrega tablas, y la API no mira las que no conoce. **Para destrabar n8n alcanza con `lacentral_demo`.** `lacentral` (datos reales) va después del merge, como el 11.
+
+1 · Backup de las tres bases (tiene que decir `backup OK` tres veces):
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+git fetch origin
+mkdir -p ~/backups-lacentral
+set marca (date +%Y%m%d-%H%M)
+for base in lacentral_test lacentral_demo lacentral
+    ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc $base > ~/backups-lacentral/$base-$marca.dump
+    and test -s ~/backups-lacentral/$base-$marca.dump
+    and echo "backup OK: $base"
+    or begin; echo "FALLÓ el backup de $base: no sigas"; break; end
+end
+```
+
+2 · `lacentral_test`: la copia `c2_fuente` y el 12 sobre ella (tiene que terminar con `NOTICE: 12: TODO OK.`):
+
+```fish
+git show origin/feature/128-catalogo-scrape:backend/db/pruebas/nc057_fuente_copia.sql | sed 's/nc057_fuente/c2_fuente/g' | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+and begin; echo "SET search_path = c2_fuente, public;"; git show origin/feature/128-catalogo-scrape:backend/db/rescaffold/12_Catalogo_Proveedores.sql; end | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+3 · `lacentral_demo`: el 12 en `public` (tiene que terminar con `NOTICE: 12: TODO OK.`):
+
+```fish
+git show origin/feature/128-catalogo-scrape:backend/db/rescaffold/12_Catalogo_Proveedores.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_demo -v ON_ERROR_STOP=1
+```
+
+4 · La clave de `lacentral_n8n` (el rol es de todo el servidor; te la pide dos veces y no queda en ningún archivo ni en el historial):
+
+```fish
+ssh -t atiz@arch docker exec -it lacentral_db psql -U lacentral -d lacentral_demo -c '\password lacentral_n8n'
+```
+
+En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, usuario `lacentral_n8n`. Las sentencias para los nodos están en `backend/db/n8n/` (parámetros `$1`, `$2`…, en el orden del encabezado de cada archivo). El flujo, en la proforma de la 055 (§ 4).
+
+5 · Avisame. La suite de esta rama corre con `LA_CENTRAL_TEST_SCHEMA=c2_fuente`. **Después del merge:** el 12 en `public` de `lacentral_test` y en `lacentral`, re-scaffold contra `public` y se borra `c2_fuente` (`nc057_fuente_borrado.sql` con el mismo `sed`).
+
+**Ojo:** el 23/11 `nc057_fuente` todavía existe en `lacentral_test` (lo vi al listar los esquemas). Si ya la borraste en otra base, falta en esta.
+- C2 en `feature/128-catalogo-scrape`: esqueleto `8043ff5` (script 12, modelo de las tres tablas tomado de un scaffold contra la copia descartable `c2_ensayo_7a51e2c7`, sentencias de n8n vacías), rojo `19e8947` (`CatalogoProveedorPostgreSqlTests`: 5 con error por aserción), código `45b2aea` (5/5). Script 12 aplicado dos veces sobre la copia: idempotente. Suite completa sobre `45b2aea` (`--no-incremental`, 0 advertencias, `LA_CENTRAL_TEST_SCHEMA=c2_ensayo_7a51e2c7`): `Correctas! - Con error: 0, Superado: 814, Omitido: 0, Total: 814, Duración: 16 m 1 s`. Proforma 055 v2.0 y bloque «PARA SANTI · 23/11 · script 12». `nc057_fuente` sigue en `lacentral_test`.
+
+## 23/11/2026 · C2 con los datos reales del primer scrape (Expoyer)
+
+**Instrucción recibida (verbatim):**
+> 23/11/2026 · Datos reales del primer scrape (Expoyer), para diseñar la compuerta C2 y el script 12. Va junto con lo que ya te pedí del Sprint 7. Anotalo en docs/sprint07/ESTADO.md. Resúmenes en español.
+>
+> ## Lo que se relevó del portal (API JSON con token Bearer)
+> - Volumen: unos 103.900 productos en 194 rubros del proveedor. El buscador corta en 10.000 por consulta, así que n8n baja rubro por rubro, de a 500, unos 400 pedidos por corrida. El único rubro de más de 10.000 se baja ordenado en los dos sentidos, y el upsert absorbe los repetidos. El catálogo de UN proveedor ronda los 100.000 registros: los índices y el upsert tienen que bancarlo.
+> - Stock: NO viene cantidad, viene un ESTADO por depósito del proveedor (CASEROS y CORDOBA): 1 = hay, 3 = no hay, 2 = a confirmar con Sergio (probablemente «pocas»). Se guarda el estado del depósito que le sirve a La Central (CORDOBA). La cantidad tiene que poder quedar null, para los proveedores que no la informan.
+> - Precios: lista (basePrice) y costo neto con el descuento del cliente (discountedPrice). El neto se validó contra la factura real de Expoyer: lista × (1 − 61,08 %) × (1 − 15 %). El de pago anticipado (earlyPaymentPrice) es opcional. El precio que muestra la web (salePrice) es el neto + 80 % de margen de la «vista cliente» y NO se guarda.
+> - Códigos: commercialCode («C 000100 14 E») es el que viene en las facturas y el que se cruza con articulo_codigo_alternativo; internalCode («C00010014E») es el id externo.
+> - Además: número original (familyCode, puede traer varios separados por « / »), marca del producto (supplier.name; brandName es la marca del VEHÍCULO), rubro del proveedor (category.name), URL de imagen e IVA (vatRate viene null: por defecto 21, o la alícuota de la D-S7-02).
+>
+> ## Lo que te pido para C2 (además de lo que ya está en el pedido del Sprint 7)
+> 1. Diseñá el catálogo, el historial y las corridas con estos datos: estado de stock (y cantidad null), lista y neto, código comercial e id externo, número original, marca, rubro, imagen, alícuota, activo, última lectura y vencido (lo que no vino en la última corrida completa se marca vencido y no se borra: CA de la 055).
+> 2. Rol de PostgreSQL para n8n con permisos mínimos (ya pedido). La clave la pone Santi.
+> 3. Un archivo docs/sprint07/CONTRATO-N8N.md con las sentencias SQL EXACTAS que va a usar n8n, cada una en UNA sola línea (el editor de n8n borra los saltos), parametrizadas con $1, $2…, y con qué parámetro es cada cosa:
+>    a) abrir una corrida (devuelve su id);
+>    b) upsert de un producto con ON CONFLICT;
+>    c) registrar el historial de precio y estado de stock de ese producto en esa corrida;
+>    d) cerrar la corrida en SUCCESS contando lo registrado, o en FAILED con el motivo;
+>    e) marcar vencido lo que no vino en una corrida SUCCESS;
+>    f) rechazar la corrida si el proveedor está dado de baja.
+>    Probalas contra PostgreSQL real con un test que haga lo mismo que va a hacer n8n.
+> 4. El bloque «PARA SANTI» del script 12 (backup, lacentral_test primero, después lacentral_demo y lacentral), igual que el 10 y el 11.
+> El workflow de n8n no es tuyo: lo arma Santi con ese contrato.
+>
+> Si el esquema de C2 ya está hecho o tiene PR abierto, ajustalo con estos datos en commits nuevos del mismo PR (rojo primero), sin abrir otro. Si cambia el esquema, avisá antes de que Santi aplique el script 12.
+
+**Plan:** 1. Cortar la suite en curso (el HEAD cambia). 2. Script 12 con los datos de Expoyer, copia descartable nueva, re-scaffold. 3. `CONTRATO-N8N.md` (reemplaza `backend/db/n8n/`): esqueleto, rojo, código. 4. Mutaciones propias; suite completa; verificadores acotados; ESTADO; push y PR.
+
+**Estado:** en curso
+- Antes de esto, `verificador-tdd` sobre `8043ff5..45b2aea`: **NO APTO** (sobrevivían M2, M13 y M14: total sobre corrida cerrada y el conteo de vencidos). Arreglado solo en test en `4aa87a0` (más una mutación por cada columna del upsert: las 11 mueren). Ese diseño queda reemplazado por el de abajo; la ronda 2 se hace sobre el diseño nuevo.
+- La suite completa sobre `4aa87a0` se cortó a mano (el HEAD iba a cambiar). Lo hice con `pgrep -f`, que mató también mi shell (exit 144): el error que advierte la memoria del proyecto. Los esquemas `pr110_test_*` que dejó los limpiaron las propias pruebas.
+- **El esquema del 12 cambió. Todavía no estaba pusheado: Santi no lo pudo aplicar.** Si lo aplicó desde otra copia, la verificación nueva del 12 corta («versión anterior del 12 (sin vencido)»).
+- Esqueleto `c8d4c0f` (12 con `numero_original`, `rubro`, `precio_pago_anticipado`, `estado_stock`, `vencido` aparte de `activo`; modelo re-scaffoldeado contra `c2_ensayo_e6807bae`; contrato en esqueleto). Rojo `042db40`: 7 con error por aserción de 8 (la que pasa, `Contrato_TieneLasSieteSentencias…`, es caracterización). Dos corridas previas del rojo tuvieron cortes de conexión (#190); la tercera, limpia. Código `126a3c5`: 8/8 (4 m 36 s: la base está lenta).
+- Mutaciones propias sobre el contrato (11: guardas de f, a, c, d, e, el `vencido = FALSE` y el `activo` de b, y el NULLIF del neto): las 11 ponen 1 prueba en rojo de 8. El resumen no distingue aserción de corte de conexión: lo mira el verificador. Contrato restaurado (sin diff).
+- verificador-tdd ronda 2 (`c8d4c0f..126a3c5`): **NO APTO**, sobrevivían 7 (columnas del upsert sin cambio entre corridas, vacío que no quedaba NULL en $4 de b y $2 de a, c) sin `pa.id`, `ultima_lectura`). Arreglo solo en test en `e6cfa2a`: esas 7 y los SET de stock y estado del historial mueren (9/9, sin cortes de conexión).
+- auditor-persistencia (`c8d4c0f..da463f8`): **NO APTO**. e) de una corrida vieja vencía lo que una más nueva acababa de leer (alcanzable: reintento de e) tras un corte, #190). Rojo `b241f8e` (1 con error por aserción), código `99d8482` (guarda NOT EXISTS de una corrida posterior; 9/9). No bloqueantes, para el PR: b) y c) son dos sentencias sin transacción común (con el flujo del contrato queda una corrida FAILED parcial, estado válido); el comentario del 12 que decía «activo = false» corregido.
+- auditor-persistencia ronda 2 (`b241f8e..99d8482`): **APTO**. No bloqueante, va en el PR: una carrera improbable (e) concurrente con un upsert de la corrida nueva) que cerraría `pa.ultima_corrida_id < c.id`; no se cambia ahora (el flujo del contrato es secuencial). ESTADO del Sprint 7 al día (fila #128 y PRÓXIMA SESIÓN). Push y PR.
+- 24/11 · Entró el #191 a `develop`: `git merge origin/develop` en `docs/sprint06-cierre-correcciones` (#193) con la bitácora en orden (#191 y después los del #193) y las dos líneas de Estado corregidas (#192 y #191 → «terminada»); avisado en el #193. Propagado a `docs/sprint07-apertura` y a esta rama, sin conflictos.
+- PR #198 (apertura del Sprint 7, base `docs/sprint06-cierre-correcciones`) y PR #199 (C2, HU-CMP-08, base `docs/sprint07-apertura`; Closes #128). Suite del #199: 818/818 sobre `d57efa0`; los dos verificadores APTO.
+- **Choque de número:** el #197 (Jotelsooon, borrador «frenado por Santi», 24/11) también es un «script 12» (`12_Vencimiento_Proveedor.sql`). El 13 de la D-S7-03/04 (redactado, fuera del repo) exige el 12 de C2. Avisado arriba de todo en el cuerpo del #199.
+
+**BLOQUEADO EN:** (1) Santi: decidir qué script es el 12 (C2 o Fix F del #197) y aplicarlo; sin eso no se fija el número del script de D-S7-03/04 ni se construyen #195, #9 y #23, y el comparador (030 a 034, 053, 050) espera C2 aplicado. (2) Javi: detalle del recorrido DoD 10 para cerrar el Sprint 6. Los #196 y #197 (Fix E y Fix F) parecen salir de ese recorrido: si son roturas, van antes que el Sprint 7. (3) Equipo: CA3 de la 054 contra la D2. (4) Sergio: P7-01, P7-02 y P7-03.
+
+## 24/11/2026 · Review del #193, choque de los dos scripts 12, script 13 a una rama y aplicación del 12
+
+**Instrucción recibida (verbatim):**
+> Seguimos. Cuatro cosas, en este orden.
+>
+> 1) #193 · Javi dejó «Request changes». Lo del conflicto de la bitácora ya está. Faltan estos tres:
+>    a) docs/sprint06/ESTADO.md: si en algún lado todavía figura como pendiente el fix de rango de años (#191), pasalo a «hecho, mergeado».
+>    b) El cuerpo del PR: la advertencia del conflicto con el #191 quedó vieja. Reemplazala por una línea que diga que se resolvió en 42902a1.
+>    c) docs/sprint07/ESTADO.md de esta rama: agregá en C7-02 la regla explícita del costo al anular: vuelve al costo de justo antes de la factura, salvo que lo hayan cambiado a mano después de la factura, en cuyo caso queda el de a mano (Sergio, 23/11/2026; D-S7-03 en el #198). Así no queda dudosa la frase «costo a mano se respeta» de la bitácora del #192.
+>    La redacción de la D-S6-30 la escribió Javi y la confirma él al re-aprobar. No la toques.
+>    Son cambios solo de docs: no se relanzan verificadores ni suite. Respondé el review de Javi punto por punto en el PR.
+>
+> 2) Choque de los dos scripts 12. Decisión: el 12 es el de C2 (#199), que está verificado y es el que necesita el scrape. Comparalo contra el 12_Vencimiento_Proveedor.sql del #197 (borrador, Fix F):
+>    - si C2 ya cubre lo que el #197 quería (vencer artículos por proveedor), dejá un comentario en el #197 explicando qué lo cubre y proponé cerrarlo;
+>    - si cubre otra cosa, que el #197 pase a ser el 14. Que no toque el número 13.
+>    Con eso queda fijo el 13.
+>
+> 3) El script 13 está solo en tu scratchpad y se pierde. Commitealo ya en una rama propia, feature/s7-script-13, sobre docs/sprint07-apertura o sobre la rama del #199, la que corresponda, con el número 13. No abras PR todavía si no está terminado, pero que quede pusheado.
+>
+> 4) Cuando Javi re-apruebe el #193 y yo mergee el #193, el #198 y el #199 en ese orden, pasame en un solo bloque, para fish, listo para pegar y sin marcadores:
+>    - el backup de lacentral;
+>    - el 12 aplicado a lacentral_test, lacentral_demo y lacentral, con la verificación de cada una;
+>    - el borrado de nc057_fuente, c2_fuente y c2_ensayo_e6807bae en lacentral_test;
+>    - la contraseña del rol lacentral_n8n, que la elijo yo, no la escribas;
+>    y vos hacé el re-scaffold contra public y su PR.
+>    Si el merge apilado retargetea mal el #198 o el #199, arreglá la base de cada PR a develop vos.
+>
+> Bitácora y ESTADO como siempre.
+
+**Plan:**
+1. #193 (`docs/sprint06-cierre-correcciones`): a) #191 a «hecho, mergeado» en el ESTADO del Sprint 6; b) cuerpo del PR (conflicto resuelto en 42902a1); c) regla del costo al anular en C7-02 del ESTADO del Sprint 7. Sin tocar la D-S6-30. Respuesta punto por punto al review de Javi. Propagar a #198 y #199.
+2. Comparar el 12 de C2 con `12_Vencimiento_Proveedor.sql` del #197; comentario en el #197 (cerrar, o pasar a 14).
+3. Script 13 a `feature/s7-script-13` (sobre `feature/128-catalogo-scrape`, porque exige el 12), push sin PR.
+4. Tras el merge de #193 → #198 → #199: bases de los PR a develop si hace falta; bloque fish para Santi; re-scaffold contra `public` y su PR.
+
+**Estado:** en curso
+- 1) #193: `da44e5a` en `docs/sprint06-cierre-correcciones`: #191 pasa a «hecho, mergeado» (`8cd856e`) en el ESTADO del Sprint 6 (era el único lugar) y regla explícita del costo al anular en C7-02 del ESTADO del Sprint 7. La D-S6-30 no se tocó. Cuerpo del PR: la advertencia del conflicto se reemplazó por «se resolvió en `42902a1`». Review de Javi respondido punto por punto (comentario 7131077291). Propagado a #198 (más `script 12` → `script 13` en C7-02, que había quedado viejo) y a #199. Sin suite ni verificadores: solo docs.
+- 2) Scripts 12: el 12 del #197 (Fix F) agrega `proveedor.vencimiento_modo` y `vencimiento_dias` (vencimiento de las facturas de compra); el `vencido` de C2 es del renglón del catálogo. C2 no lo cubre → el #197 pasa a 14: `3eef61b` en `fix/vencimiento-proveedor` (dos `git mv` y el número en `RAISE` y comentarios; mismo SQL), título y cuerpo del #197 a 14, comentario 7131115876. Las alícuotas pasan al 15. D-S7-05 en el ESTADO del Sprint 7 (#198). Cuerpos de #198 y #199 al día.
+- 3) Script 13: `feature/s7-script-13` desde `feature/128-catalogo-scrape` (exige el 12), `f944258`, pusheada, sin PR. Rotulado BORRADOR: sin ejecutar ni probar.
+
+**BLOQUEADO EN:** 4) re-aprobación del #193 (Javi) y merge de #193 → #198 → #199 (Santi). Recién después: bases de los PR, bloque fish para Santi (backup, 12 en las tres bases, borrado de esquemas de ensayo, clave de `lacentral_n8n`) y re-scaffold contra `public` con su PR.
+
+## 24/11/2026 · #198 mergeado a una rama muerta: entra a develop por el #199; aplicación del 12 en lacentral
+
+**Instrucción recibida (verbatim):**
+> Seguimos con la pila del Sprint 7. Ojo: el #198 se mergeó contra docs/sprint06-cierre-correcciones (la rama del #193, que ya estaba mergeada), así que sus commits NO están en develop.
+>
+> 1) Arreglá eso a través del #199: mergeá origin/docs/sprint07-apertura en feature/128-catalogo-scrape (merge, sin rebase), resolvé conflictos si hay, y retargeteá el #199 a develop. Verificá con git log que develop..feature/128-catalogo-scrape incluye los commits del #198. Corré la suite completa una vez sobre ese HEAD (contra lacentral_test, que ya tiene el 12 en public) y anotá hash, línea de resumen y conteo en el PR. No relances verificadores: el código no cambió, solo entra la doc del #198. Declaralo en el cuerpo del PR.
+>
+> 2) Cuando yo te diga «mergeado», pasame en un solo bloque, para fish y listo para pegar: backup de lacentral, el 12 aplicado a lacentral con su verificación, y el borrado de nc057_fuente, c2_fuente y c2_ensayo_e6807bae en lacentral_test. Después hacé el re-scaffold contra public (tiene que dar 0 diferencias de modelo) y abrí su PR.
+>
+> 3) Bitácora y ESTADO: el #198 quedó mergeado a una rama muerta (registralo con fecha), el 12 se aplicó en lacentral_demo y en lacentral_test, y el rol lacentral_n8n ya tiene clave (no la anotes).
+
+**Plan:**
+1. `git merge origin/docs/sprint07-apertura` en `feature/128-catalogo-scrape` (sin rebase), conflictos, #199 a `develop`, comprobar con `git log` que `develop..feature/128-catalogo-scrape` trae los commits del #198. Suite completa una vez sobre ese HEAD contra `public` de `lacentral_test`; hash, línea y conteo en el PR. Sin verificadores (el código de la HU no cambia).
+2. Al «mergeado»: bloque fish (backup de `lacentral`, el 12 en `lacentral` con verificación, borrado de `nc057_fuente`, `c2_fuente` y `c2_ensayo_e6807bae`); re-scaffold contra `public` (0 diferencias) y su PR.
+3. Bitácora y ESTADO: #198 a rama muerta; el 12 aplicado en `lacentral_demo` y `lacentral_test`; `lacentral_n8n` con clave.
+
+**Estado:** en curso
+- 1) `origin/docs/sprint07-apertura` mergeada en `feature/128-catalogo-scrape`: `e0f68d5`. Conflicto solo en esta bitácora (los dos lados agregaban bloques): primero los de Fix E y siembra de la demo (que vienen de `develop`), después los de C2, sin reescribir ninguno. Los 7 commits del #198 están en `origin/develop..HEAD` y en ninguno de `develop`. #199 retargeteado a `develop`. Frente a `develop`, el código es el de la HU; `LaCentralDbContext.cs` figura con 1410 líneas cambiadas, pero sin contar los finales de línea son solo las +198 de las entidades nuevas (el scaffold lo dejó entero en CRLF). Suite completa sobre `e0f68d5` contra `public` de `lacentral_test` (`--no-incremental`, 0 advertencias): `Correctas! - Con error: 0, Superado: 858, Omitido: 0, Total: 858, Duración: 18 m 11 s`. Sin verificadores (el código de la HU no cambió).
+- 3) **El #198 quedó mergeado a una rama muerta (24/11/2026)**: contra `docs/sprint06-cierre-correcciones` (`8521ae7`) cuando el #193 ya estaba en `develop`; entra por el #199. El 12 aplicado por Santi en `lacentral_test` (`public`) y `lacentral_demo`; `lacentral_n8n` con clave. ESTADO del Sprint 7 al día (fila #128 y PRÓXIMA SESIÓN).
+
+**BLOQUEADO EN:** 2) el «mergeado» de Santi para el #199. Después: bloque fish (backup de `lacentral`, el 12 en `lacentral`, borrado de los tres esquemas de ensayo) y re-scaffold contra `public` con su PR.

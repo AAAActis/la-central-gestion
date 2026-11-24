@@ -57,15 +57,17 @@ Una proforma por archivo, nombrada `<ID>-<CÓDIGO>.md`.
 | 050 | HU-UI-12 | Pantalla del comparador de precios | Alto | 8 | Sprint 8 | 5 | [`050-HU-UI-12.md`](./050-HU-UI-12.md) | #52 | Sprint 7 | Pendiente · no se parte: todos sus CA son del comparador |
 | 051 | HU-UI-13 | Manejo global de errores y avisos | Medio | 2 | Sprint 8 | 3 | [`051-HU-UI-13.md`](./051-HU-UI-13.md) | #53 | Sprint 8 | Pendiente |
 | 052 | HU-UI-14 | Comprensión y documentación del frontend | Alto | 5 | Sprint 8 | 4 | [`052-HU-UI-14.md`](./052-HU-UI-14.md) | #54 | Sprint 8 | Pendiente |
+| 055 | HU-CMP-08 | Incorporar al catálogo del proveedor el resultado de un scrape | Alto | 5 | Sprint 7 | — | [`055-HU-CMP-08.md`](./055-HU-CMP-08.md) | #128 | Sprint 7 | En desarrollo · v2.0 (23/11/2026, D-S7-01): n8n escribe directo en la base; script 12 (C2) |
 | 056 | HU-FCO-06 | Carga de factura de compra con la mecánica del negocio | Alto | 13 | Sprint 6 | 15 | [`056-HU-FCO-06.md`](./056-HU-FCO-06.md) | #163 | Sprint 6 | Construida · PR #166 (esquema y backend) y #167 (frontend), mergeados 16/11/2026, más el #170 (#169). Abierta: falta el recorrido DoD 10 contra `lacentral_demo` (Javi con Sergio) |
 | 057 | HU-FCO-07 | Registro de nota de crédito de proveedor | Alto | 13 | Sprint 6 | 14 | [`057-HU-FCO-07.md`](./057-HU-FCO-07.md) | #182 | Sprint 6 | Pendiente · entró el 18/11/2026 (D-S6-18, aprobada por el equipo; última HU del Sprint 6). Dos PR: carga manual, después PDF de Expoyer. Necesita el script 11 (E11). CA-011 a CA-014 por decisión del equipo (D-S6-21 a 25, 18/11) |
+| 058 | HU-FCO-08 | IVA por alícuota en la factura de compra y la nota de crédito | Alto | 8 | Sprint 7 | — | [`058-HU-FCO-08.md`](./058-HU-FCO-08.md) | #194 | Sprint 7 | Pendiente · desde la D-S7-02 (23/11/2026); espera el script 15 y la P7-02 |
 
-**Total: 54 historias con proforma** (las 52 del Excel, la 056 y la 057).
+**Total: 55 historias con proforma** (las 52 del Excel, la 055 v2.0, la 056 y la 057).
 
 El `Sprint` de esta tabla es el de la planificación original del 19/08/2026 y no se toca.
 **`Sprint vigente` y `Estado`** (09/11/2026) dicen lo mismo que el milestone y el estado de la
 issue en GitHub y que el `ESTADO.md` de cada sprint; si uno cambia, los otros cambian en el mismo
-push. Las HU 053, 054 y 055 no tienen proforma todavía (C5): figuran en
+push. Las HU 053 y 054 no tienen proforma todavía (C5; la 055 la tiene desde el 23/11/2026, v2.0): figuran en
 `docs/PLAN-SPRINTS-6-7-8.md`, en el Sprint 7 desde el 13/11/2026 (D-PL-05). La 056 no viene del
 Excel: su proforma se escribió el 13/11/2026 desde la issue #163; su `Sprint` es el de esa fecha. La 057 tampoco: su proforma se escribió el 18/11/2026 desde la D-S6-18 (issue #182). La 045, la paginación (#147) y es-AR (#148) están terminadas: sus
 issues se cierran a mano cuando el release del Sprint 5 entra a `main`.

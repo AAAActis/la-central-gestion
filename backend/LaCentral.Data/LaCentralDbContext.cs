@@ -47,6 +47,10 @@ public partial class LaCentralDbContext : DbContext
 
     public virtual DbSet<Proveedor> Proveedor { get; set; }
 
+    public virtual DbSet<ProveedorArticulo> ProveedorArticulo { get; set; }
+
+    public virtual DbSet<ProveedorArticuloHistorial> ProveedorArticuloHistorial { get; set; }
+
     public virtual DbSet<ProveedorCredencial> ProveedorCredencial { get; set; }
 
     public virtual DbSet<ProveedorDireccion> ProveedorDireccion { get; set; }
@@ -58,6 +62,8 @@ public partial class LaCentralDbContext : DbContext
     public virtual DbSet<Provincia> Provincia { get; set; }
 
     public virtual DbSet<Rol> Rol { get; set; }
+
+    public virtual DbSet<ScrapeCorrida> ScrapeCorrida { get; set; }
 
     public virtual DbSet<Stock> Stock { get; set; }
 
@@ -888,6 +894,158 @@ public partial class LaCentralDbContext : DbContext
                 .HasColumnName("url_referencia");
         });
 
+        modelBuilder.Entity<ProveedorArticulo>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("proveedor_articulo_pkey");
+
+            entity.ToTable("proveedor_articulo", tb => tb.HasComment("Catálogo actual de cada proveedor, una fila por código del proveedor, que n8n reingesta en cada corrida con INSERT ... ON CONFLICT (proveedor_id, codigo) DO UPDATE (D-S7-01, 23/11/2026). La vinculación con un artículo propio es articulo_codigo_alternativo (mismo proveedor_id y codigo): no apunta al id de esta fila, así que reingestar no la pierde. HU-CMP-08 (055)."));
+
+            entity.HasIndex(e => e.CodigoBarras, "ix_proveedor_articulo_codigo_barras").HasFilter("(codigo_barras IS NOT NULL)");
+
+            entity.HasIndex(e => e.Nombre, "ix_proveedor_articulo_nombre_trgm")
+                .HasMethod("gin")
+                .HasOperators(new[] { "gin_trgm_ops" })
+                .UseCollation(new[] { "es-AR-x-icu" });
+
+            entity.HasIndex(e => new { e.ProveedorId, e.Codigo }, "proveedor_articulo_codigo_unico").IsUnique();
+
+            entity.HasIndex(e => new { e.Id, e.ProveedorId }, "proveedor_articulo_id_proveedor_unico").IsUnique();
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true)
+                .HasComment("Lo que dice el proveedor: FALSE si lo publica como discontinuado. Si no informa nada, TRUE.")
+                .HasColumnName("activo");
+            entity.Property(e => e.AlicuotaIva)
+                .HasPrecision(5, 2)
+                .HasComment("Alícuota que informa el proveedor (21 = 21 %). NULL = no la informa (Expoyer: vatRate null): el comparador usa la del artículo propio o, sin ella, 21 % (D-S7-02).")
+                .HasColumnName("alicuota_iva");
+            entity.Property(e => e.Codigo)
+                .HasMaxLength(60)
+                .HasComment("Código comercial del artículo en el proveedor, el que viene en sus facturas (Expoyer: commercialCode, «C 000100 14 E»). Clave de la reingesta junto con proveedor_id, y el que se cruza con articulo_codigo_alternativo.codigo.")
+                .HasColumnName("codigo");
+            entity.Property(e => e.CodigoBarras)
+                .HasMaxLength(40)
+                .HasColumnName("codigo_barras");
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion");
+            entity.Property(e => e.DetalleTecnico)
+                .HasComment("Ficha técnica aplanada: «CLAVE: valor | CLAVE: valor».")
+                .HasColumnName("detalle_tecnico");
+            entity.Property(e => e.EstadoStock)
+                .HasMaxLength(12)
+                .HasComment("Disponibilidad que informa el proveedor en el depósito que le sirve a La Central (Expoyer: CORDOBA; 1 = HAY, 3 = NO_HAY, 2 = A_CONFIRMAR hasta que Sergio diga qué es). NULL = no informa.")
+                .HasColumnName("estado_stock");
+            entity.Property(e => e.FechaOrigen)
+                .HasComment("Fecha que el sitio del proveedor da para el dato (actualización del precio), si la da.")
+                .HasColumnName("fecha_origen");
+            entity.Property(e => e.IdExterno)
+                .HasMaxLength(100)
+                .HasComment("Identificador del renglón en el portal del proveedor (Expoyer: internalCode, «C00010014E»).")
+                .HasColumnName("id_externo");
+            entity.Property(e => e.Marca)
+                .HasMaxLength(120)
+                .HasComment("Marca del PRODUCTO (Expoyer: supplier.name). No la del vehículo (brandName).")
+                .HasColumnName("marca");
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(300)
+                .UseCollation("es-AR-x-icu")
+                .HasColumnName("nombre");
+            entity.Property(e => e.NumeroOriginal)
+                .HasMaxLength(300)
+                .HasComment("Número original de fabricante; puede traer varios separados por « / » (Expoyer: familyCode).")
+                .HasColumnName("numero_original");
+            entity.Property(e => e.PrecioLista)
+                .HasPrecision(14, 2)
+                .HasComment("Precio de lista del proveedor, sin IVA (Expoyer: basePrice).")
+                .HasColumnName("precio_lista");
+            entity.Property(e => e.PrecioNeto)
+                .HasPrecision(14, 2)
+                .HasComment("Costo neto, sin IVA, con el descuento del cliente (Expoyer: discountedPrice = lista × (1 − 61,08 %) × (1 − 15 %), validado contra su factura). Desconocido es NULL, nunca cero.")
+                .HasColumnName("precio_neto");
+            entity.Property(e => e.PrecioPagoAnticipado)
+                .HasPrecision(14, 2)
+                .HasComment("Neto con pago anticipado, si el proveedor lo informa (Expoyer: earlyPaymentPrice). El precio de venta que muestra el portal (salePrice, neto + margen de la vista cliente) NO se guarda.")
+                .HasColumnName("precio_pago_anticipado");
+            entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
+            entity.Property(e => e.Rubro)
+                .HasMaxLength(120)
+                .HasComment("Rubro del proveedor, en sus palabras (Expoyer: category.name). No es un rubro de La Central.")
+                .HasColumnName("rubro");
+            entity.Property(e => e.Stock)
+                .HasPrecision(14, 2)
+                .HasComment("Cantidad, solo si el proveedor la informa (Expoyer no). NULL = no informa, nunca cero.")
+                .HasColumnName("stock");
+            entity.Property(e => e.UltimaCorridaId)
+                .HasComment("Última corrida que leyó este renglón. Al cerrar en SUCCESS, lo que no tenga esta corrida se marca vencido.")
+                .HasColumnName("ultima_corrida_id");
+            entity.Property(e => e.UltimaLectura)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("ultima_lectura");
+            entity.Property(e => e.UrlImagen)
+                .HasMaxLength(1000)
+                .HasComment("URL de la imagen en el sitio del proveedor. Las imágenes no se descargan.")
+                .HasColumnName("url_imagen");
+            entity.Property(e => e.Vencido)
+                .HasComment("TRUE = no vino en la última corrida SUCCESS completa del proveedor. No se borra: conserva su vinculación y su historial, y vuelve a FALSE si reaparece (055 CA-003).")
+                .HasColumnName("vencido");
+
+            entity.HasOne(d => d.Proveedor).WithMany(p => p.ProveedorArticulo)
+                .HasForeignKey(d => d.ProveedorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("proveedor_articulo_proveedor_id_fkey");
+
+            entity.HasOne(d => d.ScrapeCorrida).WithMany(p => p.ProveedorArticulo)
+                .HasPrincipalKey(p => new { p.Id, p.ProveedorId })
+                .HasForeignKey(d => new { d.UltimaCorridaId, d.ProveedorId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("proveedor_articulo_corrida_mismo_proveedor");
+        });
+
+        modelBuilder.Entity<ProveedorArticuloHistorial>(entity =>
+        {
+            entity.HasKey(e => new { e.ProveedorArticuloId, e.CorridaId }).HasName("proveedor_articulo_historial_pkey");
+
+            entity.ToTable("proveedor_articulo_historial", tb => tb.HasComment("Precios y stock de cada renglón del catálogo en cada corrida (RF-016). Una fila por (renglón, corrida): un renglón repetido dentro de la misma corrida (un rubro bajado en los dos sentidos) no duplica. Crece ~100.000 filas por corrida y proveedor. Las dos FK compuestas con proveedor_id impiden mezclar proveedores. HU-CMP-08 (055)."));
+
+            entity.HasIndex(e => e.CorridaId, "ix_pah_corrida");
+
+            entity.Property(e => e.ProveedorArticuloId).HasColumnName("proveedor_articulo_id");
+            entity.Property(e => e.CorridaId).HasColumnName("corrida_id");
+            entity.Property(e => e.EstadoStock)
+                .HasMaxLength(12)
+                .HasColumnName("estado_stock");
+            entity.Property(e => e.FechaLectura)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("fecha_lectura");
+            entity.Property(e => e.PrecioLista)
+                .HasPrecision(14, 2)
+                .HasColumnName("precio_lista");
+            entity.Property(e => e.PrecioNeto)
+                .HasPrecision(14, 2)
+                .HasColumnName("precio_neto");
+            entity.Property(e => e.PrecioPagoAnticipado)
+                .HasPrecision(14, 2)
+                .HasColumnName("precio_pago_anticipado");
+            entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
+            entity.Property(e => e.Stock)
+                .HasPrecision(14, 2)
+                .HasColumnName("stock");
+
+            entity.HasOne(d => d.ScrapeCorrida).WithMany(p => p.ProveedorArticuloHistorial)
+                .HasPrincipalKey(p => new { p.Id, p.ProveedorId })
+                .HasForeignKey(d => new { d.CorridaId, d.ProveedorId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("pah_corrida_mismo_proveedor");
+
+            entity.HasOne(d => d.ProveedorArticulo).WithMany(p => p.ProveedorArticuloHistorial)
+                .HasPrincipalKey(p => new { p.Id, p.ProveedorId })
+                .HasForeignKey(d => new { d.ProveedorArticuloId, d.ProveedorId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("pah_articulo_mismo_proveedor");
+        });
+
         modelBuilder.Entity<ProveedorCredencial>(entity =>
         {
             entity.HasKey(e => e.ProveedorId).HasName("proveedor_credencial_pkey");
@@ -1047,6 +1205,46 @@ public partial class LaCentralDbContext : DbContext
             entity.Property(e => e.Nombre)
                 .HasMaxLength(20)
                 .HasColumnName("nombre");
+        });
+
+        modelBuilder.Entity<ScrapeCorrida>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("scrape_corrida_pkey");
+
+            entity.ToTable("scrape_corrida", tb => tb.HasComment("Cada lectura del catálogo de un proveedor que hace n8n (D-S7-01, 23/11/2026). Se abre en RUNNING y se cierra en SUCCESS o FAILED con la cantidad de ítems leídos (la cuenta del historial de la corrida). A lo sumo una RUNNING por proveedor. HU-CMP-08 (055)."));
+
+            entity.HasIndex(e => new { e.Id, e.ProveedorId }, "scrape_corrida_id_proveedor_unico").IsUnique();
+
+            entity.HasIndex(e => new { e.ProveedorId, e.Estado }, "ux_scrape_corrida_en_curso")
+                .IsUnique()
+                .HasFilter("((estado)::text = 'RUNNING'::text)");
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.CantidadItems).HasColumnName("cantidad_items");
+            entity.Property(e => e.EjecucionN8n)
+                .HasMaxLength(100)
+                .HasComment("Id de la ejecución de n8n ($execution.id), para encontrarla en su historial.")
+                .HasColumnName("ejecucion_n8n");
+            entity.Property(e => e.Estado)
+                .HasMaxLength(10)
+                .HasDefaultValueSql("'RUNNING'::character varying")
+                .HasColumnName("estado");
+            entity.Property(e => e.Fin).HasColumnName("fin");
+            entity.Property(e => e.Inicio)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("inicio");
+            entity.Property(e => e.MensajeError).HasColumnName("mensaje_error");
+            entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
+            entity.Property(e => e.TotalInformado)
+                .HasComment("Total de artículos que informó el sitio en el sondeo inicial (página de 1 artículo). Se compara con cantidad_items al cerrar.")
+                .HasColumnName("total_informado");
+
+            entity.HasOne(d => d.Proveedor).WithMany(p => p.ScrapeCorrida)
+                .HasForeignKey(d => d.ProveedorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("scrape_corrida_proveedor_id_fkey");
         });
 
         modelBuilder.Entity<Stock>(entity =>
