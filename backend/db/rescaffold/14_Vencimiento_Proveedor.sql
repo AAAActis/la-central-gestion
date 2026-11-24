@@ -1,5 +1,5 @@
 -- =====================================================================================
---  12_Vencimiento_Proveedor.sql
+--  14_Vencimiento_Proveedor.sql
 --  La Central · 23/11/2026 · Fix F · vencimiento automático según el proveedor
 --
 --  QUÉ HACE
@@ -39,13 +39,13 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema()
             AND table_name = 'proveedor' AND column_name = 'vencimiento_modo') THEN
         ALTER TABLE proveedor ADD COLUMN vencimiento_modo VARCHAR(30) NOT NULL DEFAULT 'MANUAL';
-        RAISE NOTICE '12: proveedor.vencimiento_modo agregada.';
+        RAISE NOTICE '14: proveedor.vencimiento_modo agregada.';
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema()
             AND table_name = 'proveedor' AND column_name = 'vencimiento_dias') THEN
         ALTER TABLE proveedor ADD COLUMN vencimiento_dias SMALLINT;
-        RAISE NOTICE '12: proveedor.vencimiento_dias agregada.';
+        RAISE NOTICE '14: proveedor.vencimiento_dias agregada.';
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = current_schema()::regnamespace
@@ -56,12 +56,12 @@ BEGIN
 
     -- Un CHECK deja pasar el NULL (resultado «desconocido»): sin IS NOT NULL, DIAS_CORRIDOS o
     -- DIA_FIJO_MES_SIGUIENTE con días NULL pasaban. Una base donde ya se aplicó la primera
-    -- versión del 12 (sin IS NOT NULL) se corrige acá: se reemplaza la restricción.
+    -- versión del 14 (sin IS NOT NULL) se corrige acá: se reemplaza la restricción.
     IF EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = current_schema()::regnamespace
             AND conname = 'proveedor_vencimiento_dias_coherente'
             AND pg_get_constraintdef(oid) NOT LIKE '%IS NOT NULL%') THEN
         ALTER TABLE proveedor DROP CONSTRAINT proveedor_vencimiento_dias_coherente;
-        RAISE NOTICE '12: proveedor_vencimiento_dias_coherente reemplazada (la versión vieja dejaba pasar días NULL).';
+        RAISE NOTICE '14: proveedor_vencimiento_dias_coherente reemplazada (la versión vieja dejaba pasar días NULL).';
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = current_schema()::regnamespace
@@ -88,26 +88,26 @@ BEGIN
             AND table_name = 'proveedor' AND column_name = 'vencimiento_modo'
             AND is_nullable = 'NO' AND character_maximum_length = 30
             AND column_default LIKE '%MANUAL%') THEN
-        RAISE EXCEPTION '12: vencimiento_modo no quedó VARCHAR(30) NOT NULL DEFAULT ''MANUAL''.';
+        RAISE EXCEPTION '14: vencimiento_modo no quedó VARCHAR(30) NOT NULL DEFAULT ''MANUAL''.';
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema()
             AND table_name = 'proveedor' AND column_name = 'vencimiento_dias'
             AND is_nullable = 'YES' AND data_type = 'smallint') THEN
-        RAISE EXCEPTION '12: vencimiento_dias no quedó SMALLINT NULL.';
+        RAISE EXCEPTION '14: vencimiento_dias no quedó SMALLINT NULL.';
     END IF;
     IF EXISTS (SELECT 1 FROM proveedor WHERE vencimiento_modo <> 'MANUAL' OR vencimiento_dias IS NOT NULL) THEN
-        RAISE NOTICE '12: hay proveedores ya configurados (normal si es una segunda corrida).';
+        RAISE NOTICE '14: hay proveedores ya configurados (normal si es una segunda corrida).';
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = current_schema()::regnamespace
             AND conname = 'proveedor_vencimiento_modo_valido') THEN
-        RAISE EXCEPTION '12: falta la restricción CHECK proveedor_vencimiento_modo_valido.';
+        RAISE EXCEPTION '14: falta la restricción CHECK proveedor_vencimiento_modo_valido.';
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = current_schema()::regnamespace
             AND conname = 'proveedor_vencimiento_dias_coherente'
             AND pg_get_constraintdef(oid) LIKE '%IS NOT NULL%') THEN
-        RAISE EXCEPTION '12: falta la restricción CHECK proveedor_vencimiento_dias_coherente (con IS NOT NULL en los modos con días).';
+        RAISE EXCEPTION '14: falta la restricción CHECK proveedor_vencimiento_dias_coherente (con IS NOT NULL en los modos con días).';
     END IF;
-    RAISE NOTICE '12: TODO OK.';
+    RAISE NOTICE '14: TODO OK.';
 END $verif$;
 
 COMMIT;
