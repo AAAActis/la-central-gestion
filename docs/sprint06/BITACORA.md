@@ -1883,3 +1883,40 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - **Choque de número:** el #197 (Jotelsooon, borrador «frenado por Santi», 24/11) también es un «script 12» (`12_Vencimiento_Proveedor.sql`). El 13 de la D-S7-03/04 (redactado, fuera del repo) exige el 12 de C2. Avisado arriba de todo en el cuerpo del #199.
 
 **BLOQUEADO EN:** (1) Santi: decidir qué script es el 12 (C2 o Fix F del #197) y aplicarlo; sin eso no se fija el número del script de D-S7-03/04 ni se construyen #195, #9 y #23, y el comparador (030 a 034, 053, 050) espera C2 aplicado. (2) Javi: detalle del recorrido DoD 10 para cerrar el Sprint 6. Los #196 y #197 (Fix E y Fix F) parecen salir de ese recorrido: si son roturas, van antes que el Sprint 7. (3) Equipo: CA3 de la 054 contra la D2. (4) Sergio: P7-01, P7-02 y P7-03.
+
+## 24/11/2026 · Review del #193, choque de los dos scripts 12, script 13 a una rama y aplicación del 12
+
+**Instrucción recibida (verbatim):**
+> Seguimos. Cuatro cosas, en este orden.
+>
+> 1) #193 · Javi dejó «Request changes». Lo del conflicto de la bitácora ya está. Faltan estos tres:
+>    a) docs/sprint06/ESTADO.md: si en algún lado todavía figura como pendiente el fix de rango de años (#191), pasalo a «hecho, mergeado».
+>    b) El cuerpo del PR: la advertencia del conflicto con el #191 quedó vieja. Reemplazala por una línea que diga que se resolvió en 42902a1.
+>    c) docs/sprint07/ESTADO.md de esta rama: agregá en C7-02 la regla explícita del costo al anular: vuelve al costo de justo antes de la factura, salvo que lo hayan cambiado a mano después de la factura, en cuyo caso queda el de a mano (Sergio, 23/11/2026; D-S7-03 en el #198). Así no queda dudosa la frase «costo a mano se respeta» de la bitácora del #192.
+>    La redacción de la D-S6-30 la escribió Javi y la confirma él al re-aprobar. No la toques.
+>    Son cambios solo de docs: no se relanzan verificadores ni suite. Respondé el review de Javi punto por punto en el PR.
+>
+> 2) Choque de los dos scripts 12. Decisión: el 12 es el de C2 (#199), que está verificado y es el que necesita el scrape. Comparalo contra el 12_Vencimiento_Proveedor.sql del #197 (borrador, Fix F):
+>    - si C2 ya cubre lo que el #197 quería (vencer artículos por proveedor), dejá un comentario en el #197 explicando qué lo cubre y proponé cerrarlo;
+>    - si cubre otra cosa, que el #197 pase a ser el 14. Que no toque el número 13.
+>    Con eso queda fijo el 13.
+>
+> 3) El script 13 está solo en tu scratchpad y se pierde. Commitealo ya en una rama propia, feature/s7-script-13, sobre docs/sprint07-apertura o sobre la rama del #199, la que corresponda, con el número 13. No abras PR todavía si no está terminado, pero que quede pusheado.
+>
+> 4) Cuando Javi re-apruebe el #193 y yo mergee el #193, el #198 y el #199 en ese orden, pasame en un solo bloque, para fish, listo para pegar y sin marcadores:
+>    - el backup de lacentral;
+>    - el 12 aplicado a lacentral_test, lacentral_demo y lacentral, con la verificación de cada una;
+>    - el borrado de nc057_fuente, c2_fuente y c2_ensayo_e6807bae en lacentral_test;
+>    - la contraseña del rol lacentral_n8n, que la elijo yo, no la escribas;
+>    y vos hacé el re-scaffold contra public y su PR.
+>    Si el merge apilado retargetea mal el #198 o el #199, arreglá la base de cada PR a develop vos.
+>
+> Bitácora y ESTADO como siempre.
+
+**Plan:**
+1. #193 (`docs/sprint06-cierre-correcciones`): a) #191 a «hecho, mergeado» en el ESTADO del Sprint 6; b) cuerpo del PR (conflicto resuelto en 42902a1); c) regla del costo al anular en C7-02 del ESTADO del Sprint 7. Sin tocar la D-S6-30. Respuesta punto por punto al review de Javi. Propagar a #198 y #199.
+2. Comparar el 12 de C2 con `12_Vencimiento_Proveedor.sql` del #197; comentario en el #197 (cerrar, o pasar a 14).
+3. Script 13 a `feature/s7-script-13` (sobre `feature/128-catalogo-scrape`, porque exige el 12), push sin PR.
+4. Tras el merge de #193 → #198 → #199: bases de los PR a develop si hace falta; bloque fish para Santi; re-scaffold contra `public` y su PR.
+
+**Estado:** en curso
