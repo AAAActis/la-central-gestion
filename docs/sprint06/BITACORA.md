@@ -1697,7 +1697,7 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 
 **Plan:** 1. `git fetch`, ramas y bitácora: `origin/develop` en `ca11be2`; la rama `docs/sprint06-cierre` sale de ahí. 2. PR 1: `docs/sprint06/ESTADO.md` al día (filas, frases «en PR», lo que falta, decisiones D-S6-27 a D-S6-29), `docs/sprint07/ESTADO.md` con las candidatas, CA-002 de la 028, esta entrada. 3. Mostrar el diff y pedir OK. 4. PR 2 desde `develop`: test rojo, producción, `[name]` duplicado, filtrados, completo, `ng build`; diff y OK; dos commits; push; PR; `verificador-tdd`.
 
-**Estado:** en curso
+**Estado:** terminada
 - Arranque: `git fetch --all --prune`; `origin/develop` = `ca11be2` (merges de #186, #189, #187 y #188; también #181, #177 a #180, #183 a #185). La rama de la tarea anterior (`fix/nca-enter-confirma-valor`) ya está contenida en `develop`. Rama `docs/sprint06-cierre` creada desde `origin/develop`. Sin worktrees extra.
 - Última entrada «en curso» anterior a esta: la de la 057 (bloque del 19/11, línea con `**BLOQUEADO EN:** revisión y merge de #183 → #184 → #185`); quedó sin pasar a «terminada» y no se reescribe (la bitácora solo se agrega). Está resuelta: los tres PR se mergearon el 20/11 (`9f387c2`).
 - ESTADO del Sprint 6: las filas #163, #13, #51 y #182 y las entradas de PRÓXIMA SESIÓN pasan a «mergeado»; sección «Lo que falta para cerrar el Sprint 6»; decisiones D-S6-27 a D-S6-29 (Sergio vía Javi, 23/11); entrada nueva de PRÓXIMA SESIÓN. Las issues #163, #13 y #51 siguen abiertas hasta el DoD 10.
@@ -1705,6 +1705,23 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - Frontend sobre `develop` (mismo código que esta rama, que solo toca `docs/`): `npx ng test --watch=false --browsers=ChromeHeadless` → `TOTAL: 370 SUCCESS` (370 de 370). Confirma la cifra que dice el ESTADO.
 **BLOQUEADO EN:** OK de Javi para commitear y pushear el PR 1 (docs); el PR 2 (`fix/fecha-rango-anios`) arranca después, desde `develop`.
 - 23/11: respuestas de Sergio (vía Javi) a las consultas: IVA por alícuota con desplegable (21 y 10,5; suma por alícuota), costo a mano se respeta, el mismo administrador puede anular y autorizarse (contradice CA-006: decide el equipo), devoluciones (motivos, alerta siempre visible, sin NC parcial). Registradas en `docs/sprint07/ESTADO.md` (C7-01 a C7-04). H1/H2 (punto 5) sin respuesta. Código sin cambios.
+
+## 23/11/2026 · Fix: rango de años en fechas abreviadas (`fix/fecha-rango-anios`)
+
+**Instrucción recibida (verbatim):**
+> 2000 a 2100
+
+(Responde a la pregunta del PR 2 de la especificación del cierre del Sprint 6: «confirmar con Javi el rango 2000–2100».)
+
+**Plan:** 1. Rama desde `origin/develop`. 2. Test rojo por aserción (años fuera de 2000 a 2100, bordes, bisiesto 2000 y 2100). 3. Producción: acotar el año en `interpretarFecha`. 4. `[name]` duplicado de `factura-compra.ts`. 5. Frontend completo y `ng build`. 6. Diff, OK de Javi, dos commits, push, PR, `verificador-tdd`.
+
+**Estado:** terminada. Abierto: merge de #191 y #192 (Javi); decisiones de Sergio en `docs/sprint07/ESTADO.md`.
+- Rojo: `fecha-abreviada.spec.ts` con 6 casos fuera de rango (`20/10/0000`, `0999`, `1999`, `2101`, `20102101`, `29/02/1900`) → `TOTAL: 6 FAILED, 49 SUCCESS`. `29/02/1900` salió de «no existe»: ahora es año fuera de rango.
+- Producción: `if (a < 2000 || a > 2100)` en `interpretarFecha`, antes de validar el día. Frontend completo `TOTAL: 377 SUCCESS` (370 + 7 casos nuevos); `ng build` limpio.
+- **El `[name]` NO se quitó:** `[name]` alimenta al `NgModel` (registro en `NgForm` como `emision`, `vencimiento`, `imputacion`) y NO deja el atributo en el DOM; `[attr.name]` deja el atributo, que los tests buscan con `input[name=…]`. Sin `[attr.name]`: 15 fallos de 377 (`Cannot read properties of null`). No es un duplicado: son dos efectos distintos. Revertido; el archivo no cambia.
+**BLOQUEADO EN:** OK de Javi para commitear (test y producción en dos commits) y pushear.
+- OK de Javi («Sí, commiteá»). Commits en `fix/fecha-rango-anios`: test y producción por separado (hashes en `git log`).
+- PR #191 abierto (base `develop`); PR #192 abierto para el cierre documental. `verificador-tdd` sobre `e66577f..4305c51`: **APTO**. Rojo real por aserción (6 de 55). 8 mutaciones del límite (2000/2100, `||`, mensaje, guarda desactivada o movida) muertas. Suite completa de frontend sobre `4305c51` limpio: `TOTAL: 377 SUCCESS`. No verificó: `ng build`, ni los llamadores de `interpretarFecha`. `auditor-persistencia` no aplica (frontend).
 
 ## 23/11/2026 · Conflicto del #191 y correcciones del cierre documental (`docs/sprint06-cierre-correcciones`)
 
