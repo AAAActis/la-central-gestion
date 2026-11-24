@@ -15,7 +15,7 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 
 | Issue | HU | SP | Espera | Estado |
 |---|---|---|---|---|
-| #128 | 055 · HU-CMP-08 · incorporar al catálogo del proveedor el resultado de un scrape (proforma reescrita, v2.0) | 5 | C2 (script 12, Santi) | Script 12 (con los datos reales de Expoyer) y `CONTRATO-N8N.md` en `feature/128-catalogo-scrape`; pruebas contra una copia descartable. PR en curso |
+| #128 | 055 · HU-CMP-08 · incorporar al catálogo del proveedor el resultado de un scrape (proforma reescrita, v2.0) | 5 | C2 (script 12, Santi) | Script 12 (datos reales de Expoyer) y `CONTRATO-N8N.md`: 9 pruebas contra PostgreSQL, suite 818/818 sobre `d57efa0`, verificadores APTO. **PR abierto; espera que Santi aplique el 12** («PARA SANTI · 23/11 · script 12») |
 | #126 | 053 · HU-CMP-06 · candidatos por aproximación entre catálogos | 8 | C2, C5, C6 | Sin proforma (C5) |
 | #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | C2, C5 y **el CA3 contra D2 (equipo)** | Sin proforma (C5). **No se construye** hasta que el equipo decida el CA3 |
 | #16 | 030 · HU-CMP-01 · búsqueda comparativa por nombre | 5 | C2 y filas de catálogo | Pendiente |
@@ -248,3 +248,21 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 - **Todavía abiertas para la proforma:** estados exactos; qué es el PDF (remito de devolución o pedido de reclamo), con qué
   datos y cómo se envía; el depósito **«Vélez»**, que Sergio nombró como origen de las devoluciones y que no existe en
   el sistema (¿es una sucursal, otro nombre de un depósito existente o un depósito nuevo?).
+
+---
+
+## PRÓXIMA SESIÓN
+
+**24/11/2026 · C2 en PR (#128, `feature/128-catalogo-scrape`).**
+- Script 12, `docs/sprint07/CONTRATO-N8N.md` (las siete sentencias de n8n, de una línea), proforma 055 v2.0. Suite
+  completa sobre `d57efa0` contra la copia descartable `c2_ensayo_e6807bae`: **818/818**, 0 advertencias.
+  `verificador-tdd` APTO en la ronda 3 (rondas 1 y 2 NO APTO, arreglado solo en test); `auditor-persistencia` APTO en la
+  ronda 2 (la 1 encontró que un e) tardío vencía lo leído por una corrida nueva; arreglado con rojo antes).
+- **Espera a Santi:** aplicar el 12 (bitácora, «PARA SANTI · 23/11 · script 12»: `c2_fuente` en `lacentral_test`,
+  `public` de `lacentral_demo`, clave de `lacentral_n8n`) y armar el workflow con el contrato. Después del merge: el 12
+  en `public` de `lacentral_test` y en `lacentral`, re-scaffold contra `public` (tiene que dar 0 diferencias), y se
+  borran `c2_fuente` y `c2_ensayo_e6807bae`.
+- **Sigue (orden del pedido del 23/11):** D-S7-04 (#195) y D-S7-03 (#9, #23) con el script 13, que está escrito en el
+  scratchpad y no en el repo todavía; después la 058 (#194), que espera la P7-02.
+- **Esperan a personas:** cierre del Sprint 6 (detalle del recorrido de Javi), merge del #191 y después la corrección de
+  las dos líneas de Estado de la bitácora en el #193; CA3 de la 054 contra la D2 (equipo); P7-01, P7-02 y P7-03 (Sergio).
