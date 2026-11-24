@@ -22,6 +22,7 @@ public class ProveedorYSucursalEnPdfTests
     {
         _proveedores.Setup(p => p.BuscarActivosPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
+        _proveedores.Setup(p => p.BuscarActivosPorRazonSocialExactaAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         _facturas.Setup(f => f.ObtenerArticulosPorCodigoProveedorAsync(It.IsAny<int>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, int>());
         _facturas.Setup(f => f.ObtenerSucursalIdPorCodigoAsync("FR", It.IsAny<CancellationToken>())).ReturnsAsync((short?)1);
