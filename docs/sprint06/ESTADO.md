@@ -398,6 +398,17 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 - **Supuestos confirmados por Javi (23/11/2026):** en ETMAN manda la «Dir. Entrega» sobre el domicilio del cliente
   (pueden ser de sucursales distintas en el mismo PDF); los términos de búsqueda por layout son fijos («ETMAN», «Fazio», «Expoyer»).
   El #196 lo aprueba Santi o Lauti.
+**24/11 · Fix E2: proveedor por razón social EXACTA primero (`fix/proveedor-razon-social-exacta`, un solo PR; sigue al #196).**
+- Orden sin CUIT: elegido a mano > CUIT > razón social **exacta** (igualdad ignorando mayúsculas, acentos y espacios sobrantes o
+  repetidos, solo activos): 1 asigna con «Revisar»; 2 o más no asignan y **no caen a «contiene»** > si no hay exactas, «contiene» como antes.
+  Resuelve pares como «EXPOYER» / «EXPOYER S.A.» y «FAZIO» / «NESTOR FAZIO S.A.» a la cuenta de nombre corto.
+- Dónde se normaliza: método nuevo del puerto `BuscarActivosPorRazonSocialExactaAsync`; el repositorio acota por palabras y compara con
+  `NormalizacionArticulo.NombreParaBusqueda`. Sin esquema, sin `unaccent`, sin tocar la normalización de acentos de los repositorios.
+- **Convención del negocio (solo documentada, el código NO la interpreta):** un proveedor «en negro» lleva el nombre sin SA/SRL/SAS o con una
+  «X» (ejemplo: «AUTOCOR X»). Pendiente confirmar si la X va por delante o al final.
+- **Riesgo registrado:** un PDF de Fazio sin CUIT con razón social «Fazio» se asigna por exacta a la cuenta de nombre corto (en negro).
+  A confirmar con Sergio que todo lo de Fazio sin CUIT es presupuesto.
+- «Fazio (demo)» (id 9) no coincide exacto con «Fazio»: cae en «contiene» con una sola coincidencia; los tests no dependen de eso.
 - **Fix F:** script `12_Vencimiento_Proveedor.sql` escrito (rama aparte); lo aplica Santi y después el re-scaffold. Sin código que dependa de las columnas.
 
 **23/11 · cierre documental del Sprint 6 (`docs/sprint06-cierre`).**

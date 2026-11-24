@@ -155,10 +155,22 @@ public class ProveedorRepositorio : IProveedorRepositorio
         }).ToList();
     }
 
-    // Andamiaje del Fix E2: todavía no busca.
-    public Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarActivosPorRazonSocialExactaAsync(
+    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarActivosPorRazonSocialExactaAsync(
         string texto, int limite, CancellationToken ct = default)
-        => Task.FromResult<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>>([]);
+    {
+        var buscado = NormalizacionArticulo.NombreParaBusqueda(texto);
+        // La base acota por palabras (mismo criterio que «contiene») y la igualdad se decide con la
+        // normalización compartida: espacios sobrantes o repetidos no se expresan en la consulta.
+        var candidatas = await ConTodasLasPalabras(_context.Proveedor.AsNoTracking().Where(p => p.Activo), texto)
+            .OrderBy(p => p.Id).ToListAsync(ct);
+        return candidatas
+            .Where(bd => NormalizacionArticulo.NombreParaBusqueda(bd.RazonSocial) == buscado)
+            .Take(limite)
+            .Select(bd => new LaCentral.UseCases.Entidades.Proveedor
+            {
+                Id = bd.Id, Codigo = bd.Codigo, RazonSocial = bd.RazonSocial, Cuit = bd.Cuit, Activo = bd.Activo
+            }).ToList();
+    }
 
     public async Task<LaCentral.UseCases.Entidades.Proveedor?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default)
     {
