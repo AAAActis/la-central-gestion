@@ -1759,3 +1759,14 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - ESTADO: «PR por abrir» pasa a «PR #196»; los dos supuestos, a «confirmados por Javi (23/11/2026)». Descripción del #196 actualizada.
 - SELECT en `lacentral_demo` (sesión con `default_transaction_read_only=on`, 6 proveedores en total): solo **Expoyer** existe (id 7, código `00035`, razón social «Expoyer», activo). **ETMAN y Fazio no existen** en la demo: ahí el reconocimiento por razón social no tiene a quién asignar. No se cambió nada; queda para decidir si se siembran. Producción (`lacentral`) no se consultó.
 - Abierto: aprobación del #196 por Santi o Lauti.
+
+## 24/11/2026 · Versionar la siembra de ETMAN y Fazio en la demo
+
+**Instrucción recibida (verbatim):**
+> Visto, siembra correcta. Sí: versionala en la rama del #196 (fix/pdf-proveedor-sucursal), en un commit propio de docs/demo. Incluí: backend/db/demo/sembrar_proveedores_pdf.sql tal como lo aplicaste; backend/db/demo/README.md actualizado: la demo tiene hoy 8 proveedores (los 5 de sembrar_demo.cs, Expoyer cargado a mano por el equipo, y ETMAN y Fazio del script nuevo); el script nuevo es un complemento que se corre DESPUÉS de sembrar_demo.cs, con SQL directo (excepción a «por la API») porque son dos filas sin CUIT para probar el reconocimiento por razón social del Fix E; solo en lacentral_demo (tiene guarda); idempotente por codigo. Sin tocar código ni tests. Mostrame el diff antes de commitear; con mi OK pusheás al #196 y actualizás la descripción del PR con una línea sobre la siembra.
+
+**Plan:** 1. Cambiar a la rama del #196. 2. Actualizar el README de la demo. 3. Mostrar el diff. 4. Con OK: commit de docs/demo, push, una línea en la descripción del #196.
+
+**Estado:** en curso
+- Rama del #196 al día con su remota; `origin/develop` sin commits nuevos que me falten. README actualizado; diff por mostrar.
+**BLOQUEADO EN:** OK de Javi sobre el diff para commitear y pushear.
