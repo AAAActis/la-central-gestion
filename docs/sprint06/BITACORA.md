@@ -1925,3 +1925,21 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - 3) Script 13: `feature/s7-script-13` desde `feature/128-catalogo-scrape` (exige el 12), `f944258`, pusheada, sin PR. Rotulado BORRADOR: sin ejecutar ni probar.
 
 **BLOQUEADO EN:** 4) re-aprobación del #193 (Javi) y merge de #193 → #198 → #199 (Santi). Recién después: bases de los PR, bloque fish para Santi (backup, 12 en las tres bases, borrado de esquemas de ensayo, clave de `lacentral_n8n`) y re-scaffold contra `public` con su PR.
+
+## 24/11/2026 · #198 mergeado a una rama muerta: entra a develop por el #199; aplicación del 12 en lacentral
+
+**Instrucción recibida (verbatim):**
+> Seguimos con la pila del Sprint 7. Ojo: el #198 se mergeó contra docs/sprint06-cierre-correcciones (la rama del #193, que ya estaba mergeada), así que sus commits NO están en develop.
+>
+> 1) Arreglá eso a través del #199: mergeá origin/docs/sprint07-apertura en feature/128-catalogo-scrape (merge, sin rebase), resolvé conflictos si hay, y retargeteá el #199 a develop. Verificá con git log que develop..feature/128-catalogo-scrape incluye los commits del #198. Corré la suite completa una vez sobre ese HEAD (contra lacentral_test, que ya tiene el 12 en public) y anotá hash, línea de resumen y conteo en el PR. No relances verificadores: el código no cambió, solo entra la doc del #198. Declaralo en el cuerpo del PR.
+>
+> 2) Cuando yo te diga «mergeado», pasame en un solo bloque, para fish y listo para pegar: backup de lacentral, el 12 aplicado a lacentral con su verificación, y el borrado de nc057_fuente, c2_fuente y c2_ensayo_e6807bae en lacentral_test. Después hacé el re-scaffold contra public (tiene que dar 0 diferencias de modelo) y abrí su PR.
+>
+> 3) Bitácora y ESTADO: el #198 quedó mergeado a una rama muerta (registralo con fecha), el 12 se aplicó en lacentral_demo y en lacentral_test, y el rol lacentral_n8n ya tiene clave (no la anotes).
+
+**Plan:**
+1. `git merge origin/docs/sprint07-apertura` en `feature/128-catalogo-scrape` (sin rebase), conflictos, #199 a `develop`, comprobar con `git log` que `develop..feature/128-catalogo-scrape` trae los commits del #198. Suite completa una vez sobre ese HEAD contra `public` de `lacentral_test`; hash, línea y conteo en el PR. Sin verificadores (el código de la HU no cambia).
+2. Al «mergeado»: bloque fish (backup de `lacentral`, el 12 en `lacentral` con verificación, borrado de `nc057_fuente`, `c2_fuente` y `c2_ensayo_e6807bae`); re-scaffold contra `public` (0 diferencias) y su PR.
+3. Bitácora y ESTADO: #198 a rama muerta; el 12 aplicado en `lacentral_demo` y `lacentral_test`; `lacentral_n8n` con clave.
+
+**Estado:** en curso
