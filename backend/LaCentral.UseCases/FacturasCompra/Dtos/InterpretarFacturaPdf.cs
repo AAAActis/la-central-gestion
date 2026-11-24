@@ -11,6 +11,8 @@ public sealed record LineaLeida(
 /// <summary>
 /// Lo que un layout reconoció del texto del PDF, sin tocar la base. <c>ParaRevisar</c> (sin orden que importe): los
 /// campos que el layout no encontró o no puede afirmar con certeza (nombres del formulario).
+/// <c>RazonSocial</c>: el nombre con el que el layout identifica a su proveedor, para buscarlo cuando el
+/// CUIT no está o no viene. <c>Destinatario</c>: el texto del PDF donde figura a quién va la mercadería.
 /// </summary>
 public sealed record ComprobanteLeido(
     IReadOnlyList<string> Cuits,
@@ -23,7 +25,9 @@ public sealed record ComprobanteLeido(
     decimal? PercepcionMunicipal,
     decimal? PercepcionGanancias,
     IReadOnlyList<LineaLeida> Lineas,
-    IReadOnlyList<string> ParaRevisar);
+    IReadOnlyList<string> ParaRevisar,
+    string? RazonSocial = null,
+    string? Destinatario = null);
 
 /// <summary>
 /// HU-FCO-05 CA-004: una línea sin artículo (<c>ArticuloId</c> null) queda no resuelta; el
@@ -48,7 +52,8 @@ public sealed record FacturaPdfInterpretada(
     decimal? PercepcionMunicipal,
     decimal? PercepcionGanancias,
     IReadOnlyList<LineaPdfInterpretada> Lineas,
-    IReadOnlyList<string> ParaRevisar);
+    IReadOnlyList<string> ParaRevisar,
+    short? SucursalSugeridaId = null);
 
 /// <summary>
 /// HU-FCO-07 (057) CA-010: lo que un lector sacó del texto de una nota de crédito de proveedor.

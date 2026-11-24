@@ -382,6 +382,18 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 
 ## PRÓXIMA SESIÓN
 
+**23/11 · Fix E: proveedor y sucursal destinataria en la lectura de PDF (`fix/pdf-proveedor-sucursal`, commits `6ce13f3`, `277d72a` y `c3e1d93`; PR #196).**
+- Proveedor: elegido a mano > CUIT > razón social que aporta el layout (ETMAN, Fazio, Expoyer), solo con una única
+  coincidencia activa y siempre «Revisar»; 0 o 2+ coincidencias: nada. Un CUIT de un proveedor de baja no se reemplaza por otro.
+- Sucursal: `SucursalSugeridaId` (FR o SV por `codigo`) desde el destinatario de cada layout; las dos o ninguna: nada.
+  La pantalla la precarga en «Destino de las líneas nuevas» con «Revisar»; sin sugerencia, como antes.
+- Verificado con los 3 PDF reales de la carpeta de Javi (ningún dato copiado al repo): los tres layouts reconocen su sucursal.
+- Suites sobre el árbol del fix: backend **846/846** (16 m 19 s, `lacentral_test`), frontend **375/375**, `ng build` limpio.
+- **Supuestos confirmados por Javi (23/11/2026):** en ETMAN manda la «Dir. Entrega» sobre el domicilio del cliente
+  (pueden ser de sucursales distintas en el mismo PDF); los términos de búsqueda por layout son fijos («ETMAN», «Fazio», «Expoyer»).
+  El #196 lo aprueba Santi o Lauti.
+- **Fix F:** script `12_Vencimiento_Proveedor.sql` escrito (rama aparte); lo aplica Santi y después el re-scaffold. Sin código que dependa de las columnas.
+
 **23/11 · cierre documental del Sprint 6 (`docs/sprint06-cierre`).**
 - **Mergeados en `develop` (`ca11be2`), en este orden:** #186 (layout de la FCO), #189 (búsqueda por palabra), #187
   (fechas abreviadas) y #188 (Enter en la nota de crédito). También están mergeados #181, #179, #178, #177, #180, #183,
