@@ -266,8 +266,9 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 - **El 12 ya está aplicado** (Santi, 24/11) en `public` de `lacentral_test` y en `lacentral_demo`. El rol `lacentral_n8n`
   ya tiene clave (no se anota). Suite completa sobre `e0f68d5` contra `public` de `lacentral_test`: **858/858**, 0
   advertencias (40 más que la anterior porque entró el Fix E, #196, desde `develop`).
-- **Falta, después del merge del #199:** el 12 en `lacentral` (con backup antes), borrar `nc057_fuente`, `c2_fuente` y
-  `c2_ensayo_e6807bae` de `lacentral_test`, y el re-scaffold contra `public` (0 diferencias de modelo) con su PR.
+- **#199 mergeado (`0633b3b`).** Re-scaffold contra `public`: 0 diferencias de modelo (`chore/rescaffold-12`, suite 858/858 sobre `f353c36`). Santi tiene el bloque fish de lo que sigue.
+- **Falta (Santi, con el bloque fish del 24/11):** el 12 en `lacentral` (con backup antes) y borrar `nc057_fuente`, `c2_fuente` y
+  `c2_ensayo_e6807bae` de `lacentral_test`.
 
 **24/11/2026 · C2 en PR (#128, `feature/128-catalogo-scrape`).**
 - Script 12, `docs/sprint07/CONTRATO-N8N.md` (las siete sentencias de n8n, de una línea), proforma 055 v2.0. Suite
