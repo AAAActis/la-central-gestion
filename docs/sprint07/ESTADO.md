@@ -267,7 +267,10 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
   `public` de `lacentral_demo`, clave de `lacentral_n8n`) y armar el workflow con el contrato. Después del merge: el 12
   en `public` de `lacentral_test` y en `lacentral`, re-scaffold contra `public` (tiene que dar 0 diferencias), y se
   borran `c2_fuente` y `c2_ensayo_e6807bae`.
-- **Sigue (orden del pedido del 23/11):** D-S7-04 (#195) y D-S7-03 (#9, #23) con el script 13, que está escrito en el
-  scratchpad y no en el repo todavía; después la 058 (#194), que espera la P7-02.
-- **Esperan a personas:** cierre del Sprint 6 (detalle del recorrido de Javi), merge del #191 y después la corrección de
-  las dos líneas de Estado de la bitácora en el #193; CA3 de la 054 contra la D2 (equipo); P7-01, P7-02 y P7-03 (Sergio).
+- **Sigue (orden del pedido del 23/11):** D-S7-04 (#195) y D-S7-03 (#9, #23) con el script 13, en borrador en
+  `feature/s7-script-13` (`f944258`, sin ejecutar ni probar; exige el 12); después la 058 (#194), que espera la P7-02 y
+  el script 15.
+- **Numeración (D-S7-05, Santi, 24/11):** 12 = C2 (#199), 13 = anulación, 14 = Fix F (#197, renumerado en `3eef61b`),
+  15 = alícuotas.
+- **Esperan a personas:** cierre del Sprint 6 (detalle del recorrido de Javi); re-aprobación del #193 (Javi; review
+  respondido el 24/11) y merge de #193 → #198 → #199; CA3 de la 054 contra la D2 (equipo); P7-01, P7-02 y P7-03 (Sergio).

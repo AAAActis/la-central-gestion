@@ -1920,3 +1920,8 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 4. Tras el merge de #193 → #198 → #199: bases de los PR a develop si hace falta; bloque fish para Santi; re-scaffold contra `public` y su PR.
 
 **Estado:** en curso
+- 1) #193: `da44e5a` en `docs/sprint06-cierre-correcciones`: #191 pasa a «hecho, mergeado» (`8cd856e`) en el ESTADO del Sprint 6 (era el único lugar) y regla explícita del costo al anular en C7-02 del ESTADO del Sprint 7. La D-S6-30 no se tocó. Cuerpo del PR: la advertencia del conflicto se reemplazó por «se resolvió en `42902a1`». Review de Javi respondido punto por punto (comentario 7131077291). Propagado a #198 (más `script 12` → `script 13` en C7-02, que había quedado viejo) y a #199. Sin suite ni verificadores: solo docs.
+- 2) Scripts 12: el 12 del #197 (Fix F) agrega `proveedor.vencimiento_modo` y `vencimiento_dias` (vencimiento de las facturas de compra); el `vencido` de C2 es del renglón del catálogo. C2 no lo cubre → el #197 pasa a 14: `3eef61b` en `fix/vencimiento-proveedor` (dos `git mv` y el número en `RAISE` y comentarios; mismo SQL), título y cuerpo del #197 a 14, comentario 7131115876. Las alícuotas pasan al 15. D-S7-05 en el ESTADO del Sprint 7 (#198). Cuerpos de #198 y #199 al día.
+- 3) Script 13: `feature/s7-script-13` desde `feature/128-catalogo-scrape` (exige el 12), `f944258`, pusheada, sin PR. Rotulado BORRADOR: sin ejecutar ni probar.
+
+**BLOQUEADO EN:** 4) re-aprobación del #193 (Javi) y merge de #193 → #198 → #199 (Santi). Recién después: bases de los PR, bloque fish para Santi (backup, 12 en las tres bases, borrado de esquemas de ensayo, clave de `lacentral_n8n`) y re-scaffold contra `public` con su PR.
