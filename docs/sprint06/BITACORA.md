@@ -2021,3 +2021,22 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - 3) **El #198 quedó mergeado a una rama muerta (24/11/2026)**: contra `docs/sprint06-cierre-correcciones` (`8521ae7`) cuando el #193 ya estaba en `develop`; entra por el #199. El 12 aplicado por Santi en `lacentral_test` (`public`) y `lacentral_demo`; `lacentral_n8n` con clave. ESTADO del Sprint 7 al día (fila #128 y PRÓXIMA SESIÓN).
 
 **BLOQUEADO EN:** 2) el «mergeado» de Santi para el #199. Después: bloque fish (backup de `lacentral`, el 12 en `lacentral`, borrado de los tres esquemas de ensayo) y re-scaffold contra `public` con su PR.
+
+## 24/11/2026 · Segundo merge de develop (#199) y suite completa (`fix/vencimiento-proveedor`)
+
+**Instrucción recibida (verbatim):**
+> Sí, hacé el segundo merge con el mismo método.
+>
+> Autorizado, commiteá el merge con ese mensaje.
+>
+> Después, en este orden: Suite completa, una sola vez, sobre el merge commit. [...] Un bloque nuevo en la bitácora, no una línea en el bloque anterior, que ya figura «terminada»: «Segundo merge de develop (#199) y suite completa». Con el hash del merge, el conflicto y su resolución, y el conteo de la suite. En un commit docs: aparte.
+
+**Plan:** 1) Cruce de §3 en las dos direcciones. 2) `git merge --no-commit --no-ff origin/develop`. 3) Resolver la bitácora conservando ambos lados, HEAD primero. 4) Commit del merge. 5) Suite completa una sola vez sobre el merge commit. 6) Este bloque, en commit aparte.
+
+**Estado:** terminada
+- Motivo del segundo merge: la primera suite completa dio rojo contra `lacentral_test` por la guarda de `PostgreSqlPruebas` (el esquema `public` tenía `proveedor_articulo`, `proveedor_articulo_historial` y `scrape_corrida`, y el modelo de la rama no los clonaba). Causa: a la rama le faltaba el #199 (script 12 y su modelo), que se mergeó después del primer merge. No era un bug de la rama.
+- Cruce de §3: develop traía 17 archivos que la rama no tenía; lo propio eran 3 (`14_Vencimiento_Proveedor.sql`, `14_Vencimiento_Proveedor_deshacer.sql`, `sprint06/BITACORA.md`). Única intersección: `docs/sprint06/BITACORA.md`.
+- Merge `601e8fc`. Único conflicto: `docs/sprint06/BITACORA.md`, resuelto conservando los dos lados con HEAD primero. Verificado: sin marcadores, 46 líneas `Estado` y 46 encabezados `##`, diff contra `origin/develop` de +28/−0. Numeración de `backend/db/rescaffold/`: 12 (del #199) y los dos 14 conviven; no hay 13 (D-S7-05).
+- Suite completa sobre `601e8fc`, una sola vez, contra `lacentral_test` con `lacentral_javi`: `Correctas! - Con error: 0, Superado: 858, Omitido: 0, Total: 858, Duración: 22 m 25 s`. Cero `[FAIL]`, ningún timeout de Npgsql (#190). El commit posterior (este bloque) solo toca documentación.
+- Unitarias puras del primer merge (`f70f68b`, `Base!=PostgreSQL`): 574 superadas; cifra parcial, no es la del PR.
+- Abierto: el #197 sigue borrador y frenado por Santi; Fix F.3–F.5 espera el 14 aplicado y el re-scaffold; sin pushear; el bloque `23/11 · Fix E y Fix F` sigue «en curso» y probablemente viejo (de otra sesión, no se tocó). La rama del E2 salió de antes del #199 y necesita el mismo `git merge origin/develop` antes de sus pruebas de persistencia.
