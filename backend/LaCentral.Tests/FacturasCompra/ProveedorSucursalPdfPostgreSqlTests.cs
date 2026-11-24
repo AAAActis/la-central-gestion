@@ -35,6 +35,14 @@ public class ProveedorSucursalPdfPostgreSqlTests
             await c.SaveChangesAsync();
             (primero, segundo) = (activoUno.Id, activoDos.Id);
         }
+        // Tocar la primera fila la deja físicamente después de la segunda: sin ORDER BY por Id, el orden de
+        // lectura ya no coincide con el de los ids.
+        await using (var c = fixture.CrearContexto())
+        {
+            var fila = await c.Proveedor.FindAsync(primero);
+            fila!.RazonSocial += " ";
+            await c.SaveChangesAsync();
+        }
 
         await using var nuevo = fixture.CrearContexto();
         var repo = new ProveedorRepositorio(nuevo);

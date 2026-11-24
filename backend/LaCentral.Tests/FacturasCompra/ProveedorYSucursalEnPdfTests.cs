@@ -56,6 +56,17 @@ public class ProveedorYSucursalEnPdfTests
     }
 
     [Fact]
+    public async Task LaBusquedaPorRazonSocial_PideAlMenosDos_ParaPoderVerLaAmbiguedad()
+    {
+        LaRazonSocialDa("Fazio", new Proveedor { Id = 9, Activo = true });
+
+        await Interpretar(PdfSintetico.PresupuestoFazio());
+
+        // Con un tope de 1, dos proveedores iguales parecerían una única coincidencia.
+        _proveedores.Verify(p => p.BuscarActivosPorRazonSocialAsync("Fazio", It.Is<int>(limite => limite >= 2), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task RazonSocialConDosCoincidencias_NoAsignaNada()
     {
         LaRazonSocialDa("Fazio", new Proveedor { Id = 9, Activo = true }, new Proveedor { Id = 10, Activo = true });
@@ -194,6 +205,22 @@ public class ProveedorYSucursalEnPdfTests
         var f = await Interpretar(PdfSintetico.FacturaExpoyer(domicilio: "SAN JERONIMO 3029"));
 
         Assert.Equal((short?)2, f.SucursalSugeridaId);
+    }
+
+    [Fact]
+    public async Task Expoyer_UnaSucursalNombradaEnUnArticulo_NoCuenta()
+    {
+        var f = await Interpretar(PdfSintetico.FacturaExpoyer(primerArticulo: "FILTRO SAN VICENTE"));
+
+        Assert.Null(f.SucursalSugeridaId);
+    }
+
+    [Fact]
+    public async Task Etman_UnaSucursalNombradaFueraDelBloqueDelCliente_NoCuenta()
+    {
+        var f = await Interpretar(PdfSintetico.FacturaEtman(remitidoPor: "SAN VICENTE"));
+
+        Assert.Null(f.SucursalSugeridaId);
     }
 
     [Fact]

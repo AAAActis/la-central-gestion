@@ -62,7 +62,7 @@ public static class PdfSintetico
     /// estándar de PdfPig no los escriben.
     /// </summary>
     public static byte[] FacturaExpoyer(string codigoAfip = "1", string totalTercera = "300.00", string? percepcion = null,
-        string domicilio = "Calle Falsa 123 - Ciudad Ficticia")
+        string domicilio = "Calle Falsa 123 - Ciudad Ficticia", string primerArticulo = "PASTILLA FICTICIA")
     {
         var renglones = new List<(double, string)[]>
         {
@@ -76,7 +76,7 @@ public static class PdfSintetico
             R((300, "Condicion de Venta: CUENTA CORRIENTE 35 DIAS")),
             R((20, "Cant."), (40, "Codigo"), (90, "Descripcion"), (200, "P.Unit."), (250, "Total"),
               (300, "Cant."), (320, "Codigo"), (370, "Descripcion"), (480, "P.Unit."), (530, "Total")),
-            R((20, "2"), (40, "AB-100"), (90, "PASTILLA FICTICIA"), (200, "1,000.00"), (250, "2,000.00"),
+            R((20, "2"), (40, "AB-100"), (90, primerArticulo), (200, "1,000.00"), (250, "2,000.00"),
               (300, "1"), (320, "C 1234 5- F"), (370, "BOMBA FICTICIA 6325"), (480, "1,250.50"), (530, "1,250.50")),
             R((20, "3"), (40, "ZZ9"), (90, "FILTRO FICTICIO"), (200, "100.00"), (250, totalTercera)),
             R((20, "RECUERDE ABONAR LAS FACTURAS A LOS 27 DIAS DE SU FECHA DE EMISION,")),
@@ -135,7 +135,7 @@ public static class PdfSintetico
     /// </summary>
     public static byte[] FacturaEtman(string codigoAfip = "01", string totalPrimeraLinea = "6,080.00",
         string percepcionIibb = "1,000.50", string percepcionIva = "2,000.25", string domicilio = "CALLE FALSA 123",
-        string? dirEntrega = null) => Generar(
+        string? dirEntrega = null, string remitidoPor = "MOSTRADOR URGENTE") => Generar(
         R((20, "REPUESTOS FICTICIOS S.A."), (300, "FACTURA")),
         R((300, $"Codigo Nro.: {codigoAfip} 0042- 00001234")),
         R((20, "Inicio de Actividades: 01/01/2001"), (300, $"C.U.I.T.: {CuitProveedor}")),
@@ -143,7 +143,7 @@ public static class PdfSintetico
         R((20, domicilio)),
         R((300, "555"), (400, "03/02/2027")),
         R((20, $"I.V.A: Responsable Inscripto C.U.I.T {CuitCliente}")),
-        R((20, "Remitido por: MOSTRADOR URGENTE"), (300, dirEntrega is null ? "Vendedor: 96" : $"Dir. Entrega: {dirEntrega} - CP: 5000")),
+        R((20, $"Remitido por: {remitidoPor}"), (300, dirEntrega is null ? "Vendedor: 96" : $"Dir. Entrega: {dirEntrega} - CP: 5000")),
         R((20, "Codigo"), (60, "Descripcion"), (200, "Marca"), (250, "Cantidad"), (300, "Precio"),
           (350, "Bonif."), (390, "Bonif."), (430, "Dto."), (480, "Total")),
         R((20, "AB-100"), (60, "PASTILLA FICTICIA DELANTERA"), (200, "MARCAX"), (250, "2"), (300, "4,000.00"),
