@@ -53,4 +53,10 @@ public interface IFacturaCompraRepositorio
     /// </summary>
     Task<IReadOnlyDictionary<string, int>> ObtenerArticulosPorCodigoProveedorAsync(
         int proveedorId, IReadOnlyCollection<string> codigos, CancellationToken ct = default);
+
+    /// <summary>
+    /// Fix E: el Id de la sucursal con ese <c>codigo</c> («FR», «SV»), o null si no existe o es el depósito
+    /// Reclamos (no es destino de una factura de compra).
+    /// </summary>
+    Task<short?> ObtenerSucursalIdPorCodigoAsync(string codigo, CancellationToken ct = default);
 }

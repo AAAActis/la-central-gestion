@@ -170,7 +170,9 @@ export interface FacturaPdfInterpretada {
   percepcionMunicipal: number | null;
   percepcionGanancias: number | null;
   lineas: LineaPdfInterpretada[];
-  /** Campos que el sistema no pudo afirmar: `proveedorId`, `tipoComprobante`, `numero`, `fechaEmision`, `lineas[i]`. */
+  /** Fix E: la sucursal a la que parece ir la mercadería, según el destinatario del PDF; null si no hay una sola. */
+  sucursalSugeridaId?: number | null;
+  /** Campos que el sistema no pudo afirmar: `proveedorId`, `tipoComprobante`, `numero`, `fechaEmision`, `lineas[i]`, `sucursalSugeridaId`. */
   paraRevisar: string[];
 }
 
