@@ -30,7 +30,7 @@ describe('interpretarFecha', () => {
     it(`«${texto}» es ${iso}`, () => expect(interpretarFecha(texto, hoy)).toEqual({ iso }));
   }
 
-  const inexistentes = ['31', '31/04', '31/02', '29/02', '29/02/2027', '00/10', '0', '20/13', '3200', '29/02/2100', '29/02/1900', '29022027', '31-04', '00.10.2026'];
+  const inexistentes = ['31', '31/04', '31/02', '29/02', '29/02/2027', '00/10', '0', '20/13', '3200', '29/02/2100', '29022027', '31-04', '00.10.2026'];
   for (const texto of inexistentes) {
     it(`«${texto}» es una fecha que no existe`, () =>
       expect(interpretarFecha(texto, hoy)).toEqual({ error: jasmine.stringContaining('no existe') }));
@@ -41,6 +41,22 @@ describe('interpretarFecha', () => {
     it(`«${texto}» no es un formato aceptado`, () =>
       expect(interpretarFecha(texto, hoy)).toEqual({ error: jasmine.stringContaining('dd/mm/aaaa') }));
   }
+
+  const fueraDeRango = ['20/10/0000', '20/10/0999', '20/10/1999', '20/10/2101', '20102101', '29/02/1900'];
+  for (const texto of fueraDeRango) {
+    it(`«${texto}» tiene el año fuera de 2000 a 2100`, () =>
+      expect(interpretarFecha(texto, hoy)).toEqual({ error: 'El año tiene que estar entre 2000 y 2100.' }));
+  }
+
+  it('los años de borde, 2000 y 2100, se aceptan con el ISO de cuatro dígitos', () => {
+    expect(interpretarFecha('20/10/2000', hoy)).toEqual({ iso: '2000-10-20' });
+    expect(interpretarFecha('20/10/2100', hoy)).toEqual({ iso: '2100-10-20' });
+  });
+
+  it('29/02/2000 existe (siglo bisiesto) y 29/02/2100 no', () => {
+    expect(interpretarFecha('29/02/2000', hoy)).toEqual({ iso: '2000-02-29' });
+    expect(interpretarFecha('29/02/2100', hoy)).toEqual({ error: jasmine.stringContaining('no existe') });
+  });
 
   it('vacío es sin fecha', () => expect(interpretarFecha('  ', hoy)).toEqual({ iso: '' }));
 
