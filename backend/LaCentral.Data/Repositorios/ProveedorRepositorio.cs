@@ -155,6 +155,11 @@ public class ProveedorRepositorio : IProveedorRepositorio
         }).ToList();
     }
 
+    // Andamiaje del Fix E2: todavía no busca.
+    public Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarActivosPorRazonSocialExactaAsync(
+        string texto, int limite, CancellationToken ct = default)
+        => Task.FromResult<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>>([]);
+
     public async Task<LaCentral.UseCases.Entidades.Proveedor?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default)
     {
         var bd = await _context.Proveedor.FirstOrDefaultAsync(p => p.Cuit == cuit, ct);

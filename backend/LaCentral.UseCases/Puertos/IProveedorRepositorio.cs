@@ -18,6 +18,13 @@ public interface IProveedorRepositorio
     /// </summary>
     Task<IReadOnlyList<Proveedor>> BuscarActivosPorRazonSocialAsync(string texto, int limite, CancellationToken ct = default);
 
+    /// <summary>
+    /// Fix E2: los proveedores ACTIVOS cuya razón social es IGUAL a <paramref name="texto"/>, ignorando mayúsculas,
+    /// acentos y espacios sobrantes o repetidos, en orden de Id y a lo sumo <paramref name="limite"/>.
+    /// «Fazio» no coincide con «Nestor Fazio S.A.»: es igualdad, no «contiene».
+    /// </summary>
+    Task<IReadOnlyList<Proveedor>> BuscarActivosPorRazonSocialExactaAsync(string texto, int limite, CancellationToken ct = default);
+
     /// <summary>ALTO 5: el código es la clave de negocio; devuelve el dueño para informar el conflicto.</summary>
     Task<Proveedor?> ObtenerPorCodigoAsync(string codigo, CancellationToken ct = default);
     /// <summary>CRÍTICO 3: por Id; false si la fila no existe.</summary>
