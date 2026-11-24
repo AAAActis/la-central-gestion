@@ -168,7 +168,7 @@ y entran al sprint**; C7-05 y C7-06 siguen como candidatas.
 - **Hoy:** `AnularConEfectosAsync` vuelve al costo del último registro válido de `articulo_historial_compra`; si no hay
   registro anterior (valor importado o cambio manual), conserva el actual.
 - **Para cumplir el ejemplo en todos los casos** habría que guardar el costo previo en cada línea de la factura al
-  registrarla (script 12).
+  registrarla (script 13; el 12 es el catálogo de proveedores, C2).
 - **Respuesta de Sergio (23/11/2026) sobre el cambio a mano:** si el costo se cambió a mano entre la factura y la anulación,
   **queda el que se puso a mano** (no se vuelve al anterior a la factura).
 - **Regla al anular (Sergio, 23/11/2026; D-S7-03 en el #198):** el costo **vuelve al de justo antes de la factura**,
