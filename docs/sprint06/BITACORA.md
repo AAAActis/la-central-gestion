@@ -1813,3 +1813,17 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 **Estado:** en curso
 - Rama del #196 al día con su remota; `origin/develop` sin commits nuevos que me falten. README actualizado; diff por mostrar.
 **BLOQUEADO EN:** OK de Javi sobre el diff para commitear y pushear.
+
+## 24/11/2026 · Merge de develop en el #197 y renumerado 12→14 (`fix/vencimiento-proveedor`)
+
+**Instrucción recibida (verbatim):**
+> Corré git merge origin/develop (merge commit, sin rebase, sin --squash). Si hay conflictos, no los resuelvas: pasame git status --short y la lista de archivos en conflicto. No hagas commit, no toques la bitácora todavía.
+>
+> Usá docs/sprint06/BITACORA.md. Agregá el bloque al final, sin reescribir nada de lo anterior. Commit aparte con docs:.
+
+**Plan:** 1) `git fetch` y cruce de archivos contra `origin/develop`. 2) `git merge --no-commit --no-ff origin/develop`. 3) Resolver `docs/sprint06/BITACORA.md` conservando ambos lados, con el OK de Javi. 4) Commit del merge. 5) Este bloque, en commit aparte. 6) Suite completa una sola vez sobre el último commit.
+
+**Estado:** terminada
+- Merge `d748fe3`: 18 commits de `origin/develop` incorporados (Fix E #196, cierre de Sprint 6 #193, siembra de ETMAN y Fazio). Único conflicto: `docs/sprint06/BITACORA.md`, resuelto conservando los bloques de ambos lados; se sacó la línea duplicada y los tres marcadores. Diff de la bitácora contra `origin/develop`: +14/−0. 41 líneas `Estado` y 41 bloques.
+- El renumerado del script del Fix F de 12 a 14 está en `3eef61b`; no se corrigió en el bloque del 23/11, va en este.
+- Abierto: el #197 sigue borrador y frenado por Santi; Fix F.3–F.5 espera el 14 aplicado y el re-scaffold; la suite completa sobre el último commit, todavía sin correr (si salta un timeout de Npgsql, #190, se filtra); el bloque `23/11 · Fix E y Fix F` quedó «en curso» y probablemente viejo (de otra sesión, no se tocó).
