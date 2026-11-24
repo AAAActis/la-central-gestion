@@ -15,7 +15,7 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 
 | Issue | HU | SP | Espera | Estado |
 |---|---|---|---|---|
-| #128 | 055 · HU-CMP-08 · incorporar al catálogo del proveedor el resultado de un scrape (proforma reescrita, v2.0) | 5 | C2 (script 12, Santi) | Script 12 (datos reales de Expoyer) y `CONTRATO-N8N.md`: 9 pruebas contra PostgreSQL, suite 818/818 sobre `d57efa0`, verificadores APTO. **PR abierto; espera que Santi aplique el 12** («PARA SANTI · 23/11 · script 12») |
+| #128 | 055 · HU-CMP-08 · incorporar al catálogo del proveedor el resultado de un scrape (proforma reescrita, v2.0) | 5 | C2 (script 12, Santi) | Script 12 (datos reales de Expoyer) y `CONTRATO-N8N.md`: 9 pruebas contra PostgreSQL, verificadores APTO. PR #199, base `develop`; suite 858/858 sobre `e0f68d5` contra `public` de `lacentral_test`. El 12 ya está en `lacentral_test` y `lacentral_demo` (24/11); falta `lacentral` y el re-scaffold contra `public` después del merge |
 | #126 | 053 · HU-CMP-06 · candidatos por aproximación entre catálogos | 8 | C2, C5, C6 | Sin proforma (C5) |
 | #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | C2, C5 y **el CA3 contra D2 (equipo)** | Sin proforma (C5). **No se construye** hasta que el equipo decida el CA3 |
 | #16 | 030 · HU-CMP-01 · búsqueda comparativa por nombre | 5 | C2 y filas de catálogo | Pendiente |
@@ -257,6 +257,17 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 ---
 
 ## PRÓXIMA SESIÓN
+
+**24/11/2026 (tarde) · el #198 entró por el #199.**
+- **El #198 se mergeó a una rama muerta (24/11/2026):** lo mergearon contra `docs/sprint06-cierre-correcciones` (`8521ae7`),
+  cuando el #193 ya había entrado a `develop`, así que sus commits no llegaron a `develop`. Entran por el #199:
+  `origin/docs/sprint07-apertura` mergeada en `feature/128-catalogo-scrape` (`e0f68d5`, sin rebase) y el #199
+  retargeteado a `develop`. `git log origin/develop..HEAD` trae los commits del #198.
+- **El 12 ya está aplicado** (Santi, 24/11) en `public` de `lacentral_test` y en `lacentral_demo`. El rol `lacentral_n8n`
+  ya tiene clave (no se anota). Suite completa sobre `e0f68d5` contra `public` de `lacentral_test`: **858/858**, 0
+  advertencias (40 más que la anterior porque entró el Fix E, #196, desde `develop`).
+- **Falta, después del merge del #199:** el 12 en `lacentral` (con backup antes), borrar `nc057_fuente`, `c2_fuente` y
+  `c2_ensayo_e6807bae` de `lacentral_test`, y el re-scaffold contra `public` (0 diferencias de modelo) con su PR.
 
 **24/11/2026 · C2 en PR (#128, `feature/128-catalogo-scrape`).**
 - Script 12, `docs/sprint07/CONTRATO-N8N.md` (las siete sentencias de n8n, de una línea), proforma 055 v2.0. Suite
