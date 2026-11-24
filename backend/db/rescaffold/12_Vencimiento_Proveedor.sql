@@ -7,8 +7,8 @@
 --       ('MANUAL', 'CONTADO', 'DIAS_CORRIDOS', 'DIA_FIJO_MES_SIGUIENTE').
 --    2. proveedor.vencimiento_dias  SMALLINT NULL, con CHECK de coherencia con el modo:
 --         MANUAL, CONTADO            -> NULL
---         DIAS_CORRIDOS              -> 7, 10, 20, 21, 25 o 30
---         DIA_FIJO_MES_SIGUIENTE     -> 1 a 28
+--         DIAS_CORRIDOS              -> 7, 10, 20, 21, 25 o 30 (NULL no pasa)
+--         DIA_FIJO_MES_SIGUIENTE     -> 1 a 28 (NULL no pasa)
 --    Los proveedores existentes quedan en MANUAL: nada cambia hasta que alguien configure uno.
 --    No hay proveedores hardcodeados: a Fric-Rot se le configura DIA_FIJO_MES_SIGUIENTE con
 --    25 desde la pantalla de proveedores o por datos, no en este script.
@@ -54,13 +54,25 @@ BEGIN
             CHECK (vencimiento_modo IN ('MANUAL', 'CONTADO', 'DIAS_CORRIDOS', 'DIA_FIJO_MES_SIGUIENTE'));
     END IF;
 
+    -- Un CHECK deja pasar el NULL (resultado «desconocido»): sin IS NOT NULL, DIAS_CORRIDOS o
+    -- DIA_FIJO_MES_SIGUIENTE con días NULL pasaban. Una base donde ya se aplicó la primera
+    -- versión del 12 (sin IS NOT NULL) se corrige acá: se reemplaza la restricción.
+    IF EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = current_schema()::regnamespace
+            AND conname = 'proveedor_vencimiento_dias_coherente'
+            AND pg_get_constraintdef(oid) NOT LIKE '%IS NOT NULL%') THEN
+        ALTER TABLE proveedor DROP CONSTRAINT proveedor_vencimiento_dias_coherente;
+        RAISE NOTICE '12: proveedor_vencimiento_dias_coherente reemplazada (la versión vieja dejaba pasar días NULL).';
+    END IF;
+
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = current_schema()::regnamespace
             AND conname = 'proveedor_vencimiento_dias_coherente') THEN
         ALTER TABLE proveedor ADD CONSTRAINT proveedor_vencimiento_dias_coherente
             CHECK (
                 (vencimiento_modo IN ('MANUAL', 'CONTADO') AND vencimiento_dias IS NULL)
-                OR (vencimiento_modo = 'DIAS_CORRIDOS' AND vencimiento_dias IN (7, 10, 20, 21, 25, 30))
-                OR (vencimiento_modo = 'DIA_FIJO_MES_SIGUIENTE' AND vencimiento_dias BETWEEN 1 AND 28)
+                OR (vencimiento_modo = 'DIAS_CORRIDOS' AND vencimiento_dias IS NOT NULL
+                    AND vencimiento_dias IN (7, 10, 20, 21, 25, 30))
+                OR (vencimiento_modo = 'DIA_FIJO_MES_SIGUIENTE' AND vencimiento_dias IS NOT NULL
+                    AND vencimiento_dias BETWEEN 1 AND 28)
             );
     END IF;
 
@@ -91,8 +103,9 @@ BEGIN
         RAISE EXCEPTION '12: falta la restricción CHECK proveedor_vencimiento_modo_valido.';
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = current_schema()::regnamespace
-            AND conname = 'proveedor_vencimiento_dias_coherente') THEN
-        RAISE EXCEPTION '12: falta la restricción CHECK proveedor_vencimiento_dias_coherente.';
+            AND conname = 'proveedor_vencimiento_dias_coherente'
+            AND pg_get_constraintdef(oid) LIKE '%IS NOT NULL%') THEN
+        RAISE EXCEPTION '12: falta la restricción CHECK proveedor_vencimiento_dias_coherente (con IS NOT NULL en los modos con días).';
     END IF;
     RAISE NOTICE '12: TODO OK.';
 END $verif$;
