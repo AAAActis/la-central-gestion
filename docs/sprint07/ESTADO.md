@@ -92,6 +92,9 @@ equipo las decida. Se registran; no se implementan.
   registrarla (script 12).
 - **Respuesta de Sergio (23/11/2026) sobre el cambio a mano:** si el costo se cambió a mano entre la factura y la anulación,
   **queda el que se puso a mano** (no se vuelve al anterior a la factura).
+- **Regla al anular (Sergio, 23/11/2026; D-S7-03 en el #198):** el costo **vuelve al de justo antes de la factura**,
+  salvo que lo hayan cambiado a mano después de la factura: en ese caso **queda el de a mano**. Es lo que quiere decir
+  «costo a mano se respeta» en la bitácora del #192.
 - **Pendiente:** el esquema (la regla ya está completa).
 - Reemplaza la «interpretación pendiente» del CA-002 de la 028 (`docs/historias/028-HU-FCO-04.md`, actualizado el
   23/11 con la respuesta; el código no cambia). El CA-004 de la 016 (#23) tenía la misma interpretación.
