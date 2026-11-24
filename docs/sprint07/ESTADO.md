@@ -1,8 +1,115 @@
 # ESTADO · Sprint 7
 
-**Entregable:** sin escribir. Lo define el equipo al abrir el sprint (§1 de `CLAUDE.md`). Este
-archivo se creó el 14/11/2026 solo para dejar la pregunta de la 027. El estado de lo adelantado
-del Sprint 7 (028, 026) está abajo, en «Construido antes de tiempo».
+**Entregable (23/11/2026):** al cerrar este sprint, una persona puede entrar al sistema y comparar los precios de un
+repuesto entre todos sus proveedores —a partir del catálogo que n8n incorpora desde cada scrape y de la vinculación de
+sus renglones con los artículos propios—, en la vista de compra o de venta y con el sitio del proveedor a un clic, y
+consultar, corregir y anular facturas de compra (anula un administrador, y el costo vuelve al de antes de la factura),
+con el IVA discriminado por alícuota, sobre `lacentral_demo`.
+
+Abierto el 23/11/2026. El Sprint 6 **todavía no está cerrado**: falta el detalle del recorrido DoD 10 (Javi con
+Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
+
+---
+
+## Tablero · Sprint 7 (milestone «Sprint 7») · 23/11/2026
+
+| Issue | HU | SP | Espera | Estado |
+|---|---|---|---|---|
+| #128 | 055 · HU-CMP-08 · incorporar al catálogo del proveedor el resultado de un scrape (proforma reescrita, v2.0) | 5 | C2 (script 12, Santi) | Script 12 (datos reales de Expoyer) y `CONTRATO-N8N.md`: 9 pruebas contra PostgreSQL, verificadores APTO. PR #199, base `develop`; suite 858/858 sobre `e0f68d5` contra `public` de `lacentral_test`. El 12 ya está en `lacentral_test` y `lacentral_demo` (24/11); falta `lacentral` y el re-scaffold contra `public` después del merge |
+| #126 | 053 · HU-CMP-06 · candidatos por aproximación entre catálogos | 8 | C2, C5, C6 | Sin proforma (C5) |
+| #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | C2, C5 y **el CA3 contra D2 (equipo)** | Sin proforma (C5). **No se construye** hasta que el equipo decida el CA3 |
+| #16 | 030 · HU-CMP-01 · búsqueda comparativa por nombre | 5 | C2 y filas de catálogo | Pendiente |
+| #18 | 031 · HU-CMP-02 · consulta en vivo a los sitios de proveedores | 13 | C2 | Pendiente. Los workflows de n8n los arma Santi, fuera de SP (D-PL-02) |
+| #19 | 032 · HU-CMP-03 · vista Compra | 3 | C1 | Pendiente |
+| #20 | 033 · HU-CMP-04 · vista Venta | 3 | C1 | Pendiente |
+| #35 | 034 · HU-CMP-05 · redirección al sitio del proveedor | 1 | — | Pendiente |
+| #52 | 050 · HU-UI-12 · pantalla del comparador | 8 | 031; su CA-004, C1 | Pendiente. No se parte (D-PL-03) |
+| #34 | 027 · HU-FCO-03 · modificación acotada de factura de compra | 2 | P7-01 (Sergio) | **Sigue bloqueada:** la D-S6-29 no responde la P7-01 (abajo) |
+| #9 (y #23) | 028 · HU-FCO-04 CA-002 y 016 · HU-ART-06 CA-004 · costo al anular (D-S7-03) | 3 | Script 13 | 028 v1.2 y 016 v1.1. #9 y #23 siguen abiertas hasta este cambio |
+| #195 | D-S7-04 · anulación con un administrador (028 CA-006 y CA-007, 057 CA-012) | 2 | Script 13 | 028 v1.2 y 057 v1.3 |
+| #194 | 058 · HU-FCO-08 · IVA por alícuota en la factura de compra y la nota de crédito (D-S7-02) | 8 | Script 15 y una pregunta a Sergio (abajo) | Proforma v1.0 |
+
+**69 SP** (los 56 del plan + 3 + 2 + 8). Contra unos 34 por sprint: **el sprint se estira, no se recorta** (§1 de
+`CLAUDE.md`, D-PL-01). Los SP de la 053, la 054, la 058 y de los cambios de D-S7-03 y D-S7-04 son estimación.
+
+## Compuertas · cada una bloquea solo las HU de su fila
+
+| Compuerta | Bloquea | Estado |
+|---|---|---|
+| ~~Qué entrega un scrape~~ | 055 | **Cerrada el 23/11/2026 por la D-S7-01:** n8n escribe directo en la base |
+| **C2** · catálogo de proveedores (script 12: `scrape_corrida`, `proveedor_articulo`, `proveedor_articulo_historial`, rol `lacentral_n8n`) | 055, 053, 054, 030, 031, 050 | Script escrito con los datos de Expoyer y ensayado; contrato en `docs/sprint07/CONTRATO-N8N.md`; **lo aplica Santi** (bitácora, «PARA SANTI · 23/11 · script 12») |
+| C5 · proformas de la 053 y la 054 (con la pantalla de vinculación) | 053, 054 | Sin escribir. El CA3 de la 054 choca con la D2: lo decide el equipo antes |
+| C6 · medición sobre 50 artículos | 053 | Con los primeros scrapes de Santi |
+| C1 · modalidad L2 y retiro de Tarjeta3/6 | 032, 033 y el CA-004 de la 050 | **Propuesta (para el equipo):** no va en el 12. El plan la ponía junto con C2, pero C2 destraba los scrapes y no tiene que esperar el cambio de modalidades, que además toca código de precios. Script propio cuando arranquen la 032 y la 033 |
+| E13 · script 13 (costo previo por línea, D-S7-03; anulación sin doble certificación, D-S7-04) | #9, #23, #195 | Pendiente de escribir |
+| E15 · script 15 (alícuotas, D-S7-02) | #194 | Pendiente de escribir; espera la pregunta P7-02 a Sergio |
+| E14 · script 14 (vencimiento de facturas por proveedor, Fix F) | #197 | Borrador; lo aplica Santi. Era el «12» del #197, renumerado el 24/11/2026 (decisión de Santi: el 12 es C2) |
+
+**Por qué tres scripts (12, 13 y 15) y no uno:** (el 14 es el Fix F del #197, otro tema) el 12 solo crea tablas nuevas y destraba a Santi hoy; no espera a
+nadie. El 13 junta dos cambios chicos y ya definidos sobre las tablas de la anulación (`factura_compra_detalle`,
+`nota_credito_compra`), con un solo re-scaffold. El 15 (alícuotas) toca artículo, líneas, nota de crédito, lectores de
+PDF y pantallas, y tiene una pregunta abierta sobre la nota de crédito: meterlo en el 13 frenaría lo que ya está
+decidido. El número 06, reservado para C2 desde el Sprint 4, queda sin usar.
+
+## Decisiones · 23/11/2026
+
+| # | Decisión | Quién | Impacto |
+|---|---|---|---|
+| D-S7-01 | **Scrapes:** los arma el equipo en n8n, y n8n **escribe directo en la base**. Responde «qué entrega un scrape». | Equipo, 23/11/2026 | Cierra esa compuerta. C2 (script 12) da las tablas y un rol `lacentral_n8n` con permisos mínimos. La 055 se reescribe (v2.0). Los workflows de Expoyer, Autocor, Nafazio (Fazio) y ETMAN los arma Santi |
+| D-S7-02 | **IVA por alícuota** (cierra C7-01, entra): 21 % y 10,5 % son tipos de alícuota. La alícuota suele ser del artículo (valor por defecto), pero en cada línea de la factura de compra se puede cambiar con un desplegable. El IVA se discrimina y se suma por alícuota en el total. Sergio pasa más alícuotas después: el diseño no supone solo dos. La nota de crédito hereda la alícuota de la línea de la factura original. | Equipo, 23/11/2026 | 058 nueva (#194). Hoy está fija en 21 % en `RegistrarFacturaCompraUseCase`, `RegistrarNotaCreditoCompraUseCase`, el lector de ETMAN y el control del neto de Expoyer. Script 15 |
+| D-S7-03 | **Costo al anular** (cierra C7-02, entra): al anular una factura, el costo del artículo vuelve al que tenía justo antes de esa factura. Si entre la factura y la anulación alguien lo cambió a mano, queda el de a mano. Exige guardar el costo previo en cada línea al registrarla. | Equipo, 23/11/2026 | Reemplaza la interpretación del CA-002 de la 028 (v1.2) y el CA-004 de la 016 (v1.1). Script 13. #9 y #23 |
+| D-S7-04 | **Anulación con UN administrador** (cierra C7-03, entra): se saca la doble certificación. Anula un ADMINISTRADOR, con motivo obligatorio, y queda registrado quién anuló. **Revierte el pedido de la Dirección del 02/11/2026 (B.4 del script 07); Santi avisa a quien lo pidió.** | Equipo, 23/11/2026 | Cambia el CA-006 y el CA-007 de la 028 (v1.2: un OPERADOR ya no pide la anulación), el CA-012 de la 057 (v1.3) y `Comun/DobleCertificacion`. Script 13 (el CHECK `ncc_anulacion_coherente` hoy exige quien autoriza). #195 |
+| D-S7-05 | **Numeración de los scripts** (choque de dos «12»): el **12** es el catálogo de proveedores (C2, #199), que está verificado y es el que necesita el scrape. El **13** es la anulación (D-S7-03 y D-S7-04). El Fix F del #197 (vencimiento de facturas por proveedor) pasa a ser el **14**: C2 no lo cubre, porque su `vencido` es del renglón del catálogo, no de la factura. Las alícuotas (D-S7-02) pasan al **15**. | Santi, 24/11/2026 | #197 renumerado en `3eef61b`; comentario en el #197 |
+
+### Primer scrape · Expoyer · relevado el 23/11/2026
+
+Portal con API JSON y token Bearer. Lo que entró al diseño de C2 (script 12 y `CONTRATO-N8N.md`):
+
+- **Volumen:** unos 103.900 productos en 194 rubros. El buscador corta en 10.000 por consulta: n8n baja rubro por
+  rubro, de a 500 (unos 400 pedidos por corrida); el único rubro de más de 10.000 se baja ordenado en los dos sentidos
+  y el upsert absorbe los repetidos. **Unos 100.000 renglones por proveedor.** Todo lo que corre por renglón usa la
+  clave `(proveedor_id, codigo)` o el id; el vencimiento recorre el catálogo del proveedor una vez por corrida.
+- **Stock:** no viene cantidad, viene un **estado por depósito** del proveedor (CASEROS y CORDOBA): 1 = hay, 3 = no hay,
+  2 = a confirmar. Se guarda el de **CORDOBA** como `HAY`, `NO_HAY` o `A_CONFIRMAR`; la cantidad queda NULL.
+- **Precios:** lista (`basePrice`) y neto con el descuento del cliente (`discountedPrice`), validado contra la factura
+  real: lista × (1 − 61,08 %) × (1 − 15 %). Pago anticipado (`earlyPaymentPrice`), opcional. **`salePrice` (neto + 80 %
+  de la vista cliente) no se guarda.**
+- **Códigos:** `commercialCode` («C 000100 14 E», el de las facturas) es el código y se cruza con
+  `articulo_codigo_alternativo`; `internalCode` («C00010014E») es el id externo.
+- **Además:** número original (`familyCode`, varios con « / »), marca del producto (`supplier.name`; `brandName` es la
+  marca del vehículo), rubro del proveedor (`category.name`), URL de imagen, IVA (`vatRate` viene null: queda NULL y
+  el comparador usa la alícuota del artículo o 21 %, D-S7-02).
+
+**P7-03 · para Sergio · 23/11/2026 · abierta:** ¿qué quiere decir el estado 2 de stock de Expoyer? ¿«pocas»? Hasta que
+conteste se guarda como `A_CONFIRMAR`.
+
+**Riesgo (para el equipo):** el historial crece unos 100.000 registros por corrida y por proveedor (RF-016 pide uno por
+corrida). Con varios proveedores y corridas nocturnas son decenas de millones por año en una base que corre en una
+netbook. No se resuelve en C2: se mide con los primeros scrapes. Opción si hace falta: registrar solo cuando cambian el
+precio o el stock.
+
+**Pendiente del equipo:** el CA3 de la 054 (#127) contra la D2 (dos códigos del mismo proveedor para el mismo
+artículo). **La 054 no se construye hasta que se decida.**
+
+### P7-01 contra la D-S6-29 · revisión del 23/11/2026
+
+La D-S6-29 dice que la mercadería entra al depósito de la sucursal que compró, y que eso se define **en la carga** de
+la factura. Confirma la interpretación (a) de la P7-01 —la «ubicación de ingreso» es la sucursal de destino— **pero no
+responde la pregunta**, que es sobre **corregirla después** de registrada. **La 027 sigue bloqueada.** Falta que Sergio
+diga:
+
+1. si se corrige línea por línea o una sucursal para toda la factura;
+2. si en la sucursal original ya se vendió parte, si se permite que quede en negativo (como en la anulación, 028 CA-003);
+3. quién la corrige: ¿alcanza con OPERADOR, o solo ADMINISTRADOR? (Con la D-S7-04 ya no hay doble certificación.)
+
+Con (a), corregir mueve stock entre sucursales: la 027 hay que reestimarla (hoy 2 SP).
+
+### P7-02 · 058 · nota de crédito por bonificación con dos alícuotas · 23/11/2026 · abierta
+
+La nota de crédito guarda un solo importe neto, sin precios por línea (la de devolución tiene artículos y cantidades,
+no importes). «Hereda la alícuota de la línea de la factura original» se resuelve en una devolución, pero no en una
+**bonificación** sobre una factura con líneas al 21 % y al 10,5 %: **¿cómo se reparte el neto entre las alícuotas?**
+¿El comprobante del proveedor ya trae el neto discriminado por alícuota? Sin esa respuesta el script 15 no se escribe.
 
 ---
 
@@ -66,9 +173,10 @@ Si es la (a), la 027 hay que reestimarla.
 
 Salen de lo que Sergio contestó (relevado por Javi el 23/11/2026) y de lo que quedó pendiente al
 cerrar el Sprint 6. **Ninguna está decidida ni estimada**: no tienen SP, y no entran al sprint hasta que el
-equipo las decida. Se registran; no se implementan.
+equipo las decida. Se registran; no se implementan. **C7-01, C7-02 y C7-03 las decidió el equipo el 23/11/2026 (D-S7-02 a D-S7-04)
+y entran al sprint**; C7-05 y C7-06 siguen como candidatas.
 
-### C7-01 · IVA 10,5 % (artículos de electricidad)
+### C7-01 · IVA 10,5 % (artículos de electricidad) · **cerrada por la D-S7-02 (23/11/2026): entra como 058, #194**
 
 - **Qué dijo Sergio:** hay artículos de electricidad con IVA 10,5 %.
 - **Hoy:** la tasa 21 % está fija en el código (`TasaIva = 0.21m` en `RegistrarFacturaCompraUseCase` y en
@@ -82,14 +190,14 @@ equipo las decida. Se registran; no se implementan.
   se usan 21 y 10,5: **Sergio pasa las otras cuando las tenga**. Sigue pendiente la decisión de equipo (artículo con
   posibilidad de cambiarla en la línea, o solo línea) y el script 12.
 
-### C7-02 · Costo al anular una factura
+### C7-02 · Costo al anular una factura · **cerrada por la D-S7-03 (23/11/2026): entra, #9 y #23**
 
 - **Qué dijo Sergio:** al anular, el costo vuelve al anterior a la factura. Ejemplo: costo 1450, factura a 1500, se
   anula: 1450.
 - **Hoy:** `AnularConEfectosAsync` vuelve al costo del último registro válido de `articulo_historial_compra`; si no hay
   registro anterior (valor importado o cambio manual), conserva el actual.
 - **Para cumplir el ejemplo en todos los casos** habría que guardar el costo previo en cada línea de la factura al
-  registrarla (script 12).
+  registrarla (script 13; el 12 es el catálogo de proveedores, C2).
 - **Respuesta de Sergio (23/11/2026) sobre el cambio a mano:** si el costo se cambió a mano entre la factura y la anulación,
   **queda el que se puso a mano** (no se vuelve al anterior a la factura).
 - **Regla al anular (Sergio, 23/11/2026; D-S7-03 en el #198):** el costo **vuelve al de justo antes de la factura**,
@@ -99,7 +207,7 @@ equipo las decida. Se registran; no se implementan.
 - Reemplaza la «interpretación pendiente» del CA-002 de la 028 (`docs/historias/028-HU-FCO-04.md`, actualizado el
   23/11 con la respuesta; el código no cambia). El CA-004 de la 016 (#23) tenía la misma interpretación.
 
-### C7-03 · Anulación con un solo administrador
+### C7-03 · Anulación con un solo administrador · **cerrada por la D-S7-04 (23/11/2026): entra, #195**
 
 - **Qué dijo Sergio:** «con uno solo sí se puede anular».
 - **Choque:** el CA-006 de la 028 exige que autorice **otra** persona con rol ADMINISTRADOR, distinta de quien pide: rechaza la
@@ -145,3 +253,35 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 - **Todavía abiertas para la proforma:** estados exactos; qué es el PDF (remito de devolución o pedido de reclamo), con qué
   datos y cómo se envía; el depósito **«Vélez»**, que Sergio nombró como origen de las devoluciones y que no existe en
   el sistema (¿es una sucursal, otro nombre de un depósito existente o un depósito nuevo?).
+
+---
+
+## PRÓXIMA SESIÓN
+
+**24/11/2026 (tarde) · el #198 entró por el #199.**
+- **El #198 se mergeó a una rama muerta (24/11/2026):** lo mergearon contra `docs/sprint06-cierre-correcciones` (`8521ae7`),
+  cuando el #193 ya había entrado a `develop`, así que sus commits no llegaron a `develop`. Entran por el #199:
+  `origin/docs/sprint07-apertura` mergeada en `feature/128-catalogo-scrape` (`e0f68d5`, sin rebase) y el #199
+  retargeteado a `develop`. `git log origin/develop..HEAD` trae los commits del #198.
+- **El 12 ya está aplicado** (Santi, 24/11) en `public` de `lacentral_test` y en `lacentral_demo`. El rol `lacentral_n8n`
+  ya tiene clave (no se anota). Suite completa sobre `e0f68d5` contra `public` de `lacentral_test`: **858/858**, 0
+  advertencias (40 más que la anterior porque entró el Fix E, #196, desde `develop`).
+- **Falta, después del merge del #199:** el 12 en `lacentral` (con backup antes), borrar `nc057_fuente`, `c2_fuente` y
+  `c2_ensayo_e6807bae` de `lacentral_test`, y el re-scaffold contra `public` (0 diferencias de modelo) con su PR.
+
+**24/11/2026 · C2 en PR (#128, `feature/128-catalogo-scrape`).**
+- Script 12, `docs/sprint07/CONTRATO-N8N.md` (las siete sentencias de n8n, de una línea), proforma 055 v2.0. Suite
+  completa sobre `d57efa0` contra la copia descartable `c2_ensayo_e6807bae`: **818/818**, 0 advertencias.
+  `verificador-tdd` APTO en la ronda 3 (rondas 1 y 2 NO APTO, arreglado solo en test); `auditor-persistencia` APTO en la
+  ronda 2 (la 1 encontró que un e) tardío vencía lo leído por una corrida nueva; arreglado con rojo antes).
+- **Espera a Santi:** aplicar el 12 (bitácora, «PARA SANTI · 23/11 · script 12»: `c2_fuente` en `lacentral_test`,
+  `public` de `lacentral_demo`, clave de `lacentral_n8n`) y armar el workflow con el contrato. Después del merge: el 12
+  en `public` de `lacentral_test` y en `lacentral`, re-scaffold contra `public` (tiene que dar 0 diferencias), y se
+  borran `c2_fuente` y `c2_ensayo_e6807bae`.
+- **Sigue (orden del pedido del 23/11):** D-S7-04 (#195) y D-S7-03 (#9, #23) con el script 13, en borrador en
+  `feature/s7-script-13` (`f944258`, sin ejecutar ni probar; exige el 12); después la 058 (#194), que espera la P7-02 y
+  el script 15.
+- **Numeración (D-S7-05, Santi, 24/11):** 12 = C2 (#199), 13 = anulación, 14 = Fix F (#197, renumerado en `3eef61b`),
+  15 = alícuotas.
+- **Esperan a personas:** cierre del Sprint 6 (detalle del recorrido de Javi); re-aprobación del #193 (Javi; review
+  respondido el 24/11) y merge de #193 → #198 → #199; CA3 de la 054 contra la D2 (equipo); P7-01, P7-02 y P7-03 (Sergio).
