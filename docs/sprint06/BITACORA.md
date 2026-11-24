@@ -1697,7 +1697,7 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 
 **Plan:** 1. `git fetch`, ramas y bitácora: `origin/develop` en `ca11be2`; la rama `docs/sprint06-cierre` sale de ahí. 2. PR 1: `docs/sprint06/ESTADO.md` al día (filas, frases «en PR», lo que falta, decisiones D-S6-27 a D-S6-29), `docs/sprint07/ESTADO.md` con las candidatas, CA-002 de la 028, esta entrada. 3. Mostrar el diff y pedir OK. 4. PR 2 desde `develop`: test rojo, producción, `[name]` duplicado, filtrados, completo, `ng build`; diff y OK; dos commits; push; PR; `verificador-tdd`.
 
-**Estado:** en curso
+**Estado:** terminada
 - Arranque: `git fetch --all --prune`; `origin/develop` = `ca11be2` (merges de #186, #189, #187 y #188; también #181, #177 a #180, #183 a #185). La rama de la tarea anterior (`fix/nca-enter-confirma-valor`) ya está contenida en `develop`. Rama `docs/sprint06-cierre` creada desde `origin/develop`. Sin worktrees extra.
 - Última entrada «en curso» anterior a esta: la de la 057 (bloque del 19/11, línea con `**BLOQUEADO EN:** revisión y merge de #183 → #184 → #185`); quedó sin pasar a «terminada» y no se reescribe (la bitácora solo se agrega). Está resuelta: los tres PR se mergearon el 20/11 (`9f387c2`).
 - ESTADO del Sprint 6: las filas #163, #13, #51 y #182 y las entradas de PRÓXIMA SESIÓN pasan a «mergeado»; sección «Lo que falta para cerrar el Sprint 6»; decisiones D-S6-27 a D-S6-29 (Sergio vía Javi, 23/11); entrada nueva de PRÓXIMA SESIÓN. Las issues #163, #13 y #51 siguen abiertas hasta el DoD 10.
@@ -1715,14 +1715,43 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 
 **Plan:** 1. Rama desde `origin/develop`. 2. Test rojo por aserción (años fuera de 2000 a 2100, bordes, bisiesto 2000 y 2100). 3. Producción: acotar el año en `interpretarFecha`. 4. `[name]` duplicado de `factura-compra.ts`. 5. Frontend completo y `ng build`. 6. Diff, OK de Javi, dos commits, push, PR, `verificador-tdd`.
 
-**Estado:** en curso
+**Estado:** terminada. Abierto: merge de #191 y #192 (Javi); decisiones de Sergio en `docs/sprint07/ESTADO.md`.
 - Rojo: `fecha-abreviada.spec.ts` con 6 casos fuera de rango (`20/10/0000`, `0999`, `1999`, `2101`, `20102101`, `29/02/1900`) → `TOTAL: 6 FAILED, 49 SUCCESS`. `29/02/1900` salió de «no existe»: ahora es año fuera de rango.
 - Producción: `if (a < 2000 || a > 2100)` en `interpretarFecha`, antes de validar el día. Frontend completo `TOTAL: 377 SUCCESS` (370 + 7 casos nuevos); `ng build` limpio.
 - **El `[name]` NO se quitó:** `[name]` alimenta al `NgModel` (registro en `NgForm` como `emision`, `vencimiento`, `imputacion`) y NO deja el atributo en el DOM; `[attr.name]` deja el atributo, que los tests buscan con `input[name=…]`. Sin `[attr.name]`: 15 fallos de 377 (`Cannot read properties of null`). No es un duplicado: son dos efectos distintos. Revertido; el archivo no cambia.
 **BLOQUEADO EN:** OK de Javi para commitear (test y producción en dos commits) y pushear.
 - OK de Javi («Sí, commiteá»). Commits en `fix/fecha-rango-anios`: test y producción por separado (hashes en `git log`).
 - PR #191 abierto (base `develop`); PR #192 abierto para el cierre documental. `verificador-tdd` sobre `e66577f..4305c51`: **APTO**. Rojo real por aserción (6 de 55). 8 mutaciones del límite (2000/2100, `||`, mensaje, guarda desactivada o movida) muertas. Suite completa de frontend sobre `4305c51` limpio: `TOTAL: 377 SUCCESS`. No verificó: `ng build`, ni los llamadores de `interpretarFecha`. `auditor-persistencia` no aplica (frontend).
-**Estado:** terminada. Abierto: merge de #191 y #192 (Javi); decisiones de Sergio en `docs/sprint07/ESTADO.md`.
+## 23/11/2026 · Conflicto del #191 y correcciones del cierre documental (`docs/sprint06-cierre-correcciones`)
+
+**Instrucción recibida (verbatim):**
+> 1. El #191 tiene conflicto con develop después del merge del #192: los dos agregaron un bloque al final de docs/sprint06/BITACORA.md. En fix/fecha-rango-anios: git merge origin/develop (nunca rebase). Resolvé conservando los dos bloques en orden cronológico, sin reescribir ninguno (la bitácora solo se agrega). Frontend completo una vez y push. No hace falta relanzar el verificador: el merge no cambia código.
+>
+> 2. El #192 se mergeó con tres correcciones pendientes. Van en un PR aparte, solo de docs, desde develop (rama docs/sprint06-cierre-correcciones):
+>    a) docs/sprint06/ESTADO.md, «Lo que falta para cerrar el Sprint 6», punto 2: la suite completa de backend sobre develop ya se corrió, 809/809 sobre ca11be2 el 22/11/2026 (18 m 33 s), y está comentada en el #189. Sacala de lo pendiente y actualizá la «última verde» (también en PRÓXIMA SESIÓN).
+>    b) Mismo apartado, punto nuevo: punto 6 del relevamiento de Sergio, la búsqueda de artículos que no devolvía nada. El #189 arregló proveedores y clientes; artículos no se reprodujo. Va al recorrido DoD 10, buscando lo mismo que buscó Sergio; si falla, candidata del Sprint 7.
+>    c) docs/sprint07/ESTADO.md, C7-04 (devoluciones): agregá a las preguntas abiertas el depósito «Vélez», que Sergio nombró como origen y que no existe en el sistema.
+>    d) Punto 3 de «Lo que falta»: nc057_fuente ya se borró (lo hizo Santi el 23/11). Sacalo de lo pendiente.
+>
+> Resúmenes en español.
+
+**Plan:** 1. En `fix/fecha-rango-anios`: `git merge origin/develop`, conflicto de la bitácora con los dos bloques en orden, frontend completo, push. 2. Rama `docs/sprint06-cierre-correcciones` desde `origin/develop` (`d783ea2`): a) a d) en los dos ESTADO, esta entrada, PR.
+
+**Estado:** terminada
+- Merge `864b89d` en `fix/fecha-rango-anios`: primero el bloque del cierre documental (#192, commit de las 16:38), después el del fix (#191, 16:42); los dos quedaron idénticos a sus originales (comparados con `diff`). Frontend completo: `TOTAL: 377 SUCCESS`. Pusheado.
+- a) y d): «Lo que falta» queda con el recorrido DoD 10 y el punto de artículos; la suite 809/809 sobre `ca11be2` (22/11, 18 m 33 s, comentario en el #189, verificado) y el borrado de `nc057_fuente` pasan a «ya hecho». «Última verde» actualizada también en PRÓXIMA SESIÓN. b) punto 2 nuevo. c) «Vélez» en las preguntas abiertas de C7-04.
+- Abierto: el bloque del cierre documental (#192) quedó con `**Estado:** en curso` y el del fix (#191) tiene dos líneas de Estado («en curso» y «terminada»); no se tocaron. Este bloque y el del #191 se agregan al mismo final: el que se mergee segundo vuelve a tener el mismo conflicto.
+
+## 23/11/2026 · Devoluciones a proveedor fuera de la tesis (`docs/sprint06-cierre-correcciones`, #193)
+
+**Instrucción recibida (verbatim):**
+> c) docs/sprint07/ESTADO.md: C7-04 (módulo de devoluciones a proveedor) sale de las candidatas del Sprint 7. Decisión del equipo (Javi y Santi, 23/11/2026): queda FUERA DE LA TESIS, como «Sprint 9 · post-tesis», para construirlo después de la defensa como mejora para el negocio. Movelo a una sección nueva «Fuera de la tesis · Sprint 9» con lo que ya dijo Sergio y las preguntas abiertas (estados, qué es el PDF, el depósito «Vélez» que no existe en el sistema). Anotá la decisión con fecha en el ESTADO del Sprint 6.
+
+**Plan:** 1. Mover C7-04 a «Fuera de la tesis · Sprint 9» (S9-01), sin perder contenido. 2. D-S6-30 en el ESTADO del Sprint 6. 3. Commit y push al #193.
+
+**Estado:** terminada
+- C7-04 movido entero (respuestas de Sergio y preguntas abiertas, con «Vélez») a `docs/sprint07/ESTADO.md`, sección final «Fuera de la tesis · Sprint 9 · post-tesis», como S9-01. C7-05 y C7-06 no se renumeran.
+- D-S6-30 (equipo, 23/11/2026) en la tabla de decisiones del 23/11 de `docs/sprint06/ESTADO.md`; el párrafo de «abre trabajo» ya no manda las devoluciones al Sprint 7.
 
 ## 23/11/2026 · Fix E (proveedor y sucursal en la lectura de PDF) y Fix F (vencimiento por proveedor)
 
