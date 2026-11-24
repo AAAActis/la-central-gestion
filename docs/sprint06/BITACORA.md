@@ -1723,3 +1723,14 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - OK de Javi («Sí, commiteá»). Commits en `fix/fecha-rango-anios`: test y producción por separado (hashes en `git log`).
 - PR #191 abierto (base `develop`); PR #192 abierto para el cierre documental. `verificador-tdd` sobre `e66577f..4305c51`: **APTO**. Rojo real por aserción (6 de 55). 8 mutaciones del límite (2000/2100, `||`, mensaje, guarda desactivada o movida) muertas. Suite completa de frontend sobre `4305c51` limpio: `TOTAL: 377 SUCCESS`. No verificó: `ng build`, ni los llamadores de `interpretarFecha`. `auditor-persistencia` no aplica (frontend).
 **Estado:** terminada. Abierto: merge de #191 y #192 (Javi); decisiones de Sergio en `docs/sprint07/ESTADO.md`.
+
+## 23/11/2026 · Fix F, solo el script 12 (`fix/vencimiento-proveedor`)
+
+**Instrucción recibida (verbatim):**
+> Fix F: sí, abrí la rama del F desde develop y escribí SOLO el script 12 (backend/db/rescaffold/12_Vencimiento_Proveedor.sql), idempotente, en una transacción, con verificación final, como los scripts 09 a 11. Después te detenés: no escribas código que dependa de las columnas hasta que Santi lo aplique en lacentral_test (public), lacentral_demo y lacentral y haga el re-scaffold. Dejá en el informe los comandos exactos para Santi y cómo comprobar que quedó aplicado en las tres bases (por ejemplo s12 = 1). [...] Sin commit ni push sin mi OK, como siempre.
+
+**Plan:** 1. Rama desde `origin/develop`. 2. Copiar el script 12 (ya escrito) a `backend/db/rescaffold/`. 3. Comandos para Santi. 4. Detenerse.
+
+**Estado:** en curso
+- Rama `fix/vencimiento-proveedor` desde `origin/develop`; script 12 en el árbol, sin commitear. Sin `psql` en esta máquina: la sintaxis no se ejecutó.
+**BLOQUEADO EN:** OK de Javi para commitear/pushear el script; Santi para aplicarlo en las tres bases y hacer el re-scaffold.
