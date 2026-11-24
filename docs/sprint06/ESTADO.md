@@ -397,9 +397,10 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 - Decisiones D-S6-27 a D-S6-29 de Sergio (23/11) cargadas arriba. Lo que abre trabajo se registró en
   `docs/sprint07/ESTADO.md`, «Candidatas desde el cierre del Sprint 6», y el CA-002 de la 028 en
   `docs/historias/028-HU-FCO-04.md`. Sin código.
-- **Queda:** recorrido DoD 10 en `lacentral_demo` (Javi con Sergio), con la búsqueda de artículos del punto 6 de Sergio,
-  y el fix de rango de años en las fechas abreviadas (`fix/fecha-rango-anios`, #191). La suite completa sobre `develop`
-  ya corrió (809/809 sobre `ca11be2`) y `nc057_fuente` ya se borró (Santi, 23/11).
+- **Queda:** recorrido DoD 10 en `lacentral_demo` (Javi con Sergio), con la búsqueda de artículos del punto 6 de Sergio.
+  El fix de rango de años en las fechas abreviadas (`fix/fecha-rango-anios`, #191) está **hecho, mergeado** en
+  `develop` (`8cd856e`, 23/11). La suite completa sobre `develop` ya corrió (809/809 sobre `ca11be2`) y `nc057_fuente`
+  ya se borró (Santi, 23/11).
 
 **21/11 (noche, 2) · Fix D: `fix/busquedas-por-palabra` (PR #189, mergeado).**
 - Javi eligió (21/11) que proveedores y clientes encuentren la razón social que contiene cada palabra escrita, sin
