@@ -205,4 +205,10 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
         => await _context.ArticuloCodigoAlternativo.AsNoTracking()
             .Where(c => c.ProveedorId == proveedorId && codigos.Contains(c.Codigo) && c.Articulo.Activo)
             .ToDictionaryAsync(c => c.Codigo, c => c.ArticuloId, ct);
+
+    public async Task<short?> ObtenerSucursalIdPorCodigoAsync(string codigo, CancellationToken ct = default)
+        => await _context.Sucursal.AsNoTracking()
+            .Where(s => s.Codigo == codigo && !s.EsReclamos)
+            .Select(s => (short?)s.Id)
+            .FirstOrDefaultAsync(ct);
 }

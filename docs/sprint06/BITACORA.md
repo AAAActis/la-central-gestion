@@ -1697,7 +1697,7 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 
 **Plan:** 1. `git fetch`, ramas y bitácora: `origin/develop` en `ca11be2`; la rama `docs/sprint06-cierre` sale de ahí. 2. PR 1: `docs/sprint06/ESTADO.md` al día (filas, frases «en PR», lo que falta, decisiones D-S6-27 a D-S6-29), `docs/sprint07/ESTADO.md` con las candidatas, CA-002 de la 028, esta entrada. 3. Mostrar el diff y pedir OK. 4. PR 2 desde `develop`: test rojo, producción, `[name]` duplicado, filtrados, completo, `ng build`; diff y OK; dos commits; push; PR; `verificador-tdd`.
 
-**Estado:** en curso
+**Estado:** terminada
 - Arranque: `git fetch --all --prune`; `origin/develop` = `ca11be2` (merges de #186, #189, #187 y #188; también #181, #177 a #180, #183 a #185). La rama de la tarea anterior (`fix/nca-enter-confirma-valor`) ya está contenida en `develop`. Rama `docs/sprint06-cierre` creada desde `origin/develop`. Sin worktrees extra.
 - Última entrada «en curso» anterior a esta: la de la 057 (bloque del 19/11, línea con `**BLOQUEADO EN:** revisión y merge de #183 → #184 → #185`); quedó sin pasar a «terminada» y no se reescribe (la bitácora solo se agrega). Está resuelta: los tres PR se mergearon el 20/11 (`9f387c2`).
 - ESTADO del Sprint 6: las filas #163, #13, #51 y #182 y las entradas de PRÓXIMA SESIÓN pasan a «mergeado»; sección «Lo que falta para cerrar el Sprint 6»; decisiones D-S6-27 a D-S6-29 (Sergio vía Javi, 23/11); entrada nueva de PRÓXIMA SESIÓN. Las issues #163, #13 y #51 siguen abiertas hasta el DoD 10.
@@ -1715,14 +1715,13 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 
 **Plan:** 1. Rama desde `origin/develop`. 2. Test rojo por aserción (años fuera de 2000 a 2100, bordes, bisiesto 2000 y 2100). 3. Producción: acotar el año en `interpretarFecha`. 4. `[name]` duplicado de `factura-compra.ts`. 5. Frontend completo y `ng build`. 6. Diff, OK de Javi, dos commits, push, PR, `verificador-tdd`.
 
-**Estado:** en curso
+**Estado:** terminada. Abierto: merge de #191 y #192 (Javi); decisiones de Sergio en `docs/sprint07/ESTADO.md`.
 - Rojo: `fecha-abreviada.spec.ts` con 6 casos fuera de rango (`20/10/0000`, `0999`, `1999`, `2101`, `20102101`, `29/02/1900`) → `TOTAL: 6 FAILED, 49 SUCCESS`. `29/02/1900` salió de «no existe»: ahora es año fuera de rango.
 - Producción: `if (a < 2000 || a > 2100)` en `interpretarFecha`, antes de validar el día. Frontend completo `TOTAL: 377 SUCCESS` (370 + 7 casos nuevos); `ng build` limpio.
 - **El `[name]` NO se quitó:** `[name]` alimenta al `NgModel` (registro en `NgForm` como `emision`, `vencimiento`, `imputacion`) y NO deja el atributo en el DOM; `[attr.name]` deja el atributo, que los tests buscan con `input[name=…]`. Sin `[attr.name]`: 15 fallos de 377 (`Cannot read properties of null`). No es un duplicado: son dos efectos distintos. Revertido; el archivo no cambia.
 **BLOQUEADO EN:** OK de Javi para commitear (test y producción en dos commits) y pushear.
 - OK de Javi («Sí, commiteá»). Commits en `fix/fecha-rango-anios`: test y producción por separado (hashes en `git log`).
 - PR #191 abierto (base `develop`); PR #192 abierto para el cierre documental. `verificador-tdd` sobre `e66577f..4305c51`: **APTO**. Rojo real por aserción (6 de 55). 8 mutaciones del límite (2000/2100, `||`, mensaje, guarda desactivada o movida) muertas. Suite completa de frontend sobre `4305c51` limpio: `TOTAL: 377 SUCCESS`. No verificó: `ng build`, ni los llamadores de `interpretarFecha`. `auditor-persistencia` no aplica (frontend).
-**Estado:** terminada. Abierto: merge de #191 y #192 (Javi); decisiones de Sergio en `docs/sprint07/ESTADO.md`.
 
 ## 23/11/2026 · Fix F, solo el script 12 (`fix/vencimiento-proveedor`)
 
@@ -1736,3 +1735,81 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 **BLOQUEADO EN:** OK de Javi para commitear/pushear el script; Santi para aplicarlo en las tres bases y hacer el re-scaffold.
 - Javi probó el 12 en una base descartable y halló un hueco: con `vencimiento_dias` NULL, `DIAS_CORRIDOS` y `DIA_FIJO_MES_SIGUIENTE` pasaban el CHECK `proveedor_vencimiento_dias_coherente` (un CHECK deja pasar NULL). Arreglo: `IS NOT NULL` en las dos ramas, y el 12 reemplaza (DROP + ADD) la restricción si existe con la definición vieja; la verificación final exige `IS NOT NULL`. El inverso no cambia.
 - Probado por mí en un esquema descartable de `lacentral_test` (creado y borrado en la misma corrida): versión vieja reproduce el hueco; 12 nuevo sobre la vieja reemplaza la restricción; 27 casos (los dos modos con NULL FALLAN; MANUAL/CONTADO con NULL, DIAS_CORRIDOS 7/10/20/21/25/30 y DIA_FIJO 1/25/28 PASAN; 15, 0, 29, MANUAL+7, CONTADO+7 y modo inválido FALLAN); 12 dos veces, inverso dos veces y 12 después del inverso. Resultado: `TODO OK`, 0 fallos.
+
+## 23/11/2026 · Conflicto del #191 y correcciones del cierre documental (`docs/sprint06-cierre-correcciones`)
+
+**Instrucción recibida (verbatim):**
+> 1. El #191 tiene conflicto con develop después del merge del #192: los dos agregaron un bloque al final de docs/sprint06/BITACORA.md. En fix/fecha-rango-anios: git merge origin/develop (nunca rebase). Resolvé conservando los dos bloques en orden cronológico, sin reescribir ninguno (la bitácora solo se agrega). Frontend completo una vez y push. No hace falta relanzar el verificador: el merge no cambia código.
+>
+> 2. El #192 se mergeó con tres correcciones pendientes. Van en un PR aparte, solo de docs, desde develop (rama docs/sprint06-cierre-correcciones):
+>    a) docs/sprint06/ESTADO.md, «Lo que falta para cerrar el Sprint 6», punto 2: la suite completa de backend sobre develop ya se corrió, 809/809 sobre ca11be2 el 22/11/2026 (18 m 33 s), y está comentada en el #189. Sacala de lo pendiente y actualizá la «última verde» (también en PRÓXIMA SESIÓN).
+>    b) Mismo apartado, punto nuevo: punto 6 del relevamiento de Sergio, la búsqueda de artículos que no devolvía nada. El #189 arregló proveedores y clientes; artículos no se reprodujo. Va al recorrido DoD 10, buscando lo mismo que buscó Sergio; si falla, candidata del Sprint 7.
+>    c) docs/sprint07/ESTADO.md, C7-04 (devoluciones): agregá a las preguntas abiertas el depósito «Vélez», que Sergio nombró como origen y que no existe en el sistema.
+>    d) Punto 3 de «Lo que falta»: nc057_fuente ya se borró (lo hizo Santi el 23/11). Sacalo de lo pendiente.
+>
+> Resúmenes en español.
+
+**Plan:** 1. En `fix/fecha-rango-anios`: `git merge origin/develop`, conflicto de la bitácora con los dos bloques en orden, frontend completo, push. 2. Rama `docs/sprint06-cierre-correcciones` desde `origin/develop` (`d783ea2`): a) a d) en los dos ESTADO, esta entrada, PR.
+
+**Estado:** terminada
+- Merge `864b89d` en `fix/fecha-rango-anios`: primero el bloque del cierre documental (#192, commit de las 16:38), después el del fix (#191, 16:42); los dos quedaron idénticos a sus originales (comparados con `diff`). Frontend completo: `TOTAL: 377 SUCCESS`. Pusheado.
+- a) y d): «Lo que falta» queda con el recorrido DoD 10 y el punto de artículos; la suite 809/809 sobre `ca11be2` (22/11, 18 m 33 s, comentario en el #189, verificado) y el borrado de `nc057_fuente` pasan a «ya hecho». «Última verde» actualizada también en PRÓXIMA SESIÓN. b) punto 2 nuevo. c) «Vélez» en las preguntas abiertas de C7-04.
+- Abierto: el bloque del cierre documental (#192) quedó con `**Estado:** en curso` y el del fix (#191) tiene dos líneas de Estado («en curso» y «terminada»); no se tocaron. Este bloque y el del #191 se agregan al mismo final: el que se mergee segundo vuelve a tener el mismo conflicto.
+
+## 23/11/2026 · Devoluciones a proveedor fuera de la tesis (`docs/sprint06-cierre-correcciones`, #193)
+
+**Instrucción recibida (verbatim):**
+> c) docs/sprint07/ESTADO.md: C7-04 (módulo de devoluciones a proveedor) sale de las candidatas del Sprint 7. Decisión del equipo (Javi y Santi, 23/11/2026): queda FUERA DE LA TESIS, como «Sprint 9 · post-tesis», para construirlo después de la defensa como mejora para el negocio. Movelo a una sección nueva «Fuera de la tesis · Sprint 9» con lo que ya dijo Sergio y las preguntas abiertas (estados, qué es el PDF, el depósito «Vélez» que no existe en el sistema). Anotá la decisión con fecha en el ESTADO del Sprint 6.
+
+**Plan:** 1. Mover C7-04 a «Fuera de la tesis · Sprint 9» (S9-01), sin perder contenido. 2. D-S6-30 en el ESTADO del Sprint 6. 3. Commit y push al #193.
+
+**Estado:** terminada
+- C7-04 movido entero (respuestas de Sergio y preguntas abiertas, con «Vélez») a `docs/sprint07/ESTADO.md`, sección final «Fuera de la tesis · Sprint 9 · post-tesis», como S9-01. C7-05 y C7-06 no se renumeran.
+- D-S6-30 (equipo, 23/11/2026) en la tabla de decisiones del 23/11 de `docs/sprint06/ESTADO.md`; el párrafo de «abre trabajo» ya no manda las devoluciones al Sprint 7.
+
+## 23/11/2026 · Fix E (proveedor y sucursal en la lectura de PDF) y Fix F (vencimiento por proveedor)
+
+**Instrucción recibida (especificación pegada por Javi, «reconocimiento de proveedor y sucursal en PDF, y vencimiento automático por proveedor»; condensada, conserva reglas y cifras):**
+> Base `develop` (d783ea2 o posterior). Un fix = una rama = un PR, dos fixes: E y F. NO commitear ni pushear sin OK de Javi; mostrar el diff antes. Nunca tocar `lacentral`; persistencia solo contra `lacentral_test`, releyendo con contexto nuevo. Sin migraciones EF; el F necesita un script SQL: lo escribís y te DETENÉS, lo aplica Santi. No inventar datos de negocio: lo no definido queda manual y se informa. Al terminar cada fix: compilar, frontend y backend completos (timeouts de Npgsql: ver #190, filtrar y declararlo), ESTADO y BITACORA, Graphify, `verificador-tdd` (y `auditor-persistencia` en el F).
+> **Fix E.** E.1 proveedor: orden elegido a mano > CUIT > razón social del layout; por razón social solo si hay UNA única coincidencia entre activos, marcada «Revisar» (`proveedorId`); 0 o 2+: nada; nunca en silencio; sin IDs ni nombres de proveedores hardcodeados (la razón social la aporta cada layout, como el CUIT); lógica en UseCases, consulta nueva en el puerto si falta. E.2 sucursal: `SucursalSugeridaId` nullable en el DTO y en «a revisar»; reconocer sin importar mayúsculas ni acentos Fragueiro (FR: «Mariano Fragueiro», «Fragueiro», «Multirep Fragueiro») y San Vicente (SV: «San Vicente», «San Jerónimo»); id por `codigo`; ambas o ninguna: no se sugiere; sin números de cuenta; leer los 3 PDF reales (fuera del repo, sin copiar ni citar sus datos); tests con texto sintético. E.3 frontend: «Destino de las líneas nuevas» precargado con la sugerencia, marcada «Revisar» y editable; sin sugerencia, como hoy; no cambiar la lectura de artículos de FCO ni NCA. E.4 pruebas: proveedor (CUIT, razón social única, ambigua, ninguna, elegido a mano manda, inactivo ignorado), sucursal (cada variante, mayúsculas, acentos, ambas, ninguna), frontend (precarga «Revisar» y editable), mutaciones.
+> **Fix F.** Sergio (vía Javi, 23/11/2026): vencimiento desde la fecha de emisión; condición configurada por proveedor; Fric-Rot vence el día 25 del mes siguiente; Etman se deja de lado (se conserva su vencimiento leído del PDF). Modos: Manual (por defecto), Contado (= emisión, supuesto a confirmar con Sergio), cuenta corriente a N días con N en {7,10,20,21,25,30}, día fijo del mes siguiente. Quincena, 15/25/30 días, 30-60, 30-60-90 y el «-5 %»: manuales, no se inventan. F.2 script `backend/db/rescaffold/12_Vencimiento_Proveedor.sql` (idempotente, una transacción, verificación final): `proveedor.vencimiento_modo VARCHAR(30) NOT NULL DEFAULT 'MANUAL'` con CHECK en MANUAL/CONTADO/DIAS_CORRIDOS/DIA_FIJO_MES_SIGUIENTE; `vencimiento_dias SMALLINT NULL` con CHECK de coherencia; COMMENT ON COLUMN; sin proveedores hardcodeados. DETENERSE tras escribirlo; Santi lo aplica en las tres bases y re-scaffold; nada de código que dependa de las columnas antes. F.3 backend: función pura `CalculoVencimiento` en UseCases (bordes: fin de mes, bisiesto, cambio de año, emisión 29/30/31); alta y modificación validan modo y días por `Result`; la modificación sin esos campos NO los borra; el contrato de registro de factura no cambia. F.4 frontend: modo y días en la pantalla de proveedores; en la factura, tras confirmar la emisión se propone el vencimiento si está vacío o fue propuesto por el sistema; lo tipeado a mano no se pisa; el del PDF manda; el cálculo lo hace el backend (endpoint de consulta), sin duplicar la regla en TypeScript; nunca anterior a la emisión. F.5 pruebas: función pura, repositorio contra PostgreSQL, API (validaciones, 401/403), frontend.
+> Fuera de la spec: devoluciones, «-5 %», Quincena y N días, vencimientos múltiples, números de cuenta, búsqueda de artículos. Al terminar informar qué quedó manual y por qué.
+
+**Plan:** 1. Arranque: `fetch`; rama `fix/pdf-proveedor-sucursal` desde `origin/develop` (d783ea2). 2. E: leer los tres PDF reales con `pdftotext` y con el `LectorTextoPdf` (volcado temporal, borrado) para ubicar el destinatario. 3. E backend en tres commits: andamiaje (puertos y campos sin comportamiento), tests rojos, producción. 4. E frontend. 5. Suites, ESTADO, bitácora, Graphify, diff, OK de Javi, PR, `verificador-tdd`. 6. F: escribir el script 12 y detenerme (rama aparte desde `develop`).
+
+**Estado:** en curso
+- Arranque: `origin/develop` = d783ea2 (#192 mergeado). El #191 (rango de años) sigue abierto. Hay una rama remota `revert-192-docs/sprint06-cierre` que no es mía: se avisa a Javi.
+- PDF reales leídos (no se copia ni se cita ningún dato): en ETMAN el bloque del cliente trae un domicilio y «Dir. Entrega:» otro, en el mismo PDF, y el encabezado lista las agencias del proveedor (con «San José», que no es San Vicente): buscar en todo el texto sería ambiguo; en Fazio el cliente y su domicilio van en las líneas entre «Cliente:» y «Tipo Operación»; en Expoyer, la línea con «SUCURSAL» y la siguiente.
+- Fix E hecho: andamiaje (puertos, campos del DTO, reconocedor vacío) → pruebas en rojo por aserción (backend 19 de 46; PostgreSQL 2 de 2; frontend 3 de 5) → producción. Un PDF que parecía de Expoyer era de otro proveedor; el layout se ajustó a la factura de Expoyer real (bloque «Sres.:»).
+- Suite completa de backend sobre el árbol del Fix E: `Correctas! - Con error: 0, Superado: 846, Total: 846, Duración: 16 m 19 s`. Frontend: `TOTAL: 375 SUCCESS`; `ng build` limpio. Sin timeouts de Npgsql (#190).
+- Script 12 del Fix F escrito (fuera del repo hasta abrir su rama). Sin `psql` en esta máquina: sintaxis sin ejecutar.
+**BLOQUEADO EN:** OK de Javi para commitear el Fix E (tres commits: andamiaje, pruebas, producción) y para los supuestos de ETMAN y de los términos por layout.
+- OK de Javi recibido («Sí, commiteá»). Commits del Fix E: andamiaje `6ce13f3`; pruebas `277d72a` (en rojo contra el andamiaje: 21 de 49 en la corrida filtrada, 19 de lógica + 2 PostgreSQL); producción `c3e1d93`. Los supuestos de ETMAN y de los términos por layout siguen declarados en el PR.
+- La suite completa (846/846) corrió sobre el mismo contenido de producción antes de reordenar los commits; se vuelve a correr sobre el último commit del PR, tras el merge de `origin/develop` (entró #191, solo frontend de fechas).
+**BLOQUEADO EN:** nada; sigue el PR del Fix E y después `verificador-tdd` y `auditor-persistencia`. El Fix F espera a que Santi aplique el script 12.
+- Suite completa sobre `dd8c93a` (último commit antes de este): `Con error: 3, Superado: 843, Total: 846, Duración: 1 h 1 m`. Los 3 son timeouts de conexión de Npgsql (#190) en clases ajenas al fix (`ArticulosApiPostgreSqlTests`, `ArticuloPrecioModalidadRestriccionesPostgreSqlTests`, `BajaArticuloConStockPostgreSqlTests`); filtrados dieron `Correctas! Superado: 3, Total: 3`. Frontend: `TOTAL: 382 SUCCESS`.
+- `verificador-tdd` ronda 1: NO APTO. Orden TDD y rojo por aserción confirmados (21 de 48 en 277d72a); 14 de 18 mutaciones muertas, 4 sobrevivieron: S1 tope `2`→`1` de la búsqueda por razón social, S2 `OrderBy(Id)`, S3 `TakeWhile` de Expoyer, S4 `Take(3)` de ETMAN. Arreglo en tests de producción sin tocar el agente ni su criterio: 4 tests nuevos, cada uno verificado con su mutación (falla) y sin ella (pasa). Re-verificación acotada a ese commit.
+- `verificador-tdd` ronda 2 (solo `dbba965`): APTO; las 4 mutaciones S1-S4 mueren, control 40/40. `auditor-persistencia`: APTO (10/10 filtrado, relectura con contexto nuevo, sin Ids sembrados, `PostgreSqlSeguridadTests` activo). El Fix E queda listo para revisión humana de #196; el Fix F sigue detenido a la espera de que Santi aplique el script 12.
+
+## 23/11/2026 · Fix E: supuestos confirmados y consulta de proveedores en la demo
+
+**Instrucción recibida (verbatim):**
+> Fix E (#196): acepto los dos supuestos. 1) En ETMAN manda «Dir. Entrega» sobre el domicilio del cliente. 2) Los términos de búsqueda por layout son fijos («ETMAN», «Fazio», «Expoyer»). OK para un commit SOLO de documentación en la rama del #196: ESTADO.md (la entrada del Fix E dice «PR por abrir»; el PR es el #196; los dos supuestos pasan de «a confirmar» a «confirmados por Javi, 23/11/2026»); bitácora (una entrada con esta confirmación, verbatim, y el estado); actualizá la descripción del #196 («Supuestos confirmados por Javi (23/11/2026)»). Pusheá. No mergees: el #196 lo tiene que aprobar Santi o Lauti. Comprobación de solo lectura, antes de cerrar: en lacentral_demo (nunca en lacentral) consultá con SELECT qué proveedores tienen en razon_social «etman», «fazio» o «expoyer» (ILIKE). Informá cuáles de los tres existen y con qué nombre exacto. Si falta alguno, no cambies nada: dejalo anotado para decidirlo. La rama remota revert-192-docs/sprint06-cierre no es tuya ni mía: no la toques.
+
+**Plan:** 1. Commit solo de docs en `fix/pdf-proveedor-sucursal`. 2. Descripción del #196. 3. SELECT de solo lectura en `lacentral_demo`. 4. Push.
+
+**Estado:** terminada
+- ESTADO: «PR por abrir» pasa a «PR #196»; los dos supuestos, a «confirmados por Javi (23/11/2026)». Descripción del #196 actualizada.
+- SELECT en `lacentral_demo` (sesión con `default_transaction_read_only=on`, 6 proveedores en total): solo **Expoyer** existe (id 7, código `00035`, razón social «Expoyer», activo). **ETMAN y Fazio no existen** en la demo: ahí el reconocimiento por razón social no tiene a quién asignar. No se cambió nada; queda para decidir si se siembran. Producción (`lacentral`) no se consultó.
+- Abierto: aprobación del #196 por Santi o Lauti.
+
+## 24/11/2026 · Versionar la siembra de ETMAN y Fazio en la demo
+
+**Instrucción recibida (verbatim):**
+> Visto, siembra correcta. Sí: versionala en la rama del #196 (fix/pdf-proveedor-sucursal), en un commit propio de docs/demo. Incluí: backend/db/demo/sembrar_proveedores_pdf.sql tal como lo aplicaste; backend/db/demo/README.md actualizado: la demo tiene hoy 8 proveedores (los 5 de sembrar_demo.cs, Expoyer cargado a mano por el equipo, y ETMAN y Fazio del script nuevo); el script nuevo es un complemento que se corre DESPUÉS de sembrar_demo.cs, con SQL directo (excepción a «por la API») porque son dos filas sin CUIT para probar el reconocimiento por razón social del Fix E; solo en lacentral_demo (tiene guarda); idempotente por codigo. Sin tocar código ni tests. Mostrame el diff antes de commitear; con mi OK pusheás al #196 y actualizás la descripción del PR con una línea sobre la siembra.
+
+**Plan:** 1. Cambiar a la rama del #196. 2. Actualizar el README de la demo. 3. Mostrar el diff. 4. Con OK: commit de docs/demo, push, una línea en la descripción del #196.
+
+**Estado:** en curso
+- Rama del #196 al día con su remota; `origin/develop` sin commits nuevos que me falten. README actualizado; diff por mostrar.
+**BLOQUEADO EN:** OK de Javi sobre el diff para commitear y pushear.
