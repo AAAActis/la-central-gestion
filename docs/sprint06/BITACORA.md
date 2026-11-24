@@ -1747,3 +1747,15 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 - Suite completa sobre `dd8c93a` (último commit antes de este): `Con error: 3, Superado: 843, Total: 846, Duración: 1 h 1 m`. Los 3 son timeouts de conexión de Npgsql (#190) en clases ajenas al fix (`ArticulosApiPostgreSqlTests`, `ArticuloPrecioModalidadRestriccionesPostgreSqlTests`, `BajaArticuloConStockPostgreSqlTests`); filtrados dieron `Correctas! Superado: 3, Total: 3`. Frontend: `TOTAL: 382 SUCCESS`.
 - `verificador-tdd` ronda 1: NO APTO. Orden TDD y rojo por aserción confirmados (21 de 48 en 277d72a); 14 de 18 mutaciones muertas, 4 sobrevivieron: S1 tope `2`→`1` de la búsqueda por razón social, S2 `OrderBy(Id)`, S3 `TakeWhile` de Expoyer, S4 `Take(3)` de ETMAN. Arreglo en tests de producción sin tocar el agente ni su criterio: 4 tests nuevos, cada uno verificado con su mutación (falla) y sin ella (pasa). Re-verificación acotada a ese commit.
 - `verificador-tdd` ronda 2 (solo `dbba965`): APTO; las 4 mutaciones S1-S4 mueren, control 40/40. `auditor-persistencia`: APTO (10/10 filtrado, relectura con contexto nuevo, sin Ids sembrados, `PostgreSqlSeguridadTests` activo). El Fix E queda listo para revisión humana de #196; el Fix F sigue detenido a la espera de que Santi aplique el script 12.
+
+## 23/11/2026 · Fix E: supuestos confirmados y consulta de proveedores en la demo
+
+**Instrucción recibida (verbatim):**
+> Fix E (#196): acepto los dos supuestos. 1) En ETMAN manda «Dir. Entrega» sobre el domicilio del cliente. 2) Los términos de búsqueda por layout son fijos («ETMAN», «Fazio», «Expoyer»). OK para un commit SOLO de documentación en la rama del #196: ESTADO.md (la entrada del Fix E dice «PR por abrir»; el PR es el #196; los dos supuestos pasan de «a confirmar» a «confirmados por Javi, 23/11/2026»); bitácora (una entrada con esta confirmación, verbatim, y el estado); actualizá la descripción del #196 («Supuestos confirmados por Javi (23/11/2026)»). Pusheá. No mergees: el #196 lo tiene que aprobar Santi o Lauti. Comprobación de solo lectura, antes de cerrar: en lacentral_demo (nunca en lacentral) consultá con SELECT qué proveedores tienen en razon_social «etman», «fazio» o «expoyer» (ILIKE). Informá cuáles de los tres existen y con qué nombre exacto. Si falta alguno, no cambies nada: dejalo anotado para decidirlo. La rama remota revert-192-docs/sprint06-cierre no es tuya ni mía: no la toques.
+
+**Plan:** 1. Commit solo de docs en `fix/pdf-proveedor-sucursal`. 2. Descripción del #196. 3. SELECT de solo lectura en `lacentral_demo`. 4. Push.
+
+**Estado:** terminada
+- ESTADO: «PR por abrir» pasa a «PR #196»; los dos supuestos, a «confirmados por Javi (23/11/2026)». Descripción del #196 actualizada.
+- SELECT en `lacentral_demo` (sesión con `default_transaction_read_only=on`, 6 proveedores en total): solo **Expoyer** existe (id 7, código `00035`, razón social «Expoyer», activo). **ETMAN y Fazio no existen** en la demo: ahí el reconocimiento por razón social no tiene a quién asignar. No se cambió nada; queda para decidir si se siembran. Producción (`lacentral`) no se consultó.
+- Abierto: aprobación del #196 por Santi o Lauti.
