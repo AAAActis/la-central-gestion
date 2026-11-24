@@ -201,6 +201,26 @@ public class CatalogoProveedorPostgreSqlTests
     }
 
     [PostgreSqlFact]
+    public async Task CA003_ElVencimientoDeUnaCorridaVieja_NoVenceLoQueLeyoUnaMasNueva()
+    {
+        // auditor-persistencia: e) de la corrida N llega tarde (reintento tras un corte, o a mano) con la N+1 ya leyendo.
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var proveedorId = await CrearProveedorAsync(fixture, "SCR-3C");
+        await using var n8n = await N8n.ConectarAsync(fixture);
+        var vieja = await n8n.AbrirAsync(proveedorId);
+        await n8n.ProductoAsync(vieja, Producto.Expoyer("A", 50m));
+        await n8n.CerrarAsync(vieja, "SUCCESS");
+        var nueva = await n8n.AbrirAsync(proveedorId);
+        await n8n.ProductoAsync(nueva, Producto.Expoyer("A", 60m));
+
+        Assert.Equal(0L, await n8n.VencerAsync(vieja));
+
+        await using var lectura = fixture.CrearContexto();
+        var a = await lectura.ProveedorArticulo.SingleAsync(p => p.ProveedorId == proveedorId);
+        Assert.Equal((false, nueva), (a.Vencido, a.UltimaCorridaId));
+    }
+
+    [PostgreSqlFact]
     public async Task CA004_ProveedorDadoDeBaja_SeRechaza_SinAbrirCorrida()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
