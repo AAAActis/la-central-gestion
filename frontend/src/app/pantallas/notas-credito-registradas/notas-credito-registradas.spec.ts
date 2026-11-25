@@ -283,4 +283,67 @@ describe('NotasCreditoRegistradas · 057 CA-012', () => {
       expect(dialogo()).withContext('el diálogo sigue abierto').not.toBeNull();
     });
   }
+
+  describe('Enter sobre un código exacto de proveedor lo elige', () => {
+    const proveedor = (id: number, codigo: string) =>
+      ({ id, codigo, razonSocial: `Proveedor ${codigo}`, cuit: null, urlReferencia: null, activo: true, tipoComprobanteHabitual: null });
+    const opciones = () => raiz().querySelectorAll('button.opcion').length;
+    const campo = () => raiz().querySelector<HTMLInputElement>('input[name="textoProveedor"]');
+
+    function enter(texto: string) {
+      c.textoProveedor = texto;
+      campo()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    }
+
+    function responder(items: ReturnType<typeof proveedor>[]) {
+      servidor.expectOne(r => r.url === '/api/proveedores').flush({ items, total: items.length, pagina: 1, tamanoPagina: 20 });
+      fixture.detectChanges();
+    }
+
+    it('«35» elige al 00035 sin dejar la lista ni el texto', () => {
+      enter(' 35 ');
+      responder([proveedor(8, '00350'), proveedor(7, '00035')]);
+
+      expect(c.proveedor()?.id).toBe(7);
+      expect(c.textoProveedor).toBe('');
+      expect(opciones()).toBe(0);
+      expect(campo()).toBeNull();
+
+      // La lista está oculta mientras hay proveedor: al quitarlo no tiene que volver.
+      c.proveedor.set(null);
+      fixture.detectChanges();
+      expect(opciones()).toBe(0);
+    });
+
+    it('con 035 y 00035 los lista y no elige', () => {
+      enter('35');
+      responder([proveedor(7, '00035'), proveedor(9, '035')]);
+
+      expect(c.proveedor()).toBeNull();
+      expect(opciones()).toBe(2);
+    });
+
+    it('sin código exacto lista como siempre', () => {
+      enter('35');
+      responder([proveedor(8, '00350')]);
+
+      expect(c.proveedor()).toBeNull();
+      expect(opciones()).toBe(1);
+    });
+
+    it('el botón Buscar proveedor lista aunque el código sea exacto', () => {
+      c.textoProveedor = '35';
+      Array.from(raiz().querySelectorAll('button')).find(b => b.textContent?.trim() === 'Buscar proveedor')!.click();
+      responder([proveedor(7, '00035')]);
+
+      expect(c.proveedor()).toBeNull();
+      expect(opciones()).toBe(1);
+    });
+
+    it('con el campo vacío no consulta', () => {
+      enter('   ');
+
+      expect(servidor.match(r => r.url === '/api/proveedores').length).toBe(0);
+    });
+  });
 });

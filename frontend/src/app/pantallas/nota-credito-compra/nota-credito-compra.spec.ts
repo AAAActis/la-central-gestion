@@ -379,4 +379,117 @@ describe('NotaCreditoCompra · 057', () => {
 
     expect(aviso()).toBeNull();
   });
+
+  describe('Enter sobre un código exacto lo elige', () => {
+    const otro = (id: number, codigo: string): ProveedorResumen => ({ ...expoyer, id, codigo, razonSocial: `Otro ${codigo}` });
+    const parecido = (n: number): ArticuloResultado => ({ ...articulo, id: 200 + n, codigoInterno: `A-100${n}`, nombre: `Parecido ${n}` });
+    const opciones = () => raiz.querySelectorAll('button.opcion').length;
+
+    function enter(nombre: string) {
+      const campo = raiz.querySelector(`input[name="${nombre}"]`) as HTMLInputElement;
+      campo.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    }
+
+    function clic(texto: string) {
+      ([...raiz.querySelectorAll('button')].find(b => b.textContent?.trim() === texto) as HTMLButtonElement).click();
+    }
+
+    function responderProveedores(items: ProveedorResumen[]) {
+      servidor.expectOne(r => r.url === '/api/proveedores').flush({ items });
+      fixture.detectChanges();
+    }
+
+    function responderArticulos(articulos: ArticuloResultado[]) {
+      const pedido = servidor.expectOne(r => r.url === '/api/articulos');
+      pedido.flush({ articulos, total: articulos.length, pagina: 1, tamanoPagina: 20, conflictos: [] });
+      fixture.detectChanges();
+      return pedido.request;
+    }
+
+    /** Responde, si salieron, los pedidos que dispara una elección; devuelve cuántos fueron. */
+    function responderEleccion(url: string, cuerpo: object) {
+      const pedidos = servidor.match(r => r.url === url);
+      pedidos.forEach(p => p.flush(cuerpo));
+      fixture.detectChanges();
+      return pedidos.length;
+    }
+
+    function enDevolucion(texto: string) {
+      c().clase = 'DEVOLUCION';
+      fixture.detectChanges();
+      c().textoArticulo = texto;
+    }
+
+    it('proveedor: «3» elige al 00003 sin dejar la lista y trae sus facturas', () => {
+      c().textoProveedor = '3';
+      enter('textoProveedor');
+      responderProveedores([otro(30, '00030'), expoyer]);
+
+      expect(c().proveedor()).toEqual(expoyer);
+      expect(opciones()).toBe(0);
+      expect(responderEleccion('/api/facturas-compra', { items: [], total: 0, pagina: 1, tamanoPagina: 100 })).toBe(1);
+
+      // La lista está oculta mientras hay proveedor: al cambiarlo no tiene que volver.
+      c().cambiarProveedor();
+      fixture.detectChanges();
+      expect(opciones()).toBe(0);
+    });
+
+    it('proveedor: con 003 y 00003 los lista y no elige', () => {
+      c().textoProveedor = '3';
+      enter('textoProveedor');
+      responderProveedores([expoyer, otro(9, '003')]);
+
+      expect(c().proveedor()).toBeNull();
+      expect(opciones()).toBe(2);
+    });
+
+    it('proveedor: sin código exacto lista como siempre', () => {
+      c().textoProveedor = '3';
+      enter('textoProveedor');
+      responderProveedores([otro(30, '00030')]);
+
+      expect(c().proveedor()).toBeNull();
+      expect(opciones()).toBe(1);
+    });
+
+    it('proveedor: el botón Buscar lista aunque el código sea exacto', () => {
+      c().textoProveedor = '3';
+      clic('Buscar proveedor');
+      responderProveedores([expoyer]);
+
+      expect(c().proveedor()).toBeNull();
+      expect(opciones()).toBe(1);
+    });
+
+    it('artículo: elige el código interno exacto aunque venga último en una página de 20, sin pedir la aproximada', () => {
+      enDevolucion(' a-100 ');
+      enter('textoArticulo');
+      const pedido = responderArticulos([...Array.from({ length: 19 }, (_, n) => parecido(n)), articulo]);
+
+      expect(pedido.params.get('tamanoPagina')).toBe('20');
+      expect(pedido.params.get('aproximada')).not.toBe('true');
+      expect(c().lineas.map(l => l.articulo.id)).toEqual([100]);
+      expect(opciones()).toBe(0);
+      expect(responderEleccion('/api/articulos/100', { id: 100, existencias: [] })).toBe(1);
+    });
+
+    it('artículo: sin código interno exacto lista y no agrega línea', () => {
+      enDevolucion('A-100');
+      enter('textoArticulo');
+      responderArticulos([parecido(1), parecido(2)]);
+
+      expect(c().lineas.length).toBe(0);
+      expect(opciones()).toBe(2);
+    });
+
+    it('artículo: el botón Buscar lista aunque el código sea exacto', () => {
+      enDevolucion('A-100');
+      clic('Buscar artículo');
+      responderArticulos([articulo]);
+
+      expect(c().lineas.length).toBe(0);
+      expect(opciones()).toBe(1);
+    });
+  });
 });
