@@ -1722,6 +1722,20 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 **BLOQUEADO EN:** OK de Javi para commitear (test y producción en dos commits) y pushear.
 - OK de Javi («Sí, commiteá»). Commits en `fix/fecha-rango-anios`: test y producción por separado (hashes en `git log`).
 - PR #191 abierto (base `develop`); PR #192 abierto para el cierre documental. `verificador-tdd` sobre `e66577f..4305c51`: **APTO**. Rojo real por aserción (6 de 55). 8 mutaciones del límite (2000/2100, `||`, mensaje, guarda desactivada o movida) muertas. Suite completa de frontend sobre `4305c51` limpio: `TOTAL: 377 SUCCESS`. No verificó: `ng build`, ni los llamadores de `interpretarFecha`. `auditor-persistencia` no aplica (frontend).
+
+## 23/11/2026 · Fix F, solo el script 12 (`fix/vencimiento-proveedor`)
+
+**Instrucción recibida (verbatim):**
+> Fix F: sí, abrí la rama del F desde develop y escribí SOLO el script 12 (backend/db/rescaffold/12_Vencimiento_Proveedor.sql), idempotente, en una transacción, con verificación final, como los scripts 09 a 11. Después te detenés: no escribas código que dependa de las columnas hasta que Santi lo aplique en lacentral_test (public), lacentral_demo y lacentral y haga el re-scaffold. Dejá en el informe los comandos exactos para Santi y cómo comprobar que quedó aplicado en las tres bases (por ejemplo s12 = 1). [...] Sin commit ni push sin mi OK, como siempre.
+
+**Plan:** 1. Rama desde `origin/develop`. 2. Copiar el script 12 (ya escrito) a `backend/db/rescaffold/`. 3. Comandos para Santi. 4. Detenerse.
+
+**Estado:** en curso
+- Rama `fix/vencimiento-proveedor` desde `origin/develop`; script 12 en el árbol, sin commitear. Sin `psql` en esta máquina: la sintaxis no se ejecutó.
+**BLOQUEADO EN:** OK de Javi para commitear/pushear el script; Santi para aplicarlo en las tres bases y hacer el re-scaffold.
+- Javi probó el 12 en una base descartable y halló un hueco: con `vencimiento_dias` NULL, `DIAS_CORRIDOS` y `DIA_FIJO_MES_SIGUIENTE` pasaban el CHECK `proveedor_vencimiento_dias_coherente` (un CHECK deja pasar NULL). Arreglo: `IS NOT NULL` en las dos ramas, y el 12 reemplaza (DROP + ADD) la restricción si existe con la definición vieja; la verificación final exige `IS NOT NULL`. El inverso no cambia.
+- Probado por mí en un esquema descartable de `lacentral_test` (creado y borrado en la misma corrida): versión vieja reproduce el hueco; 12 nuevo sobre la vieja reemplaza la restricción; 27 casos (los dos modos con NULL FALLAN; MANUAL/CONTADO con NULL, DIAS_CORRIDOS 7/10/20/21/25/30 y DIA_FIJO 1/25/28 PASAN; 15, 0, 29, MANUAL+7, CONTADO+7 y modo inválido FALLAN); 12 dos veces, inverso dos veces y 12 después del inverso. Resultado: `TODO OK`, 0 fallos.
+
 ## 23/11/2026 · Conflicto del #191 y correcciones del cierre documental (`docs/sprint06-cierre-correcciones`)
 
 **Instrucción recibida (verbatim):**
@@ -1837,6 +1851,20 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 **Estado:** terminada
 - Rama del #196 al día con su remota; `origin/develop` sin commits nuevos que me falten. README actualizado; diff por mostrar.
 **BLOQUEADO EN:** OK de Javi sobre el diff para commitear y pushear.
+
+## 24/11/2026 · Merge de develop en el #197 y renumerado 12→14 (`fix/vencimiento-proveedor`)
+
+**Instrucción recibida (verbatim):**
+> Corré git merge origin/develop (merge commit, sin rebase, sin --squash). Si hay conflictos, no los resuelvas: pasame git status --short y la lista de archivos en conflicto. No hagas commit, no toques la bitácora todavía.
+>
+> Usá docs/sprint06/BITACORA.md. Agregá el bloque al final, sin reescribir nada de lo anterior. Commit aparte con docs:.
+
+**Plan:** 1) `git fetch` y cruce de archivos contra `origin/develop`. 2) `git merge --no-commit --no-ff origin/develop`. 3) Resolver `docs/sprint06/BITACORA.md` conservando ambos lados, con el OK de Javi. 4) Commit del merge. 5) Este bloque, en commit aparte. 6) Suite completa una sola vez sobre el último commit.
+
+**Estado:** terminada
+- Merge `d748fe3`: 18 commits de `origin/develop` incorporados (Fix E #196, cierre de Sprint 6 #193, siembra de ETMAN y Fazio). Único conflicto: `docs/sprint06/BITACORA.md`, resuelto conservando los bloques de ambos lados; se sacó la línea duplicada y los tres marcadores. Diff de la bitácora contra `origin/develop`: +14/−0. 41 líneas `Estado` y 41 bloques.
+- El renumerado del script del Fix F de 12 a 14 está en `3eef61b`; no se corrigió en el bloque del 23/11, va en este.
+- Abierto: el #197 sigue borrador y frenado por Santi; Fix F.3–F.5 espera el 14 aplicado y el re-scaffold; la suite completa sobre el último commit, todavía sin correr (si salta un timeout de Npgsql, #190, se filtra); el bloque `23/11 · Fix E y Fix F` quedó «en curso» y probablemente viejo (de otra sesión, no se tocó).
 
 ### PARA SANTI · 23/11/2026 · script 12 (C2, catálogo de proveedores y rol de n8n)
 
@@ -1965,7 +1993,7 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 3. Script 13 a `feature/s7-script-13` (sobre `feature/128-catalogo-scrape`, porque exige el 12), push sin PR.
 4. Tras el merge de #193 → #198 → #199: bases de los PR a develop si hace falta; bloque fish para Santi; re-scaffold contra `public` y su PR.
 
-**Estado:** en curso
+**Estado:** terminada. El punto 4 se hizo en el bloque siguiente (#199 mergeado, bloque fish, re-scaffold).
 - 1) #193: `da44e5a` en `docs/sprint06-cierre-correcciones`: #191 pasa a «hecho, mergeado» (`8cd856e`) en el ESTADO del Sprint 6 (era el único lugar) y regla explícita del costo al anular en C7-02 del ESTADO del Sprint 7. La D-S6-30 no se tocó. Cuerpo del PR: la advertencia del conflicto se reemplazó por «se resolvió en `42902a1`». Review de Javi respondido punto por punto (comentario 7131077291). Propagado a #198 (más `script 12` → `script 13` en C7-02, que había quedado viejo) y a #199. Sin suite ni verificadores: solo docs.
 - 2) Scripts 12: el 12 del #197 (Fix F) agrega `proveedor.vencimiento_modo` y `vencimiento_dias` (vencimiento de las facturas de compra); el `vencido` de C2 es del renglón del catálogo. C2 no lo cubre → el #197 pasa a 14: `3eef61b` en `fix/vencimiento-proveedor` (dos `git mv` y el número en `RAISE` y comentarios; mismo SQL), título y cuerpo del #197 a 14, comentario 7131115876. Las alícuotas pasan al 15. D-S7-05 en el ESTADO del Sprint 7 (#198). Cuerpos de #198 y #199 al día.
 - 3) Script 13: `feature/s7-script-13` desde `feature/128-catalogo-scrape` (exige el 12), `f944258`, pusheada, sin PR. Rotulado BORRADOR: sin ejecutar ni probar.
@@ -1988,7 +2016,7 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 2. Al «mergeado»: bloque fish (backup de `lacentral`, el 12 en `lacentral` con verificación, borrado de `nc057_fuente`, `c2_fuente` y `c2_ensayo_e6807bae`); re-scaffold contra `public` (0 diferencias) y su PR.
 3. Bitácora y ESTADO: #198 a rama muerta; el 12 aplicado en `lacentral_demo` y `lacentral_test`; `lacentral_n8n` con clave.
 
-**Estado:** en curso
+**Estado:** terminada. Abierto: Santi corre el bloque fish (backup, el 12 en `lacentral`, borrado de los tres esquemas de ensayo); merge del PR del re-scaffold.
 - 1) `origin/docs/sprint07-apertura` mergeada en `feature/128-catalogo-scrape`: `e0f68d5`. Conflicto solo en esta bitácora (los dos lados agregaban bloques): primero los de Fix E y siembra de la demo (que vienen de `develop`), después los de C2, sin reescribir ninguno. Los 7 commits del #198 están en `origin/develop..HEAD` y en ninguno de `develop`. #199 retargeteado a `develop`. Frente a `develop`, el código es el de la HU; `LaCentralDbContext.cs` figura con 1410 líneas cambiadas, pero sin contar los finales de línea son solo las +198 de las entidades nuevas (el scaffold lo dejó entero en CRLF). Suite completa sobre `e0f68d5` contra `public` de `lacentral_test` (`--no-incremental`, 0 advertencias): `Correctas! - Con error: 0, Superado: 858, Omitido: 0, Total: 858, Duración: 18 m 11 s`. Sin verificadores (el código de la HU no cambió).
 - 3) **El #198 quedó mergeado a una rama muerta (24/11/2026)**: contra `docs/sprint06-cierre-correcciones` (`8521ae7`) cuando el #193 ya estaba en `develop`; entra por el #199. El 12 aplicado por Santi en `lacentral_test` (`public`) y `lacentral_demo`; `lacentral_n8n` con clave. ESTADO del Sprint 7 al día (fila #128 y PRÓXIMA SESIÓN).
 
@@ -2020,3 +2048,38 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - Orden de Javi (25/11/2026): commitear el bloque de ESTADO (`docs:`); **desvío anotado: el caso 8 de la spec real (mayúsculas, acentos y espacios en la comparación exacta) queda cubierto por PostgreSQL (`Exacta_IgnoraMayusculasAcentosYEspaciosSobrantesORepetidos`), no por Moq, porque la comparación está en el puerto, según la spec**; no cambiar el diseño; agregar test propio de PostgreSQL para «ninguna exacta devuelve vacío» en un commit `test:` aparte. Sin push, sin PR, sin suite completa ni verificadores hasta que entren el #200 y el #197 a `develop` (se traen con un solo merge).
 - Test `Exacta_SinNingunaExacta_DevuelveVacio_AunqueHayaQuienLaContenga` agregado (verde desde el primer momento: la producción ya existía). Filtrado `ProveedorRazonSocialExacta`: `Correctas! - Con error: 0, Superado: 13, Total: 13`.
 **BLOQUEADO EN:** entrada del #200 y el #197 a `develop` y decisión del equipo sobre la regla.
+
+- 2) #199 mergeado (`0633b3b`). Bloque fish entregado a Santi: backup de `lacentral`, el 12 en `lacentral` con verificación (3 tablas) y borrado de `nc057_fuente`, `c2_fuente` y `c2_ensayo_e6807bae` en `lacentral_test` (con `nc057_fuente_borrado.sql` y `sed`; guardas: solo `lacentral_test` y sin dependencias de afuera). Sin probar desde acá (no hay `ssh` a `arch`).
+- Re-scaffold contra `public` de `lacentral_test` en `chore/rescaffold-12` (`f353c36`): **0 diferencias de modelo** (`git diff --ignore-cr-at-eol` vacío); solo cambian finales de línea en 9 archivos, la salida del scaffold tal cual. Suite completa sobre `f353c36` (`--no-incremental`, 0 advertencias): `Correctas! - Con error: 0, Superado: 858, Omitido: 0, Total: 858, Duración: 15 m 58 s`. PR del re-scaffold abierto (ver ESTADO).
+
+## 24/11/2026 · Segundo merge de develop (#199) y suite completa (`fix/vencimiento-proveedor`)
+
+**Instrucción recibida (verbatim):**
+> Sí, hacé el segundo merge con el mismo método.
+>
+> Autorizado, commiteá el merge con ese mensaje.
+>
+> Después, en este orden: Suite completa, una sola vez, sobre el merge commit. [...] Un bloque nuevo en la bitácora, no una línea en el bloque anterior, que ya figura «terminada»: «Segundo merge de develop (#199) y suite completa». Con el hash del merge, el conflicto y su resolución, y el conteo de la suite. En un commit docs: aparte.
+
+**Plan:** 1) Cruce de §3 en las dos direcciones. 2) `git merge --no-commit --no-ff origin/develop`. 3) Resolver la bitácora conservando ambos lados, HEAD primero. 4) Commit del merge. 5) Suite completa una sola vez sobre el merge commit. 6) Este bloque, en commit aparte.
+
+**Estado:** terminada
+- Motivo del segundo merge: la primera suite completa dio rojo contra `lacentral_test` por la guarda de `PostgreSqlPruebas` (el esquema `public` tenía `proveedor_articulo`, `proveedor_articulo_historial` y `scrape_corrida`, y el modelo de la rama no los clonaba). Causa: a la rama le faltaba el #199 (script 12 y su modelo), que se mergeó después del primer merge. No era un bug de la rama.
+- Cruce de §3: develop traía 17 archivos que la rama no tenía; lo propio eran 3 (`14_Vencimiento_Proveedor.sql`, `14_Vencimiento_Proveedor_deshacer.sql`, `sprint06/BITACORA.md`). Única intersección: `docs/sprint06/BITACORA.md`.
+- Merge `601e8fc`. Único conflicto: `docs/sprint06/BITACORA.md`, resuelto conservando los dos lados con HEAD primero. Verificado: sin marcadores, 46 líneas `Estado` y 46 encabezados `##`, diff contra `origin/develop` de +28/−0. Numeración de `backend/db/rescaffold/`: 12 (del #199) y los dos 14 conviven; no hay 13 (D-S7-05).
+- Suite completa sobre `601e8fc`, una sola vez, contra `lacentral_test` con `lacentral_javi`: `Correctas! - Con error: 0, Superado: 858, Omitido: 0, Total: 858, Duración: 22 m 25 s`. Cero `[FAIL]`, ningún timeout de Npgsql (#190). El commit posterior (este bloque) solo toca documentación.
+- Unitarias puras del primer merge (`f70f68b`, `Base!=PostgreSQL`): 574 superadas; cifra parcial, no es la del PR.
+- Abierto: el #197 sigue borrador y frenado por Santi; Fix F.3–F.5 espera el 14 aplicado y el re-scaffold; sin pushear; el bloque `23/11 · Fix E y Fix F` sigue «en curso» y probablemente viejo (de otra sesión, no se tocó). La rama del E2 salió de antes del #199 y necesita el mismo `git merge origin/develop` antes de sus pruebas de persistencia.
+
+## 25/11/2026 · #200 con conflicto tras el merge del #197: merge de develop
+
+**Instrucción recibida (verbatim):**
+> Se mergeó el #197 (script 14, 54569b8) antes que el #200, y el #200 quedó con conflicto. Mergeá origin/develop en la rama del #200 (merge, sin rebase). Si el conflicto es en la bitácora, conservá los bloques de los dos lados sin reescribir ninguno. Como el merge solo trae SQL y docs del #197, no hace falta suite completa ni verificadores: declaralo en el cuerpo del PR. Ojo: NO hagas re-scaffold nuevo en este PR aunque public de lacentral_test ya tenga el 14; el del 14 va en un PR aparte, después de que yo lo aplique en demo y en la real. Avisame cuando esté sin conflicto.
+
+**Plan:**
+1. `git merge origin/develop` en `chore/rescaffold-12` (sin rebase). Solo se solapa esta bitácora; se conservan los bloques de los dos lados (primero los de `develop`, después los de esta rama), sin reescribir ninguno.
+2. Push y cuerpo del #200: el merge trae solo SQL (`14_Vencimiento_Proveedor*.sql`) y docs del #197; sin suite completa ni verificadores. Sin re-scaffold del 14.
+
+**Estado:** terminada. Abierto: Santi aplica el 14 en `lacentral_demo` y en la real; después, PR aparte con el re-scaffold del 14.
+- 1) `origin/develop` (#197, `54569b8`) mergeado en `chore/rescaffold-12`. Entraron solo `backend/db/rescaffold/14_Vencimiento_Proveedor.sql`, `14_Vencimiento_Proveedor_deshacer.sql` y esta bitácora. Único conflicto: esta bitácora. Orden final: las dos líneas de esta rama que cierran el bloque del 24/11 (#199 mergeado y re-scaffold), el bloque «Segundo merge de develop (#199)» de `develop`, y este bloque al final (corrige el orden del plan: las dos líneas tenían que quedar pegadas a su bloque). Sin marcadores; 48 encabezados `##` = 44 de la base + 3 de `develop` + 1 de esta rama; ninguna línea de ningún lado falta. Sin re-scaffold del 14.
+- 2) Push `4300cd5` (merge) + `fcd2d58` (ESTADO: #197 mergeado). Cuerpo del #200 con la sección «Merge de develop tras el #197»: solo SQL y docs, sin suite ni verificadores, y sin re-scaffold del 14. GitHub: `mergeable: MERGEABLE` (`mergeStateStatus: BLOCKED`, por la revisión pendiente, no por conflicto).
