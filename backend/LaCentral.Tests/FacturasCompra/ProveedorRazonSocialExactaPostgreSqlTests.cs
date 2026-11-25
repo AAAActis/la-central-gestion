@@ -46,6 +46,23 @@ public class ProveedorRazonSocialExactaPostgreSqlTests
     }
 
     [PostgreSqlFact]
+    public async Task Exacta_SinNingunaExacta_DevuelveVacio_AunqueHayaQuienLaContenga()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using (var c = fixture.CrearContexto())
+        {
+            c.Proveedor.AddRange(Prov("PRV-EX0", "Ninguna Exacta Test S.A."), Prov("PRV-EXA", "Otra Distinta Test"));
+            await c.SaveChangesAsync();
+        }
+
+        await using var nuevo = fixture.CrearContexto();
+        var repo = new ProveedorRepositorio(nuevo);
+
+        Assert.Empty(await repo.BuscarActivosPorRazonSocialExactaAsync("Ninguna Exacta Test", 5));
+        Assert.Empty(await repo.BuscarActivosPorRazonSocialExactaAsync("No Existe En Absoluto", 5));
+    }
+
+    [PostgreSqlFact]
     public async Task Exacta_IgnoraMayusculasAcentosYEspaciosSobrantesORepetidos()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
