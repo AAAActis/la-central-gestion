@@ -89,3 +89,10 @@ Si en alguna base corta con «13: hay N facturas de compra anuladas sin usuario_
 - La D2 en el esquema: `articulo_codigo_alternativo` tiene `un_codigo_por_proveedor` UNIQUE (`articulo_id`, `proveedor_id`), que es lo que se reemplaza por (`proveedor_id`, `codigo`), y `codigo_unico_global` UNIQUE (`codigo`) solo. Este último impide que dos proveedores compartan un código, y Santi nombró únicamente la unicidad (`proveedor_id`, `codigo`). No está decidido si el global queda.
 
 **BLOQUEADO EN:** dos respuestas de Santi: el número del script de la vinculación (el 15 es de alícuotas según la D-S7-05) y si `codigo_unico_global` queda o se reemplaza por (`proveedor_id`, `codigo`). Mientras tanto, los verificadores del #202 y la medición C6 (solo lectura sobre la demo).
+- Respuestas de Santi (25/11/2026): el script de la vinculación es el **16** (el 15 sigue siendo de alícuotas, como dice la D-S7-05), y `codigo_unico_global` se **reemplaza por UNIQUE (`proveedor_id`, `codigo`)**: el mismo texto de código puede estar en dos proveedores.
+- C6, datos disponibles (solo lectura, 25/11):
+  - `lacentral_demo`: 31 artículos activos y códigos alternativos solo de los proveedores 1 a 5, ninguno de Expoyer (7). `lacentral_santi` no tiene SELECT sobre `proveedor_articulo` (42501).
+  - `lacentral_test` (`public`): 2.644 artículos activos, sin códigos alternativos y sin filas en `proveedor_articulo`. pg_trgm 1.6 en `public`.
+  - Así no hay 50 artículos propios para cruzar contra el scrape de Expoyer.
+
+**BLOQUEADO EN:** C6, a la espera de que Santi elija cómo se accede a los datos. Sigo con el script 16, que ya está decidido.
