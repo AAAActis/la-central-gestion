@@ -70,3 +70,10 @@ and git show origin/feature/s7-script-13:backend/db/rescaffold/13_Anulacion_Cost
 
 Si en alguna base corta con «13: hay N facturas de compra anuladas sin usuario_anulacion_id», no se aplicó nada: hay que decidir quién figura como el que las anuló. Esa decisión es del equipo; no la invento.
 - Suite completa sobre `68745d6`, contra `public` de `lacentral_test` (`dotnet build --no-incremental`: 0 errores, 0 advertencias; `dotnet test --no-build`): `Correctas! - Con error:     0, Superado:   869, Omitido:     0, Total:   869, Duración: 7 m 44 s - LaCentral.Tests.dll (net10.0)`. Son 858 + las 11 del 13, con cero `[FAIL]`. Push y PR a continuación; este commit es solo docs y queda fuera de la corrida.
+- PR **#202** abierto. `verificador-tdd` en curso, con alcance `f944258`, `2b3e9d5` y `0d4ec50` y la suite de `68745d6` (869). El `auditor-persistencia` va después: no corren dos a la vez.
+- Revisión previa de la 053 y la 054:
+  - `proveedor_articulo` no tiene `articulo_id`, y `articulo_codigo_alternativo` (`articulo_id`, `proveedor_id`, `codigo`) no guarda usuario ni fecha. El CA1 de la 054 pide asentarlos, así que la vinculación necesita un script nuevo.
+  - El CA3 de la 054 (dos códigos del mismo proveedor para el mismo artículo) choca con la D2 (un código vigente por proveedor y artículo). El ESTADO ya lo marcaba como decisión del equipo.
+  - La 053 no tiene umbral de parecido: la compuerta C6 (medición sobre 50 artículos) no está hecha.
+
+**BLOQUEADO EN:** la 054 y el umbral de la 053, que dependen de Santi o del equipo: el CA3 contra la D2, dónde se guarda la vinculación y el umbral de pg_trgm. Mientras tanto, los verificadores del #202.
