@@ -1993,7 +1993,7 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 3. Script 13 a `feature/s7-script-13` (sobre `feature/128-catalogo-scrape`, porque exige el 12), push sin PR.
 4. Tras el merge de #193 → #198 → #199: bases de los PR a develop si hace falta; bloque fish para Santi; re-scaffold contra `public` y su PR.
 
-**Estado:** en curso
+**Estado:** terminada. El punto 4 se hizo en el bloque siguiente (#199 mergeado, bloque fish, re-scaffold).
 - 1) #193: `da44e5a` en `docs/sprint06-cierre-correcciones`: #191 pasa a «hecho, mergeado» (`8cd856e`) en el ESTADO del Sprint 6 (era el único lugar) y regla explícita del costo al anular en C7-02 del ESTADO del Sprint 7. La D-S6-30 no se tocó. Cuerpo del PR: la advertencia del conflicto se reemplazó por «se resolvió en `42902a1`». Review de Javi respondido punto por punto (comentario 7131077291). Propagado a #198 (más `script 12` → `script 13` en C7-02, que había quedado viejo) y a #199. Sin suite ni verificadores: solo docs.
 - 2) Scripts 12: el 12 del #197 (Fix F) agrega `proveedor.vencimiento_modo` y `vencimiento_dias` (vencimiento de las facturas de compra); el `vencido` de C2 es del renglón del catálogo. C2 no lo cubre → el #197 pasa a 14: `3eef61b` en `fix/vencimiento-proveedor` (dos `git mv` y el número en `RAISE` y comentarios; mismo SQL), título y cuerpo del #197 a 14, comentario 7131115876. Las alícuotas pasan al 15. D-S7-05 en el ESTADO del Sprint 7 (#198). Cuerpos de #198 y #199 al día.
 - 3) Script 13: `feature/s7-script-13` desde `feature/128-catalogo-scrape` (exige el 12), `f944258`, pusheada, sin PR. Rotulado BORRADOR: sin ejecutar ni probar.
@@ -2016,11 +2016,13 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 2. Al «mergeado»: bloque fish (backup de `lacentral`, el 12 en `lacentral` con verificación, borrado de `nc057_fuente`, `c2_fuente` y `c2_ensayo_e6807bae`); re-scaffold contra `public` (0 diferencias) y su PR.
 3. Bitácora y ESTADO: #198 a rama muerta; el 12 aplicado en `lacentral_demo` y `lacentral_test`; `lacentral_n8n` con clave.
 
-**Estado:** en curso
+**Estado:** terminada. Abierto: Santi corre el bloque fish (backup, el 12 en `lacentral`, borrado de los tres esquemas de ensayo); merge del PR del re-scaffold.
 - 1) `origin/docs/sprint07-apertura` mergeada en `feature/128-catalogo-scrape`: `e0f68d5`. Conflicto solo en esta bitácora (los dos lados agregaban bloques): primero los de Fix E y siembra de la demo (que vienen de `develop`), después los de C2, sin reescribir ninguno. Los 7 commits del #198 están en `origin/develop..HEAD` y en ninguno de `develop`. #199 retargeteado a `develop`. Frente a `develop`, el código es el de la HU; `LaCentralDbContext.cs` figura con 1410 líneas cambiadas, pero sin contar los finales de línea son solo las +198 de las entidades nuevas (el scaffold lo dejó entero en CRLF). Suite completa sobre `e0f68d5` contra `public` de `lacentral_test` (`--no-incremental`, 0 advertencias): `Correctas! - Con error: 0, Superado: 858, Omitido: 0, Total: 858, Duración: 18 m 11 s`. Sin verificadores (el código de la HU no cambió).
 - 3) **El #198 quedó mergeado a una rama muerta (24/11/2026)**: contra `docs/sprint06-cierre-correcciones` (`8521ae7`) cuando el #193 ya estaba en `develop`; entra por el #199. El 12 aplicado por Santi en `lacentral_test` (`public`) y `lacentral_demo`; `lacentral_n8n` con clave. ESTADO del Sprint 7 al día (fila #128 y PRÓXIMA SESIÓN).
 
 **BLOQUEADO EN:** 2) el «mergeado» de Santi para el #199. Después: bloque fish (backup de `lacentral`, el 12 en `lacentral`, borrado de los tres esquemas de ensayo) y re-scaffold contra `public` con su PR.
+- 2) #199 mergeado (`0633b3b`). Bloque fish entregado a Santi: backup de `lacentral`, el 12 en `lacentral` con verificación (3 tablas) y borrado de `nc057_fuente`, `c2_fuente` y `c2_ensayo_e6807bae` en `lacentral_test` (con `nc057_fuente_borrado.sql` y `sed`; guardas: solo `lacentral_test` y sin dependencias de afuera). Sin probar desde acá (no hay `ssh` a `arch`).
+- Re-scaffold contra `public` de `lacentral_test` en `chore/rescaffold-12` (`f353c36`): **0 diferencias de modelo** (`git diff --ignore-cr-at-eol` vacío); solo cambian finales de línea en 9 archivos, la salida del scaffold tal cual. Suite completa sobre `f353c36` (`--no-incremental`, 0 advertencias): `Correctas! - Con error: 0, Superado: 858, Omitido: 0, Total: 858, Duración: 15 m 58 s`. PR del re-scaffold abierto (ver ESTADO).
 
 ## 24/11/2026 · Segundo merge de develop (#199) y suite completa (`fix/vencimiento-proveedor`)
 
@@ -2040,3 +2042,16 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - Suite completa sobre `601e8fc`, una sola vez, contra `lacentral_test` con `lacentral_javi`: `Correctas! - Con error: 0, Superado: 858, Omitido: 0, Total: 858, Duración: 22 m 25 s`. Cero `[FAIL]`, ningún timeout de Npgsql (#190). El commit posterior (este bloque) solo toca documentación.
 - Unitarias puras del primer merge (`f70f68b`, `Base!=PostgreSQL`): 574 superadas; cifra parcial, no es la del PR.
 - Abierto: el #197 sigue borrador y frenado por Santi; Fix F.3–F.5 espera el 14 aplicado y el re-scaffold; sin pushear; el bloque `23/11 · Fix E y Fix F` sigue «en curso» y probablemente viejo (de otra sesión, no se tocó). La rama del E2 salió de antes del #199 y necesita el mismo `git merge origin/develop` antes de sus pruebas de persistencia.
+
+## 25/11/2026 · #200 con conflicto tras el merge del #197: merge de develop
+
+**Instrucción recibida (verbatim):**
+> Se mergeó el #197 (script 14, 54569b8) antes que el #200, y el #200 quedó con conflicto. Mergeá origin/develop en la rama del #200 (merge, sin rebase). Si el conflicto es en la bitácora, conservá los bloques de los dos lados sin reescribir ninguno. Como el merge solo trae SQL y docs del #197, no hace falta suite completa ni verificadores: declaralo en el cuerpo del PR. Ojo: NO hagas re-scaffold nuevo en este PR aunque public de lacentral_test ya tenga el 14; el del 14 va en un PR aparte, después de que yo lo aplique en demo y en la real. Avisame cuando esté sin conflicto.
+
+**Plan:**
+1. `git merge origin/develop` en `chore/rescaffold-12` (sin rebase). Solo se solapa esta bitácora; se conservan los bloques de los dos lados (primero los de `develop`, después los de esta rama), sin reescribir ninguno.
+2. Push y cuerpo del #200: el merge trae solo SQL (`14_Vencimiento_Proveedor*.sql`) y docs del #197; sin suite completa ni verificadores. Sin re-scaffold del 14.
+
+**Estado:** terminada. Abierto: Santi aplica el 14 en `lacentral_demo` y en la real; después, PR aparte con el re-scaffold del 14.
+- 1) `origin/develop` (#197, `54569b8`) mergeado en `chore/rescaffold-12`. Entraron solo `backend/db/rescaffold/14_Vencimiento_Proveedor.sql`, `14_Vencimiento_Proveedor_deshacer.sql` y esta bitácora. Único conflicto: esta bitácora. Orden final: las dos líneas de esta rama que cierran el bloque del 24/11 (#199 mergeado y re-scaffold), el bloque «Segundo merge de develop (#199)» de `develop`, y este bloque al final (corrige el orden del plan: las dos líneas tenían que quedar pegadas a su bloque). Sin marcadores; 48 encabezados `##` = 44 de la base + 3 de `develop` + 1 de esta rama; ninguna línea de ningún lado falta. Sin re-scaffold del 14.
+- 2) Push `4300cd5` (merge) + `fcd2d58` (ESTADO: #197 mergeado). Cuerpo del #200 con la sección «Merge de develop tras el #197»: solo SQL y docs, sin suite ni verificadores, y sin re-scaffold del 14. GitHub: `mergeable: MERGEABLE` (`mergeStateStatus: BLOCKED`, por la revisión pendiente, no por conflicto).
