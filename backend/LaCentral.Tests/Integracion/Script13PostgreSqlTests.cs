@@ -251,6 +251,74 @@ public class Script13PostgreSqlTests
         await FallaConAsync(contexto, "ncc_anulacion_coherente");
     }
 
+    private static async Task NotaRechazadaAsync(PostgreSqlPruebas fixture, (int Usuario, int Proveedor, int Articulo, int Factura, short Sucursal) s,
+        Action<NotaCreditoCompra> cambio)
+    {
+        var nota = Nota(s.Proveedor, s.Usuario);
+        cambio(nota);
+        await using var contexto = fixture.CrearContexto();
+        contexto.NotaCreditoCompra.Add(nota);
+        await FallaConAsync(contexto, "ncc_anulacion_coherente");
+    }
+
+    // Una ACTIVA no trae nada de una anulación: ni motivo, ni fecha, ni quién.
+    [PostgreSqlFact]
+    public async Task NotaActivaConRastroDeAnulacion_LaRechazaLaBase()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await AplicarAsync(fixture);
+        var s = await SembrarAsync(fixture);
+
+        await NotaRechazadaAsync(fixture, s, n => n.MotivoAnulacion = "Duplicada");
+        await NotaRechazadaAsync(fixture, s, n => n.FechaAnulacion = DateTime.UtcNow);
+        await NotaRechazadaAsync(fixture, s, n => n.UsuarioAnulacionId = s.Usuario);
+    }
+
+    [PostgreSqlFact]
+    public async Task NotaAnuladaSinMotivoOSinFecha_LaRechazaLaBase()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await AplicarAsync(fixture);
+        var s = await SembrarAsync(fixture);
+
+        await NotaRechazadaAsync(fixture, s, n => (n.Estado, n.FechaAnulacion, n.UsuarioAnulacionId) = ("ANULADA", DateTime.UtcNow, s.Usuario));
+        await NotaRechazadaAsync(fixture, s, n => (n.Estado, n.MotivoAnulacion, n.UsuarioAnulacionId) = ("ANULADA", "Duplicada", s.Usuario));
+    }
+
+    // La guarda corta solo por anuladas SIN usuario: una anulada con quién anuló no frena el 13.
+    [PostgreSqlFact]
+    public async Task ConFacturaAnuladaConUsuario_ElScriptSeAplica()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        await EjecutarAsync(fixture, "ALTER TABLE factura_compra DROP CONSTRAINT IF EXISTS fc_anulacion_con_usuario; " +
+            $"UPDATE factura_compra SET estado = 'ANULADA', motivo_anulacion = 'Vieja', fecha_anulacion = now(), usuario_anulacion_id = {s.Usuario} WHERE id = {s.Factura}");
+
+        var avisos = await AplicarAsync(fixture);
+
+        Assert.Contains("13: TODO OK.", avisos);
+        Assert.Equal(1L, await EscalarAsync<long>(fixture,
+            "SELECT count(*) FROM pg_constraint WHERE connamespace = current_schema()::regnamespace AND conname = 'fc_anulacion_con_usuario'"));
+    }
+
+    // Sin el 12 el 13 no arranca: corta con su mensaje y no toca ninguna restricción.
+    [PostgreSqlFact]
+    public async Task SinScript12_ElScriptCortaSinAplicarNada()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await EjecutarAsync(fixture, "DROP TABLE scrape_corrida CASCADE; ALTER TABLE factura_compra DROP CONSTRAINT IF EXISTS fc_anulacion_con_usuario");
+        var antes = await EscalarAsync<string>(fixture, Firma);
+
+        var error = await Assert.ThrowsAsync<PostgresException>(() => AplicarAsync(fixture));
+
+        Assert.Equal("P0001", error.SqlState);
+        Assert.Contains("13: falta el script 12", error.MessageText);
+        Assert.Equal(antes, await EscalarAsync<string>(fixture, Firma));
+    }
+
+    private const string Firma = "SELECT string_agg(conname || ':' || pg_get_constraintdef(oid), ';' ORDER BY conname) FROM pg_constraint " +
+        "WHERE connamespace = current_schema()::regnamespace";
+
     // En la real puede haber anuladas sin usuario: el 13 corta con un mensaje y no deja nada a medias.
     // Sin aplicar antes: mientras public no tenga el 13, también prueba que los pasos 1 y 2 se deshacen.
     [PostgreSqlFact]
@@ -260,14 +328,12 @@ public class Script13PostgreSqlTests
         var s = await SembrarAsync(fixture);
         await EjecutarAsync(fixture, "ALTER TABLE factura_compra DROP CONSTRAINT IF EXISTS fc_anulacion_con_usuario; " +
             $"UPDATE factura_compra SET estado = 'ANULADA', motivo_anulacion = 'Vieja', fecha_anulacion = now() WHERE id = {s.Factura}");
-        const string firma = "SELECT string_agg(conname || ':' || pg_get_constraintdef(oid), ';' ORDER BY conname) FROM pg_constraint " +
-            "WHERE connamespace = current_schema()::regnamespace";
-        var antes = await EscalarAsync<string>(fixture, firma);
+        var antes = await EscalarAsync<string>(fixture, Firma);
 
         var error = await Assert.ThrowsAsync<PostgresException>(() => AplicarAsync(fixture));
 
         Assert.Equal("P0001", error.SqlState);
         Assert.Contains("1 facturas de compra anuladas sin usuario_anulacion_id", error.MessageText);
-        Assert.Equal(antes, await EscalarAsync<string>(fixture, firma));
+        Assert.Equal(antes, await EscalarAsync<string>(fixture, Firma));
     }
 }
