@@ -66,7 +66,7 @@ Lo pidió Santi el 25/11/2026, para que cada uno (y su Claude) sepa qué es suyo
 | C1 · modalidad L2 y retiro de Tarjeta3/6 | 032, 033 y el CA-004 de la 050 | **Propuesta (para el equipo):** no va en el 12. El plan la ponía junto con C2, pero C2 destraba los scrapes y no tiene que esperar el cambio de modalidades, que además toca código de precios. Script propio cuando arranquen la 032 y la 033 |
 | E13 · script 13 (costo previo por línea, D-S7-03; anulación sin doble certificación, D-S7-04) | #9, #23, #195 | Pendiente de escribir |
 | E15 · script 15 (alícuotas, D-S7-02) | #194 | Pendiente de escribir; espera la pregunta P7-02 a Sergio |
-| E14 · script 14 (vencimiento de facturas por proveedor, Fix F) | #197 | Mergeado a `develop` (`54569b8`, 25/11/2026), antes que el #200, que quedó con conflicto en la bitácora y se resolvió con merge (`4300cd5`). Lo aplica Santi en `lacentral_demo` y en la real; `public` de `lacentral_test` ya lo tiene. Su re-scaffold va en un PR aparte, después de eso. Era el «12» del #197, renumerado el 24/11/2026 (decisión de Santi: el 12 es C2) |
+| E14 · script 14 (vencimiento de facturas por proveedor, Fix F) | #197 | Mergeado a `develop` (`54569b8`, 25/11/2026), antes que el #200, que quedó con conflicto en la bitácora y se resolvió con merge (`4300cd5`). Aplicado por Santi (25/11) en `lacentral_test`, `lacentral_demo` y `lacentral`, con «14: TODO OK.» en las tres (backup de la real antes, en `~/dev/TESIS/backups/lacentral-antes-14.dump`). Re-scaffold en `chore/rescaffold-14` (`99d6320`): solo `VencimientoModo` y `VencimientoDias` en `Proveedor` y su configuración. Era el «12» del #197, renumerado el 24/11/2026 (decisión de Santi: el 12 es C2) |
 
 **Por qué tres scripts (12, 13 y 15) y no uno:** (el 14 es el Fix F del #197, otro tema) el 12 solo crea tablas nuevas y destraba a Santi hoy; no espera a
 nadie. El 13 junta dos cambios chicos y ya definidos sobre las tablas de la anulación (`factura_compra_detalle`,
@@ -281,6 +281,12 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 ---
 
 ## PRÓXIMA SESIÓN
+
+**25/11/2026 · el 14 aplicado en las tres bases y su re-scaffold en PR.**
+- **#197 (script 14, Fix F) mergeado (`54569b8`)** antes que el #200; el #200 se destrabó con merge de `develop` y está mergeado (`07fd8e7`).
+- **El 14 está aplicado** (Santi, 25/11) en `public` de `lacentral_test`, en `lacentral_demo` y en `lacentral`, con «14: TODO OK.» en las tres. Backup de la real antes: `~/dev/TESIS/backups/lacentral-antes-14.dump`.
+- **Re-scaffold del 14** en `chore/rescaffold-14` (`99d6320`) contra `public` de `lacentral_test`: solo `VencimientoModo` y `VencimientoDias` en `Proveedor` y su configuración en `LaCentralDbContext.cs` (+18 líneas, sin cambios de finales de línea). **PR #201.** Suite completa sobre `4064b1e`: **858/858**, 0 advertencias. Sin verificadores (no hay lógica nueva).
+- **Sigue:** Fix F.3–F.5 (usar el vencimiento por proveedor), que esperaba el 14 aplicado y este re-scaffold.
 
 **24/11/2026 (tarde) · el #198 entró por el #199.**
 - **El #198 se mergeó a una rama muerta (24/11/2026):** lo mergearon contra `docs/sprint06-cierre-correcciones` (`8521ae7`),
