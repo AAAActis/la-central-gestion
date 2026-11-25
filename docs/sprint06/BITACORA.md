@@ -2040,3 +2040,43 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - Suite completa sobre `601e8fc`, una sola vez, contra `lacentral_test` con `lacentral_javi`: `Correctas! - Con error: 0, Superado: 858, Omitido: 0, Total: 858, Duración: 22 m 25 s`. Cero `[FAIL]`, ningún timeout de Npgsql (#190). El commit posterior (este bloque) solo toca documentación.
 - Unitarias puras del primer merge (`f70f68b`, `Base!=PostgreSQL`): 574 superadas; cifra parcial, no es la del PR.
 - Abierto: el #197 sigue borrador y frenado por Santi; Fix F.3–F.5 espera el 14 aplicado y el re-scaffold; sin pushear; el bloque `23/11 · Fix E y Fix F` sigue «en curso» y probablemente viejo (de otra sesión, no se tocó). La rama del E2 salió de antes del #199 y necesita el mismo `git merge origin/develop` antes de sus pruebas de persistencia.
+
+## 25/11/2026 · Fix «Enter sobre un código exacto lo elige» (`fix/enter-codigo-exacto`)
+
+**Instrucción recibida (verbatim):**
+> Tarea: fix chico de frontend «Enter sobre un código exacto lo elige» en todas las pantallas. Rama fix/enter-codigo-exacto, desde origin/develop (fetch primero; si develop trae commits, mergealos según CLAUDE.md §3). Trabajá en una carpeta o worktree distinto del que usa la sesión del E2.
+> PROBLEMA: En la factura de compra (FCO), escribir «35» y dar Enter elige a Expoyer directo (enterProveedor / enterArticulo en factura-compra.ts, HU-FCO-06 CA-002, CA-003, CA-009). En NCA, en compras registradas y en notas registradas, el Enter solo lista (buscarProveedor / buscarArticulo) y no elige. Es una lógica que nunca se copió.
+> REGLA (igual a la de FCO, no se cambia): Proveedor: Enter busca; si exactamente UN resultado tiene su código igual al texto sin ceros a la izquierda, se elige sin listar. Con dos o más (035 y 00035) se LISTA y no se elige (CA-003, se mantiene). Con cero, se lista como hoy. Artículo: Enter elige si hay un código interno exacto (trim, sin distinguir mayúsculas), como enterArticulo. Al elegir se usa el elegirProveedor / agregarArticulo que ya tiene cada pantalla; no se duplica la lógica de elección.
+> ALCANCE: 1. Extraé la regla a compartido/ (funciones puras; hoy sinCeros es privada en factura-compra.ts, línea ~731) y hacé que FCO la use SIN cambiar su comportamiento. 2. Aplicala en NCA (proveedor y artículo), compras-registradas y notas-credito-registradas (filtro de proveedor). 3. Buscá con grep otros campos de búsqueda de proveedor o artículo con Enter y LISTALOS en el informe. Cambiá solo los que tengan el mismo caso; si alguno no está claro, preguntá.
+> VERIFICAR ANTES DE IMPLEMENTAR (sin editar): tamaño de página de api.proveedores(...) y api.buscar(...) en cada pantalla; informar si el exacto puede quedar afuera. NO cambies el backend sin avisarme. Mostrame el plan y los archivos a tocar antes de editar.
+> NO SE HACE: no se normalizan los códigos a 5 dígitos (propuesta de Javi, a confirmar con el equipo; solo se anota en la bitácora). No se tocan colores, estilos ni SISTEMA-VISUAL. No se tocan backend ni esquema.
+> REGLAS: sin commit ni push sin OK; TDD en tres commits (andamiaje, specs en rojo por aserción, producción); suite de frontend una sola vez sobre el último commit, declarar que corre solo en Chromium; verificador-tdd al cerrar, una vez, acotado a los commits del fix; auditor-persistencia «no aplica»; decisiones nuevas «a confirmar», sin número propio.
+
+**Plan:**
+1. Rama desde `origin/develop` y cruce de §3.
+2. Inspección previa (sin editar código): pantallas con búsqueda y tamaño de página.
+3. Plan a Javi y OK.
+4. Tres commits TDD; suite una vez; verificador-tdd una vez.
+
+**Estado:** en curso
+- 1) Rama `fix/enter-codigo-exacto` creada desde `origin/develop` (`54569b8`); develop traía commits respecto del worktree viejo, no hay trabajo propio que cruzar.
+- 2) Inspección hecha, sin editar código. Proveedor: `api.proveedores` sin tamanoPagina → el backend usa 20 y ordena el código exacto primero (`ProveedorRepositorio.cs:90`). Artículo: el código interno exacto es Prioridad 0 (`ArticuloRepositorio.cs:166`), primero en el orden. El exacto no queda afuera de la página en ninguno de los dos.
+- A confirmar (no implementado): normalizar los códigos de proveedor a 5 dígitos, propuesta de Javi.
+
+**BLOQUEADO EN:** el OK de Javi al plan y a los archivos a tocar, antes de editar código.
+
+**Instrucción de continuación, 25/11/2026 20:23 (verbatim):**
+> Plan aprobado. Respuestas:
+> 1. NCA conserva su listado actual (sin aproximada, página de 20) y solo suma el elegir. El spec de NCA tiene que probar que el código interno exacto queda dentro de la página aun sin aproximada.
+> 2. Normalizar a 5 dígitos: fuera de alcance, queda «a confirmar» en la bitácora, sin implementar.
+> 3. Ya no existe session-a-9016f7. El worktree principal es del E2: no lo toques.
+>
+> Autorizado:
+> - git fetch --all --prune; si origin/develop trajo commits (#197, #199, #200), aplicá CLAUDE.md §3 con un solo git merge origin/develop y dejalo escrito en la bitácora.
+> - Commits 1, 2 y 3 como los planteaste. El bloque de bitácora sin commitear va en un commit docs propio, el primero.
+> - Al cerrar: ng test filtrado en el bucle, y UNA vez ng test --watch=false --browsers=ChromeHeadless completo y ng build sobre el último commit. Dame la línea literal y el hash.
+> - Pará ahí: sin push, sin PR y SIN verificador-tdd todavía. Va después, desde la carpeta principal, cuando el E2 termine. Declaralo en la bitácora.
+
+- OK de Javi al plan: se levanta el bloqueo anterior.
+- A confirmar (fuera de alcance, sin implementar): normalizar los códigos de proveedor a 5 dígitos.
+- §3: `origin/develop` trae 8 commits (#200, `07fd8e7`; #197 y #199 ya estaban en la base). Archivos: `Data/Models/*` y `LaCentralDbContext.cs` (finales de línea del re-scaffold), `frontend/angular.json` (`analytics: false`), `docs/sprint07/ESTADO.md` y esta bitácora. Único solapamiento: la bitácora. El plan no cambia; en el conflicto se conservan los bloques de los dos lados, primero los de `develop`.
