@@ -6,6 +6,7 @@ import {
   ApiLaCentral, ArticuloResultado, FacturaCompraResumen, NotaCreditoCompraNueva, ProveedorResumen, TotalesNotaCreditoCompra,
   mensajeDeError,
 } from '../../nucleo/api';
+import { exactoArticulo, exactoProveedor } from '../../compartido/codigo-exacto';
 
 /** 057 CA-005: un artículo devuelto y su origen, elegido por línea (D9). */
 interface LineaDevuelta { articulo: ArticuloResultado; sucursalId: number | null; cantidad: number | null; }
@@ -48,7 +49,7 @@ interface Origen { id: number; nombre: string; }
             }
             <div class="fila">
               <input name="textoProveedor" [(ngModel)]="textoProveedor" placeholder="Código o nombre del proveedor"
-                aria-label="Código o nombre del proveedor" (keydown.enter)="$event.preventDefault(); buscarProveedor()" />
+                aria-label="Código o nombre del proveedor" (keydown.enter)="$event.preventDefault(); enterProveedor()" />
               <button type="button" class="secundario" (click)="buscarProveedor()">Buscar proveedor</button>
             </div>
             @if (errorProveedor()) { <p class="error">{{ errorProveedor() }}</p> }
@@ -126,7 +127,7 @@ interface Origen { id: number; nombre: string; }
             }
             <div class="fila">
               <input name="textoArticulo" [(ngModel)]="textoArticulo" placeholder="Código o nombre del artículo"
-                aria-label="Código o nombre del artículo" (keydown.enter)="$event.preventDefault(); buscarArticulo()" />
+                aria-label="Código o nombre del artículo" (keydown.enter)="$event.preventDefault(); enterArticulo()" />
               <button type="button" class="secundario" (click)="buscarArticulo()">Buscar artículo</button>
             </div>
             @for (a of articulos(); track a.id) {
@@ -247,11 +248,12 @@ export class NotaCreditoCompra {
     return this.paraRevisar().includes(campo);
   }
 
-  buscarProveedor() {
+  buscarProveedor(alTerminar?: (p: ProveedorResumen[]) => boolean) {
     this.errorProveedor.set(null);
     const texto = this.textoProveedor;
     this.api.proveedores(texto).subscribe({
       next: p => {
+        if (alTerminar?.(p)) return;
         this.proveedores.set(p);
         if (p.length === 0) this.errorProveedor.set(`No hay proveedores activos para «${texto}».`);
       },
@@ -259,6 +261,16 @@ export class NotaCreditoCompra {
         this.proveedores.set([]);
         this.errorProveedor.set(mensajeDeError(e));
       },
+    });
+  }
+
+  /** HU-FCO-06 CA-002 y CA-003, como en la factura: Enter sobre un código exacto lo elige sin listar. */
+  enterProveedor() {
+    const texto = this.textoProveedor;
+    this.buscarProveedor(p => {
+      const exacto = exactoProveedor(p, texto);
+      if (exacto) this.elegirProveedor(exacto);
+      return !!exacto;
     });
   }
 
@@ -291,10 +303,20 @@ export class NotaCreditoCompra {
     this.marcadas.set(marcadas);
   }
 
-  buscarArticulo() {
+  buscarArticulo(alTerminar?: (a: ArticuloResultado[]) => boolean) {
     this.api.buscar(this.textoArticulo, false, 1, 20).subscribe({
-      next: r => this.articulos.set(r.articulos),
+      next: r => { if (!alTerminar?.(r.articulos)) this.articulos.set(r.articulos); },
       error: e => this.error.set(mensajeDeError(e)),
+    });
+  }
+
+  /** HU-FCO-06 CA-009, como en la factura: Enter sobre el código exacto de un artículo lo elige sin listar. */
+  enterArticulo() {
+    const texto = this.textoArticulo;
+    this.buscarArticulo(a => {
+      const exacto = exactoArticulo(a, texto);
+      if (exacto) this.agregarArticulo(exacto);
+      return !!exacto;
     });
   }
 
