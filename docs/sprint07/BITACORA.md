@@ -96,3 +96,17 @@ Si en alguna base corta con «13: hay N facturas de compra anuladas sin usuario_
   - Así no hay 50 artículos propios para cruzar contra el scrape de Expoyer.
 
 **BLOQUEADO EN:** C6, a la espera de que Santi elija cómo se accede a los datos. Sigo con el script 16, que ya está decidido.
+- Respuesta de Santi sobre la C6 y reglas del día (25/11/2026), verbatim:
+  > Postergá la C6: construí la 053 con el umbral configurable en 0,3 y dejá la medición pendiente en el ESTADO; se mide cuando el scrape corra contra la base real (articulos reales + catálogo juntos). No pidas GRANT ni toques permisos.
+  >
+  > De acá en adelante, para no frenar: las decisiones TÉCNICAS las tomás vos (esquema, índices, tipos, nombres, qué script, cómo se arma una pantalla, valores por defecto configurables), las registrás con fecha en el ESTADO y seguís. Solo parás por: (a) una regla de NEGOCIO que no esté escrita ni se deduzca de las D vigentes, (b) un cambio que exija tocar datos reales de lacentral, o (c) criterios de aceptación que se contradigan entre sí. Si tenés varias preguntas de negocio, juntalas y me las hacés todas juntas al final de la HU, no de a una.
+  >
+  > Reglas ya decididas hoy (25/11/2026), registralas:
+  > - D2 revisada: un artículo puede tener varios códigos del mismo proveedor; la unicidad es UNIQUE(proveedor_id, codigo), no global.
+  > - La vinculación es la fila de articulo_codigo_alternativo, con usuario_id y fecha (script 16). n8n no toca esa tabla.
+  > - Vinculación automática: si proveedor_articulo (proveedor_id, codigo) ya existe en articulo_codigo_alternativo, está vinculado.
+  > - Comparador: una fila por código vinculado, con marca, precio neto, precio de lista, estado de stock e imagen; ordenado por precio neto. CA4: estado de stock máximo entre las filas del mismo proveedor.
+  > - Precio que se compara: precio_neto (costo sin IVA). El precio de lista se muestra pero no se compara.
+  > - Productos vencidos (vencido = true) no aparecen en el comparador ni como candidatos.
+  > - Para la prueba manual del entregable usá la demo: si necesitás vincular artículos de la demo con códigos de Expoyer o Autocor, cargalos por la pantalla o con un script de siembra de la demo, nunca en lacentral.
+- Con eso, la C6 queda postergada: umbral configurable en 0,3. Desde ahora tomo yo las decisiones técnicas y las registro en el ESTADO (memoria `decisiones-tecnicas-sin-preguntar`). Las reglas del día van al ESTADO como D-S7-06 a D-S7-11, en el PR del 16.
