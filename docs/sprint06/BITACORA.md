@@ -2098,3 +2098,16 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - Reintento filtrado (sin repetir la suite entera), por las 35 clases con fallos: `Correctas! - Con error:     0, Superado:   270, Omitido:     0, Total:   270, Duración: 20 m 36 s`. Un primer intento filtrando por los 240 nombres no corrió (el filtro excedió el límite de la herramienta de pruebas) y no cuenta.
 - Declarado (#190): los 240 fallos de la suite completa son de infraestructura (la base compartida dejó de responder durante la corrida), no del fix; todos pasan en el reintento. Corrió sobre `01e2560`.
 **BLOQUEADO EN:** decisión del equipo sobre la regla; sin push, PR ni verificadores hasta entonces.
+
+## 25/11/2026 · Fix E2 · decisión: sin CUIT = en negro
+
+**Instrucción recibida (verbatim):**
+> Decisión de Javi, 25/11/2026: un PDF sin CUIT es SIEMPRE una carga en negro (presupuesto). No se agrega columna ni bandera, y la regla del CUIT simulado que propuso Santi queda descartada. «Razón social exacta primero» sale tal como está. Autorizado, SOLO documentación (cero código, cero tests): 1. En docs/sprint06/ESTADO.md, en el bloque del E2: cambiá «a confirmar» por «decidida por Javi el 25/11/2026: sin CUIT = en negro; sin columna ni código». Mantené el riesgo Fazio, redactado como consecuencia de esa decisión: un proveedor real que mande el PDF sin CUIT queda tratado como en negro. 2. Bitácora: un bloque NUEVO (se agrega, no se reescribe) con esta decisión y su fecha. Verificá que Estado = encabezados ##. 3. Un solo commit, tipo docs. Sin push, sin PR, sin verificadores. 4. Mostrame el diff del ESTADO antes de commitear.
+
+**Plan:** 1. ESTADO. 2. Este bloque y conteo. 3. Mostrar el diff. 4. Con OK: un commit `docs:`.
+
+**Estado:** terminada
+- **Decisión (Javi, 25/11/2026):** un PDF sin CUIT es siempre una carga en negro (presupuesto); sin columna ni bandera; descartada la regla del CUIT simulado; «razón social exacta primero» sale tal como está. Levanta el bloqueo por la decisión de la regla.
+- ESTADO editado (bloque del 25/11, líneas «Estado» y «Caso conocido»).
+**BLOQUEADO EN:** OK de Javi sobre el diff del ESTADO para commitear.
+- OK de Javi (25/11/2026) para el commit `docs:` con dos agregados en el ESTADO: el riesgo de que «contiene» asigne un PDF sin CUIT a una cuenta en blanco («sin CUIT = en negro» es convención de la operación, el sistema no la garantiza) y que la pregunta a Sergio del bloque del 24/11 queda superada. «La X va por delante o al final» sigue a confirmar. Sin push, PR ni verificadores: quedan abiertos.
