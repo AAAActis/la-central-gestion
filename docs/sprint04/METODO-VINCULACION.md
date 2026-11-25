@@ -57,7 +57,7 @@ Tres piezas, y dos ya existen:
 | Tabla | Estado | Qué guarda |
 |---|---|---|
 | `articulo` | **existe** | El catálogo maestro de La Central. 2644 filas. |
-| `articulo_codigo_alternativo` | **existe** (D2) | Código + proveedor + artículo. Un código vigente por proveedor y artículo, con unicidad global. |
+| `articulo_codigo_alternativo` | **existe** (D2) | Código + proveedor + artículo. Es la vinculación (D-S7-07). Un artículo puede tener varios códigos del mismo proveedor; cada código de un proveedor apunta a un solo artículo: UNIQUE (proveedor_id, codigo), sin unicidad global (D2 revisada, D-S7-06, Santi, 25/11/2026; script 16). |
 | `proveedor_articulo` | **nueva** | El catálogo crudo del proveedor, tal como lo manda. |
 
 La tabla nueva, en lo esencial:

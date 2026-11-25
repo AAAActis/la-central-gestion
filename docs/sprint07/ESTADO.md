@@ -17,7 +17,7 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 |---|---|---|---|---|
 | #128 | 055 · HU-CMP-08 · incorporar al catálogo del proveedor el resultado de un scrape (proforma reescrita, v2.0) | 5 | C2 (script 12, Santi) | Script 12 (datos reales de Expoyer) y `CONTRATO-N8N.md`: 9 pruebas contra PostgreSQL, verificadores APTO. **#199 mergeado (`0633b3b`, 24/11).** El 12 en `lacentral_test` y `lacentral_demo`; `lacentral` con el bloque fish de Santi. Re-scaffold contra `public`: 0 diferencias de modelo |
 | #126 | 053 · HU-CMP-06 · candidatos por aproximación entre catálogos | 8 | C2, C5, C6 | Sin proforma (C5) |
-| #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | C2, C5 y **el CA3 contra D2 (equipo)** | Sin proforma (C5). **No se construye** hasta que el equipo decida el CA3 |
+| #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | C2, C5 y ~~el CA3 contra D2~~ (D-S7-06) | Sin proforma (C5). CA3 cerrado por la D-S7-06; esquema en el script 16 |
 | #16 | 030 · HU-CMP-01 · búsqueda comparativa por nombre | 5 | C2 y filas de catálogo | Pendiente |
 | #18 | 031 · HU-CMP-02 · consulta en vivo a los sitios de proveedores | 13 | C2 | Pendiente. Los workflows de n8n los arma Santi, fuera de SP (D-PL-02) |
 | #19 | 032 · HU-CMP-03 · vista Compra | 3 | C1 | Pendiente |
@@ -60,6 +60,13 @@ decidido. El número 06, reservado para C2 desde el Sprint 4, queda sin usar.
 | D-S7-03 | **Costo al anular** (cierra C7-02, entra): al anular una factura, el costo del artículo vuelve al que tenía justo antes de esa factura. Si entre la factura y la anulación alguien lo cambió a mano, queda el de a mano. Exige guardar el costo previo en cada línea al registrarla. | Equipo, 23/11/2026 | Reemplaza la interpretación del CA-002 de la 028 (v1.2) y el CA-004 de la 016 (v1.1). Script 13. #9 y #23 |
 | D-S7-04 | **Anulación con UN administrador** (cierra C7-03, entra): se saca la doble certificación. Anula un ADMINISTRADOR, con motivo obligatorio, y queda registrado quién anuló. **Revierte el pedido de la Dirección del 02/11/2026 (B.4 del script 07); Santi avisa a quien lo pidió.** | Equipo, 23/11/2026 | Cambia el CA-006 y el CA-007 de la 028 (v1.2: un OPERADOR ya no pide la anulación), el CA-012 de la 057 (v1.3) y `Comun/DobleCertificacion`. Script 13 (el CHECK `ncc_anulacion_coherente` hoy exige quien autoriza). #195 |
 | D-S7-05 | **Numeración de los scripts** (choque de dos «12»): el **12** es el catálogo de proveedores (C2, #199), que está verificado y es el que necesita el scrape. El **13** es la anulación (D-S7-03 y D-S7-04). El Fix F del #197 (vencimiento de facturas por proveedor) pasa a ser el **14**: C2 no lo cubre, porque su `vencido` es del renglón del catálogo, no de la factura. Las alícuotas (D-S7-02) pasan al **15**. | Santi, 24/11/2026 | #197 renumerado en `3eef61b`; comentario en el #197 |
+| D-S7-06 | **D2 revisada** (cierra el CA3 de la 054 contra la D2): un artículo propio puede tener varios códigos del mismo proveedor (la misma bomba en dos marcas, cada una con su código). Se mantiene UNIQUE (`proveedor_id`, `codigo`): cada código de un proveedor apunta a un solo artículo y la factura de compra lo identifica sin ambigüedad. Se saca la unicidad global del código. En el comparador cada código es su propia fila; el CA4 informa el máximo. | Santi, 25/11/2026 | Script 16. La ficha del artículo (alta y modificación) sigue cargando un código por proveedor (decisión técnica, abajo) |
+| D-S7-07 | **La vinculación es la fila de `articulo_codigo_alternativo`** (`proveedor_id`, `codigo`, `articulo_id`), con `usuario_id` y `fecha_vinculacion`. `proveedor_articulo` se cruza con ella por (`proveedor_id`, `codigo`); no lleva `articulo_id`. n8n no toca esa tabla. | Santi, 25/11/2026 | Script 16 |
+| D-S7-08 | **Vinculación automática por código:** si (`proveedor_id`, `codigo`) de `proveedor_articulo` ya existe en `articulo_codigo_alternativo`, la fila está vinculada. Lo que no coincide pasa a candidatos por parecido de nombre y número original (053), y lo confirma el operador (054). | Santi, 25/11/2026 | 053, 054 |
+| D-S7-09 | **Comparador:** una fila por código vinculado, con marca, precio neto, precio de lista, estado de stock e imagen, ordenada por precio neto. Se compara `precio_neto` (costo sin IVA); el de lista se muestra pero no se compara. CA4 de la 054: el estado de stock máximo entre las filas del mismo proveedor. | Santi, 25/11/2026 | 030, 050, 054 CA4 |
+| D-S7-10 | **Vencidos fuera:** las filas con `vencido = true` no aparecen ni en el comparador ni como candidatos. | Santi, 25/11/2026 | 030, 050, 053 |
+| D-S7-11 | **C6 postergada:** la 053 se construye con el umbral de parecido configurable en 0,3 (el valor por defecto de pg_trgm). Se mide cuando el scrape corra contra la base real (artículos reales y catálogo juntos). La prueba manual del entregable va sobre la demo: los vínculos que hagan falta se cargan por la pantalla o con una siembra de la demo, nunca en `lacentral`. | Santi, 25/11/2026 | 053; C6 sigue abierta |
+| D-S7-12 | **Las decisiones técnicas las toma el asistente** (esquema, índices, tipos, nombres, número de script, pantallas, valores por defecto configurables) y se registran acá con fecha. Se para solo por una regla de negocio que falta, por datos reales de `lacentral` o por CA contradictorios. Las preguntas de negocio se juntan al final de cada HU. | Santi, 25/11/2026 | Forma de trabajo |
 
 ### Primer scrape · Expoyer · relevado el 23/11/2026
 
@@ -88,8 +95,8 @@ corrida). Con varios proveedores y corridas nocturnas son decenas de millones po
 netbook. No se resuelve en C2: se mide con los primeros scrapes. Opción si hace falta: registrar solo cuando cambian el
 precio o el stock.
 
-**Pendiente del equipo:** el CA3 de la 054 (#127) contra la D2 (dos códigos del mismo proveedor para el mismo
-artículo). **La 054 no se construye hasta que se decida.**
+**Cerrado (25/11/2026, D-S7-06):** el CA3 de la 054 (#127) contra la D2 (dos códigos del mismo proveedor para el mismo
+artículo). Vale el CA3; la D2 queda revisada.
 
 ### P7-01 contra la D-S6-29 · revisión del 23/11/2026
 
@@ -257,6 +264,11 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 ---
 
 ## PRÓXIMA SESIÓN
+
+**25/11/2026 · script 16 (vinculación, D-S7-06 y D-S7-07).**
+- **`feature/127-vinculacion-esquema`:** el 16 cambia la unicidad de `articulo_codigo_alternativo` a (`proveedor_id`, `codigo`) y agrega quién vinculó y cuándo. Tiene 8 pruebas PostgreSQL. Lo aplica Santi en las tres bases; el bloque fish está en la bitácora.
+- **Técnico (25/11):** la ficha del artículo sigue con un código por proveedor; los códigos extra entran por la vinculación. El PR del re-scaffold del 16 cambia el mapa de `ManejadorExcepcionesGlobal` y `Modificar_ElCodigoChocaEnElMotor…`. Hasta ese PR, con el 16 aplicado en `lacentral_test`, esas dos pruebas dan rojo.
+- **Después del 16:** la 053 (candidatos, umbral 0,3) y la 054 (vincular). La C6 queda abierta (D-S7-11).
 
 **24/11/2026 (tarde) · el #198 entró por el #199.**
 - **El #198 se mergeó a una rama muerta (24/11/2026):** lo mergearon contra `docs/sprint06-cierre-correcciones` (`8521ae7`),

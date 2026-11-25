@@ -84,7 +84,7 @@ desactives ni lo eludas. Ningún `TRUNCATE` ni `DROP` fuera del esquema de prueb
   Tarjeta3, Tarjeta6, EfectivoTransferencia, Costo, CasoEspecial—, L2 todavía no existe y
   las tarjetas no tienen tasa: no inventar un número ni sumarles uso. Costo desconocido es
   null, nunca cero.
-- D2 Un código vigente por proveedor y artículo. Más la unicidad global de códigos.
+- D2 Un artículo puede tener varios códigos del mismo proveedor; cada código de un proveedor apunta a un solo artículo: UNIQUE (proveedor_id, codigo), sin unicidad global (D2 revisada, D-S7-06, Santi, 25/11/2026; script 16). Hasta el 25/11/2026 era «un código vigente por proveedor y artículo, más la unicidad global de códigos».
 - D3 HU-FCO-01 antes que HU-ART-05.
 - D7 Todo en pesos. Sin moneda ni cotización.
 - D8 Son PERCEPCIONES: `factura_compra.percepcion_{iva, iibb, municipal, ganancias}`.

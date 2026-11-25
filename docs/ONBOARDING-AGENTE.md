@@ -262,7 +262,7 @@ código.
 | | Decisión |
 |---|---|
 | **D1** | Precios por modalidad, persistidos por artículo. Seis modalidades: Lista, Tarjeta3, Tarjeta6, EfectivoTransferencia, Costo, CasoEspecial. Fórmula: `precio = valor_de_la_base × (1 + porcentaje/100)`. Lista = +50 sobre CostoArticulo. Costo = 0 sobre CostoArticulo. Efectivo = **−10 sobre PrecioLista**, no sobre el costo. Tarjeta3 y Tarjeta6: tasas **sin definir**, base y porcentaje en NULL — **no inventes un número**. CasoEspecial: precio manual, sin fórmula. **Precio NULL significa "no se pudo calcular", NUNCA cero.** |
-| **D2** | Un solo código vigente por proveedor y artículo, más la unicidad global de códigos. |
+| **D2** | Un artículo puede tener varios códigos del mismo proveedor; cada código de un proveedor apunta a un solo artículo: UNIQUE (proveedor_id, codigo), sin unicidad global (D2 revisada, D-S7-06, Santi, 25/11/2026; script 16). Antes: un solo código vigente por proveedor y artículo, más la unicidad global. |
 | **D3** | HU-FCO-01 va **antes** que HU-ART-05: el recálculo necesita una compra que lo dispare. |
 | **D7** | Todo en pesos. No hay moneda ni cotización. |
 | **D8** | Son **percepciones**, no retenciones: `factura_compra.percepcion_{iva, iibb, municipal, ganancias}`. |

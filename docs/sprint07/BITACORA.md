@@ -115,3 +115,34 @@ Si en alguna base corta con «13: hay N facturas de compra anuladas sin usuario_
   - Decisiones técnicas: la ficha del artículo (alta y modificación) sigue con un código por proveedor, como hoy, y los códigos extra del mismo proveedor entran por la vinculación de la 054. Los mensajes del manejador y `Modificar_ElCodigoChocaEnElMotor…` (que dependen de `codigo_unico_global`) se cambian en el PR del re-scaffold, porque `RestriccionesUnicasPostgreSqlTests` exige que cada nombre del mapa exista en la base. Entre la aplicación del 16 y ese PR, esas dos pruebas quedan en rojo.
   - Pruebas `Script16PostgreSqlTests` (8), con el 16 en esqueleto (BEGIN/COMMIT vacíos) para el rojo.
 - Rojo `0e28343` (el 16 en esqueleto): `Con error: 8, Superado: 0, Total: 8`, cada una por su razón (23505 `codigo_unico_global` y `un_codigo_por_proveedor`, 42703 `usuario_id`, nombre del índice, aviso ausente). En `f8aef6d` (el 16 real) las 8 fallaron con 2BP01: `codigo_unico_global` y `un_codigo_por_proveedor` son **restricciones** UNIQUE, no índices sueltos. Lo de «son índices» de más arriba salió de una consulta a `pg_constraint` que había fallado (42725), y yo lo leí como que no había restricciones. Corregido: el 16 borra la restricción (o el índice, si alguna base lo tuviera suelto) y el único nuevo también es una restricción. `Correctas! - Con error: 0, Superado: 8, Total: 8`.
+- Decisiones del 25/11 en el ESTADO como D-S7-06 a D-S7-12. Además, la tabla del tablero (#127) y el «Pendiente del equipo» del CA3 quedan cerrados por la D-S7-06. La D2 se actualizó en `CLAUDE.md`, `docs/ONBOARDING-AGENTE.md` y `docs/sprint04/METODO-VINCULACION.md`.
+
+### PARA SANTI · 25/11/2026 · script 16 en las tres bases
+
+Va después del 13, aunque no depende de él (los dos requieren solo el 12). Desde la raíz del repo, en fish. Cada paso tiene que terminar con `NOTICE:  16: TODO OK.`; si uno falla, no sigas. Es una sola transacción.
+
+1 · `lacentral_test` (`public`):
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+git fetch origin
+git show origin/feature/127-vinculacion-esquema:backend/db/rescaffold/16_Vinculacion_Codigo_Proveedor.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+2 · `lacentral_demo`:
+
+```fish
+git show origin/feature/127-vinculacion-esquema:backend/db/rescaffold/16_Vinculacion_Codigo_Proveedor.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_demo -v ON_ERROR_STOP=1
+```
+
+3 · `lacentral` (la real), con backup antes. Tiene que decir `backup OK` antes de aplicar:
+
+```fish
+mkdir -p ~/dev/TESIS/backups
+ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc lacentral > ~/dev/TESIS/backups/lacentral-antes-16.dump
+and test -s ~/dev/TESIS/backups/lacentral-antes-16.dump
+and echo "backup OK"
+and git show origin/feature/127-vinculacion-esquema:backend/db/rescaffold/16_Vinculacion_Codigo_Proveedor.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral -v ON_ERROR_STOP=1
+```
+
+Al aplicarlo en `lacentral_test`, dos pruebas dan rojo hasta el PR del re-scaffold del 16: `RestriccionesUnicasPostgreSqlTests` (el mapa del manejador nombra `codigo_unico_global` y `un_codigo_por_proveedor`) y `Modificar_ElCodigoChocaEnElMotorDespuesDeActualizarLosDatos_NoQuedaNada` (choca por la unicidad global). Conviene aplicarlo cuando yo pueda abrir ese PR enseguida.
