@@ -2052,5 +2052,6 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 1. `git merge origin/develop` en `chore/rescaffold-12` (sin rebase). Solo se solapa esta bitácora; se conservan los bloques de los dos lados (primero los de `develop`, después los de esta rama), sin reescribir ninguno.
 2. Push y cuerpo del #200: el merge trae solo SQL (`14_Vencimiento_Proveedor*.sql`) y docs del #197; sin suite completa ni verificadores. Sin re-scaffold del 14.
 
-**Estado:** en curso
+**Estado:** terminada. Abierto: Santi aplica el 14 en `lacentral_demo` y en la real; después, PR aparte con el re-scaffold del 14.
 - 1) `origin/develop` (#197, `54569b8`) mergeado en `chore/rescaffold-12`. Entraron solo `backend/db/rescaffold/14_Vencimiento_Proveedor.sql`, `14_Vencimiento_Proveedor_deshacer.sql` y esta bitácora. Único conflicto: esta bitácora. Orden final: las dos líneas de esta rama que cierran el bloque del 24/11 (#199 mergeado y re-scaffold), el bloque «Segundo merge de develop (#199)» de `develop`, y este bloque al final (corrige el orden del plan: las dos líneas tenían que quedar pegadas a su bloque). Sin marcadores; 48 encabezados `##` = 44 de la base + 3 de `develop` + 1 de esta rama; ninguna línea de ningún lado falta. Sin re-scaffold del 14.
+- 2) Push `4300cd5` (merge) + `fcd2d58` (ESTADO: #197 mergeado). Cuerpo del #200 con la sección «Merge de develop tras el #197»: solo SQL y docs, sin suite ni verificadores, y sin re-scaffold del 14. GitHub: `mergeable: MERGEABLE` (`mergeStateStatus: BLOCKED`, por la revisión pendiente, no por conflicto).
