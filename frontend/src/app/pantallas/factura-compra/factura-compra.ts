@@ -9,6 +9,7 @@ import {
 } from '../../nucleo/api';
 import { SesionActual } from '../../nucleo/sesion';
 import { RELOJ, aTextoFecha, hoyIso, interpretarFecha } from '../../compartido/fecha-abreviada';
+import { exactoArticulo, exactoProveedor } from '../../compartido/codigo-exacto';
 
 interface LineaEnCarga {
   articulo: ArticuloResultado;
@@ -345,11 +346,11 @@ export class FacturaCompra {
   /** CA-002 y CA-003: Enter sobre un código exacto (sin ceros a la izquierda) lo elige sin listar.
    *  Si hay más de uno (035 y 00035), lista: elegir uno solo sería adivinar. */
   enterProveedor() {
-    const codigo = sinCeros(this.textoProveedor);
+    const texto = this.textoProveedor;
     this.buscarProveedor(p => {
-      const exactos = p.filter(x => sinCeros(x.codigo) === codigo);
-      if (exactos.length === 1) this.elegirProveedor(exactos[0]);
-      return exactos.length === 1;
+      const exacto = exactoProveedor(p, texto);
+      if (exacto) this.elegirProveedor(exacto);
+      return !!exacto;
     });
   }
 
@@ -437,9 +438,9 @@ export class FacturaCompra {
 
   /** CA-009: Enter sobre el código exacto de un artículo lo elige sin listar. */
   enterArticulo() {
-    const codigo = this.textoArticulo.trim().toUpperCase();
+    const texto = this.textoArticulo;
     this.buscarArticulo(a => {
-      const exacto = a.find(x => x.codigoInterno.trim().toUpperCase() === codigo);
+      const exacto = exactoArticulo(a, texto);
       if (exacto) this.elegirArticulo(exacto);
       return !!exacto;
     });
@@ -725,9 +726,4 @@ export class FacturaCompra {
     this.errorPdf.set(null);
     this.version++;
   }
-}
-
-/** CA-003: 35 y 00035 son el mismo código. */
-function sinCeros(codigo: string) {
-  return codigo.trim().toUpperCase().replace(/^0+(?=.)/, '');
 }
