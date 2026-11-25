@@ -1995,3 +1995,14 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 **BLOQUEADO EN:** 2) el «mergeado» de Santi para el #199. Después: bloque fish (backup de `lacentral`, el 12 en `lacentral`, borrado de los tres esquemas de ensayo) y re-scaffold contra `public` con su PR.
 - 2) #199 mergeado (`0633b3b`). Bloque fish entregado a Santi: backup de `lacentral`, el 12 en `lacentral` con verificación (3 tablas) y borrado de `nc057_fuente`, `c2_fuente` y `c2_ensayo_e6807bae` en `lacentral_test` (con `nc057_fuente_borrado.sql` y `sed`; guardas: solo `lacentral_test` y sin dependencias de afuera). Sin probar desde acá (no hay `ssh` a `arch`).
 - Re-scaffold contra `public` de `lacentral_test` en `chore/rescaffold-12` (`f353c36`): **0 diferencias de modelo** (`git diff --ignore-cr-at-eol` vacío); solo cambian finales de línea en 9 archivos, la salida del scaffold tal cual. Suite completa sobre `f353c36` (`--no-incremental`, 0 advertencias): `Correctas! - Con error: 0, Superado: 858, Omitido: 0, Total: 858, Duración: 15 m 58 s`. PR del re-scaffold abierto (ver ESTADO).
+
+## 25/11/2026 · #200 con conflicto tras el merge del #197: merge de develop
+
+**Instrucción recibida (verbatim):**
+> Se mergeó el #197 (script 14, 54569b8) antes que el #200, y el #200 quedó con conflicto. Mergeá origin/develop en la rama del #200 (merge, sin rebase). Si el conflicto es en la bitácora, conservá los bloques de los dos lados sin reescribir ninguno. Como el merge solo trae SQL y docs del #197, no hace falta suite completa ni verificadores: declaralo en el cuerpo del PR. Ojo: NO hagas re-scaffold nuevo en este PR aunque public de lacentral_test ya tenga el 14; el del 14 va en un PR aparte, después de que yo lo aplique en demo y en la real. Avisame cuando esté sin conflicto.
+
+**Plan:**
+1. `git merge origin/develop` en `chore/rescaffold-12` (sin rebase). Solo se solapa esta bitácora; se conservan los bloques de los dos lados (primero los de `develop`, después los de esta rama), sin reescribir ninguno.
+2. Push y cuerpo del #200: el merge trae solo SQL (`14_Vencimiento_Proveedor*.sql`) y docs del #197; sin suite completa ni verificadores. Sin re-scaffold del 14.
+
+**Estado:** en curso
