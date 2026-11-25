@@ -11,6 +11,29 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 
 ---
 
+## Reparto · 25/11/2026
+
+Lo pidió Santi el 25/11/2026, para que cada uno (y su Claude) sepa qué es suyo.
+
+**Santi (su Claude):**
+- Script 13 (#202).
+- Script 16 y vinculación: 053 (#126) y 054 (#127).
+- Comparador: 030 (#16), 031 (#18, en lo que toca al sistema), 032 (#19), 033 (#20), 034 (#35) y 050 (#52).
+- Compras: 026, 027 (#34), 028 (#9), 016 (#23) y #195.
+- Scrapes y workflows de n8n: fuera del repo.
+
+**Javi (su Claude):**
+- Fix E2 (proveedor sin CUIT, ver D-S7-12).
+- Fix F F.3 a F.5 (vencimiento por proveedor; usa las columnas del 14, #201).
+- La 058 (#194, alícuotas, script 15), cuando Sergio conteste la P7-02.
+
+**Regla:**
+- Nadie toca lo del otro.
+- `ESTADO` y bitácora: cada uno agrega sus bloques y nunca reescribe los del otro. Los conflictos se resuelven con merge, conservando los dos lados.
+- Scripts: el 13 y el 16 son de Santi; el 14 y el 15, de Javi. Si uno necesita tocar una tabla del script del otro, avisa antes.
+
+---
+
 ## Tablero · Sprint 7 (milestone «Sprint 7») · 23/11/2026
 
 | Issue | HU | SP | Espera | Estado |
@@ -60,6 +83,7 @@ decidido. El número 06, reservado para C2 desde el Sprint 4, queda sin usar.
 | D-S7-03 | **Costo al anular** (cierra C7-02, entra): al anular una factura, el costo del artículo vuelve al que tenía justo antes de esa factura. Si entre la factura y la anulación alguien lo cambió a mano, queda el de a mano. Exige guardar el costo previo en cada línea al registrarla. | Equipo, 23/11/2026 | Reemplaza la interpretación del CA-002 de la 028 (v1.2) y el CA-004 de la 016 (v1.1). Script 13. #9 y #23 |
 | D-S7-04 | **Anulación con UN administrador** (cierra C7-03, entra): se saca la doble certificación. Anula un ADMINISTRADOR, con motivo obligatorio, y queda registrado quién anuló. **Revierte el pedido de la Dirección del 02/11/2026 (B.4 del script 07); Santi avisa a quien lo pidió.** | Equipo, 23/11/2026 | Cambia el CA-006 y el CA-007 de la 028 (v1.2: un OPERADOR ya no pide la anulación), el CA-012 de la 057 (v1.3) y `Comun/DobleCertificacion`. Script 13 (el CHECK `ncc_anulacion_coherente` hoy exige quien autoriza). #195 |
 | D-S7-05 | **Numeración de los scripts** (choque de dos «12»): el **12** es el catálogo de proveedores (C2, #199), que está verificado y es el que necesita el scrape. El **13** es la anulación (D-S7-03 y D-S7-04). El Fix F del #197 (vencimiento de facturas por proveedor) pasa a ser el **14**: C2 no lo cubre, porque su `vencido` es del renglón del catálogo, no de la factura. Las alícuotas (D-S7-02) pasan al **15**. | Santi, 24/11/2026 | #197 renumerado en `3eef61b`; comentario en el #197 |
+| D-S7-12 | **Factura sin CUIT** (decisión de negocio de Javi): «una factura sin CUIT es remito o presupuesto: compra en negro». Para el Fix E2 queda sugerido usar `proveedor.cuit_simulado`: la única coincidencia por nombre con `cuit_simulado = true`, marcada «Revisar». Lo decide e implementa Javi. | Javi, 25/11/2026 | Fix E2 (Javi). Los números D-S7-06 a D-S7-11 los usan las ramas de Santi todavía sin mergear (#202 y la del 16) |
 
 ### Primer scrape · Expoyer · relevado el 23/11/2026
 
