@@ -69,3 +69,4 @@ and git show origin/feature/s7-script-13:backend/db/rescaffold/13_Anulacion_Cost
 ```
 
 Si en alguna base corta con «13: hay N facturas de compra anuladas sin usuario_anulacion_id», no se aplicó nada: hay que decidir quién figura como el que las anuló. Esa decisión es del equipo; no la invento.
+- Suite completa sobre `68745d6`, contra `public` de `lacentral_test` (`dotnet build --no-incremental`: 0 errores, 0 advertencias; `dotnet test --no-build`): `Correctas! - Con error:     0, Superado:   869, Omitido:     0, Total:   869, Duración: 7 m 44 s - LaCentral.Tests.dll (net10.0)`. Son 858 + las 11 del 13, con cero `[FAIL]`. Push y PR a continuación; este commit es solo docs y queda fuera de la corrida.
