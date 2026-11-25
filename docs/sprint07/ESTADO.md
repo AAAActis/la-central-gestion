@@ -261,7 +261,7 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 **25/11/2026 · el 14 aplicado en las tres bases y su re-scaffold en PR.**
 - **#197 (script 14, Fix F) mergeado (`54569b8`)** antes que el #200; el #200 se destrabó con merge de `develop` y está mergeado (`07fd8e7`).
 - **El 14 está aplicado** (Santi, 25/11) en `public` de `lacentral_test`, en `lacentral_demo` y en `lacentral`, con «14: TODO OK.» en las tres. Backup de la real antes: `~/dev/TESIS/backups/lacentral-antes-14.dump`.
-- **Re-scaffold del 14** en `chore/rescaffold-14` (`99d6320`) contra `public` de `lacentral_test`: solo `VencimientoModo` y `VencimientoDias` en `Proveedor` y su configuración en `LaCentralDbContext.cs` (+18 líneas, sin cambios de finales de línea). La suite y el PR están en la bitácora.
+- **Re-scaffold del 14** en `chore/rescaffold-14` (`99d6320`) contra `public` de `lacentral_test`: solo `VencimientoModo` y `VencimientoDias` en `Proveedor` y su configuración en `LaCentralDbContext.cs` (+18 líneas, sin cambios de finales de línea). **PR #201.** Suite completa sobre `4064b1e`: **858/858**, 0 advertencias. Sin verificadores (no hay lógica nueva).
 - **Sigue:** Fix F.3–F.5 (usar el vencimiento por proveedor), que esperaba el 14 aplicado y este re-scaffold.
 
 **24/11/2026 (tarde) · el #198 entró por el #199.**
