@@ -4,11 +4,11 @@
 --
 --  QUÉ HACE
 --    1. articulo_codigo_alternativo: la unicidad pasa a ser UNIQUE (proveedor_id, codigo)
---       (índice codigo_alt_proveedor_codigo_unico). Se borran:
---         codigo_unico_global      UNIQUE (codigo): dos proveedores pueden usar el mismo código;
---         un_codigo_por_proveedor  UNIQUE (articulo_id, proveedor_id): un artículo puede tener
+--       (restricción codigo_alt_proveedor_codigo_unico). Se borran:
+--         codigo_unico_global      restricción UNIQUE (codigo): dos proveedores pueden usar el mismo código;
+--         un_codigo_por_proveedor  restricción UNIQUE (articulo_id, proveedor_id): un artículo puede tener
 --                                  varios códigos del mismo proveedor (CA3 de la 054);
---         ix_codigo_alt_proveedor  (proveedor_id): lo cubre el índice nuevo, que empieza igual.
+--         ix_codigo_alt_proveedor  índice (proveedor_id): lo cubre el único nuevo, que empieza igual.
 --       Cada código de un proveedor sigue apuntando a un solo artículo: la factura de compra
 --       identifica el artículo sin ambigüedad.
 --    2. articulo_codigo_alternativo.usuario_id (FK a usuario) y fecha_vinculacion
@@ -42,15 +42,24 @@ BEGIN
 
     -- 1 · Unicidad por proveedor y código (D-S7-06). Primero el índice nuevo: si hubiera
     -- repetidos, revienta acá, antes de sacar los viejos.
-    IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relnamespace = v_esquema AND relname = 'codigo_alt_proveedor_codigo_unico') THEN
-        CREATE UNIQUE INDEX codigo_alt_proveedor_codigo_unico ON articulo_codigo_alternativo (proveedor_id, codigo);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = v_esquema AND conname = 'codigo_alt_proveedor_codigo_unico') THEN
+        ALTER TABLE articulo_codigo_alternativo
+            ADD CONSTRAINT codigo_alt_proveedor_codigo_unico UNIQUE (proveedor_id, codigo);
         RAISE NOTICE '16: codigo_alt_proveedor_codigo_unico creado.';
     END IF;
-    IF EXISTS (SELECT 1 FROM pg_class WHERE relnamespace = v_esquema AND relname = 'codigo_unico_global') THEN
+    -- Es una restricción UNIQUE (con su índice); por si alguna base la tuviera como índice suelto, también.
+    IF EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = v_esquema AND conname = 'codigo_unico_global') THEN
+        ALTER TABLE articulo_codigo_alternativo DROP CONSTRAINT codigo_unico_global;
+        RAISE NOTICE '16: codigo_unico_global borrado.';
+    ELSIF EXISTS (SELECT 1 FROM pg_class WHERE relnamespace = v_esquema AND relname = 'codigo_unico_global') THEN
         DROP INDEX codigo_unico_global;
         RAISE NOTICE '16: codigo_unico_global borrado.';
     END IF;
-    IF EXISTS (SELECT 1 FROM pg_class WHERE relnamespace = v_esquema AND relname = 'un_codigo_por_proveedor') THEN
+    -- Es una restricción UNIQUE (con su índice); por si alguna base la tuviera como índice suelto, también.
+    IF EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = v_esquema AND conname = 'un_codigo_por_proveedor') THEN
+        ALTER TABLE articulo_codigo_alternativo DROP CONSTRAINT un_codigo_por_proveedor;
+        RAISE NOTICE '16: un_codigo_por_proveedor borrado.';
+    ELSIF EXISTS (SELECT 1 FROM pg_class WHERE relnamespace = v_esquema AND relname = 'un_codigo_por_proveedor') THEN
         DROP INDEX un_codigo_por_proveedor;
         RAISE NOTICE '16: un_codigo_por_proveedor borrado.';
     END IF;
@@ -80,9 +89,8 @@ DO $verif$
 DECLARE
     v_esquema regnamespace := current_schema()::regnamespace;
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_index i JOIN pg_class x ON x.oid = i.indexrelid
-                   WHERE x.relnamespace = v_esquema AND x.relname = 'codigo_alt_proveedor_codigo_unico'
-                   AND i.indisunique AND pg_get_indexdef(i.indexrelid) LIKE '%(proveedor_id, codigo)') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = v_esquema AND conname = 'codigo_alt_proveedor_codigo_unico'
+                   AND contype = 'u' AND pg_get_constraintdef(oid) = 'UNIQUE (proveedor_id, codigo)') THEN
         RAISE EXCEPTION '16: falta el único (proveedor_id, codigo).';
     END IF;
     IF EXISTS (SELECT 1 FROM pg_class WHERE relnamespace = v_esquema
