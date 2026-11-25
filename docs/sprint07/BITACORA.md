@@ -77,3 +77,15 @@ Si en alguna base corta con «13: hay N facturas de compra anuladas sin usuario_
   - La 053 no tiene umbral de parecido: la compuerta C6 (medición sobre 50 artículos) no está hecha.
 
 **BLOQUEADO EN:** la 054 y el umbral de la 053, que dependen de Santi o del equipo: el CA3 contra la D2, dónde se guarda la vinculación y el umbral de pg_trgm. Mientras tanto, los verificadores del #202.
+- Respuestas de Santi (25/11/2026), verbatim, a las tres preguntas:
+  > (CA3 vs D2) Vale el CA3. Decisión de Santi, 25/11/2026: la D2 se afloja así. Un artículo propio puede tener varios códigos del mismo proveedor (por ejemplo, la misma bomba en dos marcas, cada una con su código). Lo que se mantiene es la unicidad de (proveedor_id, codigo): cada código de un proveedor apunta a un solo artículo, así la factura de compra sigue identificando el artículo sin ambigüedad. En el comparador cada código aparece como su propia fila, con su marca, precio y stock; el CA4 informa el máximo de stock entre ellas. Registralo como decisión con fecha en el ESTADO y actualizá la D2 donde esté escrita.
+  >
+  > Esquema: para vincular no hace falta articulo_id en proveedor_articulo. El vínculo es articulo_codigo_alternativo (proveedor_id, codigo, articulo_id), y proveedor_articulo se cruza con él por (proveedor_id, codigo). Vincular un producto del scrape es crear ese código alternativo, así la vinculación automática por código sale gratis y no se duplica el dato. Si la D2 hoy está implementada como un índice único por (proveedor_id, articulo_id) vigente, se reemplaza por el de (proveedor_id, codigo). Si los CA de la 054 piden saber quién vinculó y cuándo, agregá usuario_id y fecha a articulo_codigo_alternativo. Todo cambio de esquema va en un script nuevo, el 15, con su PR, y me pasás el bloque fish para aplicarlo en las tres bases.
+  >
+  > (Vinculación) Código alternativo (Recomendado).
+  >
+  > (Umbral 053) Mido y propongo.
+- Choque de numeración: la D-S7-05 reserva el 15 para las alícuotas (D-S7-02, #194). Se lo señalo a Santi. Hasta que conteste, el script de la vinculación queda sin número.
+- La D2 en el esquema: `articulo_codigo_alternativo` tiene `un_codigo_por_proveedor` UNIQUE (`articulo_id`, `proveedor_id`), que es lo que se reemplaza por (`proveedor_id`, `codigo`), y `codigo_unico_global` UNIQUE (`codigo`) solo. Este último impide que dos proveedores compartan un código, y Santi nombró únicamente la unicidad (`proveedor_id`, `codigo`). No está decidido si el global queda.
+
+**BLOQUEADO EN:** dos respuestas de Santi: el número del script de la vinculación (el 15 es de alícuotas según la D-S7-05) y si `codigo_unico_global` queda o se reemplaza por (`proveedor_id`, `codigo`). Mientras tanto, los verificadores del #202 y la medición C6 (solo lectura sobre la demo).
