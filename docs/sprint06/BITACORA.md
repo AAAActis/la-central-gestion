@@ -2016,3 +2016,4 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - Merge de `origin/develop` (`0633b3b`) con conflicto solo en esta bitácora: conservados los dos lados, 45 `**Estado:**` y 45 encabezados `##`.
 - Commits: andamiaje `e5f9322`; pruebas `cdcbf64`, en rojo sobre ese commit: `Con error: 7, Superado: 5, Total: 12` (3 Moq por Assert/Verify, 4 PostgreSQL por Assert); producción en el commit siguiente.
 **BLOQUEADO EN:** decisión del equipo sobre la regla (exacta / CUIT simulado / columna «en negro»); sin PR ni verificadores hasta entonces.
+- Corrida filtrada (`FacturasCompra` y `Proveedor`) sobre `d4d8cb7`: `Con error: 50, Superado: 375, Total: 425`; los 50 son timeouts de conexión de Npgsql (#190) en clases de PostgreSQL ajenas al fix, ninguno de `ProveedorRazonSocialExacta`. Reintento filtrado de esos nombres: `Correctas! - Con error: 0, Superado: 51, Total: 51`. Sin suite completa ni verificadores (orden de Javi).
