@@ -41,7 +41,7 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 | C5 · proformas de la 053 y la 054 (con la pantalla de vinculación) | 053, 054 | Sin escribir. El CA3 de la 054 choca con la D2: lo decide el equipo antes |
 | C6 · medición sobre 50 artículos | 053 | Con los primeros scrapes de Santi |
 | C1 · modalidad L2 y retiro de Tarjeta3/6 | 032, 033 y el CA-004 de la 050 | **Propuesta (para el equipo):** no va en el 12. El plan la ponía junto con C2, pero C2 destraba los scrapes y no tiene que esperar el cambio de modalidades, que además toca código de precios. Script propio cuando arranquen la 032 y la 033 |
-| E13 · script 13 (costo previo por línea, D-S7-03; anulación sin doble certificación, D-S7-04) | #9, #23, #195 | Pendiente de escribir |
+| E13 · script 13 (costo previo por línea, D-S7-03; anulación sin doble certificación, D-S7-04) | #9, #23, #195 | Escrito y ensayado (25/11/2026) en `feature/s7-script-13`: `13: TODO OK.` en un esquema descartable de `lacentral_test` (borrado después), idempotente, con una guarda nueva (corta si hay facturas anuladas sin quién las anuló). 11 pruebas PostgreSQL (`Script13PostgreSqlTests`) que corren el archivo tal cual. **Lo aplica Santi** en test, demo y la real (con backup); el bloque fish está en `docs/sprint07/BITACORA.md`. Después: re-scaffold en PR aparte |
 | E15 · script 15 (alícuotas, D-S7-02) | #194 | Pendiente de escribir; espera la pregunta P7-02 a Sergio |
 | E14 · script 14 (vencimiento de facturas por proveedor, Fix F) | #197 | Mergeado a `develop` (`54569b8`, 25/11/2026), antes que el #200, que quedó con conflicto en la bitácora y se resolvió con merge (`4300cd5`). Lo aplica Santi en `lacentral_demo` y en la real; `public` de `lacentral_test` ya lo tiene. Su re-scaffold va en un PR aparte, después de eso. Era el «12» del #197, renumerado el 24/11/2026 (decisión de Santi: el 12 es C2) |
 
@@ -257,6 +257,12 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 ---
 
 ## PRÓXIMA SESIÓN
+
+**25/11/2026 · arranque del Sprint 7 · script 13.**
+- **Bitácora nueva:** `docs/sprint07/BITACORA.md` (lo anterior del Sprint 7 está en la del Sprint 6).
+- **#201 (re-scaffold del 14) sigue abierto:** no se toca `Proveedor` hasta que entre. Fix E2 y Fix F.3–F.5 son de Javi; los workflows de n8n y el scrape, de Santi (fuera del repo).
+- **Script 13** en `feature/s7-script-13`: ensayado, con pruebas, en PR (ver la fila E13). Espera que Santi lo aplique en las tres bases; después, re-scaffold en PR aparte, y recién ahí la 028 y la 016 (D-S7-03) y el #195 (D-S7-04) en código.
+- **Sigue:** la 053 y la 054 (vinculación automática por código, después candidatos por pg_trgm). La 054 tiene el CA3 contra la D2 sin decidir: se pregunta antes de construirla.
 
 **24/11/2026 (tarde) · el #198 entró por el #199.**
 - **El #198 se mergeó a una rama muerta (24/11/2026):** lo mergearon contra `docs/sprint06-cierre-correcciones` (`8521ae7`),

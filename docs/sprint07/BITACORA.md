@@ -37,3 +37,35 @@ Sprint 7 anterior al 25/11/2026 (C2, el 12, el 14 y sus re-scaffolds) está en
 - 1) Arranque. `origin/develop` = `07fd8e7` (#200). **El #201 sigue abierto**: no se toca `Proveedor` hasta que entre. El último bloque «en curso» de `docs/sprint06/BITACORA.md` (23/11, «C2 con los datos reales del primer scrape») ya está cumplido: C2 entró con el #199 (`0633b3b`). No se retoma. Worktrees: solo el principal.
 - 2) `feature/s7-script-13` con `origin/develop` mergeado (`0cb0de7`, merge sin conflicto; la rama solo traía el SQL del 13). Error en el borrador: el paso 2 hace `pg_get_constraintdef((SELECT FROM pg_constraint …))`, sin `oid`. No hay `psql` en esta máquina: el ensayo corre los SQL con un programa descartable de .NET (Npgsql) en el scratchpad.
 - Corrección: el borrador SÍ tiene `SELECT oid` en el paso 2. Lo de la línea anterior salió de una lectura comprimida del archivo, no del archivo; no hay tal error. Ensayo en `s13_ensayo_246121ce` (`lacentral_test`, `lacentral_santi`; copia con `backend/db/pruebas/nc057_fuente_{copia,entrar}.sql` y el nombre reemplazado): `copia creada (33 tablas)`; el 13: `13: TODO OK.`; el 13 otra vez: solo `13: TODO OK.` (idempotente). Datos (solo lectura): en `lacentral_test`, `public` no tiene facturas de compra; en `lacentral_demo` hay 18, todas ACTIVA. La real no se lee desde acá: se agrega al 13 una guarda que corta si hay facturas ANULADA sin `usuario_anulacion_id` (sin ella, `fc_anulacion_con_usuario` fallaría con un 23514 sin explicación).
+- Pruebas: `Script13PostgreSqlTests` (11, `[PostgreSqlFact]`; cada una corre el archivo del 13 tal cual sobre su esquema aislado). Rojo `2b3e9d5`, contra el borrador: `Con error: 1, Superado: 10, Total: 11`; la que falla es `ConFacturaAnuladaSinUsuario_ElScriptCortaSinAplicarNada`, por aserción (`Expected: "P0001"`, `Actual: "23514"`: el ADD CONSTRAINT revienta sin explicar). Las otras 10 pasan contra el borrador porque esos CHECK ya estaban escritos (caracterización). Producción `0d4ec50` (guarda + encabezado): `Correctas! - Con error: 0, Superado: 11, Total: 11`.
+- Esquema de ensayo `s13_ensayo_246121ce` borrado (`borrado.sql` con el nombre reemplazado: «drop cascades to 34 other objects», `public: 33 tablas`). No toqué `demo_ensayo_c3` ni los tres `pr110_test_*` que hay en `lacentral_test`, porque no son míos.
+
+### PARA SANTI · 25/11/2026 · script 13 en las tres bases
+
+Desde la raíz del repo, en fish. Cada paso tiene que terminar con `NOTICE:  13: TODO OK.`; si uno falla, no sigas. El 13 es una sola transacción: si corta, no deja nada a medias.
+
+1 · `lacentral_test` (`public`):
+
+```fish
+cd ~/dev/TESIS/la-central-gestion
+git fetch origin
+git show origin/feature/s7-script-13:backend/db/rescaffold/13_Anulacion_Costo_Previo_Un_Administrador.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_test -v ON_ERROR_STOP=1
+```
+
+2 · `lacentral_demo`:
+
+```fish
+git show origin/feature/s7-script-13:backend/db/rescaffold/13_Anulacion_Costo_Previo_Un_Administrador.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral_demo -v ON_ERROR_STOP=1
+```
+
+3 · `lacentral` (la real), con backup antes. Tiene que decir `backup OK` antes de aplicar:
+
+```fish
+mkdir -p ~/dev/TESIS/backups
+ssh atiz@arch docker exec lacentral_db pg_dump -U lacentral -Fc lacentral > ~/dev/TESIS/backups/lacentral-antes-13.dump
+and test -s ~/dev/TESIS/backups/lacentral-antes-13.dump
+and echo "backup OK"
+and git show origin/feature/s7-script-13:backend/db/rescaffold/13_Anulacion_Costo_Previo_Un_Administrador.sql | ssh atiz@arch docker exec -i lacentral_db psql -U lacentral -d lacentral -v ON_ERROR_STOP=1
+```
+
+Si en alguna base corta con «13: hay N facturas de compra anuladas sin usuario_anulacion_id», no se aplicó nada: hay que decidir quién figura como el que las anuló. Esa decisión es del equipo; no la invento.
