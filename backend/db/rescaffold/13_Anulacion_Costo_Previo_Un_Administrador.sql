@@ -3,8 +3,8 @@
 -- La Central · 23/11/2026 · D-S7-03 (028 CA-002 v1.2, 016 CA-004 v1.1; #9, #23) y
 --                            D-S7-04 (028 CA-006 y CA-007 v1.2, 057 CA-012 v1.3; #195)
 --
--- BORRADOR (24/11/2026): sin ejecutar todavía contra PostgreSQL, sin pruebas y sin re-scaffold.
--- No se aplica hasta que esté en un PR con sus pruebas.
+-- 25/11/2026: ensayado en un esquema descartable de lacentral_test, con pruebas PostgreSQL
+-- de sus CHECK (Script13PostgreSqlTests). Sin re-scaffold todavía.
 --
 -- QUÉ HACE
 -- 1. D-S7-03 · factura_compra_detalle.costo_previo (NUMERIC, NULL = el artículo no tenía
@@ -25,6 +25,7 @@
 --
 -- REQUISITO
 -- El script 12 aplicado (scrape_corrida existe). Si no, se corta sin tocar nada.
+-- Ninguna factura de compra ANULADA sin usuario_anulacion_id. Si hay, se corta sin tocar nada.
 --
 -- CÓMO SE APLICA
 -- Una transacción. Es idempotente: cada paso se salta si ya está, y la verificación del
@@ -73,6 +74,10 @@ BEGIN
     -- 3 · Una factura anulada dice quién la anuló (D-S7-04)
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE connamespace = current_schema()::regnamespace
                    AND conname = 'fc_anulacion_con_usuario') THEN
+        IF EXISTS (SELECT 1 FROM factura_compra WHERE estado = 'ANULADA' AND usuario_anulacion_id IS NULL) THEN
+            RAISE EXCEPTION '13: hay % facturas de compra anuladas sin usuario_anulacion_id: no se aplicó nada.',
+                (SELECT count(*) FROM factura_compra WHERE estado = 'ANULADA' AND usuario_anulacion_id IS NULL);
+        END IF;
         ALTER TABLE factura_compra ADD CONSTRAINT fc_anulacion_con_usuario
             CHECK (estado <> 'ANULADA' OR usuario_anulacion_id IS NOT NULL);
         COMMENT ON COLUMN factura_compra.usuario_autorizacion_id IS
