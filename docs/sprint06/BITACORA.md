@@ -2066,4 +2066,9 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 2. `dotnet ef dbcontext scaffold` contra `public` de `lacentral_test` (comando del README de `backend/db/rescaffold/`). Comprobar con `git diff --ignore-cr-at-eol` que solo aparecen `VencimientoModo` y `VencimientoDias` en `Proveedor` y su configuración en `LaCentralDbContext.cs`.
 3. Commit del scaffold; bitácora y ESTADO; suite completa una vez sobre el HEAD; PR contra `develop` con hash, línea y conteo. Sin verificadores si no hay lógica nueva.
 
-**Estado:** en curso
+**Estado:** terminada. Abierto: merge del PR del re-scaffold del 14; después, Fix F.3–F.5.
+- 1) `chore/rescaffold-14` creada desde `develop` (`07fd8e7`, con el #200 adentro).
+- 2) Scaffold contra `public` de `lacentral_test` (`dotnet-ef` 10.0.11, con `DOTNET_ROOT=$HOME/.dotnet`) en `99d6320`. Solo aparecen `VencimientoModo` (`string`, `HasMaxLength(30)`, default `'MANUAL'`) y `VencimientoDias` (`short?`) en `Proveedor`, más su configuración en `LaCentralDbContext.cs`, con los comentarios de las columnas: +18 líneas en 2 archivos. El diff en bytes es igual a `--ignore-cr-at-eol`, sin cambios de finales de línea. No hay archivos nuevos ni borrados.
+- 3) ESTADO del Sprint 7 en `4064b1e`: la fila E14 y un bloque del 25/11 en PRÓXIMA SESIÓN. La suite completa sobre `4064b1e` está en curso.
+- 4) Suite completa sobre `4064b1e`, contra `public` de `lacentral_test`. Primero `dotnet build --no-incremental` (0 errores, 0 advertencias) y después `dotnet test --no-build`: `Correctas! - Con error:     0, Superado:   858, Omitido:     0, Total:   858, Duración: 11 m 3 s - LaCentral.Tests.dll (net10.0)`. Cero `[FAIL]`. Un primer intento con `dotnet test --no-incremental` no ejecutó ningún test (MSB1001: `dotnet test` no acepta ese modificador), así que no cuenta. Sin verificadores: no hay lógica nueva.
+- 5) Push de `chore/rescaffold-14` y PR contra `develop` (ver ESTADO). El commit de esta bitácora queda fuera de la corrida: es solo docs.
