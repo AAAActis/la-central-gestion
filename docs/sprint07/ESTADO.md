@@ -15,7 +15,7 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 
 | Issue | HU | SP | Espera | Estado |
 |---|---|---|---|---|
-| #128 | 055 · HU-CMP-08 · incorporar al catálogo del proveedor el resultado de un scrape (proforma reescrita, v2.0) | 5 | C2 (script 12, Santi) | Script 12 (datos reales de Expoyer) y `CONTRATO-N8N.md`: 9 pruebas contra PostgreSQL, verificadores APTO. PR #199, base `develop`; suite 858/858 sobre `e0f68d5` contra `public` de `lacentral_test`. El 12 ya está en `lacentral_test` y `lacentral_demo` (24/11); falta `lacentral` y el re-scaffold contra `public` después del merge |
+| #128 | 055 · HU-CMP-08 · incorporar al catálogo del proveedor el resultado de un scrape (proforma reescrita, v2.0) | 5 | C2 (script 12, Santi) | Script 12 (datos reales de Expoyer) y `CONTRATO-N8N.md`: 9 pruebas contra PostgreSQL, verificadores APTO. **#199 mergeado (`0633b3b`, 24/11).** El 12 en `lacentral_test` y `lacentral_demo`; `lacentral` con el bloque fish de Santi. Re-scaffold contra `public`: 0 diferencias de modelo |
 | #126 | 053 · HU-CMP-06 · candidatos por aproximación entre catálogos | 8 | C2, C5, C6 | Sin proforma (C5) |
 | #127 | 054 · HU-CMP-07 · vinculación manual con aprendizaje | 8 | C2, C5 y **el CA3 contra D2 (equipo)** | Sin proforma (C5). **No se construye** hasta que el equipo decida el CA3 |
 | #16 | 030 · HU-CMP-01 · búsqueda comparativa por nombre | 5 | C2 y filas de catálogo | Pendiente |
@@ -43,7 +43,7 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 | C1 · modalidad L2 y retiro de Tarjeta3/6 | 032, 033 y el CA-004 de la 050 | **Propuesta (para el equipo):** no va en el 12. El plan la ponía junto con C2, pero C2 destraba los scrapes y no tiene que esperar el cambio de modalidades, que además toca código de precios. Script propio cuando arranquen la 032 y la 033 |
 | E13 · script 13 (costo previo por línea, D-S7-03; anulación sin doble certificación, D-S7-04) | #9, #23, #195 | Pendiente de escribir |
 | E15 · script 15 (alícuotas, D-S7-02) | #194 | Pendiente de escribir; espera la pregunta P7-02 a Sergio |
-| E14 · script 14 (vencimiento de facturas por proveedor, Fix F) | #197 | Borrador; lo aplica Santi. Era el «12» del #197, renumerado el 24/11/2026 (decisión de Santi: el 12 es C2) |
+| E14 · script 14 (vencimiento de facturas por proveedor, Fix F) | #197 | Mergeado a `develop` (`54569b8`, 25/11/2026), antes que el #200, que quedó con conflicto en la bitácora y se resolvió con merge (`4300cd5`). Lo aplica Santi en `lacentral_demo` y en la real; `public` de `lacentral_test` ya lo tiene. Su re-scaffold va en un PR aparte, después de eso. Era el «12» del #197, renumerado el 24/11/2026 (decisión de Santi: el 12 es C2) |
 
 **Por qué tres scripts (12, 13 y 15) y no uno:** (el 14 es el Fix F del #197, otro tema) el 12 solo crea tablas nuevas y destraba a Santi hoy; no espera a
 nadie. El 13 junta dos cambios chicos y ya definidos sobre las tablas de la anulación (`factura_compra_detalle`,
@@ -266,8 +266,9 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 - **El 12 ya está aplicado** (Santi, 24/11) en `public` de `lacentral_test` y en `lacentral_demo`. El rol `lacentral_n8n`
   ya tiene clave (no se anota). Suite completa sobre `e0f68d5` contra `public` de `lacentral_test`: **858/858**, 0
   advertencias (40 más que la anterior porque entró el Fix E, #196, desde `develop`).
-- **Falta, después del merge del #199:** el 12 en `lacentral` (con backup antes), borrar `nc057_fuente`, `c2_fuente` y
-  `c2_ensayo_e6807bae` de `lacentral_test`, y el re-scaffold contra `public` (0 diferencias de modelo) con su PR.
+- **#199 mergeado (`0633b3b`).** Re-scaffold contra `public`: 0 diferencias de modelo (`chore/rescaffold-12`, suite 858/858 sobre `f353c36`). Santi tiene el bloque fish de lo que sigue.
+- **Falta (Santi, con el bloque fish del 24/11):** el 12 en `lacentral` (con backup antes) y borrar `nc057_fuente`, `c2_fuente` y
+  `c2_ensayo_e6807bae` de `lacentral_test`.
 
 **24/11/2026 · C2 en PR (#128, `feature/128-catalogo-scrape`).**
 - Script 12, `docs/sprint07/CONTRATO-N8N.md` (las siete sentencias de n8n, de una línea), proforma 055 v2.0. Suite
