@@ -43,7 +43,7 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 | C1 · modalidad L2 y retiro de Tarjeta3/6 | 032, 033 y el CA-004 de la 050 | **Propuesta (para el equipo):** no va en el 12. El plan la ponía junto con C2, pero C2 destraba los scrapes y no tiene que esperar el cambio de modalidades, que además toca código de precios. Script propio cuando arranquen la 032 y la 033 |
 | E13 · script 13 (costo previo por línea, D-S7-03; anulación sin doble certificación, D-S7-04) | #9, #23, #195 | Pendiente de escribir |
 | E15 · script 15 (alícuotas, D-S7-02) | #194 | Pendiente de escribir; espera la pregunta P7-02 a Sergio |
-| E14 · script 14 (vencimiento de facturas por proveedor, Fix F) | #197 | Borrador; lo aplica Santi. Era el «12» del #197, renumerado el 24/11/2026 (decisión de Santi: el 12 es C2) |
+| E14 · script 14 (vencimiento de facturas por proveedor, Fix F) | #197 | Mergeado a `develop` (`54569b8`, 25/11/2026), antes que el #200, que quedó con conflicto en la bitácora y se resolvió con merge (`4300cd5`). Lo aplica Santi en `lacentral_demo` y en la real; `public` de `lacentral_test` ya lo tiene. Su re-scaffold va en un PR aparte, después de eso. Era el «12» del #197, renumerado el 24/11/2026 (decisión de Santi: el 12 es C2) |
 
 **Por qué tres scripts (12, 13 y 15) y no uno:** (el 14 es el Fix F del #197, otro tema) el 12 solo crea tablas nuevas y destraba a Santi hoy; no espera a
 nadie. El 13 junta dos cambios chicos y ya definidos sobre las tablas de la anulación (`factura_compra_detalle`,
