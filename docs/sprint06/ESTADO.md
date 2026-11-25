@@ -704,3 +704,12 @@ Sprint 5). Antes de la primera HU del comparador, el equipo decide: qué entrega
 reescritura de la 055; la opción (a) o (b) del plan; CA3 de la 054 contra D2; la D1 de
 `CLAUDE.md`. Siguen C2, C5 y C6, y C1 en el mismo cambio de esquema que C2. Pendientes: contar
 R1 cuando la base responda, cerrar #160, y escribir la HU de las correcciones de Javi.
+
+---
+
+**25/11 · Fix E2 (`fix/proveedor-razon-social-exacta`): estado de la regla y riesgos. Bloque nuevo; el del 24/11 no se toca.**
+- **Estado:** regla **implementada** en la rama (commits `e5f9322`, `cdcbf64`, `d4d8cb7`), **pendiente de decisión del equipo** y **a confirmar**: el equipo está decidiendo entre la razón social exacta, una regla por CUIT simulado y una columna «en negro». No hay PR, `verificador-tdd` ni `auditor-persistencia`, ni suite completa hasta esa decisión.
+- **Riesgo (la regla depende de los datos, no del sistema):** que «Fazio» o «Expoyer» se asignen a la cuenta de nombre corto depende de cómo se nombran los proveedores. Si alguien renombra un proveedor (por ejemplo le agrega «S.A.» o le saca la «X»), cambia el resultado sin que cambie el sistema. Lo que lo cubre es el «Revisar»: toda asignación por razón social queda marcada y el operador la confirma.
+- **Caso conocido:** un PDF de Fazio sin CUIT se asigna a la cuenta de nombre corto (en negro) aunque sea de la cuenta en blanco; el operador lo corrige con «Revisar». **A confirmar con Sergio** que todo lo de Fazio sin CUIT es presupuesto.
+- **Convención de nombres (solo documentada, no se programa):** en negro = sin forma societaria (SA, SRL, SAS) o con una «X» (ejemplo «AUTOCOR X»); a confirmar si la X va por delante o al final.
+- Sin decisiones de negocio nuevas con número propio. Frontend, esquema, sucursal y lectura de artículos de FCO y NCA: sin cambios.
