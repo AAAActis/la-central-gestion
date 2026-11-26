@@ -39,3 +39,35 @@ La instrucción verbatim y el plan están en el bloque «26/11/2026 · #202 sin 
 - Lectura técnica: «la PK» = la PK de cada una de esas cuatro tablas (`usuario_pkey`, `cliente_pkey`, `proveedor_pkey`, `articulo_pkey`). La de `factura_compra_detalle` (que también difiere) queda en la deuda con las otras 107.
 - Rojo `0564466` (prueba acotada): `Con error: 1, Superado: 0, Total: 1`, «4 restricciones distintas», las 4 `*_baja_coherente`; las 4 PK coinciden.
 - Producción `6f36ac9`: los 4 CHECK a la D10 y el aviso del encabezado. Filtrado: `Correctas! - Con error: 0, Superado: 1, Total: 1`. Deuda del desfase completo en el ESTADO (C7-06) y PRÓXIMA SESIÓN. Sigue: suite completa cuando termine la del auditor del #202 (no se carga la base dos veces a la vez), PR y verificadores.
+- 3) Consulta de esquemas de `lacentral_test` (dueño, tablas, tamaño; `BEGIN READ ONLY … ROLLBACK`) entregada a Santi en la respuesta. No la corrí ni borré nada.
+
+## 26/11/2026 · Cola autónoma: #202, base_completa, script 16, 053/054, comparador, compras
+
+**Instrucción recibida (verbatim):**
+> Seguí trabajando solo con esta cola, en este orden, sin esperarme entre una tarea y otra:
+>
+> 1) #202: cuando el auditor-persistencia dé su resultado, si es NO APTO arreglalo (hasta 3 rondas, como dice CLAUDE.md). Con los dos APTO, dejá el PR listo y anotalo en el ESTADO. No lo mergeo yo hasta que vuelva.
+> 2) base_completa.sql: suite completa (cuando no haya otra corriendo), push, PR y verificadores con el alcance acotado a sus commits.
+> 3) Script 16 (vinculación: UNIQUE(proveedor_id, codigo), usuario_id y fecha_vinculacion en articulo_codigo_alternativo) con sus pruebas PostgreSQL y PR. Dejá el bloque fish para aplicarlo en las tres bases en la bitácora, en una sección «PARA SANTI», y seguí.
+> 4) 053 y 054 sobre la rama del 16 (PR apilado, con la base declarada en el cuerpo; cuando el 16 entre a develop, retargeteás). Vinculación automática por código primero, después candidatos con pg_trgm (umbral configurable en 0,3, C6 pendiente), con su pantalla.
+> 5) Comparador: 030, 032, 033, 034 y la pantalla 050, con las reglas D-S7-06 a D-S7-11. La 031 solo documentada.
+> 6) Compras: 016 y 028 (D-S7-03) y #195 (D-S7-04) recién cuando yo haya aplicado el 13; si todavía no, saltealas y seguí. La 027 sigue bloqueada por la P7-01: no la toques.
+>
+> Reglas para no frenar:
+> - Nunca dos suites completas a la vez ni mientras corra un verificador: mientras una corre, avanzá escribiendo código o pruebas de la tarea siguiente, sin correr nada contra la base.
+> - Decisiones técnicas: las tomás vos y las registrás con fecha en el ESTADO.
+> - Solo parás por (a) una regla de negocio que no esté escrita, (b) algo que toque datos reales de lacentral, o (c) CA contradictorios. Si te pasa, NO te quedes esperando: anotá la pregunta en una sección «PREGUNTAS PARA SANTI» del ESTADO y seguí con la tarea siguiente de la cola.
+> - Todo lo que necesite mis manos (aplicar scripts, merges) va a «PARA SANTI» en la bitácora, con el bloque fish listo, y seguís.
+> - Si un verificador da NO APTO, lo arreglás vos (hasta 3 rondas), como dice CLAUDE.md.
+> - Al final de cada tarea: bitácora y ESTADO actualizados, y una línea con el número de PR.
+>
+> Cuando vuelva, quiero un resumen de: PRs abiertos con su estado de verificadores, bloques PARA SANTI pendientes y PREGUNTAS PARA SANTI.
+
+**Plan:**
+1. #202: esperar el resultado del auditor (en curso sobre `fe5ed3e`); NO APTO → arreglo, hasta 3 rondas. APTO → ESTADO.
+2. `fix/base-completa-check-baja`: suite completa cuando termine la del auditor; push, PR, `verificador-tdd` y `auditor-persistencia` de a uno, acotados a `0564466..6f36ac9`.
+3. Script 16: ya está en `feature/127-vinculacion-esquema` (rojo `0e28343`, verde `f8aef6d`/`bd33193`, 8/8 filtradas, bloque fish en la bitácora de esa rama). Falta: merge de `develop`, suite, PR, verificadores.
+4. 053/054 apilados sobre la rama del 16. 5. Comparador. 6. Compras, solo si el 13 está aplicado.
+Mientras corre una suite o un verificador: solo escribir código o pruebas, nada contra la base.
+
+**Estado:** en curso
