@@ -2145,3 +2145,46 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 >
 > Al cerrar: ng test --watch=false --browsers=ChromeHeadless completo y ng build, UNA vez, sobre el último commit. Línea literal y hash. Sin push, sin PR, sin verificador-tdd (va después, desde la carpeta principal, cuando el E2 termine).
 - §3, 26/11: `origin/develop` trae #201 (re-scaffold del 14: `LaCentralDbContext.cs`, `Models/Proveedor.cs`) y #203 (docs del Sprint 7). Único solapamiento: esta bitácora; resuelto conservando los dos lados, primero los de `develop`. No toca el frontend; el plan no cambia.
+
+**Instrucción de continuación, 26/11/2026, tarde (verbatim):**
+> Confirmado: el clic en NCA también se frena mientras la primera línea no tiene
+> origen; queda igual que la FCO. Declaralo en el cuerpo del PR como
+> comportamiento que cambia, aparte del Enter.
+>
+> El E2 no tiene corridas pendientes. El dotnet 8800 de las 10:39 es de una
+> compilación del E2: no lo toques. El LaCentral.Api del 51212 era la demo de
+> Javi, que corre contra lacentral_demo y no interfiere.
+> Dejá .codex/ y AGENTS.md sin tocar.
+>
+> Ahora, en este orden:
+> 1. Las dos pruebas de backend (ProveedorFco06Tests.cs:158 y
+>    ArticuloRepositorioTests.cs:27), filtradas y con --no-build, contra
+>    lacentral_test. Si alguna falla por conexión (#190), repetí esa sola vez y
+>    declaralo.
+> 2. Suite completa de frontend y ng build, UNA vez, sobre el último commit.
+>    Línea literal y hash.
+> 3. Las líneas de bitácora de esta ronda, con BLOQUEADO EN.
+> Sin push, sin PR, sin verificador-tdd.
+- Merge `5be5732` (#201 y #203). Después del merge, `git diff --stat origin/develop...HEAD` mostraba 10 archivos, todos del fix; en esta bitácora solo agregados. `git status --short`: solo `.codex/` y `AGENTS.md` (fecha 25/11 21:11, no creados por esta sesión), que quedan sin tocar por indicación de Javi.
+- Doble Enter en NCA, specs en rojo `7708097`: 1 rojo por aserción, 87 verdes en el filtrado (el spec termina además con un pedido abierto, `GET /api/articulos/100`, el segundo que no debía salir). Se enmendó una vez antes de la producción, para sumar que `nueva()` saca el aviso. Un segundo spec de guarda (con el origen elegido se agrega de nuevo, D9) nace en verde.
+- Producción `59f21ba`: el control de repetido de la factura pasa a `compartido/linea-repetida.ts` y lo usan FCO (sus dos usos) y NCA (`errorArticulo`, junto al buscador). Filtrado con FCO y `codigo-exacto`: 186/186, antes del commit.
+- Mutaciones sobre `59f21ba`, las 4 en rojo y restauradas: sin mirar la sucursal → 5; sin excluir la línea reemplazada → 1; `nueva()` sin limpiar el aviso → 1; `buscarArticulo` sin limpiarlo → 1.
+- Confirmado por Javi, **para el cuerpo del PR como comportamiento que cambia, aparte del Enter:** en NCA el clic tampoco agrega dos veces un artículo mientras la primera línea no tiene origen; queda igual que la FCO.
+- Las pruebas de backend se frenaron a la mañana: había un `dotnet test --no-build` en marcha desde la carpeta principal. A la tarde, Javi confirmó que el E2 no tiene corridas pendientes. El proceso 8800 (`dotnet run --project backend/LaCentral.Api --urls http://localhost:5181`, según su línea de comando) no se tocó.
+- Backend sobre `59f21ba` (26/11 12:13), contra `lacentral_test` con `lacentral_javi`, verificado antes de correr: `dotnet build` del proyecto de pruebas en este worktree (0 advertencias, 0 errores) y `dotnet test --no-build` filtrado a las dos: `Pruebas totales: 2` · `Correcto: 2` (`ProveedorFco06PostgreSqlTests.BuscarSinCuit_PorCodigoSinCerosALaIzquierda_ElCodigoExactoPrimero` y `ArticuloRepositorioTests.Busqueda_OrdenaInternoProveedorYNombreSinDuplicarPorAlternativas`). Pasaron a la primera, sin reintento por #190. No es la suite de backend.
+- Suite completa de frontend sobre `59f21ba` (26/11 12:14), sin cambios sin commitear en `frontend/`, una sola vez: `Chrome Headless 158.0.0.0 (Windows 10): Executed 408 of 408 SUCCESS (6.836 secs / 5.528 secs)` · `TOTAL: 408 SUCCESS`. Solo Chromium. `ng build`: exit 0, sin advertencias, `Application bundle generation complete. [8.349 seconds]`.
+- Sin push, sin PR y sin `verificador-tdd`. Alcance pendiente del verificador: `cca1741`, `591a4d4`, `0676f4f`, `7708097` y `59f21ba`. Antes de abrir el PR: fetch (§3) y `ESTADO.md`.
+
+**BLOQUEADO EN:** el OK de Javi para commitear estas líneas, y que el E2 libere la carpeta principal para correr `verificador-tdd`.
+- A confirmar (sin implementar, anterior a este fix): la igualdad con la FCO vale al **agregar**. Al **cambiar el origen** de una línea, la FCO rechaza un destino donde ya está el mismo artículo (`cambiarDestino`) y la NCA no tiene ese control: se pueden dejar dos líneas del mismo artículo y origen, que según el comentario de `stockNegativo` la API no acepta.
+
+**Instrucción de continuación, 26/11/2026, cierre en este worktree (verbatim):**
+> Commiteá las líneas de bitácora (solo docs; 59f21ba sigue siendo el hash
+> probado). Dejá .codex/ y AGENTS.md sin tocar. Mostrame git status --short y
+> git log --oneline -3. Después no hagas nada más: voy a retirar tu worktree.
+> Sin push, sin PR, sin verificador.
+
+- Este commit toca solo esta bitácora: `59f21ba` sigue siendo el hash probado y la suite no se repite. Javi retira este worktree después; la rama `fix/enter-codigo-exacto` queda en el repositorio, sin pushear.
+- Sigue «a confirmar»: el control al cambiar el origen en NCA.
+
+**BLOQUEADO EN:** `verificador-tdd` desde la carpeta principal cuando esté libre; push y PR, con el OK de Javi.
