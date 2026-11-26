@@ -14,6 +14,24 @@ public class ObtenerComparadorUseCase
     private readonly IComparadorRepositorio _comparador;
     public ObtenerComparadorUseCase(IComparadorRepositorio comparador) => _comparador = comparador;
 
-    public Task<Result<ComparadorDto>> EjecutarAsync(int articuloId, CancellationToken ct = default)
-        => Task.FromResult(Result<ComparadorDto>.Success(new(articuloId, [], [], null)));   // esqueleto: rojo
+    public async Task<Result<ComparadorDto>> EjecutarAsync(int articuloId, CancellationToken ct = default)
+    {
+        var datos = await _comparador.ObtenerAsync(articuloId, ct);
+        if (datos is null)
+            return Result<ComparadorDto>.Failure(TipoError.NoEncontrado, "El artículo indicado no existe.");
+
+        var masBarato = datos.Filas.Min(f => f.PrecioNeto);
+        // 030 CA-002: del más barato al más caro; sin neto no se compara y va al final.
+        var filas = datos.Filas
+            .OrderBy(f => f.PrecioNeto is null).ThenBy(f => f.PrecioNeto).ThenBy(f => f.Proveedor).ThenBy(f => f.Codigo)
+            .Select(f => new FilaComparadorDto(f.ProveedorId, f.Proveedor, f.UrlReferencia, f.Codigo, f.Nombre, f.Marca,
+                f.PrecioNeto, f.PrecioLista, f.PrecioNeto - masBarato, f.EstadoStock, f.Stock, f.UrlImagen, f.UltimaLectura,
+                f.ProveedorId == datos.UltimoProveedorId))
+            .ToList();
+        var existencias = datos.Filas.GroupBy(f => f.ProveedorId)
+            .Select(g => new ExistenciaProveedorDto(g.Key,
+                g.MaxBy(f => Rango(f.EstadoStock))!.EstadoStock, g.Max(f => f.Stock)))
+            .OrderBy(e => e.ProveedorId).ToList();
+        return Result<ComparadorDto>.Success(new(articuloId, filas, existencias, filas.Count == 0 ? SinProveedores : null));
+    }
 }
