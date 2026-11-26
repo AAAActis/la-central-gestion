@@ -2095,3 +2095,35 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - OK de Javi al plan: se levanta el bloqueo anterior.
 - A confirmar (fuera de alcance, sin implementar): normalizar los códigos de proveedor a 5 dígitos.
 - §3: `origin/develop` trae 8 commits (#200, `07fd8e7`; #197 y #199 ya estaban en la base). Archivos: `Data/Models/*` y `LaCentralDbContext.cs` (finales de línea del re-scaffold), `frontend/angular.json` (`analytics: false`), `docs/sprint07/ESTADO.md` y esta bitácora. Único solapamiento: la bitácora. El plan no cambia; en el conflicto se conservan los bloques de los dos lados, primero los de `develop`.
+- Commits: `221a1be` (docs, inicio) y `de068fd` (merge de `origin/develop`; conflicto solo en esta bitácora, bloques de los dos lados con los de `develop` primero). `npm ci` en este worktree, que no tenía `node_modules`.
+- Commit 1 `cca1741` (andamiaje): `compartido/codigo-exacto.ts` y FCO usándolo. Specs de FCO tras la extracción: 91/91. Su `codigo-exacto.spec.ts` (7 specs) es caracterización del código movido, nace en verde; se agregó con `--amend` al commit 1, todavía local. Mutaciones: sin quitar ceros → 2 rojos; elegir el primero de varios → 1 rojo.
+- Commit 2 `d9c319f` (specs): filtrado NCA + compras + notas, 86 specs, 4 rojos todos por aserción (elegir por Enter: compras, notas, proveedor NCA y artículo NCA), 82 verdes. Los specs de guarda (lista con dos, sin exacto, botón Buscar, campo vacío) nacen en verde.
+- Commit 3 `5164b80` (producción): `enterProveedor` en NCA, compras y notas; `enterArticulo` en NCA, sin aproximada y con página de 20. Filtrado con FCO y `codigo-exacto`: 184/184.
+- Suite completa de frontend sobre `5164b80`, árbol limpio, una sola vez: `TOTAL: 406 SUCCESS` (Chrome Headless 158.0.0.0; solo Chromium). `ng build` sobre `5164b80`: exit 0, sin advertencias.
+- El orden del backend (exacto primero) no se probó acá ni se corrieron pruebas de backend. Lo cubren `ProveedorFco06Tests.cs:158` y `ArticuloRepositorioTests.cs:27`, leídos y no ejecutados.
+- `graphify update` no corrido: este worktree no tiene `graphify-out/` y el principal es del E2.
+- A confirmar (sin implementar): en NCA, dos Enter seguidos antes de la respuesta agregan dos líneas del mismo artículo; FCO lo frena con su control de repetido en `elegirArticulo` y NCA no tiene uno.
+- Sin push, sin PR y SIN `verificador-tdd` todavía: va después, desde la carpeta principal, cuando el E2 termine, acotado a `cca1741`, `d9c319f` y `5164b80`. `auditor-persistencia`: no aplica (solo frontend). `ESTADO.md` pendiente de actualizar antes del push.
+
+**BLOQUEADO EN:** que el E2 libere la carpeta principal para correr `verificador-tdd` (Javi). Estas líneas quedan sin commitear hasta el OK de Javi.
+- Corrección antes de cerrar (25/11/2026 20:35): en las tres pantallas de proveedor la lista vive en el `@else` de `@if (proveedor())`, así que «no queda ninguna opción» daba verde aunque `proveedores` no se limpiara. Los specs «elige» ahora quitan o cambian el proveedor y afirman que la lista no vuelve.
+- Historia local reescrita, sin push: `d9c319f` pasa a `591a4d4` (amend, mismos tres commits TDD) y `5164b80` pasa a `0676f4f` (cherry-pick sin cambios). Las líneas de arriba que citan los hashes viejos quedan como rastro.
+- `591a4d4`: filtrado NCA + compras + notas, 4 rojos todos por aserción, 82 verdes. `0676f4f`: filtrado con FCO y `codigo-exacto`, 184/184.
+- Mutaciones sobre `0676f4f` (sin el guard en compras, `return false` en notas, sin el guard en NCA): 3 rojos, uno por pantalla, 83 verdes; restaurado con `git checkout --`.
+- Suite completa de frontend sobre `0676f4f`, una sola vez (reemplaza a la de `5164b80`): `Chrome Headless 158.0.0.0 (Windows 10): Executed 406 of 406 SUCCESS (6.096 secs / 4.934 secs)` · `TOTAL: 406 SUCCESS`. Solo Chromium. `ng build`: exit 0, `Application bundle generation complete. [6.938 seconds]`.
+- Alcance del `verificador-tdd` pendiente: `cca1741`, `591a4d4` y `0676f4f`. Antes hay que commitear estas líneas y sacar este worktree (R1 del agente).
+
+**BLOQUEADO EN:** que el E2 libere la carpeta principal para correr `verificador-tdd`, y el OK de Javi para commitear estas líneas de bitácora.
+
+**Instrucción de continuación, 26/11/2026 (verbatim):**
+> Respuestas:
+> 1. Sí: commiteá la bitácora en un commit docs. Estado queda en curso, con su BLOQUEADO EN.
+> 2. Sí, el doble Enter en NCA se arregla en esta rama: lo introduce este fix. Reutilizá el mecanismo de la factura de compra, sin duplicar lógica. Primero el spec en rojo por aserción en un commit propio, después la producción en otro commit.
+> 3. Sí: corré filtradas las dos pruebas de backend (ProveedorFco06Tests.cs:158 y ArticuloRepositorioTests.cs:27). Verificá antes que la conexión sea lacentral_test. Nunca la real. No uses lacentral_demo. No las corras mientras el E2 esté corriendo su suite.
+>
+> Antes de seguir: git fetch --all --prune y un solo git merge origin/develop (entraron #203 y #201; si conflictúa la bitácora, se conservan los dos lados). Después mostrame la salida de:
+>   git log --oneline --graph -10
+>   git diff --stat origin/develop...HEAD
+> El segundo debe mostrar solo los archivos del fix, sin contenido que haya entrado por los merges de develop. Confirmá con git status --short que no quedó nada nuevo dentro del repo.
+>
+> Al cerrar: ng test --watch=false --browsers=ChromeHeadless completo y ng build, UNA vez, sobre el último commit. Línea literal y hash. Sin push, sin PR, sin verificador-tdd (va después, desde la carpeta principal, cuando el E2 termine).
