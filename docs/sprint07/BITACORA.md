@@ -175,3 +175,8 @@ La instrucción verbatim está en el bloque «26/11/2026 · Cola autónoma…» 
 
 **Estado:** en curso
 - Merge de `origin/develop` (`bda2692`): conflictos solo en docs (bitácora add/add, y en ESTADO las decisiones y PRÓXIMA SESIÓN). Se conservan los dos lados; la D-S7-12 de Javi queda entre la D-S7-11 y la D-S7-13. El código que entró (re-scaffold del 14, `Proveedor`) no se solapa con el 16.
+- Mientras corre la suite del auditor del #202 (sin nada contra la base), escrito y commiteado, con su rojo en esqueleto:
+  - 053 en `feature/126-candidatos-vinculacion` (sobre esta rama): rojo `725aee7` (unitarias 10/10 en rojo), rojo de pantalla `7b3fc58` (4 en rojo; «con texto vacío no consulta» pasa contra el esqueleto), verde de pantalla `0c79ee8` (frontend 387/387), producción `848714a` (unitarias 10/10). **Falta correr** `CandidatosApiPostgreSqlTests` (9), en rojo sobre `725aee7` y en verde.
+  - Comparador en `feature/030-comparador` (sobre esta rama): rojo `02b91f3` (unitarias 8/8 en rojo), producción `2613307` (8/8), rojo de pantalla `cc1a4b6` (8 en rojo), verde `430a603` (frontend 390/390), 031 documentada `6b3d522`. **Falta correr** `ComparadorApiPostgreSqlTests` (3).
+  - 054: no se escribe todavía. Necesita el 16 aplicado y su re-scaffold (`UsuarioId` y `FechaVinculacion` en el modelo, y `codigo_alt_proveedor_codigo_unico` en el mapa del manejador). D-S7-17: se parte en 054a y 054b.
+- ESTADO: D-S7-15 a D-S7-17 y la sección «PREGUNTAS PARA SANTI» (PS-01 a PS-05).

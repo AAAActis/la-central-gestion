@@ -92,6 +92,9 @@ decidido. El número 06, reservado para C2 desde el Sprint 4, queda sin usar.
 | D-S7-12 | **Factura sin CUIT** (decisión de negocio de Javi): «una factura sin CUIT es remito o presupuesto: compra en negro». Para el Fix E2 queda sugerido usar `proveedor.cuit_simulado`: la única coincidencia por nombre con `cuit_simulado = true`, marcada «Revisar». Lo decide e implementa Javi. | Javi, 25/11/2026 | Fix E2 (Javi). Los números D-S7-06 a D-S7-11 los usan las ramas de Santi todavía sin mergear (#202 y la del 16) |
 | D-S7-13 | **Las decisiones técnicas las toma el asistente** (esquema, índices, tipos, nombres, número de script, pantallas, valores por defecto configurables) y se registran acá con fecha. Se para solo por una regla de negocio que falta, por datos reales de `lacentral` o por CA contradictorios. Las preguntas de negocio se juntan al final de cada HU. | Santi, 25/11/2026 | Forma de trabajo |
 | D-S7-14 | **Sin función de normalización en el 16:** la vinculación automática es igualdad exacta por `(proveedor_id, codigo)`, con el código normalizado como lo guarda la ficha (`NormalizacionArticulo`: sin espacios en los extremos y en mayúsculas). La cubre `codigo_alt_proveedor_codigo_unico`. Si los candidatos por número original de la 053 necesitan un índice, va en el script de la 053. | Asistente, 25/11/2026 (decisión técnica, D-S7-13) | 053, 054 |
+| D-S7-15 | **053 · cómo se busca.** Exacta: la clave en mayúsculas, sin acentos y solo con letras y dígitos («GN/100» = «gn 100»), contra código, número original, código de barras y nombre; la misma regla en C# (`NormalizacionCatalogo.Clave`) y en SQL. Aproximada: `similarity()` de pg_trgm contra nombre y número original, el máximo entre los textos buscados (CA5: el del artículo y el de sus filas vinculadas); umbral en `Catalogo:UmbralParecido` (0,3), hasta 50 filas. Fuera: proveedor de baja (CA3) y vencidos (D-S7-10). | Asistente, 26/11/2026 (D-S7-13) | 053 |
+| D-S7-16 | **Comparador · detalle.** Ordena por precio neto ascendente; una fila sin neto va al final y dice «No informa precio bonificado» (032 CA-004). La diferencia (032 CA-002) es neto menos el neto más barato. El stock máximo por proveedor (054 CA4) ordena HAY > A_CONFIRMAR > NO_HAY. La vista Venta toma el precio estimado (modalidad Lista) y las existencias de la ficha del artículo, sin endpoint nuevo. | Asistente, 26/11/2026 (D-S7-13) | 030, 032, 033, 050 |
+| D-S7-17 | **054 en dos PR.** 054a: vincular (CA1, CA2, CA3, CA5, CA6, CA10 para vincular), cuando el 16 esté aplicado y re-scaffoldeado. 054b: desvincular, retiro y copia del proveedor y el código en el historial de compras (CA7, CA8, CA9), con un script 17, después de PS-01 y PS-02. | Asistente, 26/11/2026 (D-S7-13) | 054 |
 
 ### Primer scrape · Expoyer · relevado el 23/11/2026
 
@@ -161,6 +164,16 @@ pendiente que el CA-002 de la 028, y la #23 sigue abierta hasta la respuesta.
 Recorrido DoD 10 de la 026 y la 028 contra `lacentral_demo`: sin hacer, va con el del Sprint 7.
 
 ---
+
+## PREGUNTAS PARA SANTI · 26/11/2026
+
+Juntadas al cerrar el código de la 053, la 054 y el comparador (D-S7-13). Mientras no estén contestadas, sigue lo que no depende de ellas.
+
+- **PS-01 · 054 CA10 contra `CLAUDE.md` (CA contradictorios).** El CA10 dice que un OPERADOR puede desvincular, y `CLAUDE.md` dice «Retirar un código de proveedor: SOLO ADMINISTRADOR». ¿Desvincular desde la pantalla de vinculación lo puede hacer el OPERADOR, mientras que el retiro desde la ficha del artículo (HU-ART-03) sigue siendo solo del ADMINISTRADOR? Bloquea la 054b (desvincular: CA7 y CA8).
+- **PS-02 · 054 CA8 · código retirado.** Un código que figura en una factura queda «retirado» y no vuelve a aparecer. ¿Ese mismo código (`proveedor_id`, `codigo`) se puede vincular después a **otro** artículo? Si sí, la unicidad del 16 tiene que dejar afuera a los retirados (índice único parcial); si no, queda como está. Bloquea el script 17 (retiro).
+- **PS-03 · 054 CA4 · pedido de compra.** «Un pedido de compra no puede exceder ese máximo»: el sistema no tiene pedidos de compra. ¿Esa mitad del CA queda NO verificada, fuera del sprint, o hay que construirla? El máximo de stock por proveedor ya está en el comparador.
+- **PS-04 · 030 CA-004 sin «entonces».** El CA dice «Dado que el artículo no tiene ningún proveedor asociado, cuando el vendedor lo selecciona», y no dice qué pasa. Hice que el comparador informe «El artículo no tiene filas de catálogo vinculadas de ningún proveedor activo.». ¿Vale?
+- **PS-05 · 033 CA-002 · factura de venta.** «Permite ingresar un precio distinto del estimado al registrar una factura de venta»: no hay factura de venta en el sistema. Lo declaro NO verificado en el PR. ¿Va así?
 
 ## Preguntas para Sergio
 
