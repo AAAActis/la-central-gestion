@@ -257,6 +257,14 @@ Ya descriptas en la spec de correcciones del Sprint 6. Quedan como candidatas. *
   común.
 - Limitar los intentos de contraseña en el login y en la anulación.
 - Unificar el parser de fechas abreviadas en las demás pantallas con fechas.
+- **`backend/db/base_completa.sql` desfasado del esquema vivo (26/11/2026).** Es la v3.0 del 26/08/2026: contra `public` de
+  `lacentral_test` difieren 112 restricciones; los 4 CHECK `*_baja_coherente` (aviso de Javi) se corrigieron a la D10 en
+  `fix/base-completa-check-baja`, con `BaseCompletaPostgreSqlTests` acotada a esos 4 y a la PK de esas tablas. Quedan 108:
+  todo lo de los scripts 01 a 14 (NC, precios por modalidad, catálogo y scrape, historiales de baja, provincias, PK de
+  `factura_compra_detalle` con `sucursal_id`) y sobra `articulo_margen`. El encabezado avisa que es histórico. Propuesta
+  (Santi, 26/11): al cerrar el Sprint 7, regenerar la PARTE A desde `pg_dump --schema-only` de `public` (no a mano),
+  ampliar la prueba a todas las restricciones y marcar la PARTE C (importación de los CSV) como histórica: ya no
+  corre sobre el esquema de hoy (p. ej., inserta `proveedor_direccion.provincia` como texto y hoy es `provincia_id`).
 
 ## Fuera de la tesis · Sprint 9 · post-tesis
 
@@ -281,6 +289,10 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 ---
 
 ## PRÓXIMA SESIÓN
+
+**26/11/2026 · `base_completa.sql` con el CHECK de baja de la D10.**
+- Rama `fix/base-completa-check-baja` desde `develop`: los 4 `*_baja_coherente` iguales a los de las bases vivas, aviso de
+  esquema histórico en el encabezado y `BaseCompletaPostgreSqlTests`. El resto del desfase es deuda (C7-06), sin hacer.
 
 **25/11/2026 · el 14 aplicado en las tres bases y su re-scaffold en PR.**
 - **#197 (script 14, Fix F) mergeado (`54569b8`)** antes que el #200; el #200 se destrabó con merge de `develop` y está mergeado (`07fd8e7`).

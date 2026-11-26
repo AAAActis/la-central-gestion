@@ -25,3 +25,17 @@ Sprint 7 anterior al 25/11/2026 (C2, el 12, el 14 y sus re-scaffolds) está en
 - En `feature/127-vinculacion-esquema`, la fila D-S7-12 era otra decisión técnica de Santi. Pasa a D-S7-13 en esa rama: el número D-S7-12 queda para la decisión de Javi.
 
 **Estado:** terminada. Queda abierto que Santi mergee el PR.
+
+## 26/11/2026 · base_completa.sql con el CHECK de la D10 (punto 2 del bloque del 26/11 en `feature/s7-script-13`)
+
+La instrucción verbatim y el plan están en el bloque «26/11/2026 · #202 sin conflicto y auditor; base_completa.sql…» de la bitácora de `feature/s7-script-13` (#202). Este bloque es el rastro del punto 2, en `fix/base-completa-check-baja` desde `origin/develop` (`bda2692`).
+
+**Estado:** en curso
+- Prueba `BaseCompletaPostgreSqlTests` (sin commit todavía): corre solo la parte de tablas de la PARTE A (entre `CREATE EXTENSION … pg_trgm;` y `CREATE SCHEMA staging;`; corta si ese tramo tiene DROP, TRUNCATE, SCHEMA, `public.` o search_path) en un esquema `bc_prueba_*` dentro de una transacción que se revierte, y compara `pg_constraint` contra `public` de `lacentral_test`. Rojo: `Con error: 1, Superado: 0, Total: 1`, **112 restricciones distintas**. Solo 4 son las del aviso de Javi (`usuario`, `cliente`, `proveedor`, `articulo` `*_baja_coherente`, estrictos en el archivo, D10 en la base). Las otras 108 son todo lo que agregaron los scripts 01 a 14 y el archivo (v3.0, 26/08/2026) no tiene: tablas `nota_credito_compra*`, `articulo_precio_modalidad`, `proveedor_articulo*`, `scrape_corrida`, los cuatro `*_historial_baja`, `provincia` y direcciones, la PK de `factura_compra_detalle` con `sucursal_id`; y sobra `articulo_margen`.
+
+**BLOQUEADO EN:** Santi: «igual a lo que corre en las bases» es reescribir la PARTE A entera (los 12 scripts adentro, PR grande) y deja la PARTE B/C de importación apuntando a columnas que ya no existen; o se arreglan los 4 CHECK de baja y la prueba compara solo esos.
+- Respuesta de Santi (26/11/2026), verbatim:
+  > Solo los 4 CHECK de baja, en un PR chico, con la prueba acotada a esos 4 y a la PK. Además, en el encabezado de base_completa.sql poné un aviso visible: «Esquema v3.0 del 26/08/2026, histórico. El esquema vigente es este archivo más los scripts 01 a 14 de backend/db/rescaffold/, en orden. No armar una base solo con este archivo.» El desfase completo va como deuda en el ESTADO, con la propuesta de regenerar la PARTE A desde pg_dump --schema-only de public al cerrar el Sprint 7 (no a mano) y marcar la PARTE C como histórica. Esa regeneración no se hace ahora.
+- Lectura técnica: «la PK» = la PK de cada una de esas cuatro tablas (`usuario_pkey`, `cliente_pkey`, `proveedor_pkey`, `articulo_pkey`). La de `factura_compra_detalle` (que también difiere) queda en la deuda con las otras 107.
+- Rojo `0564466` (prueba acotada): `Con error: 1, Superado: 0, Total: 1`, «4 restricciones distintas», las 4 `*_baja_coherente`; las 4 PK coinciden.
+- Producción `6f36ac9`: los 4 CHECK a la D10 y el aviso del encabezado. Filtrado: `Correctas! - Con error: 0, Superado: 1, Total: 1`. Deuda del desfase completo en el ESTADO (C7-06) y PRÓXIMA SESIÓN. Sigue: suite completa cuando termine la del auditor del #202 (no se carga la base dos veces a la vez), PR y verificadores.
