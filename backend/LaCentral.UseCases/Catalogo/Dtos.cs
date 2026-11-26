@@ -20,3 +20,9 @@ public sealed record ResultadoCandidatosDto(
 
 /// <summary>D-S7-11: el umbral es configurable; 0,3 es el de pg_trgm por defecto. La C6 sigue abierta.</summary>
 public sealed record OpcionesCandidatos(double UmbralParecido = 0.3, int MaximoAproximadas = 50);
+
+/// <summary>Lo que la 054 necesita de una fila de catálogo para vincularla.</summary>
+public sealed record FilaParaVincularDto(int Id, int ProveedorId, string Codigo, bool Vencido, bool ProveedorActivo);
+
+/// <summary>054 · El resultado de vincular: el artículo y el código que le quedó asociado.</summary>
+public sealed record VinculacionDto(int ArticuloId, int ProveedorId, string Codigo);
