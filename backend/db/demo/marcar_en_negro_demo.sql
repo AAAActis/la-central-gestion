@@ -3,18 +3,18 @@
 --  La Central · 26/11/2026 · Fix E2 (D-S7-12)
 --
 --  QUÉ HACE
---    Marca cuit_simulado = true (proveedor «en negro») en los tres proveedores sin CUIT de la
---    demo que se usan para recorrer el reconocimiento por razón social del PDF:
---      DEMO-06  «ETMAN Repuestos (demo)»
+--    Marca cuit_simulado = true (proveedor «en negro») SOLO en Fazio, el proveedor de la demo
+--    que se usa para recorrer el reconocimiento por razón social del PDF:
 --      DEMO-07  «Fazio (demo)»
---      00035    «Expoyer»
---    Sin la marca, desde la D-S7-12 ninguno se reconoce. No toca ninguna otra fila.
+--    Sin la marca, desde la D-S7-12 no se reconoce. No toca ninguna otra fila, y tampoco
+--    desmarca lo que haya marcado una versión anterior de este script.
 --    Ojo: por razón social nunca se asigna una factura A; solo presupuestos y comprobantes B.
 --
 --  CÓMO SE APLICA
 --    Lo aplica Javi o Santi, DESPUÉS de sembrar_proveedores_pdf.sql. Una transacción,
---    idempotente (una segunda corrida no cambia nada). Se corta si la base no es
---    lacentral_demo o si falta alguno de los tres.
+--    idempotente (una segunda corrida no cambia nada). Se corta sin cambiar nada si la base no
+--    es lacentral_demo, si DEMO-07 «Fazio (demo)» no queda activo y en negro, o si «Fazio» no
+--    deja exactamente un proveedor activo en negro.
 -- =====================================================================================
 
 ROLLBACK;
@@ -31,22 +31,22 @@ END $guarda$;
 -- Código y razón social juntos: un código reutilizado por otro proveedor no se marca.
 UPDATE proveedor
    SET cuit_simulado = true
- WHERE (codigo, razon_social) IN (('DEMO-06', 'ETMAN Repuestos (demo)'),
-                                  ('DEMO-07', 'Fazio (demo)'),
-                                  ('00035',   'Expoyer'))
+ WHERE (codigo, razon_social) = ('DEMO-07', 'Fazio (demo)')
    AND cuit IS NULL
    AND NOT cuit_simulado;
 
 DO $verif$
-DECLARE
-    termino text;
 BEGIN
-    FOREACH termino IN ARRAY ARRAY['etman', 'fazio', 'expoyer'] LOOP
-        IF (SELECT count(*) FROM proveedor
-             WHERE activo AND cuit_simulado AND razon_social ILIKE '%' || termino || '%') <> 1 THEN
-            RAISE EXCEPTION 'marcar_en_negro_demo: tiene que haber exactamente un proveedor activo en negro de «%».', termino;
-        END IF;
-    END LOOP;
+    IF NOT EXISTS (SELECT 1 FROM proveedor
+                    WHERE (codigo, razon_social) = ('DEMO-07', 'Fazio (demo)') AND activo AND cuit_simulado) THEN
+        RAISE EXCEPTION 'marcar_en_negro_demo: DEMO-07 «Fazio (demo)» tiene que quedar activo y en negro.';
+    END IF;
+    -- La misma normalización que la búsqueda de la aplicación: mayúsculas y sin acentos.
+    IF (SELECT count(*) FROM proveedor
+         WHERE activo AND cuit_simulado
+           AND translate(upper(razon_social), 'ÁÉÍÓÚÜ', 'AEIOUU') LIKE '%FAZIO%') <> 1 THEN
+        RAISE EXCEPTION 'marcar_en_negro_demo: tiene que haber exactamente un proveedor activo en negro de «Fazio».';
+    END IF;
     RAISE NOTICE 'marcar_en_negro_demo: TODO OK.';
 END $verif$;
 
