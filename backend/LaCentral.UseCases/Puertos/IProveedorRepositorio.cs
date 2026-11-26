@@ -12,18 +12,11 @@ public interface IProveedorRepositorio
     Task<Proveedor?> ObtenerPorCuitAsync(string cuit, CancellationToken ct = default);
 
     /// <summary>
-    /// Fix E: los proveedores ACTIVOS cuya razón social contiene todas las palabras de <paramref name="texto"/>
-    /// (sin acentos ni mayúsculas), en orden de Id. Devuelve a lo sumo <paramref name="limite"/>: quien llama
-    /// pide uno más de los que necesita para saber si la coincidencia es única.
+    /// Fix E2 (D-S7-12): los proveedores ACTIVOS y EN NEGRO (<c>cuit_simulado</c>) cuya razón social contiene todas
+    /// las palabras de <paramref name="texto"/> (sin acentos ni mayúsculas), en orden de Id. Devuelve a lo sumo
+    /// <paramref name="limite"/>: quien llama pide uno más de los que necesita para saber si la coincidencia es única.
     /// </summary>
     Task<IReadOnlyList<Proveedor>> BuscarActivosEnNegroPorRazonSocialAsync(string texto, int limite, CancellationToken ct = default);
-
-    /// <summary>
-    /// Fix E2: los proveedores ACTIVOS cuya razón social es IGUAL a <paramref name="texto"/>, ignorando mayúsculas,
-    /// acentos y espacios sobrantes o repetidos, en orden de Id y a lo sumo <paramref name="limite"/>.
-    /// «Fazio» no coincide con «Nestor Fazio S.A.»: es igualdad, no «contiene».
-    /// </summary>
-    Task<IReadOnlyList<Proveedor>> BuscarActivosPorRazonSocialExactaAsync(string texto, int limite, CancellationToken ct = default);
 
     /// <summary>ALTO 5: el código es la clave de negocio; devuelve el dueño para informar el conflicto.</summary>
     Task<Proveedor?> ObtenerPorCodigoAsync(string codigo, CancellationToken ct = default);

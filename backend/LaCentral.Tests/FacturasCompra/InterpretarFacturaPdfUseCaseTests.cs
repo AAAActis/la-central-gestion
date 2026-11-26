@@ -18,7 +18,6 @@ public class InterpretarFacturaPdfUseCaseTests
     {
         _proveedores.Setup(p => p.BuscarActivosEnNegroPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
-        _proveedores.Setup(p => p.BuscarActivosPorRazonSocialExactaAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
     }
 
     private InterpretarFacturaPdfUseCase CasoDeUso() => new(_lector.Object, _proveedores.Object, _facturas.Object);
