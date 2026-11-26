@@ -83,6 +83,8 @@ builder.Services.AddSingleton(sp => new OpcionesCandidatos(
     sp.GetRequiredService<IConfiguration>().GetValue("Catalogo:UmbralParecido", 0.3)));
 builder.Services.AddScoped<ICatalogoCandidatosRepositorio, CatalogoCandidatosRepositorio>();
 builder.Services.AddScoped<BuscarCandidatosUseCase>();
+builder.Services.AddScoped<ICatalogoVinculacionRepositorio, CatalogoVinculacionRepositorio>();
+builder.Services.AddScoped<VincularFilaCatalogoUseCase>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
