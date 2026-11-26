@@ -4,6 +4,7 @@ using LaCentral.Data.Models;
 using LaCentral.Data.Repositorios;
 using LaCentral.UseCases;
 using LaCentral.UseCases.Articulos;
+using LaCentral.UseCases.Catalogo;
 using LaCentral.UseCases.Clientes;
 using LaCentral.UseCases.FacturasCompra;
 using LaCentral.UseCases.NotasCreditoCompra;
@@ -77,6 +78,11 @@ builder.Services.AddScoped<ConsultarNotasCreditoCompraUseCase>();
 builder.Services.AddScoped<InterpretarFacturaPdfUseCase>();
 builder.Services.AddScoped<InterpretarNotaCreditoPdfUseCase>();
 builder.Services.AddScoped<ILectorTextoPdf, LaCentral.Api.Pdf.LectorTextoPdf>();
+// 053 · D-S7-11: el umbral de parecido es configurable (Catalogo:UmbralParecido); 0,3 por defecto.
+builder.Services.AddSingleton(sp => new OpcionesCandidatos(
+    sp.GetRequiredService<IConfiguration>().GetValue("Catalogo:UmbralParecido", 0.3)));
+builder.Services.AddScoped<ICatalogoCandidatosRepositorio, CatalogoCandidatosRepositorio>();
+builder.Services.AddScoped<BuscarCandidatosUseCase>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
