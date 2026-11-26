@@ -161,6 +161,39 @@ public class VinculacionApiPostgreSqlTests : IClassFixture<WebApplicationFactory
         Assert.False(await nuevo.ArticuloCodigoAlternativo.AnyAsync(c => c.ProveedorId == s.Proveedor));
     }
 
+    [PostgreSqlFact]
+    public async Task CA5_DarDeAltaDesdeLaFila_CreaElArticuloYLoDejaVinculado()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var http = Cliente(fixture, "OPERADOR", s.Usuario);
+
+        var respuesta = await http.PostAsJsonAsync($"/api/catalogo/filas/{s.Filas["marca b"]}/alta-vinculada", new { nombre = "Bomba de agua marca B" });
+
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        var id = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("articuloId").GetInt32();
+        await using var nuevo = fixture.CrearContexto();
+        Assert.Equal("Bomba de agua marca B", (await nuevo.Articulo.SingleAsync(a => a.Id == id)).Nombre);
+        var fila = await LeerAsync(nuevo, s.Proveedor, "BA-8");
+        Assert.Equal(id, fila!.Value.ArticuloId);
+        Assert.Equal(s.Usuario, fila.Value.UsuarioId);
+    }
+
+    [PostgreSqlFact]
+    public async Task CA5_CA6_SiElCodigoYaEsDeOtroArticulo_Es409_YNoQuedaElArticuloNuevo()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        using var http = Cliente(fixture, "OPERADOR", s.Usuario);
+        Assert.Equal(HttpStatusCode.OK, (await VincularAsync(http, s.Filas["marca a"], s.Otro)).StatusCode);
+
+        var respuesta = await http.PostAsJsonAsync($"/api/catalogo/filas/{s.Filas["marca a"]}/alta-vinculada", new { nombre = "No tiene que quedar" });
+
+        Assert.Equal(HttpStatusCode.Conflict, respuesta.StatusCode);
+        await using var nuevo = fixture.CrearContexto();
+        Assert.False(await nuevo.Articulo.AnyAsync(a => a.Nombre == "No tiene que quedar"));
+    }
+
     /// <summary>usuario_id y fecha_vinculacion son del 16 y todavía no están en el modelo scaffoldeado.</summary>
     private static async Task<(int ArticuloId, int? UsuarioId, DateTime? Fecha)?> LeerAsync(LaCentralDbContext contexto, int proveedor, string codigo)
     {
