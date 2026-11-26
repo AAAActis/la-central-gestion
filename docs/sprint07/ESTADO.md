@@ -328,3 +328,6 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 - **Demo:** `backend/db/demo/marcar_en_negro_demo.sql` marca ETMAN, Fazio y Expoyer; **sin aplicar** (lo aplica Javi o Santi).
 - **Deuda (va también en el cuerpo del PR):** un proveedor en negro no se puede dar de alta ni marcar desde la app: la app no escribe `cuit_simulado` y queda en `false`; hoy se corrige por SQL.
 - **Pendiente:** push, PR, `verificador-tdd` y `auditor-persistencia`.
+- **Verificación sobre `187ba6a` (26/11/2026):** suite completa `Con error! - Con error:    42, Superado:   821, Omitido:     0, Total:   863, Duración: 1 h 36 m` (los 42, de conexión a la base, #190); reintento filtrado de los 42: 34 superados y 8 fallos; segundo reintento de esos 8: `Correctas! - Con error: 0, Superado: 8, Total: 8`. `dotnet build --no-incremental` en una carpeta de salida limpia: 0 advertencias, 0 errores.
+- **Script de demo (`bb87162`):** aprobado por Javi; **fuera de la corrida de la suite** (commit posterior, ninguna prueba lo ejecuta) y **sin ejecutar**: lo aplica Javi o Santi. Va así declarado en el cuerpo del PR.
+- **Deuda:** Expoyer se marca en negro **en la demo** por decisión de Javi, para el recorrido; **no refleja el par blanco/negro de la base real**.

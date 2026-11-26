@@ -48,10 +48,18 @@ Sprint 7 anterior al 25/11/2026 (C2, el 12, el 14 y sus re-scaffolds) está en
 
 **Plan:** 1. Verificar el tipo. 2. Commit de renombre (sin cambio de conducta). 3. Pruebas en rojo. 4. Producción. 5. Demo (solo lectura) y script sin aplicar. 6. ESTADO y bitácora. 7. Suite completa una vez.
 
-**Estado:** en curso
+**Estado:** terminada
 - El tipo está disponible donde se decide: `ComprobanteLeido.TipoComprobante` (`"A"`, `"B"` o `null` si el código de ARCA no se reconoce); no hace falta leer nada nuevo del PDF. `origin/develop` sin commits nuevos.
 - Commits: renombre `ea6b734` (sin cambio de conducta, compila); pruebas `8632734`, en rojo sobre ese commit: `Con error: 4, Superado: 52, Total: 56`, las 4 por aserción (2 Moq de factura A, 2 PostgreSQL). Una primera corrida mostró `Total: 54` sin las 2 de PostgreSQL nuevas (causa no determinada; se recompiló y se repitió) y no cuenta. Se borraron las dos clases de «exacta primero» y las pruebas de CUIT y de cada layout pasaron a comprobantes B.
 - Producción `00710c0`: filtrado `Correctas! - Con error: 0, Superado: 56, Total: 56`. Graphify actualizado.
 - `lacentral_demo`, solo lectura (`ro=on`): 9 proveedores; ETMAN (8), Fazio (9) y Expoyer (7) activos, sin CUIT y en `false`; hay además AUTOCOR SRL (10, con CUIT, `false`). Script `backend/db/demo/marcar_en_negro_demo.sql` escrito y **sin ejecutar** en ninguna base; sin commitear.
 - Los datos de `cuit_simulado` valen para `lacentral_test`; `lacentral` está sin verificar.
 - ESTADO del sprint 7: bloque nuevo (spec superada por la D-S7-12, regla vigente, deuda del alta en negro).
+- Orden de Javi (26/11/2026): no repetir la suite; reintento filtrado (#190); `dotnet build --no-incremental` sin tests; mutaciones del tipo solo en clases Moq y revertir; script aprobado en commit propio sin ejecutarlo; deuda de Expoyer en la demo (decisión de Javi, no refleja la real).
+- Suite completa sobre `187ba6a`: `Con error! - Con error:    42, Superado:   821, Omitido:     0, Total:   863, Duración: 1 h 36 m - LaCentral.Tests.dll (net10.0)`. 863 = 871 − 13 de «exacta primero» + 5 nuevos. Los 42: 29 `NpgsqlException` y 13 `InvalidOperationException` por fallo transitorio; ninguno de las clases del fix. Antes de la suite la compilación fue incremental.
+- Reintento filtrado por nombre de los 42: `Con error: 8, Superado: 34, Total: 42` (7 de conexión y `NotasCreditoCompraApiPostgreSqlTests.Post_Devolucion_201ConIdYLocation_YQuedaEscritaConElUsuarioDelToken`, que esperaba 201 y recibió 500; la salida no muestra la causa). Segundo reintento de esos 8: `Correctas! - Con error: 0, Superado: 8, Total: 8`.
+- `dotnet build --no-incremental` en `bin` falló con 4 errores de copia: un `LaCentral.Api` (PID 51212, ajeno a esta tarea, no se tocó) tiene las DLL bloqueadas. Repetido con `--artifacts-path` en una carpeta nueva: `Compilación correcta. 0 Advertencia(s) 0 Errores`.
+- Mutaciones sobre la condición del tipo (52 pruebas Moq; base 52/52): `== "B"` mata 1 (`UnComprobanteDeTipoNoReconocido_…`); `== null` mata 5 (los tres `CadaLayout…`, `RazonSocialUnica_…`, `LaBusquedaPorRazonSocial_PideAlMenosDos…`). Revertidas sin commitear.
+- Script y nota del README en `bb87162`; no ejecutado. Sin push, PR ni verificadores.
+
+**Estado de la tarea:** implementación y verificación local hechas; quedan push, PR y verificadores.
