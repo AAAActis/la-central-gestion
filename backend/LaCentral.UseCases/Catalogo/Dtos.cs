@@ -26,3 +26,6 @@ public sealed record FilaParaVincularDto(int Id, int ProveedorId, string Codigo,
 
 /// <summary>054 · El resultado de vincular: el artículo y el código que le quedó asociado.</summary>
 public sealed record VinculacionDto(int ArticuloId, int ProveedorId, string Codigo);
+
+/// <summary>054a CA5 · El artículo dado de alta desde la fila y el código que le quedó vinculado.</summary>
+public sealed record AltaVinculadaDto(int ArticuloId, string CodigoInterno, int ProveedorId, string Codigo);
