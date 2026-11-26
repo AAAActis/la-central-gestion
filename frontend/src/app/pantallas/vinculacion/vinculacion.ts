@@ -95,6 +95,7 @@ import { ApiLaCentral, ArticuloResultado, CandidatoCatalogo, ResultadoCandidatos
                     <button type="button" class="vincular" [disabled]="!elegido() || vinculando() === f.id" (click)="vincular(f)">
                       {{ vinculando() === f.id ? 'Vinculando…' : 'Vincular' }}
                     </button>
+                    <button type="button" class="alta" [disabled]="vinculando() === f.id" (click)="darDeAlta(f)">Dar de alta y vincular</button>
                   }
                 </td>
               </tr>
@@ -152,14 +153,25 @@ export class Vinculacion {
     this.mensajeVinculacion.set(null);
     this.vinculando.set(fila.id);
     this.api.vincular(fila.id, articulo.id).subscribe({
-      next: () => {
-        const vinculado = { id: articulo.id, codigoInterno: articulo.codigoInterno, nombre: articulo.nombre };
-        const marcar = (filas: CandidatoCatalogo[]) => filas.map(f => f.id === fila.id ? { ...f, vinculado } : f);
-        this.resultado.update(r => r && { ...r, exactas: marcar(r.exactas), aproximadas: marcar(r.aproximadas) });
-        this.vinculando.set(null);
-      },
+      next: () => this.marcarVinculada(fila.id, { id: articulo.id, codigoInterno: articulo.codigoInterno, nombre: articulo.nombre }),
       error: e => { this.mensajeVinculacion.set(mensajeDeError(e)); this.vinculando.set(null); },
     });
+  }
+
+  /** CA5: el artículo nuevo lleva el nombre de la fila; se corrige después desde su ficha. */
+  darDeAlta(fila: CandidatoCatalogo) {
+    this.mensajeVinculacion.set(null);
+    this.vinculando.set(fila.id);
+    this.api.altaVinculada(fila.id, fila.nombre).subscribe({
+      next: a => this.marcarVinculada(fila.id, { id: a.articuloId, codigoInterno: a.codigoInterno, nombre: fila.nombre }),
+      error: e => { this.mensajeVinculacion.set(mensajeDeError(e)); this.vinculando.set(null); },
+    });
+  }
+
+  private marcarVinculada(filaId: number, vinculado: CandidatoCatalogo['vinculado']) {
+    const marcar = (filas: CandidatoCatalogo[]) => filas.map(f => f.id === filaId ? { ...f, vinculado } : f);
+    this.resultado.update(r => r && { ...r, exactas: marcar(r.exactas), aproximadas: marcar(r.aproximadas) });
+    this.vinculando.set(null);
   }
 
   protected porcentaje(parecido: number | null): string {
