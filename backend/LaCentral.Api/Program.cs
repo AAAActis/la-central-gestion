@@ -5,6 +5,7 @@ using LaCentral.Data.Repositorios;
 using LaCentral.UseCases;
 using LaCentral.UseCases.Articulos;
 using LaCentral.UseCases.Clientes;
+using LaCentral.UseCases.Comparador;
 using LaCentral.UseCases.FacturasCompra;
 using LaCentral.UseCases.NotasCreditoCompra;
 using LaCentral.UseCases.Proveedores;
@@ -77,6 +78,8 @@ builder.Services.AddScoped<ConsultarNotasCreditoCompraUseCase>();
 builder.Services.AddScoped<InterpretarFacturaPdfUseCase>();
 builder.Services.AddScoped<InterpretarNotaCreditoPdfUseCase>();
 builder.Services.AddScoped<ILectorTextoPdf, LaCentral.Api.Pdf.LectorTextoPdf>();
+builder.Services.AddScoped<IComparadorRepositorio, ComparadorRepositorio>();
+builder.Services.AddScoped<ObtenerComparadorUseCase>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
