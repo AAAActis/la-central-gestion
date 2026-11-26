@@ -21,7 +21,7 @@ public class ProveedorRazonSocialExactaTests
     public ProveedorRazonSocialExactaTests()
     {
         _proveedores.Setup(p => p.BuscarActivosPorRazonSocialExactaAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        _proveedores.Setup(p => p.BuscarActivosPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _proveedores.Setup(p => p.BuscarActivosEnNegroPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         _facturas.Setup(f => f.ObtenerArticulosPorCodigoProveedorAsync(It.IsAny<int>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, int>());
     }
@@ -30,7 +30,7 @@ public class ProveedorRazonSocialExactaTests
         => _proveedores.Setup(p => p.BuscarActivosPorRazonSocialExactaAsync("Fazio", It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(proveedores);
 
     private void ElContieneDa(params Proveedor[] proveedores)
-        => _proveedores.Setup(p => p.BuscarActivosPorRazonSocialAsync("Fazio", It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(proveedores);
+        => _proveedores.Setup(p => p.BuscarActivosEnNegroPorRazonSocialAsync("Fazio", It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(proveedores);
 
     private async Task<FacturaPdfInterpretada> Interpretar(int? proveedorElegido = null)
     {
@@ -42,7 +42,7 @@ public class ProveedorRazonSocialExactaTests
     }
 
     private void ElContieneNoSeConsulto()
-        => _proveedores.Verify(p => p.BuscarActivosPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        => _proveedores.Verify(p => p.BuscarActivosEnNegroPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
 
     // CA-1 / CA-6
     [Fact]
@@ -104,7 +104,7 @@ public class ProveedorRazonSocialExactaTests
         var f = await Interpretar();
 
         Assert.Null(f.ProveedorId);
-        _proveedores.Verify(p => p.BuscarActivosPorRazonSocialAsync("Fazio", It.Is<int>(limite => limite >= 2), It.IsAny<CancellationToken>()), Times.Once);
+        _proveedores.Verify(p => p.BuscarActivosEnNegroPorRazonSocialAsync("Fazio", It.Is<int>(limite => limite >= 2), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // CA-4 (la consulta solo trae activos; acá, que el caso de uso tampoco cuenta uno inactivo)

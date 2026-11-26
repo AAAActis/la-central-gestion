@@ -144,7 +144,7 @@ public class ProveedorRepositorio : IProveedorRepositorio
         };
     }
 
-    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarActivosPorRazonSocialAsync(
+    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarActivosEnNegroPorRazonSocialAsync(
         string texto, int limite, CancellationToken ct = default)
     {
         var filas = await ConTodasLasPalabras(_context.Proveedor.AsNoTracking().Where(p => p.Activo), texto)

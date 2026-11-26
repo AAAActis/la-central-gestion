@@ -47,14 +47,14 @@ public class ProveedorSucursalPdfPostgreSqlTests
         await using var nuevo = fixture.CrearContexto();
         var repo = new ProveedorRepositorio(nuevo);
 
-        var todos = await repo.BuscarActivosPorRazonSocialAsync("cordoba", 10);
+        var todos = await repo.BuscarActivosEnNegroPorRazonSocialAsync("cordoba", 10);
         Assert.Equal([primero, segundo], todos.Select(p => p.Id));
         Assert.All(todos, p => Assert.True(p.Activo));
 
-        var conTope = await repo.BuscarActivosPorRazonSocialAsync("cordoba", 1);
+        var conTope = await repo.BuscarActivosEnNegroPorRazonSocialAsync("cordoba", 1);
         Assert.Equal([primero], conTope.Select(p => p.Id));
 
-        Assert.Empty(await repo.BuscarActivosPorRazonSocialAsync("inexistente", 10));
+        Assert.Empty(await repo.BuscarActivosEnNegroPorRazonSocialAsync("inexistente", 10));
     }
 
     [PostgreSqlFact]

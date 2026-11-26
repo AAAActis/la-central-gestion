@@ -20,7 +20,7 @@ public class ProveedorYSucursalEnPdfTests
 
     public ProveedorYSucursalEnPdfTests()
     {
-        _proveedores.Setup(p => p.BuscarActivosPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _proveedores.Setup(p => p.BuscarActivosEnNegroPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
         _proveedores.Setup(p => p.BuscarActivosPorRazonSocialExactaAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         _facturas.Setup(f => f.ObtenerArticulosPorCodigoProveedorAsync(It.IsAny<int>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
@@ -39,7 +39,7 @@ public class ProveedorYSucursalEnPdfTests
     }
 
     private void LaRazonSocialDa(string termino, params Proveedor[] proveedores)
-        => _proveedores.Setup(p => p.BuscarActivosPorRazonSocialAsync(termino, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        => _proveedores.Setup(p => p.BuscarActivosEnNegroPorRazonSocialAsync(termino, It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(proveedores);
 
     // --- Proveedor ---------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ public class ProveedorYSucursalEnPdfTests
         await Interpretar(PdfSintetico.PresupuestoFazio());
 
         // Con un tope de 1, dos proveedores iguales parecerían una única coincidencia.
-        _proveedores.Verify(p => p.BuscarActivosPorRazonSocialAsync("Fazio", It.Is<int>(limite => limite >= 2), It.IsAny<CancellationToken>()), Times.Once);
+        _proveedores.Verify(p => p.BuscarActivosEnNegroPorRazonSocialAsync("Fazio", It.Is<int>(limite => limite >= 2), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class ProveedorYSucursalEnPdfTests
 
         Assert.Equal(7, f.ProveedorId);
         Assert.DoesNotContain("proveedorId", f.ParaRevisar);
-        _proveedores.Verify(p => p.BuscarActivosPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _proveedores.Verify(p => p.BuscarActivosEnNegroPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class ProveedorYSucursalEnPdfTests
         var f = await Interpretar(PdfSintetico.PresupuestoFazio(), proveedorElegido: 5);
 
         Assert.Equal(5, f.ProveedorId);
-        _proveedores.Verify(p => p.BuscarActivosPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _proveedores.Verify(p => p.BuscarActivosEnNegroPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]

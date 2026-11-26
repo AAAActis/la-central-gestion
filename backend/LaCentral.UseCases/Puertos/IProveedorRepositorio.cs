@@ -16,7 +16,7 @@ public interface IProveedorRepositorio
     /// (sin acentos ni mayúsculas), en orden de Id. Devuelve a lo sumo <paramref name="limite"/>: quien llama
     /// pide uno más de los que necesita para saber si la coincidencia es única.
     /// </summary>
-    Task<IReadOnlyList<Proveedor>> BuscarActivosPorRazonSocialAsync(string texto, int limite, CancellationToken ct = default);
+    Task<IReadOnlyList<Proveedor>> BuscarActivosEnNegroPorRazonSocialAsync(string texto, int limite, CancellationToken ct = default);
 
     /// <summary>
     /// Fix E2: los proveedores ACTIVOS cuya razón social es IGUAL a <paramref name="texto"/>, ignorando mayúsculas,

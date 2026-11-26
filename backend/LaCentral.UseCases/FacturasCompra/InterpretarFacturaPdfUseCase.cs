@@ -66,7 +66,7 @@ public class InterpretarFacturaPdfUseCase
                 var exactas = (await _proveedores.BuscarActivosPorRazonSocialExactaAsync(razonSocial, 2, ct)).Where(p => p.Activo).ToList();
                 var coincidencias = exactas.Count > 0
                     ? exactas
-                    : (await _proveedores.BuscarActivosPorRazonSocialAsync(razonSocial, 2, ct)).Where(p => p.Activo).ToList();
+                    : (await _proveedores.BuscarActivosEnNegroPorRazonSocialAsync(razonSocial, 2, ct)).Where(p => p.Activo).ToList();
                 if (coincidencias.Count == 1)
                 {
                     proveedorId = coincidencias[0].Id;
