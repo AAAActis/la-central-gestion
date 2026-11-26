@@ -1,12 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiLaCentral, CandidatoCatalogo, ResultadoCandidatos, mensajeDeError } from '../../nucleo/api';
+import { ApiLaCentral, ArticuloResultado, CandidatoCatalogo, ResultadoCandidatos, mensajeDeError } from '../../nucleo/api';
 
 /**
  * 053 · HU-CMP-06 · Candidatos de vinculación: entre los catálogos de todos los proveedores, primero
  * las coincidencias exactas y, aparte, las aproximadas de mayor a menor parecido (CA1). Una fila ya
  * vinculada dice a qué artículo (CA4). Sin candidatos, se dice para qué texto (CA6).
+ * 054a · HU-CMP-07: con un artículo propio elegido, cada fila sin vincular se vincula a él (CA1);
+ * si el código ya es de otro artículo, se muestra lo que dice la API (CA6).
  * Solo clases del sistema visual (docs/diseno/SISTEMA-VISUAL.md): no agrega estilos.
  */
 @Component({
@@ -23,11 +25,29 @@ import { ApiLaCentral, CandidatoCatalogo, ResultadoCandidatos, mensajeDeError } 
           <button type="submit" class="primario" [disabled]="buscando()">{{ buscando() ? 'Buscando…' : 'Buscar' }}</button>
         </div>
       </form>
+      <form class="filtros articulo" (ngSubmit)="buscarArticulo()">
+        <div class="fila">
+          <label>Artículo propio (código interno, código de proveedor o nombre)
+            <input name="textoArticulo" [(ngModel)]="textoArticulo" autocomplete="off" />
+          </label>
+          <button type="submit" [disabled]="buscandoArticulo()">{{ buscandoArticulo() ? 'Buscando…' : 'Buscar artículo' }}</button>
+        </div>
+      </form>
+      @if (elegido(); as a) {
+        <p class="elegido" role="status">Vinculando a <span class="mono">{{ a.codigoInterno }}</span> · {{ a.nombre }}</p>
+      } @else if (articulos().length > 0) {
+        <ul>
+          @for (a of articulos(); track a.id) {
+            <li><button type="button" class="elegir" (click)="elegir(a)"><span class="mono">{{ a.codigoInterno }}</span> · {{ a.nombre }}</button></li>
+          }
+        </ul>
+      }
     </section>
 
     @if (error()) {
       <p class="error" role="alert">{{ error() }}</p>
     } @else if (resultado(); as r) {
+      @if (mensajeVinculacion()) { <p class="error" role="alert">{{ mensajeVinculacion() }}</p> }
       @if (r.mensaje) {
         <div class="estado-vacio vacio" role="status"><h2>Sin candidatos</h2><p>{{ r.mensaje }}</p></div>
       } @else {
@@ -72,6 +92,9 @@ import { ApiLaCentral, CandidatoCatalogo, ResultadoCandidatos, mensajeDeError } 
                     <span class="etiqueta activa vinculada">Vinculada a <span class="mono">{{ v.codigoInterno }}</span> · {{ v.nombre }}</span>
                   } @else {
                     <span class="tenue">Sin vincular</span>
+                    <button type="button" class="vincular" [disabled]="!elegido() || vinculando() === f.id" (click)="vincular(f)">
+                      {{ vinculando() === f.id ? 'Vinculando…' : 'Vincular' }}
+                    </button>
                   }
                 </td>
               </tr>
@@ -90,6 +113,12 @@ export class Vinculacion {
   readonly resultado = signal<ResultadoCandidatos | null>(null);
   readonly error = signal<string | null>(null);
   readonly buscando = signal(false);
+  readonly articulos = signal<ArticuloResultado[]>([]);
+  readonly elegido = signal<ArticuloResultado | null>(null);
+  readonly buscandoArticulo = signal(false);
+  readonly vinculando = signal<number | null>(null);
+  /** CA6: el error de vincular no tapa los resultados, como sí lo hace el de buscar. */
+  readonly mensajeVinculacion = signal<string | null>(null);
 
   buscar() {
     const texto = this.texto.trim();
@@ -99,6 +128,37 @@ export class Vinculacion {
     this.api.candidatos(texto).subscribe({
       next: r => { this.resultado.set(r); this.buscando.set(false); },
       error: e => { this.resultado.set(null); this.error.set(mensajeDeError(e)); this.buscando.set(false); },
+    });
+  }
+
+  buscarArticulo() {
+    const texto = this.textoArticulo.trim();
+    if (texto === '') return;
+    this.elegido.set(null);
+    this.buscandoArticulo.set(true);
+    this.api.buscar(texto, false, 1, 10).subscribe({
+      next: p => { this.articulos.set(p.articulos); this.buscandoArticulo.set(false); },
+      error: e => { this.articulos.set([]); this.error.set(mensajeDeError(e)); this.buscandoArticulo.set(false); },
+    });
+  }
+
+  elegir(articulo: ArticuloResultado) {
+    this.elegido.set(articulo);
+  }
+
+  vincular(fila: CandidatoCatalogo) {
+    const articulo = this.elegido();
+    if (!articulo) return;
+    this.mensajeVinculacion.set(null);
+    this.vinculando.set(fila.id);
+    this.api.vincular(fila.id, articulo.id).subscribe({
+      next: () => {
+        const vinculado = { id: articulo.id, codigoInterno: articulo.codigoInterno, nombre: articulo.nombre };
+        const marcar = (filas: CandidatoCatalogo[]) => filas.map(f => f.id === fila.id ? { ...f, vinculado } : f);
+        this.resultado.update(r => r && { ...r, exactas: marcar(r.exactas), aproximadas: marcar(r.aproximadas) });
+        this.vinculando.set(null);
+      },
+      error: e => { this.mensajeVinculacion.set(mensajeDeError(e)); this.vinculando.set(null); },
     });
   }
 
