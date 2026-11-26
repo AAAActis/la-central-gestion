@@ -5,6 +5,7 @@ import { FacturaCompra } from './pantallas/factura-compra/factura-compra';
 import { NotaCreditoCompra } from './pantallas/nota-credito-compra/nota-credito-compra';
 import { NotasCreditoRegistradas } from './pantallas/notas-credito-registradas/notas-credito-registradas';
 import { Clientes, Proveedores } from './pantallas/terceros/terceros';
+import { Vinculacion } from './pantallas/vinculacion/vinculacion';
 
 /**
  * Los módulos del sistema. Un módulo nuevo se agrega acá y aparece en el menú y en las rutas;
@@ -33,5 +34,9 @@ export const MODULOS_DEL_SISTEMA: readonly Modulo[] = [
   {
     ruta: 'notas-credito-registradas', titulo: 'Notas de crédito registradas', bajada: 'Consultá las notas de crédito por proveedor o fecha y anulá una con autorización.',
     roles: ['ADMINISTRADOR', 'OPERADOR'], componente: NotasCreditoRegistradas,
+  },
+  {
+    ruta: 'vinculacion', titulo: 'Vincular catálogo', bajada: 'Buscá un repuesto en los catálogos de los proveedores y vinculalo con un artículo propio.',
+    roles: ['ADMINISTRADOR', 'OPERADOR'], componente: Vinculacion,
   },
 ];

@@ -184,6 +184,20 @@ export interface TotalesFacturaCompra {
   total: number;
 }
 
+/** 053 · El artículo propio al que ya está vinculada una fila de catálogo (CA4). */
+export interface ArticuloVinculado { id: number; codigoInterno: string; nombre: string; }
+
+/** 053 · Una fila del catálogo de un proveedor. `parecido` (0 a 1) solo en las aproximadas. */
+export interface CandidatoCatalogo {
+  id: number; proveedorId: number; proveedor: string; codigo: string; nombre: string;
+  numeroOriginal: string | null; marca: string | null; parecido: number | null; vinculado: ArticuloVinculado | null;
+}
+
+/** 053 · CA1: exactas y, aparte, aproximadas. CA6: `mensaje` cuando no hay ninguna. */
+export interface ResultadoCandidatos {
+  texto: string; exactas: CandidatoCatalogo[]; aproximadas: CandidatoCatalogo[]; mensaje: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiLaCentral {
   private readonly http = inject(HttpClient);
@@ -209,6 +223,13 @@ export class ApiLaCentral {
 
   historialCompras(id: number): Observable<RegistroHistorialCompra[]> {
     return this.http.get<RegistroHistorialCompra[]>(`/api/articulos/${id}/historial-compras`);
+  }
+
+  /** 053 · Candidatos de vinculación por texto y, si se indica, también por un artículo propio (CA5). */
+  candidatos(texto: string, articuloId: number | null = null): Observable<ResultadoCandidatos> {
+    let params = new HttpParams().set('texto', texto);
+    if (articuloId !== null) params = params.set('articuloId', articuloId);
+    return this.http.get<ResultadoCandidatos>('/api/catalogo/candidatos', { params });
   }
 
   crear(alta: AltaArticulo): Observable<{ id: number; codigoInterno: string }> {
