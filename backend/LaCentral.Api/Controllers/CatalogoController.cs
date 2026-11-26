@@ -14,9 +14,11 @@ public class CatalogoController : ControllerBase
 {
     private readonly BuscarCandidatosUseCase _buscarCandidatos;
     private readonly VincularFilaCatalogoUseCase _vincular;
+    private readonly CrearYVincularArticuloUseCase _crearYVincular;
 
-    public CatalogoController(BuscarCandidatosUseCase buscarCandidatos, VincularFilaCatalogoUseCase vincular)
-        => (_buscarCandidatos, _vincular) = (buscarCandidatos, vincular);
+    public CatalogoController(BuscarCandidatosUseCase buscarCandidatos, VincularFilaCatalogoUseCase vincular,
+        CrearYVincularArticuloUseCase crearYVincular)
+        => (_buscarCandidatos, _vincular, _crearYVincular) = (buscarCandidatos, vincular, crearYVincular);
 
     /// <summary>
     /// 053 · Candidatos de vinculación: exactas y, aparte, aproximadas por parecido (pg_trgm). Con
@@ -43,4 +45,14 @@ public class CatalogoController : ControllerBase
     public async Task<IActionResult> Vincular(int filaId, [FromBody] VincularFilaRequest request,
         CancellationToken cancellationToken = default)
         => this.AResultadoHttp(await _vincular.EjecutarAsync(filaId, request.ArticuloId, cancellationToken));
+
+    /// <summary>054a CA5 · Da de alta el artículo desde la fila y lo deja vinculado, en una sola operación.</summary>
+    [HttpPost("filas/{filaId:int}/alta-vinculada")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> AltaVinculada(int filaId, [FromBody] AltaVinculadaRequest request,
+        CancellationToken cancellationToken = default)
+        => this.AResultadoHttp(await _crearYVincular.EjecutarAsync(filaId, request.Nombre, cancellationToken));
 }

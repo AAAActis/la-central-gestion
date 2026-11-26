@@ -85,6 +85,7 @@ builder.Services.AddScoped<ICatalogoCandidatosRepositorio, CatalogoCandidatosRep
 builder.Services.AddScoped<BuscarCandidatosUseCase>();
 builder.Services.AddScoped<ICatalogoVinculacionRepositorio, CatalogoVinculacionRepositorio>();
 builder.Services.AddScoped<VincularFilaCatalogoUseCase>();
+builder.Services.AddScoped<CrearYVincularArticuloUseCase>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
