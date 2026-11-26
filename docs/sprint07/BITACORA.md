@@ -63,3 +63,14 @@ Sprint 7 anterior al 25/11/2026 (C2, el 12, el 14 y sus re-scaffolds) está en
 - Script y nota del README en `bb87162`; no ejecutado. Sin push, PR ni verificadores.
 
 **Estado de la tarea:** implementación y verificación local hechas; quedan push, PR y verificadores.
+
+## 26/11/2026 · Fix E2 · confirmación del tipo no reconocido
+
+**Instrucción recibida (verbatim):**
+> 1. Confirmado: un comprobante de tipo no reconocido (null) se asigna. La regla es «no es A». Declaralo como riesgo en el PR: un código de ARCA que el lector no traduce, en una factura A real de un proveedor cuyo CUIT no está cargado, caería a la cuenta en negro, con «Revisar». 2. Mostrame la lista de códigos de comprobante que el lector traduce a "A" y a "B", para el cuerpo del PR. 3. Sin push, sin PR, sin verificadores todavía.
+
+**Plan:** 1. Leer los códigos en `LayoutsPdf`. 2. Anotar la confirmación y el riesgo en el ESTADO. Sin código.
+
+**Estado:** terminada
+- `LayoutsPdf.cs`: ETMAN `Nro.: (\d{2})` con `01` → A y `06` → B; Expoyer «Código N… (\d{1,2})» con `1` → A y `6` → B; Fazio fija `"B"`. Resto o sin coincidencia → `null`.
+- ESTADO: confirmación, riesgo para el PR y lista de códigos. Sin commit. Quedan push, PR y verificadores.
