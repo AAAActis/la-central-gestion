@@ -175,3 +175,28 @@ La instrucción verbatim está en el bloque «26/11/2026 · Cola autónoma…» 
 
 **Estado:** en curso
 - Merge de `origin/develop` (`bda2692`): conflictos solo en docs (bitácora add/add, y en ESTADO las decisiones y PRÓXIMA SESIÓN). Se conservan los dos lados; la D-S7-12 de Javi queda entre la D-S7-11 y la D-S7-13. El código que entró (re-scaffold del 14, `Proveedor`) no se solapa con el 16.
+- Mientras corre la suite del auditor del #202 (sin nada contra la base), escrito y commiteado, con su rojo en esqueleto:
+  - 053 en `feature/126-candidatos-vinculacion` (sobre esta rama): rojo `725aee7` (unitarias 10/10 en rojo), rojo de pantalla `7b3fc58` (4 en rojo; «con texto vacío no consulta» pasa contra el esqueleto), verde de pantalla `0c79ee8` (frontend 387/387), producción `848714a` (unitarias 10/10). **Falta correr** `CandidatosApiPostgreSqlTests` (9), en rojo sobre `725aee7` y en verde.
+  - Comparador en `feature/030-comparador` (sobre esta rama): rojo `02b91f3` (unitarias 8/8 en rojo), producción `2613307` (8/8), rojo de pantalla `cc1a4b6` (8 en rojo), verde `430a603` (frontend 390/390), 031 documentada `6b3d522`. **Falta correr** `ComparadorApiPostgreSqlTests` (3).
+  - 054: no se escribe todavía. Necesita el 16 aplicado y su re-scaffold (`UsuarioId` y `FechaVinculacion` en el modelo, y `codigo_alt_proveedor_codigo_unico` en el mapa del manejador). D-S7-17: se parte en 054a y 054b.
+- ESTADO: D-S7-15 a D-S7-17 y la sección «PREGUNTAS PARA SANTI» (PS-01 a PS-05).
+
+## 26/11/2026 17:25 · Retomar tras el reinicio: auditor del #202 y la cola
+
+**Instrucción recibida (verbatim):**
+> Se reinició la máquina en medio del trabajo: el auditor-persistencia del #202 estaba corriendo su suite completa sobre fe5ed3e y se cortó. Retomá según CLAUDE.md:
+> 1) Leé el último bloque «en curso» de la bitácora y hacé el fetch y la comparación con develop.
+> 2) Revisá los worktrees: git worktree list. Si quedó el del auditor u otro tuyo, sacalo con git worktree remove (sin --force; si dice que está sucio, avisame qué tiene) y después git worktree prune. Fijate también que no hayan quedado esquemas de ensayo a medias en lacentral_test (solo listalos, no borres nada que no sea tuyo).
+> 3) Volvé a invocar el auditor-persistencia del #202 con el alcance acotado a sus commits. La suite de la ronda anterior no terminó, así que esta invocación la corre de nuevo (una sola vez).
+> 4) Seguí con la cola que te dejé (base_completa, script 16, 053/054, comparador, compras) con las mismas reglas: no parar por lo técnico, PREGUNTAS PARA SANTI y PARA SANTI en el ESTADO y la bitácora, y seguir.
+
+**Plan:**
+1. Bitácora leída. Fetch: `origin/develop` no trae commits nuevos (`HEAD..origin/develop` vacío).
+2. Worktrees y esquemas sobrantes de `lacentral_test`.
+3. `auditor-persistencia` del #202 sobre `fe5ed3e`, acotado a `f944258`, `2b3e9d5`, `0d4ec50` y `a23c8fb`. Corre la suite él.
+4. Cola: base_completa → 16 → 053/054 → comparador → compras (si el 13 está aplicado).
+
+**Estado:** en curso
+- Worktree del auditor (`…/3472cf08…/scratchpad/auditor-wt-5646dca3`, `fe5ed3e`): figuraba `prunable` porque el reinicio borró el scratchpad. `git worktree remove` y `git worktree prune -v` lo sacaron; queda solo el principal.
+- `lacentral_test` a las 17:22 (reinicio de esta máquina 16:57:31). Esquemas fuera de `public`: `demo_ensayo_c3` (26 tablas), `staging` (3) y diez `pr110_test_*` (33 tablas c/u). De esos, `2264c6cc…` y `691bc549…` son de la corrida cortada del auditor: tienen sesión desde 100.88.21.29 (esta máquina), abierta antes del reinicio. Los otros ocho no tienen sesión que los identifique: `046097d2…`, `3856de7c…`, `3e568313…`, `7c31ee4a…`, `959576f5…`, `9f995e95…`, `e6221f80…`, `ef4770ee…`. De esos, `959576f5…`, `9f995e95…` y `ef4770ee…` tienen sesión desde 100.89.21.64 (otro equipo), con 17 sesiones `idle in transaction` desde las 15:08 y un `DROP SCHEMA "pr110_test_959576f5…"` trabado desde las 16:04 por la pid 163340, que es de esa misma máquina. No borré nada: el clasificador de permisos rechazó el `pg_terminate_backend` de mis sesiones fantasma y el `DROP` de mis dos esquemas. Las sesiones fantasma (12) se caen solas cuando venza el keepalive de TCP.
+- `auditor-persistencia` del #202 relanzado sobre `fe5ed3e`, acotado a `f944258`, `2b3e9d5`, `0d4ec50` y `a23c8fb`; corre él la suite (una vez). Mientras tanto, solo código sin base.
