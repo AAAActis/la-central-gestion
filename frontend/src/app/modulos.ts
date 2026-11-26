@@ -1,5 +1,6 @@
 import { Modulo } from './nucleo/acceso';
 import { Articulos } from './pantallas/articulos/articulos';
+import { Comparador } from './pantallas/comparador/comparador';
 import { ComprasRegistradas } from './pantallas/compras-registradas/compras-registradas';
 import { FacturaCompra } from './pantallas/factura-compra/factura-compra';
 import { NotaCreditoCompra } from './pantallas/nota-credito-compra/nota-credito-compra';
@@ -33,5 +34,9 @@ export const MODULOS_DEL_SISTEMA: readonly Modulo[] = [
   {
     ruta: 'notas-credito-registradas', titulo: 'Notas de crédito registradas', bajada: 'Consultá las notas de crédito por proveedor o fecha y anulá una con autorización.',
     roles: ['ADMINISTRADOR', 'OPERADOR'], componente: NotasCreditoRegistradas,
+  },
+  {
+    ruta: 'comparador', titulo: 'Comparador de precios', bajada: 'Mirá lo que cuesta un artículo en cada proveedor, del más barato al más caro.',
+    roles: ['ADMINISTRADOR', 'OPERADOR'], componente: Comparador,
   },
 ];

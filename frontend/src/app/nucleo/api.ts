@@ -184,6 +184,21 @@ export interface TotalesFacturaCompra {
   total: number;
 }
 
+/** 030 · Una fila del comparador: un código vinculado de un proveedor (D-S7-09). */
+export interface FilaComparador {
+  proveedorId: number; proveedor: string; urlReferencia: string | null; codigo: string; nombre: string; marca: string | null;
+  precioNeto: number | null; precioLista: number | null; diferenciaConMasBarato: number | null;
+  estadoStock: 'HAY' | 'NO_HAY' | 'A_CONFIRMAR' | null; stock: number | null; urlImagen: string | null;
+  ultimaLectura: string; ultimoComprado: boolean;
+}
+
+/** 030 · El comparador de un artículo; `existenciaPorProveedor` es el máximo entre sus filas (054 CA4). */
+export interface Comparador {
+  articuloId: number; filas: FilaComparador[];
+  existenciaPorProveedor: { proveedorId: number; estadoStock: FilaComparador['estadoStock']; stock: number | null }[];
+  mensaje: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiLaCentral {
   private readonly http = inject(HttpClient);
@@ -205,6 +220,11 @@ export class ApiLaCentral {
 
   ficha(id: number): Observable<FichaArticulo> {
     return this.http.get<FichaArticulo>(`/api/articulos/${id}`);
+  }
+
+  /** 030 · El comparador de precios de un artículo, del más barato al más caro por precio neto. */
+  comparador(id: number): Observable<Comparador> {
+    return this.http.get<Comparador>(`/api/articulos/${id}/comparador`);
   }
 
   historialCompras(id: number): Observable<RegistroHistorialCompra[]> {
