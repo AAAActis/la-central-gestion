@@ -2056,6 +2056,23 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - 1) `origin/develop` (#197, `54569b8`) mergeado en `chore/rescaffold-12`. Entraron solo `backend/db/rescaffold/14_Vencimiento_Proveedor.sql`, `14_Vencimiento_Proveedor_deshacer.sql` y esta bitácora. Único conflicto: esta bitácora. Orden final: las dos líneas de esta rama que cierran el bloque del 24/11 (#199 mergeado y re-scaffold), el bloque «Segundo merge de develop (#199)» de `develop`, y este bloque al final (corrige el orden del plan: las dos líneas tenían que quedar pegadas a su bloque). Sin marcadores; 48 encabezados `##` = 44 de la base + 3 de `develop` + 1 de esta rama; ninguna línea de ningún lado falta. Sin re-scaffold del 14.
 - 2) Push `4300cd5` (merge) + `fcd2d58` (ESTADO: #197 mergeado). Cuerpo del #200 con la sección «Merge de develop tras el #197»: solo SQL y docs, sin suite ni verificadores, y sin re-scaffold del 14. GitHub: `mergeable: MERGEABLE` (`mergeStateStatus: BLOCKED`, por la revisión pendiente, no por conflicto).
 
+## 25/11/2026 · Re-scaffold del 14 contra `public` de `lacentral_test`
+
+**Instrucción recibida (verbatim):**
+> El #200 está mergeado y el 14 ya está aplicado en lacentral_test, lacentral_demo y lacentral, con «14: TODO OK.» en las tres; backup de la real en ~/dev/TESIS/backups/lacentral-antes-14.dump. Desde develop actualizado, abrí el PR del re-scaffold del 14 contra public de lacentral_test: tiene que aparecer solo vencimiento_modo y vencimiento_dias en Proveedor (y su configuración en el DbContext). Suite completa una vez sobre el HEAD del PR, con hash, línea de resumen y conteo en el cuerpo. Verificadores no aplican si no hay lógica nueva. Actualizá bitácora y ESTADO.
+
+**Plan:**
+1. Rama `chore/rescaffold-14` desde `develop` actualizado (`07fd8e7`, #200 mergeado).
+2. `dotnet ef dbcontext scaffold` contra `public` de `lacentral_test` (comando del README de `backend/db/rescaffold/`). Comprobar con `git diff --ignore-cr-at-eol` que solo aparecen `VencimientoModo` y `VencimientoDias` en `Proveedor` y su configuración en `LaCentralDbContext.cs`.
+3. Commit del scaffold; bitácora y ESTADO; suite completa una vez sobre el HEAD; PR contra `develop` con hash, línea y conteo. Sin verificadores si no hay lógica nueva.
+
+**Estado:** terminada. Abierto: merge del PR del re-scaffold del 14; después, Fix F.3–F.5.
+- 1) `chore/rescaffold-14` creada desde `develop` (`07fd8e7`, con el #200 adentro).
+- 2) Scaffold contra `public` de `lacentral_test` (`dotnet-ef` 10.0.11, con `DOTNET_ROOT=$HOME/.dotnet`) en `99d6320`. Solo aparecen `VencimientoModo` (`string`, `HasMaxLength(30)`, default `'MANUAL'`) y `VencimientoDias` (`short?`) en `Proveedor`, más su configuración en `LaCentralDbContext.cs`, con los comentarios de las columnas: +18 líneas en 2 archivos. El diff en bytes es igual a `--ignore-cr-at-eol`, sin cambios de finales de línea. No hay archivos nuevos ni borrados.
+- 3) ESTADO del Sprint 7 en `4064b1e`: la fila E14 y un bloque del 25/11 en PRÓXIMA SESIÓN. La suite completa sobre `4064b1e` está en curso.
+- 4) Suite completa sobre `4064b1e`, contra `public` de `lacentral_test`. Primero `dotnet build --no-incremental` (0 errores, 0 advertencias) y después `dotnet test --no-build`: `Correctas! - Con error:     0, Superado:   858, Omitido:     0, Total:   858, Duración: 11 m 3 s - LaCentral.Tests.dll (net10.0)`. Cero `[FAIL]`. Un primer intento con `dotnet test --no-incremental` no ejecutó ningún test (MSB1001: `dotnet test` no acepta ese modificador), así que no cuenta. Sin verificadores: no hay lógica nueva.
+- 5) Push de `chore/rescaffold-14` y PR contra `develop` (ver ESTADO). El commit de esta bitácora queda fuera de la corrida: es solo docs.
+
 ## 25/11/2026 · Fix «Enter sobre un código exacto lo elige» (`fix/enter-codigo-exacto`)
 
 **Instrucción recibida (verbatim):**
@@ -2127,3 +2144,4 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 > El segundo debe mostrar solo los archivos del fix, sin contenido que haya entrado por los merges de develop. Confirmá con git status --short que no quedó nada nuevo dentro del repo.
 >
 > Al cerrar: ng test --watch=false --browsers=ChromeHeadless completo y ng build, UNA vez, sobre el último commit. Línea literal y hash. Sin push, sin PR, sin verificador-tdd (va después, desde la carpeta principal, cuando el E2 termine).
+- §3, 26/11: `origin/develop` trae #201 (re-scaffold del 14: `LaCentralDbContext.cs`, `Models/Proveedor.cs`) y #203 (docs del Sprint 7). Único solapamiento: esta bitácora; resuelto conservando los dos lados, primero los de `develop`. No toca el frontend; el plan no cambia.
