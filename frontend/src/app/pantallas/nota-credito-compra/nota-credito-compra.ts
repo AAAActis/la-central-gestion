@@ -7,6 +7,7 @@ import {
   mensajeDeError,
 } from '../../nucleo/api';
 import { exactoArticulo, exactoProveedor } from '../../compartido/codigo-exacto';
+import { lineaRepetida } from '../../compartido/linea-repetida';
 
 /** 057 CA-005: un artículo devuelto y su origen, elegido por línea (D9). */
 interface LineaDevuelta { articulo: ArticuloResultado; sucursalId: number | null; cantidad: number | null; }
@@ -130,6 +131,7 @@ interface Origen { id: number; nombre: string; }
                 aria-label="Código o nombre del artículo" (keydown.enter)="$event.preventDefault(); enterArticulo()" />
               <button type="button" class="secundario" (click)="buscarArticulo()">Buscar artículo</button>
             </div>
+            @if (errorArticulo()) { <p class="error" role="alert">{{ errorArticulo() }}</p> }
             @for (a of articulos(); track a.id) {
               <button type="button" class="opcion" (click)="agregarArticulo(a)"><span class="mono">{{ a.codigoInterno }}</span> {{ a.nombre }}</button>
             }
@@ -173,6 +175,7 @@ export class NotaCreditoCompra {
   textoProveedor = '';
   readonly proveedores = signal<ProveedorResumen[]>([]);
   readonly errorProveedor = signal<string | null>(null);
+  readonly errorArticulo = signal<string | null>(null);
   readonly proveedor = signal<ProveedorResumen | null>(null);
   readonly facturas = signal<FacturaCompraResumen[]>([]);
   readonly errorFacturas = signal<string | null>(null);
@@ -304,6 +307,7 @@ export class NotaCreditoCompra {
   }
 
   buscarArticulo(alTerminar?: (a: ArticuloResultado[]) => boolean) {
+    this.errorArticulo.set(null);
     this.api.buscar(this.textoArticulo, false, 1, 20).subscribe({
       next: r => { if (!alTerminar?.(r.articulos)) this.articulos.set(r.articulos); },
       error: e => this.error.set(mensajeDeError(e)),
@@ -321,8 +325,13 @@ export class NotaCreditoCompra {
   }
 
   agregarArticulo(a: ArticuloResultado) {
-    this.lineas = [...this.lineas, { articulo: a, sucursalId: null, cantidad: 1 }];
     this.articulos.set([]);
+    // La línea nueva entra sin origen: choca con otra del mismo artículo que todavía no lo tenga.
+    if (lineaRepetida(this.lineas, a.id, null)) {
+      this.errorArticulo.set(`${a.codigoInterno} ya está en la devolución: corregí su línea.`);
+      return;
+    }
+    this.lineas = [...this.lineas, { articulo: a, sucursalId: null, cantidad: 1 }];
     this.textoArticulo = '';
     this.invalidarTotales();
     this.api.ficha(a.id).subscribe(f => {
@@ -419,6 +428,7 @@ export class NotaCreditoCompra {
     this.importeNeto = null;
     this.percepciones = { iva: null, iibb: null, municipal: null, ganancias: null };
     this.lineas = [];
+    this.errorArticulo.set(null);
     this.paraRevisar.set([]);
     this.facturasSinEncontrar.set([]);
     this.desdePdf = false;
