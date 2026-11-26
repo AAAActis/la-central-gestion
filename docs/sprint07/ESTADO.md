@@ -11,6 +11,29 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 
 ---
 
+## Reparto · 25/11/2026
+
+Lo pidió Santi el 25/11/2026, para que cada uno (y su Claude) sepa qué es suyo.
+
+**Santi (su Claude):**
+- Script 13 (#202).
+- Script 16 y vinculación: 053 (#126) y 054 (#127).
+- Comparador: 030 (#16), 031 (#18, en lo que toca al sistema), 032 (#19), 033 (#20), 034 (#35) y 050 (#52).
+- Compras: 026, 027 (#34), 028 (#9), 016 (#23) y #195.
+- Scrapes y workflows de n8n: fuera del repo.
+
+**Javi (su Claude):**
+- Fix E2 (proveedor sin CUIT, ver D-S7-12).
+- Fix F F.3 a F.5 (vencimiento por proveedor; usa las columnas del 14, #201).
+- La 058 (#194, alícuotas, script 15), cuando Sergio conteste la P7-02.
+
+**Regla:**
+- Nadie toca lo del otro.
+- `ESTADO` y bitácora: cada uno agrega sus bloques y nunca reescribe los del otro. Los conflictos se resuelven con merge, conservando los dos lados.
+- Scripts: el 13 y el 16 son de Santi; el 14 y el 15, de Javi. Si uno necesita tocar una tabla del script del otro, avisa antes.
+
+---
+
 ## Tablero · Sprint 7 (milestone «Sprint 7») · 23/11/2026
 
 | Issue | HU | SP | Espera | Estado |
@@ -43,7 +66,7 @@ Sergio). Si ese recorrido encontró algo roto, va antes que todo lo de acá.
 | C1 · modalidad L2 y retiro de Tarjeta3/6 | 032, 033 y el CA-004 de la 050 | **Propuesta (para el equipo):** no va en el 12. El plan la ponía junto con C2, pero C2 destraba los scrapes y no tiene que esperar el cambio de modalidades, que además toca código de precios. Script propio cuando arranquen la 032 y la 033 |
 | E13 · script 13 (costo previo por línea, D-S7-03; anulación sin doble certificación, D-S7-04) | #9, #23, #195 | Pendiente de escribir |
 | E15 · script 15 (alícuotas, D-S7-02) | #194 | Pendiente de escribir; espera la pregunta P7-02 a Sergio |
-| E14 · script 14 (vencimiento de facturas por proveedor, Fix F) | #197 | Mergeado a `develop` (`54569b8`, 25/11/2026), antes que el #200, que quedó con conflicto en la bitácora y se resolvió con merge (`4300cd5`). Lo aplica Santi en `lacentral_demo` y en la real; `public` de `lacentral_test` ya lo tiene. Su re-scaffold va en un PR aparte, después de eso. Era el «12» del #197, renumerado el 24/11/2026 (decisión de Santi: el 12 es C2) |
+| E14 · script 14 (vencimiento de facturas por proveedor, Fix F) | #197 | Mergeado a `develop` (`54569b8`, 25/11/2026), antes que el #200, que quedó con conflicto en la bitácora y se resolvió con merge (`4300cd5`). Aplicado por Santi (25/11) en `lacentral_test`, `lacentral_demo` y `lacentral`, con «14: TODO OK.» en las tres (backup de la real antes, en `~/dev/TESIS/backups/lacentral-antes-14.dump`). Re-scaffold en `chore/rescaffold-14` (`99d6320`): solo `VencimientoModo` y `VencimientoDias` en `Proveedor` y su configuración. Era el «12» del #197, renumerado el 24/11/2026 (decisión de Santi: el 12 es C2) |
 
 **Por qué tres scripts (12, 13 y 15) y no uno:** (el 14 es el Fix F del #197, otro tema) el 12 solo crea tablas nuevas y destraba a Santi hoy; no espera a
 nadie. El 13 junta dos cambios chicos y ya definidos sobre las tablas de la anulación (`factura_compra_detalle`,
@@ -66,6 +89,7 @@ decidido. El número 06, reservado para C2 desde el Sprint 4, queda sin usar.
 | D-S7-09 | **Comparador:** una fila por código vinculado, con marca, precio neto, precio de lista, estado de stock e imagen, ordenada por precio neto. Se compara `precio_neto` (costo sin IVA); el de lista se muestra pero no se compara. CA4 de la 054: el estado de stock máximo entre las filas del mismo proveedor. | Santi, 25/11/2026 | 030, 050, 054 CA4 |
 | D-S7-10 | **Vencidos fuera:** las filas con `vencido = true` no aparecen ni en el comparador ni como candidatos. | Santi, 25/11/2026 | 030, 050, 053 |
 | D-S7-11 | **C6 postergada:** la 053 se construye con el umbral de parecido configurable en 0,3 (el valor por defecto de pg_trgm). Se mide cuando el scrape corra contra la base real (artículos reales y catálogo juntos). La prueba manual del entregable va sobre la demo: los vínculos que hagan falta se cargan por la pantalla o con una siembra de la demo, nunca en `lacentral`. | Santi, 25/11/2026 | 053; C6 sigue abierta |
+| D-S7-12 | **Factura sin CUIT** (decisión de negocio de Javi): «una factura sin CUIT es remito o presupuesto: compra en negro». Para el Fix E2 queda sugerido usar `proveedor.cuit_simulado`: la única coincidencia por nombre con `cuit_simulado = true`, marcada «Revisar». Lo decide e implementa Javi. | Javi, 25/11/2026 | Fix E2 (Javi). Los números D-S7-06 a D-S7-11 los usan las ramas de Santi todavía sin mergear (#202 y la del 16) |
 | D-S7-13 | **Las decisiones técnicas las toma el asistente** (esquema, índices, tipos, nombres, número de script, pantallas, valores por defecto configurables) y se registran acá con fecha. Se para solo por una regla de negocio que falta, por datos reales de `lacentral` o por CA contradictorios. Las preguntas de negocio se juntan al final de cada HU. | Santi, 25/11/2026 | Forma de trabajo |
 | D-S7-14 | **Sin función de normalización en el 16:** la vinculación automática es igualdad exacta por `(proveedor_id, codigo)`, con el código normalizado como lo guarda la ficha (`NormalizacionArticulo`: sin espacios en los extremos y en mayúsculas). La cubre `codigo_alt_proveedor_codigo_unico`. Si los candidatos por número original de la 053 necesitan un índice, va en el script de la 053. | Asistente, 25/11/2026 (decisión técnica, D-S7-13) | 053, 054 |
 
@@ -270,6 +294,12 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 - **`feature/127-vinculacion-esquema`:** el 16 cambia la unicidad de `articulo_codigo_alternativo` a (`proveedor_id`, `codigo`) y agrega quién vinculó y cuándo. Tiene 8 pruebas PostgreSQL. Lo aplica Santi en las tres bases; el bloque fish está en la bitácora.
 - **Técnico (25/11):** la ficha del artículo sigue con un código por proveedor; los códigos extra entran por la vinculación. El PR del re-scaffold del 16 cambia el mapa de `ManejadorExcepcionesGlobal` y `Modificar_ElCodigoChocaEnElMotor…`. Hasta ese PR, con el 16 aplicado en `lacentral_test`, esas dos pruebas dan rojo.
 - **Después del 16:** la 053 (candidatos, umbral 0,3) y la 054 (vincular). La C6 queda abierta (D-S7-11).
+
+**25/11/2026 · el 14 aplicado en las tres bases y su re-scaffold en PR.**
+- **#197 (script 14, Fix F) mergeado (`54569b8`)** antes que el #200; el #200 se destrabó con merge de `develop` y está mergeado (`07fd8e7`).
+- **El 14 está aplicado** (Santi, 25/11) en `public` de `lacentral_test`, en `lacentral_demo` y en `lacentral`, con «14: TODO OK.» en las tres. Backup de la real antes: `~/dev/TESIS/backups/lacentral-antes-14.dump`.
+- **Re-scaffold del 14** en `chore/rescaffold-14` (`99d6320`) contra `public` de `lacentral_test`: solo `VencimientoModo` y `VencimientoDias` en `Proveedor` y su configuración en `LaCentralDbContext.cs` (+18 líneas, sin cambios de finales de línea). **PR #201.** Suite completa sobre `4064b1e`: **858/858**, 0 advertencias. Sin verificadores (no hay lógica nueva).
+- **Sigue:** Fix F.3–F.5 (usar el vencimiento por proveedor), que esperaba el 14 aplicado y este re-scaffold.
 
 **24/11/2026 (tarde) · el #198 entró por el #199.**
 - **El #198 se mergeó a una rama muerta (24/11/2026):** lo mergearon contra `docs/sprint06-cierre-correcciones` (`8521ae7`),

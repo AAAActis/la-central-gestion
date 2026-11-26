@@ -892,6 +892,14 @@ public partial class LaCentralDbContext : DbContext
                 .HasMaxLength(300)
                 .HasComment("Página de precios del proveedor, usada por el comparador (HU-CMP-05). Ningún proveedor la tiene cargada en el sistema de origen: hay que relevarla.")
                 .HasColumnName("url_referencia");
+            entity.Property(e => e.VencimientoDias)
+                .HasComment("Los días de vencimiento_modo: NULL en MANUAL y CONTADO; 7, 10, 20, 21, 25 o 30 en DIAS_CORRIDOS; 1 a 28 (el día del mes) en DIA_FIJO_MES_SIGUIENTE. Sergio vía Javi, 23/11/2026.")
+                .HasColumnName("vencimiento_dias");
+            entity.Property(e => e.VencimientoModo)
+                .HasMaxLength(30)
+                .HasDefaultValueSql("'MANUAL'::character varying")
+                .HasComment("Cómo vence una factura de este proveedor, desde su fecha de emisión: MANUAL (no se calcula; se carga a mano, por defecto), CONTADO (el mismo día), DIAS_CORRIDOS (emisión + vencimiento_dias) o DIA_FIJO_MES_SIGUIENTE (el día vencimiento_dias del mes siguiente a la emisión). Sergio vía Javi, 23/11/2026.")
+                .HasColumnName("vencimiento_modo");
         });
 
         modelBuilder.Entity<ProveedorArticulo>(entity =>
