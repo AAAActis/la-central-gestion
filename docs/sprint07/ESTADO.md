@@ -316,3 +316,15 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
   15 = alícuotas.
 - **Esperan a personas:** cierre del Sprint 6 (detalle del recorrido de Javi); re-aprobación del #193 (Javi; review
   respondido el 24/11) y merge de #193 → #198 → #199; CA3 de la 054 contra la D2 (equipo); P7-01, P7-02 y P7-03 (Sergio).
+
+---
+
+## Fix E2 · implementado según la D-S7-12 · 26/11/2026
+
+- **La spec del Fix E2 («razón social exacta primero») queda superada por la D-S7-12.** Los bloques anteriores que la describen (`docs/sprint06/ESTADO.md`, 24/11 y 25/11) no se tocan: valen como historia, no como regla vigente.
+- **Regla vigente** (`fix/proveedor-razon-social-exacta`, commits `ea6b734`, `8632734` y `00710c0`): elegido a mano > CUIT de un proveedor cargado (un CUIT de proveedor de baja no se reemplaza) > si ningún CUIT del texto pertenece a un proveedor cargado **y el comprobante leído no es A**, el único proveedor ACTIVO con `cuit_simulado = true` cuya razón social contiene el término del layout, siempre «Revisar»; con 0 o 2 o más, nada. Sin cambios de esquema ni de frontend.
+- **«No es A» incluye el tipo no reconocido** (código de ARCA que el lector no traduce): hoy se asigna. A confirmar.
+- **Datos:** los pares blanco/negro de `cuit_simulado` se verificaron **solo en `lacentral_test`** (25/11, solo lectura). **`lacentral` (la real) está sin verificar.**
+- **Demo:** `backend/db/demo/marcar_en_negro_demo.sql` marca ETMAN, Fazio y Expoyer; **sin aplicar** (lo aplica Javi o Santi).
+- **Deuda (va también en el cuerpo del PR):** un proveedor en negro no se puede dar de alta ni marcar desde la app: la app no escribe `cuit_simulado` y queda en `false`; hoy se corrige por SQL.
+- **Pendiente:** push, PR, `verificador-tdd` y `auditor-persistencia`.
