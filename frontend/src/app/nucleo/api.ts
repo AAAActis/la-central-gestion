@@ -238,6 +238,12 @@ export class ApiLaCentral {
       `/api/catalogo/filas/${filaId}/vinculacion`, { articuloId });
   }
 
+  /** 054a CA5 · Da de alta el artículo desde la fila de catálogo y lo deja vinculado, en una sola operación. */
+  altaVinculada(filaId: number, nombre: string): Observable<{ articuloId: number; codigoInterno: string; proveedorId: number; codigo: string }> {
+    return this.http.post<{ articuloId: number; codigoInterno: string; proveedorId: number; codigo: string }>(
+      `/api/catalogo/filas/${filaId}/alta-vinculada`, { nombre });
+  }
+
   crear(alta: AltaArticulo): Observable<{ id: number; codigoInterno: string }> {
     return this.http.post<{ id: number; codigoInterno: string }>('/api/articulos', alta);
   }

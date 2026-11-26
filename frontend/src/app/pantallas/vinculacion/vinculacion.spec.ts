@@ -137,4 +137,16 @@ describe('Vinculacion · HU-CMP-06 (053)', () => {
     expect(raiz().querySelector('[role="alert"]')?.textContent).toContain('ART-008');
     expect(botonVincular(1)).not.toBeNull();
   });
+
+  it('054a CA5: Dar de alta crea el artículo con el nombre de la fila y la deja vinculada a él, sin elegir otro', () => {
+    buscar('bomba', sinMensaje([fila(1)]));
+    raiz().querySelector<HTMLButtonElement>('tr[data-id="1"] button.alta')!.click();
+    const pedido = servidor.expectOne('/api/catalogo/filas/1/alta-vinculada');
+    expect(pedido.request.method).toBe('POST');
+    expect(pedido.request.body).toEqual({ nombre: 'Bomba 1' });
+    pedido.flush({ articuloId: 31, codigoInterno: 'LC-000031', proveedorId: 7, codigo: 'C-1' });
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('tr[data-id="1"] .vinculada')?.textContent).toContain('LC-000031');
+  });
 });
