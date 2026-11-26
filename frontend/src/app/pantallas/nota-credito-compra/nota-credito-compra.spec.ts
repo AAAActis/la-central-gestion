@@ -491,5 +491,51 @@ describe('NotaCreditoCompra · 057', () => {
       expect(c().lineas.length).toBe(0);
       expect(opciones()).toBe(1);
     });
+
+    it('artículo: dos Enter antes de la respuesta agregan una sola línea y avisan', () => {
+      enDevolucion('A-100');
+      enter('textoArticulo');
+      enter('textoArticulo');
+      const pedidos = servidor.match(r => r.url === '/api/articulos');
+      expect(pedidos.length).toBe(2);
+      pedidos.forEach(p => p.flush({ articulos: [articulo], total: 1, pagina: 1, tamanoPagina: 20, conflictos: [] }));
+      fixture.detectChanges();
+
+      expect(c().lineas.length).toBe(1);
+      expect(opciones()).toBe(0);
+      expect(raiz.textContent).toContain('A-100 ya está en la devolución');
+      expect(responderEleccion('/api/articulos/100', { id: 100, existencias: [] })).toBe(1);
+
+      // Una búsqueda nueva saca el aviso.
+      c().textoArticulo = 'zzz';
+      enter('textoArticulo');
+      responderArticulos([]);
+      expect(raiz.textContent).not.toContain('ya está en la devolución');
+
+      // Y la nota siguiente no lo arrastra.
+      c().textoArticulo = 'A-100';
+      enter('textoArticulo');
+      responderArticulos([articulo]);
+      c().nueva();
+      enDevolucion('');
+      fixture.detectChanges();
+      expect(raiz.textContent).not.toContain('ya está en la devolución');
+    });
+
+    it('artículo: con el origen ya elegido, el mismo artículo se agrega de nuevo para otro origen (D9)', () => {
+      const ficha = { id: 100, existencias: [{ sucursalId: 1, sucursal: 'Fragueiro (Casa Central)', cantidad: 4 }] };
+      enDevolucion('A-100');
+      enter('textoArticulo');
+      responderArticulos([articulo]);
+      responderEleccion('/api/articulos/100', ficha);
+      c().lineas[0].sucursalId = 1;
+
+      c().textoArticulo = 'A-100';
+      enter('textoArticulo');
+      responderArticulos([articulo]);
+
+      expect(c().lineas.map(l => l.sucursalId)).toEqual([1, null]);
+      expect(responderEleccion('/api/articulos/100', ficha)).toBe(1);
+    });
   });
 });
