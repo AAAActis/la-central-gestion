@@ -68,6 +68,12 @@ social, que los deja marcados «Revisar».
   verificación final: exactamente un ETMAN y un Fazio activos.
 - Expoyer ya está en la demo; no se siembra.
 
+### 4 bis · Marcarlos en negro (Fix E2, D-S7-12)
+
+Después del anterior, `marcar_en_negro_demo.sql` pone `cuit_simulado = true` en `DEMO-06`, `DEMO-07` y Expoyer
+(`00035`). Sin eso, un PDF sin CUIT conocido no los reconoce; una factura A no se asigna nunca por razón social.
+Solo `lacentral_demo` (tiene guarda), idempotente; lo aplica Javi o Santi.
+
 ## Ensayo del 04/11/2026
 
 Sobre el esquema de `develop` (scripts 01 a 04), en `lacentral_test.demo_ensayo_c3`:
