@@ -97,6 +97,7 @@ public class ProveedorYSucursalEnPdfTests
         Assert.Null(f.ProveedorId);
     }
 
+    // Un proveedor asignado por CUIT implica un CUIT conocido: esa sola condición impide buscar por razón social.
     [Fact]
     public async Task ElCuitManda_SobreLaRazonSocial_YNoQuedaParaRevisar()
     {
@@ -136,6 +137,8 @@ public class ProveedorYSucursalEnPdfTests
         _proveedores.Verify(p => p.BuscarActivosEnNegroPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    // Ningún layout reconocido llega sin razón social; un texto sin layout corta antes
+    // (InterpretarFacturaPdfUseCaseTests.UnLayoutQueNoSeConoce_Invalido_YPideLaCargaManual).
     [Theory]
     [InlineData("etman")]
     [InlineData("fazio")]
