@@ -86,6 +86,7 @@ export class Vinculacion {
   private readonly api = inject(ApiLaCentral);
 
   texto = '';
+  textoArticulo = '';
   readonly resultado = signal<ResultadoCandidatos | null>(null);
   readonly error = signal<string | null>(null);
   readonly buscando = signal(false);

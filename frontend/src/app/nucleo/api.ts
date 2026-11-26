@@ -232,6 +232,12 @@ export class ApiLaCentral {
     return this.http.get<ResultadoCandidatos>('/api/catalogo/candidatos', { params });
   }
 
+  /** 054a · Vincula una fila de catálogo con un artículo propio. 409 si el código ya es de otro (CA6). */
+  vincular(filaId: number, articuloId: number): Observable<{ articuloId: number; proveedorId: number; codigo: string }> {
+    return this.http.post<{ articuloId: number; proveedorId: number; codigo: string }>(
+      `/api/catalogo/filas/${filaId}/vinculacion`, { articuloId });
+  }
+
   crear(alta: AltaArticulo): Observable<{ id: number; codigoInterno: string }> {
     return this.http.post<{ id: number; codigoInterno: string }>('/api/articulos', alta);
   }

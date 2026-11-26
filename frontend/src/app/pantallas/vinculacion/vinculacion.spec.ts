@@ -87,4 +87,54 @@ describe('Vinculacion · HU-CMP-06 (053)', () => {
     expect(raiz().querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBeFalse();
     expect(raiz().querySelector('[role="alert"]')).not.toBeNull();
   });
+
+  // 054a · HU-CMP-07: vincular una fila con un artículo propio.
+  const sinMensaje = (exactas: CandidatoCatalogo[]): ResultadoCandidatos => ({ texto: 'bomba', exactas, aproximadas: [], mensaje: null });
+  const botonVincular = (id: number) => raiz().querySelector<HTMLButtonElement>(`tr[data-id="${id}"] button.vincular`);
+
+  function elegirArticulo() {
+    fixture.componentInstance.textoArticulo = 'bomba';
+    raiz().querySelector<HTMLFormElement>('form.articulo')!.dispatchEvent(new Event('submit'));
+    servidor.expectOne(r => r.url === '/api/articulos' && r.params.get('texto') === 'bomba').flush({
+      articulos: [{ id: 5, codigoInterno: 'ART-005', nombre: 'Bomba de agua' }], total: 1, pagina: 1, tamanoPagina: 10,
+    });
+    fixture.detectChanges();
+    raiz().querySelector<HTMLButtonElement>('button.elegir')!.click();
+    fixture.detectChanges();
+  }
+
+  it('054a: sin artículo elegido, Vincular está deshabilitado; una fila ya vinculada no lo ofrece', () => {
+    buscar('bomba', sinMensaje([fila(1), fila(2, null, { id: 8, codigoInterno: 'ART-008', nombre: 'Otra' })]));
+    expect(botonVincular(1)?.disabled).toBeTrue();
+    expect(botonVincular(2)).toBeNull();
+  });
+
+  it('054a CA1: con el artículo elegido, Vincular lo manda a la API y la fila queda vinculada a él', () => {
+    buscar('bomba', sinMensaje([fila(1)]));
+    elegirArticulo();
+    expect(raiz().querySelector('.elegido')?.textContent).toContain('ART-005');
+
+    botonVincular(1)!.click();
+    const pedido = servidor.expectOne('/api/catalogo/filas/1/vinculacion');
+    expect(pedido.request.method).toBe('POST');
+    expect(pedido.request.body).toEqual({ articuloId: 5 });
+    pedido.flush({ articuloId: 5, proveedorId: 7, codigo: 'C-1' });
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('tr[data-id="1"] .vinculada')?.textContent).toContain('ART-005');
+    expect(botonVincular(1)).toBeNull();
+  });
+
+  it('054a CA6: si el código ya es de otro artículo, muestra lo que dice la API y la fila queda sin vincular', () => {
+    buscar('bomba', sinMensaje([fila(1)]));
+    elegirArticulo();
+    botonVincular(1)!.click();
+    servidor.expectOne('/api/catalogo/filas/1/vinculacion').flush(
+      { detail: 'El código C-1 de este proveedor ya está vinculado a el artículo ART-008 · Otra.' },
+      { status: 409, statusText: 'Conflict' });
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('[role="alert"]')?.textContent).toContain('ART-008');
+    expect(botonVincular(1)).not.toBeNull();
+  });
 });
