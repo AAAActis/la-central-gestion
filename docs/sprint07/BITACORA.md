@@ -116,3 +116,40 @@ Si en alguna base corta con «13: hay N facturas de compra anuladas sin usuario_
 - 25/11 · Suite completa sobre `2331ee1`: `Con error! - Con error:     3, Superado:   870, Omitido:     0, Total:   873, Duración: 58 m 16 s`. Los 3 fallos son timeouts de Npgsql («The operation has timed out» y «Exception while reading from stream»), sin ninguna aserción, en clases que no tocan el 13: FacturasCompraApi `Post_SinFechaDeEmision_400YNoEscribe`, ProveedorDetalleApi `Modificar_SinTipoHabitualEnElCuerpo…` y ClienteRepositorio `DosCiclos…`. Corridos filtrados dan `Correctas! - Con error: 0, Superado: 4, Total: 4` (un nombre matchea dos pruebas). 873 = 869 + 4 nuevas.
 - PR #202 actualizado (push de `a23c8fb` y de este commit de docs). `verificador-tdd` ronda 2, acotado a `a23c8fb`.
 - 25/11 · `verificador-tdd` #202 ronda 2 (solo `a23c8fb`): **APTO**. M7, M8a, M8b, M14, M14b, M11 y M15 quedan muertas, cada una con su prueba en rojo. El verificador no tomó mi corrida (hash `2331ee1` ≠ HEAD, y con 3 timeouts) y corrió la suite una vez sobre `78bb15a`: `Correctas! - Con error:     0, Superado:   873, Omitido:     0, Total:   873, Duración: 55 m 2 s - LaCentral.Tests.dll (net10.0)`. El cambio de rama del árbol principal que notó fue mío (pasé a la del 16). Sigue el `auditor-persistencia`.
+
+## 25/11/2026 · Reparto del Sprint 7 en develop (PR solo de docs)
+
+**Instrucción recibida (verbatim):**
+> Necesito el reparto del Sprint 7 en develop YA, para que el Claude de Javi lo lea. Desde develop, rama docs/sprint07-reparto, un PR solo de docs (sin suite ni verificadores, declaralo):
+> - En docs/sprint07/ESTADO.md, arriba del tablero, una sección «Reparto · 25/11/2026» con dos listas:
+>   · Santi (su Claude): script 13 (#202), script 16 y vinculación (053 #126, 054 #127), comparador (030 #16, 031 #18 en lo que toca al sistema, 032 #19, 033 #20, 034 #35, 050 #52), compras (026, 027 #34, 028 #9, 016 #23, #195). Scrapes y workflows de n8n (fuera del repo).
+>   · Javi (su Claude): Fix E2 (proveedor sin CUIT) y Fix F F.3–F.5 (vencimiento por proveedor, usa las columnas del 14 / #201). Y la 058 (#194, alícuotas, script 15) cuando Sergio conteste la P7-02.
+>   · Regla: nadie toca lo del otro. ESTADO y bitácora: cada uno agrega sus bloques, nunca reescribe los del otro; conflictos con merge conservando los dos lados. Scripts: 13 y 16 son de Santi, 14 y 15 de Javi; si uno necesita tocar una tabla del script del otro, avisa antes.
+> - Decisión de negocio de Javi, 25/11/2026 (registrala con fecha, D-S7-12): «una factura sin CUIT es remito o presupuesto: compra en negro». Para el Fix E2 queda sugerido usar proveedor.cuit_simulado (la única coincidencia por nombre con cuit_simulado = true, con «Revisar»); lo decide e implementa Javi.
+> - En docs/sprint07/BITACORA.md, un bloque nuevo con la instrucción verbatim y «Estado: terminada».
+> Abrí el PR, pasame el número y seguí con lo tuyo.
+
+**Plan:**
+1. Rama `docs/sprint07-reparto` desde `origin/develop` (`07fd8e7`), en un worktree aparte: el árbol principal corre la suite del #202.
+2. En el `ESTADO`: la sección «Reparto · 25/11/2026» arriba del tablero y la fila D-S7-12.
+3. Abrir este bloque, hacer el push y abrir el PR, sin suite ni verificadores.
+
+- `docs/sprint07/BITACORA.md` no existía en `develop`; se crea con la misma cabecera que en `feature/s7-script-13`. Al mergear esa rama habrá un conflicto add/add, que se resuelve conservando los dos lados.
+- En `feature/127-vinculacion-esquema`, la fila D-S7-12 era otra decisión técnica de Santi. Pasa a D-S7-13 en esa rama: el número D-S7-12 queda para la decisión de Javi.
+
+**Estado:** terminada. Queda abierto que Santi mergee el PR.
+
+## 26/11/2026 · #202 sin conflicto y auditor; base_completa.sql con el CHECK de la D10; consulta de esquemas
+
+**Instrucción recibida (verbatim):**
+> 1) #202: quedó con conflicto tras el merge del #203 (bitácora del Sprint 7, add/add). Mergeá origin/develop en feature/s7-script-13 conservando los dos lados y terminá el auditor-persistencia. Avisame cuando esté sin conflicto y con los dos verificadores en APTO.
+> 2) Javi avisó que base_completa.sql tiene el CHECK de baja estricto, y las bases vivas tienen el de la D10 (activo OR (motivo IS NOT NULL AND fecha IS NOT NULL)). Arreglalo en un PR aparte desde develop: que base_completa.sql quede igual a lo que corre en las bases, con una prueba que arme el esquema desde ese archivo y compare las restricciones contra public de lacentral_test.
+> 3) Pasame una consulta de solo lectura para listar los esquemas de lacentral_test con su dueño y su tamaño, para decidir cuáles borrar. No borres nada vos.
+
+**Plan:**
+1. `feature/s7-script-13`: merge de `origin/develop` (`bda2692`) conservando los dos lados en BITACORA y ESTADO; push; `auditor-persistencia` acotado a los commits del 13, con la suite de `78bb15a` (873) — el merge solo trae docs y el re-scaffold del 14, que ya tiene su suite en el #201.
+2. Rama desde `develop` para `base_completa.sql`: prueba PostgreSQL que arma un esquema desde el archivo y compara las restricciones CHECK contra `public` (rojo), corregir el archivo (verde), suite, PR, verificadores.
+3. Consulta de solo lectura de esquemas con dueño y tamaño, en la respuesta.
+
+**Estado:** en curso
+- 1) Merge de `origin/develop` en `feature/s7-script-13`: conflictos add/add en `docs/sprint07/BITACORA.md` (bloque del 13 + bloque del reparto de Javi) y de contenido en `ESTADO.md` (PRÓXIMA SESIÓN): se conservan los dos lados, sin marcadores. Lo demás que entró (`Proveedor.cs`, `LaCentralDbContext.cs`, bitácora del Sprint 6) no se solapa con el 13.

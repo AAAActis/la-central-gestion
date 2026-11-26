@@ -37,6 +37,16 @@ public partial class Proveedor
     /// </summary>
     public char? TipoComprobanteHabitual { get; set; }
 
+    /// <summary>
+    /// Cómo vence una factura de este proveedor, desde su fecha de emisión: MANUAL (no se calcula; se carga a mano, por defecto), CONTADO (el mismo día), DIAS_CORRIDOS (emisión + vencimiento_dias) o DIA_FIJO_MES_SIGUIENTE (el día vencimiento_dias del mes siguiente a la emisión). Sergio vía Javi, 23/11/2026.
+    /// </summary>
+    public string VencimientoModo { get; set; } = null!;
+
+    /// <summary>
+    /// Los días de vencimiento_modo: NULL en MANUAL y CONTADO; 7, 10, 20, 21, 25 o 30 en DIAS_CORRIDOS; 1 a 28 (el día del mes) en DIA_FIJO_MES_SIGUIENTE. Sergio vía Javi, 23/11/2026.
+    /// </summary>
+    public short? VencimientoDias { get; set; }
+
     public virtual ICollection<Articulo> Articulo { get; set; } = new List<Articulo>();
 
     public virtual ICollection<ArticuloCodigoAlternativo> ArticuloCodigoAlternativo { get; set; } = new List<ArticuloCodigoAlternativo>();
