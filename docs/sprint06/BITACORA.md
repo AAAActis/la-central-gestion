@@ -2128,3 +2128,223 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - 3) ESTADO del Sprint 7 en `4064b1e`: la fila E14 y un bloque del 25/11 en PRÓXIMA SESIÓN. La suite completa sobre `4064b1e` está en curso.
 - 4) Suite completa sobre `4064b1e`, contra `public` de `lacentral_test`. Primero `dotnet build --no-incremental` (0 errores, 0 advertencias) y después `dotnet test --no-build`: `Correctas! - Con error:     0, Superado:   858, Omitido:     0, Total:   858, Duración: 11 m 3 s - LaCentral.Tests.dll (net10.0)`. Cero `[FAIL]`. Un primer intento con `dotnet test --no-incremental` no ejecutó ningún test (MSB1001: `dotnet test` no acepta ese modificador), así que no cuenta. Sin verificadores: no hay lógica nueva.
 - 5) Push de `chore/rescaffold-14` y PR contra `develop` (ver ESTADO). El commit de esta bitácora queda fuera de la corrida: es solo docs.
+
+## 25/11/2026 · Fix «Enter sobre un código exacto lo elige» (`fix/enter-codigo-exacto`)
+
+**Instrucción recibida (verbatim):**
+> Tarea: fix chico de frontend «Enter sobre un código exacto lo elige» en todas las pantallas. Rama fix/enter-codigo-exacto, desde origin/develop (fetch primero; si develop trae commits, mergealos según CLAUDE.md §3). Trabajá en una carpeta o worktree distinto del que usa la sesión del E2.
+> PROBLEMA: En la factura de compra (FCO), escribir «35» y dar Enter elige a Expoyer directo (enterProveedor / enterArticulo en factura-compra.ts, HU-FCO-06 CA-002, CA-003, CA-009). En NCA, en compras registradas y en notas registradas, el Enter solo lista (buscarProveedor / buscarArticulo) y no elige. Es una lógica que nunca se copió.
+> REGLA (igual a la de FCO, no se cambia): Proveedor: Enter busca; si exactamente UN resultado tiene su código igual al texto sin ceros a la izquierda, se elige sin listar. Con dos o más (035 y 00035) se LISTA y no se elige (CA-003, se mantiene). Con cero, se lista como hoy. Artículo: Enter elige si hay un código interno exacto (trim, sin distinguir mayúsculas), como enterArticulo. Al elegir se usa el elegirProveedor / agregarArticulo que ya tiene cada pantalla; no se duplica la lógica de elección.
+> ALCANCE: 1. Extraé la regla a compartido/ (funciones puras; hoy sinCeros es privada en factura-compra.ts, línea ~731) y hacé que FCO la use SIN cambiar su comportamiento. 2. Aplicala en NCA (proveedor y artículo), compras-registradas y notas-credito-registradas (filtro de proveedor). 3. Buscá con grep otros campos de búsqueda de proveedor o artículo con Enter y LISTALOS en el informe. Cambiá solo los que tengan el mismo caso; si alguno no está claro, preguntá.
+> VERIFICAR ANTES DE IMPLEMENTAR (sin editar): tamaño de página de api.proveedores(...) y api.buscar(...) en cada pantalla; informar si el exacto puede quedar afuera. NO cambies el backend sin avisarme. Mostrame el plan y los archivos a tocar antes de editar.
+> NO SE HACE: no se normalizan los códigos a 5 dígitos (propuesta de Javi, a confirmar con el equipo; solo se anota en la bitácora). No se tocan colores, estilos ni SISTEMA-VISUAL. No se tocan backend ni esquema.
+> REGLAS: sin commit ni push sin OK; TDD en tres commits (andamiaje, specs en rojo por aserción, producción); suite de frontend una sola vez sobre el último commit, declarar que corre solo en Chromium; verificador-tdd al cerrar, una vez, acotado a los commits del fix; auditor-persistencia «no aplica»; decisiones nuevas «a confirmar», sin número propio.
+
+**Plan:**
+1. Rama desde `origin/develop` y cruce de §3.
+2. Inspección previa (sin editar código): pantallas con búsqueda y tamaño de página.
+3. Plan a Javi y OK.
+4. Tres commits TDD; suite una vez; verificador-tdd una vez.
+
+**Estado:** terminada
+- 1) Rama `fix/enter-codigo-exacto` creada desde `origin/develop` (`54569b8`); develop traía commits respecto del worktree viejo, no hay trabajo propio que cruzar.
+- 2) Inspección hecha, sin editar código. Proveedor: `api.proveedores` sin tamanoPagina → el backend usa 20 y ordena el código exacto primero (`ProveedorRepositorio.cs:90`). Artículo: el código interno exacto es Prioridad 0 (`ArticuloRepositorio.cs:166`), primero en el orden. El exacto no queda afuera de la página en ninguno de los dos.
+- A confirmar (no implementado): normalizar los códigos de proveedor a 5 dígitos, propuesta de Javi.
+
+**BLOQUEADO EN:** el OK de Javi al plan y a los archivos a tocar, antes de editar código.
+
+**Instrucción de continuación, 25/11/2026 20:23 (verbatim):**
+> Plan aprobado. Respuestas:
+> 1. NCA conserva su listado actual (sin aproximada, página de 20) y solo suma el elegir. El spec de NCA tiene que probar que el código interno exacto queda dentro de la página aun sin aproximada.
+> 2. Normalizar a 5 dígitos: fuera de alcance, queda «a confirmar» en la bitácora, sin implementar.
+> 3. Ya no existe session-a-9016f7. El worktree principal es del E2: no lo toques.
+>
+> Autorizado:
+> - git fetch --all --prune; si origin/develop trajo commits (#197, #199, #200), aplicá CLAUDE.md §3 con un solo git merge origin/develop y dejalo escrito en la bitácora.
+> - Commits 1, 2 y 3 como los planteaste. El bloque de bitácora sin commitear va en un commit docs propio, el primero.
+> - Al cerrar: ng test filtrado en el bucle, y UNA vez ng test --watch=false --browsers=ChromeHeadless completo y ng build sobre el último commit. Dame la línea literal y el hash.
+> - Pará ahí: sin push, sin PR y SIN verificador-tdd todavía. Va después, desde la carpeta principal, cuando el E2 termine. Declaralo en la bitácora.
+
+- OK de Javi al plan: se levanta el bloqueo anterior.
+- A confirmar (fuera de alcance, sin implementar): normalizar los códigos de proveedor a 5 dígitos.
+- §3: `origin/develop` trae 8 commits (#200, `07fd8e7`; #197 y #199 ya estaban en la base). Archivos: `Data/Models/*` y `LaCentralDbContext.cs` (finales de línea del re-scaffold), `frontend/angular.json` (`analytics: false`), `docs/sprint07/ESTADO.md` y esta bitácora. Único solapamiento: la bitácora. El plan no cambia; en el conflicto se conservan los bloques de los dos lados, primero los de `develop`.
+- Commits: `221a1be` (docs, inicio) y `de068fd` (merge de `origin/develop`; conflicto solo en esta bitácora, bloques de los dos lados con los de `develop` primero). `npm ci` en este worktree, que no tenía `node_modules`.
+- Commit 1 `cca1741` (andamiaje): `compartido/codigo-exacto.ts` y FCO usándolo. Specs de FCO tras la extracción: 91/91. Su `codigo-exacto.spec.ts` (7 specs) es caracterización del código movido, nace en verde; se agregó con `--amend` al commit 1, todavía local. Mutaciones: sin quitar ceros → 2 rojos; elegir el primero de varios → 1 rojo.
+- Commit 2 `d9c319f` (specs): filtrado NCA + compras + notas, 86 specs, 4 rojos todos por aserción (elegir por Enter: compras, notas, proveedor NCA y artículo NCA), 82 verdes. Los specs de guarda (lista con dos, sin exacto, botón Buscar, campo vacío) nacen en verde.
+- Commit 3 `5164b80` (producción): `enterProveedor` en NCA, compras y notas; `enterArticulo` en NCA, sin aproximada y con página de 20. Filtrado con FCO y `codigo-exacto`: 184/184.
+- Suite completa de frontend sobre `5164b80`, árbol limpio, una sola vez: `TOTAL: 406 SUCCESS` (Chrome Headless 158.0.0.0; solo Chromium). `ng build` sobre `5164b80`: exit 0, sin advertencias.
+- El orden del backend (exacto primero) no se probó acá ni se corrieron pruebas de backend. Lo cubren `ProveedorFco06Tests.cs:158` y `ArticuloRepositorioTests.cs:27`, leídos y no ejecutados.
+- `graphify update` no corrido: este worktree no tiene `graphify-out/` y el principal es del E2.
+- A confirmar (sin implementar): en NCA, dos Enter seguidos antes de la respuesta agregan dos líneas del mismo artículo; FCO lo frena con su control de repetido en `elegirArticulo` y NCA no tiene uno.
+- Sin push, sin PR y SIN `verificador-tdd` todavía: va después, desde la carpeta principal, cuando el E2 termine, acotado a `cca1741`, `d9c319f` y `5164b80`. `auditor-persistencia`: no aplica (solo frontend). `ESTADO.md` pendiente de actualizar antes del push.
+
+**BLOQUEADO EN:** que el E2 libere la carpeta principal para correr `verificador-tdd` (Javi). Estas líneas quedan sin commitear hasta el OK de Javi.
+- Corrección antes de cerrar (25/11/2026 20:35): en las tres pantallas de proveedor la lista vive en el `@else` de `@if (proveedor())`, así que «no queda ninguna opción» daba verde aunque `proveedores` no se limpiara. Los specs «elige» ahora quitan o cambian el proveedor y afirman que la lista no vuelve.
+- Historia local reescrita, sin push: `d9c319f` pasa a `591a4d4` (amend, mismos tres commits TDD) y `5164b80` pasa a `0676f4f` (cherry-pick sin cambios). Las líneas de arriba que citan los hashes viejos quedan como rastro.
+- `591a4d4`: filtrado NCA + compras + notas, 4 rojos todos por aserción, 82 verdes. `0676f4f`: filtrado con FCO y `codigo-exacto`, 184/184.
+- Mutaciones sobre `0676f4f` (sin el guard en compras, `return false` en notas, sin el guard en NCA): 3 rojos, uno por pantalla, 83 verdes; restaurado con `git checkout --`.
+- Suite completa de frontend sobre `0676f4f`, una sola vez (reemplaza a la de `5164b80`): `Chrome Headless 158.0.0.0 (Windows 10): Executed 406 of 406 SUCCESS (6.096 secs / 4.934 secs)` · `TOTAL: 406 SUCCESS`. Solo Chromium. `ng build`: exit 0, `Application bundle generation complete. [6.938 seconds]`.
+- Alcance del `verificador-tdd` pendiente: `cca1741`, `591a4d4` y `0676f4f`. Antes hay que commitear estas líneas y sacar este worktree (R1 del agente).
+
+**BLOQUEADO EN:** que el E2 libere la carpeta principal para correr `verificador-tdd`, y el OK de Javi para commitear estas líneas de bitácora.
+
+**Instrucción de continuación, 26/11/2026 (verbatim):**
+> Respuestas:
+> 1. Sí: commiteá la bitácora en un commit docs. Estado queda en curso, con su BLOQUEADO EN.
+> 2. Sí, el doble Enter en NCA se arregla en esta rama: lo introduce este fix. Reutilizá el mecanismo de la factura de compra, sin duplicar lógica. Primero el spec en rojo por aserción en un commit propio, después la producción en otro commit.
+> 3. Sí: corré filtradas las dos pruebas de backend (ProveedorFco06Tests.cs:158 y ArticuloRepositorioTests.cs:27). Verificá antes que la conexión sea lacentral_test. Nunca la real. No uses lacentral_demo. No las corras mientras el E2 esté corriendo su suite.
+>
+> Antes de seguir: git fetch --all --prune y un solo git merge origin/develop (entraron #203 y #201; si conflictúa la bitácora, se conservan los dos lados). Después mostrame la salida de:
+>   git log --oneline --graph -10
+>   git diff --stat origin/develop...HEAD
+> El segundo debe mostrar solo los archivos del fix, sin contenido que haya entrado por los merges de develop. Confirmá con git status --short que no quedó nada nuevo dentro del repo.
+>
+> Al cerrar: ng test --watch=false --browsers=ChromeHeadless completo y ng build, UNA vez, sobre el último commit. Línea literal y hash. Sin push, sin PR, sin verificador-tdd (va después, desde la carpeta principal, cuando el E2 termine).
+- §3, 26/11: `origin/develop` trae #201 (re-scaffold del 14: `LaCentralDbContext.cs`, `Models/Proveedor.cs`) y #203 (docs del Sprint 7). Único solapamiento: esta bitácora; resuelto conservando los dos lados, primero los de `develop`. No toca el frontend; el plan no cambia.
+
+**Instrucción de continuación, 26/11/2026, tarde (verbatim):**
+> Confirmado: el clic en NCA también se frena mientras la primera línea no tiene
+> origen; queda igual que la FCO. Declaralo en el cuerpo del PR como
+> comportamiento que cambia, aparte del Enter.
+>
+> El E2 no tiene corridas pendientes. El dotnet 8800 de las 10:39 es de una
+> compilación del E2: no lo toques. El LaCentral.Api del 51212 era la demo de
+> Javi, que corre contra lacentral_demo y no interfiere.
+> Dejá .codex/ y AGENTS.md sin tocar.
+>
+> Ahora, en este orden:
+> 1. Las dos pruebas de backend (ProveedorFco06Tests.cs:158 y
+>    ArticuloRepositorioTests.cs:27), filtradas y con --no-build, contra
+>    lacentral_test. Si alguna falla por conexión (#190), repetí esa sola vez y
+>    declaralo.
+> 2. Suite completa de frontend y ng build, UNA vez, sobre el último commit.
+>    Línea literal y hash.
+> 3. Las líneas de bitácora de esta ronda, con BLOQUEADO EN.
+> Sin push, sin PR, sin verificador-tdd.
+- Merge `5be5732` (#201 y #203). Después del merge, `git diff --stat origin/develop...HEAD` mostraba 10 archivos, todos del fix; en esta bitácora solo agregados. `git status --short`: solo `.codex/` y `AGENTS.md` (fecha 25/11 21:11, no creados por esta sesión), que quedan sin tocar por indicación de Javi.
+- Doble Enter en NCA, specs en rojo `7708097`: 1 rojo por aserción, 87 verdes en el filtrado (el spec termina además con un pedido abierto, `GET /api/articulos/100`, el segundo que no debía salir). Se enmendó una vez antes de la producción, para sumar que `nueva()` saca el aviso. Un segundo spec de guarda (con el origen elegido se agrega de nuevo, D9) nace en verde.
+- Producción `59f21ba`: el control de repetido de la factura pasa a `compartido/linea-repetida.ts` y lo usan FCO (sus dos usos) y NCA (`errorArticulo`, junto al buscador). Filtrado con FCO y `codigo-exacto`: 186/186, antes del commit.
+- Mutaciones sobre `59f21ba`, las 4 en rojo y restauradas: sin mirar la sucursal → 5; sin excluir la línea reemplazada → 1; `nueva()` sin limpiar el aviso → 1; `buscarArticulo` sin limpiarlo → 1.
+- Confirmado por Javi, **para el cuerpo del PR como comportamiento que cambia, aparte del Enter:** en NCA el clic tampoco agrega dos veces un artículo mientras la primera línea no tiene origen; queda igual que la FCO.
+- Las pruebas de backend se frenaron a la mañana: había un `dotnet test --no-build` en marcha desde la carpeta principal. A la tarde, Javi confirmó que el E2 no tiene corridas pendientes. El proceso 8800 (`dotnet run --project backend/LaCentral.Api --urls http://localhost:5181`, según su línea de comando) no se tocó.
+- Backend sobre `59f21ba` (26/11 12:13), contra `lacentral_test` con `lacentral_javi`, verificado antes de correr: `dotnet build` del proyecto de pruebas en este worktree (0 advertencias, 0 errores) y `dotnet test --no-build` filtrado a las dos: `Pruebas totales: 2` · `Correcto: 2` (`ProveedorFco06PostgreSqlTests.BuscarSinCuit_PorCodigoSinCerosALaIzquierda_ElCodigoExactoPrimero` y `ArticuloRepositorioTests.Busqueda_OrdenaInternoProveedorYNombreSinDuplicarPorAlternativas`). Pasaron a la primera, sin reintento por #190. No es la suite de backend.
+- Suite completa de frontend sobre `59f21ba` (26/11 12:14), sin cambios sin commitear en `frontend/`, una sola vez: `Chrome Headless 158.0.0.0 (Windows 10): Executed 408 of 408 SUCCESS (6.836 secs / 5.528 secs)` · `TOTAL: 408 SUCCESS`. Solo Chromium. `ng build`: exit 0, sin advertencias, `Application bundle generation complete. [8.349 seconds]`.
+- Sin push, sin PR y sin `verificador-tdd`. Alcance pendiente del verificador: `cca1741`, `591a4d4`, `0676f4f`, `7708097` y `59f21ba`. Antes de abrir el PR: fetch (§3) y `ESTADO.md`.
+
+**BLOQUEADO EN:** el OK de Javi para commitear estas líneas, y que el E2 libere la carpeta principal para correr `verificador-tdd`.
+- A confirmar (sin implementar, anterior a este fix): la igualdad con la FCO vale al **agregar**. Al **cambiar el origen** de una línea, la FCO rechaza un destino donde ya está el mismo artículo (`cambiarDestino`) y la NCA no tiene ese control: se pueden dejar dos líneas del mismo artículo y origen, que según el comentario de `stockNegativo` la API no acepta.
+
+**Instrucción de continuación, 26/11/2026, cierre en este worktree (verbatim):**
+> Commiteá las líneas de bitácora (solo docs; 59f21ba sigue siendo el hash
+> probado). Dejá .codex/ y AGENTS.md sin tocar. Mostrame git status --short y
+> git log --oneline -3. Después no hagas nada más: voy a retirar tu worktree.
+> Sin push, sin PR, sin verificador.
+
+- Este commit toca solo esta bitácora: `59f21ba` sigue siendo el hash probado y la suite no se repite. Javi retira este worktree después; la rama `fix/enter-codigo-exacto` queda en el repositorio, sin pushear.
+- Sigue «a confirmar»: el control al cambiar el origen en NCA.
+
+**BLOQUEADO EN:** `verificador-tdd` desde la carpeta principal cuando esté libre; push y PR, con el OK de Javi.
+
+**Instrucción de continuación, 27/11/2026 11:02 (verbatim):**
+> Un último commit de docs en fix/proveedor-razon-social-exacta: corregí el ESTADO (los esquemas huérfanos de lacentral_javi YA se borraron, 3 de 3, el 27/11; quedan los de lacentral_santi: demo_ensayo_c3 y tres pr110_test_*, a resolver por Santi) y commiteá las anotaciones pendientes de la bitácora (push, comentario del PR, borrado). Sin CUIT ni nombre del titular. Push al PR (solo documentación, sin verificadores ni suite). Dejá el árbol limpio: git status debe mostrar solo .codex/ y AGENTS.md sin versionar. Pegame ese git status y el hash.
+> Después, sin tocar nada más, seguí con la rama de Enter en esta misma carpeta:
+> 1. git worktree list (debe haber solo el principal).
+> 2. git fetch --all --prune; git log --oneline HEAD..origin/develop. Si develop trae commits, cruzalos con lo que toca la rama de Enter (git diff --name-only) y reportá antes de mergear (sección 3 del CLAUDE.md).
+> 3. git checkout fix/enter-codigo-exacto; git branch --unset-upstream. Si el checkout se queja, parás y me pegás el error.
+> 4. Leé el último bloque en curso de la bitácora de esa rama, actualizá su ESTADO.md ANTES del push, y pegame git log --oneline origin/develop..HEAD y git diff --stat contra develop.
+> Sin push ni verificadores todavía: te digo cuándo.
+
+- Primera parte hecha en la rama del Fix E2: `767fe2d`, pusheado al #204; árbol limpio.
+- Un solo worktree. `git fetch --all --prune`: `HEAD..origin/develop` vacío (`bda2692`), antes y después del cambio de rama; nada que mergear.
+- `git checkout fix/enter-codigo-exacto` sin errores (HEAD `bb2fd35`); `git branch --unset-upstream` (seguía a `origin/develop`). La rama no está en el remoto.
+- `ESTADO` del Sprint 7: entrada en PRÓXIMA SESIÓN con commits, pruebas, lo que cambia, lo «a confirmar» y lo pendiente. Sin commit: no lo pide la instrucción.
+
+**BLOQUEADO EN:** Javi: OK para commitear el ESTADO y estas líneas, y cuándo van el `verificador-tdd`, el push y el PR.
+
+**Instrucción de continuación, 27/11/2026 11:03 (verbatim):**
+> OK: commiteá ESTADO.md (sprint07) y BITACORA.md (sprint06) en fix/enter-codigo-exacto. Sin CUIT ni nombre del titular. Sin push.
+>
+> Después, invocá UNA vez verificador-tdd, acotado a cca1741, 591a4d4, 0676f4f, 7708097 y 59f21ba. Al invocarlo pasale, como exige el CLAUDE.md §5: el hash 59f21ba, la línea literal del resumen de la suite y el conteo (los de la bitácora del 26/11), y aclarale que los commits posteriores a 59f21ba son solo documentación. Si falta alguno de esos tres datos, decime cuál antes de invocarlo. auditor-persistencia: NO aplica (frontend); se declara así en el PR.
+>
+> Antes de invocar: git worktree list con un solo worktree; Javi confirma que la demo del 5181 está cerrada.
+> Si da NO APTO: arreglá y reverificá solo los commits del arreglo, hasta 3 rondas (CLAUDE.md). Si da APTO: parás y me pegás el veredicto completo, más el borrador del cuerpo del PR. En el cuerpo: los CA uno por uno; el cambio de conducta del click-guard de la NCA, declarado; las pruebas rojo→verde por commit; PR grande por los .spec (546 líneas, casi todas de tests); y que el conflicto previsto en ESTADO.md con #204 se resuelve mergeando develop cuando #204 entre. Sin push ni PR hasta mi OK.
+
+- Se levanta el bloqueo del commit. Commit de docs: ESTADO del Sprint 7 y esta bitácora. Sigue: `verificador-tdd`.
+- Commit `f0d1310` (ESTADO y bitácora), sin CUIT ni nombre del titular, sin push.
+- Antes de invocar: un solo worktree; nada escucha en el 5181 y no hay procesos `dotnet` (Javi confirma la demo cerrada). `59f21ba..HEAD`: solo `docs/sprint06/BITACORA.md` y `docs/sprint07/ESTADO.md`.
+- `verificador-tdd` lanzado sobre `cca1741`, `591a4d4`, `0676f4f`, `7708097` y `59f21ba`, con la suite de `59f21ba` (408 de 408). `auditor-persistencia`: no aplica (solo frontend).
+- **BLOQUEADO EN:** el veredicto del `verificador-tdd`.
+- `verificador-tdd`, ronda 1, sobre los cinco commits: **NO APTO**. Rojos de `591a4d4` (4 de 86) y `7708097` (1 de 88) reproducidos; sin afirmaciones falsas. Sobreviven 4 mutaciones sobre líneas del diff (186/186 en verde): M3 `codigo-exacto.ts:14` (código interno guardado en minúsculas), M4 `codigo-exacto.ts:19` (código de proveedor con letras), M10 `nota-credito-compra.ts:328` (clic sobre un repetido deja la lista a la vista), M13 `compras-registradas.ts:137` (elegir según un texto que no se buscó). No bloqueantes: `quitarLinea` y `cambiarProveedor` no limpian `errorArticulo`; dos Enter de proveedor en la NCA piden dos veces las facturas. Worktree borrado.
+- Plan de la ronda 2: solo specs, en un commit nuevo (la conducta ya existe, nacen en verde y se prueban en rojo mutando producción); suite de frontend sobre ese commit; reverificar solo ese commit.
+- Arreglo de la ronda 1: `60ccf7e` (solo specs, 9 nuevos). Filtrado sobre producción sin cambios: 130/130. Nueve mutaciones, una por vez, todas en rojo por la prueba esperada y producción restaurada: M3, M4, M10, M13 (1 rojo cada una) y el texto actual en notas, proveedor NCA, factura proveedor y factura artículo (1 cada una) y artículo NCA (2). Nacen en verde: son de caracterización.
+- Suite completa de frontend sobre `60ccf7e` (27/11 11:25), sin cambios sin commitear en `frontend/`: `Chrome Headless 158.0.0.0 (Windows 10): Executed 417 of 417 SUCCESS (3.159 secs / 2.657 secs)` · `TOTAL: 417 SUCCESS`. `ng build`: exit 0, sin advertencias.
+- `verificador-tdd`, ronda 2, lanzado solo sobre `60ccf7e`.
+- **BLOQUEADO EN:** el veredicto de la ronda 2.
+- `verificador-tdd`, ronda 2, solo sobre `60ccf7e`: **APTO**. Las 9 mutaciones en rojo por aserción (incluidas M3, M4, M10 y M13), ninguna sobrevive; 130/130 sin mutar; no repitió la suite (usó la de `60ccf7e`). Worktree borrado (con `rm -rf` y `prune` tras un `Filename too long`).
+- No bloqueantes de la ronda 1, introducidos por este fix y sin arreglar: `quitarLinea` y `cambiarProveedor` no limpian el aviso de repetido; dos Enter en el proveedor de la NCA piden dos veces las facturas y la segunda respuesta vacía las marcadas. Decide Javi.
+- ESTADO actualizado y cuerpo del PR redactado (scratchpad de la sesión). `graphify update .` corrido. Sin commit, sin push, sin PR.
+- **BLOQUEADO EN:** el OK de Javi para commitear estos documentos, pushear y abrir el PR.
+
+**Instrucción de continuación, 27/11/2026 12:08 (verbatim):**
+> Antes de abrir: arreglá el doble Enter en el proveedor de la nota de crédito, misma familia que el del artículo, con el mismo patrón de guarda.
+> 1. Commit de test en rojo: dos Enter seguidos en el proveedor, antes de la respuesta, piden las facturas una sola vez y no vacían las ya marcadas. Corré el spec y mostrame el rojo por aserción (no por compilación).
+> 2. Commit de producción aparte con la guarda. Corré filtrado: nota-credito-compra y compartido, --no-build equivalente de frontend. Mostrame el verde.
+> 3. Pasame el diff de esos dos commits y esperá mi OK; después invocás verificador-tdd UNA vez acotado a esos dos commits (aclarale que el resto ya dio APTO en las rondas 1 y 2, y pasale hash, línea literal y conteo de la suite; si cambió el conteo, corré la suite de frontend una vez sobre el HEAD y pasale ese resultado).
+> 4. Actualizá el cuerpo del PR: sacá el doble Enter de «Conocido, sin arreglar», sumalo a Criterios y al rojo→verde, agregá la ronda 3 a Verificadores y corregí la línea de la suite al HEAD nuevo. «quitarLinea/cambiarProveedor» queda como conocido.
+> 5. Recién entonces: commit de docs (ESTADO.md y bitácora), fetch, y si #204 ya entró en develop mergeá develop y resolvé ESTADO.md conservando ambos bloques; si no, no. Push sin merge y abrí el PR. Sin CUIT ni nombre del titular.
+> Si el verificador da NO APTO: arreglo y reverificación solo de esos commits, hasta 3 rondas. Worktree del verificador con una ruta corta (el anterior falló con Filename too long).
+
+- Precisión sobre la ronda 1: dio **NO APTO** (lo anotado arriba); el APTO es de la ronda 2, sobre `60ccf7e`.
+- Doble Enter en el proveedor de la NCA. Rojo `b171fd9`: sobre producción sin cambios, `TOTAL: 1 FAILED, 41 SUCCESS`, por aserción (`nota-credito-compra.spec.ts:519`, `Expected 1 to be 0`; `:520`, `Expected $.length = 0 to equal 1`). El segundo spec (otro código antes de la respuesta) nace en verde.
+- Producción `d01c064`: `elegirProveedor` corta si el proveedor ya es el elegido. Quien lo llama: el clic de la lista, el Enter y la lectura de PDF (que antes llama a `nueva()`). Filtrado NCA, NCA PDF y `compartido/`, sobre ese cambio: `TOTAL: 184 SUCCESS`. Mutación de control (`if (this.proveedor()) return;`): 1 rojo de 42, el segundo spec; restaurada.
+- **BLOQUEADO EN:** el OK de Javi al diff de `b171fd9` y `d01c064` para correr la suite y el `verificador-tdd`.
+
+**Instrucción de continuación, 27/11/2026 12:20 (verbatim):**
+> OK con dos condiciones, ambas por lectura de código, sin correr nada pesado, antes de invocar al verificador:
+> 1. En nota-credito-compra.ts: si el pedido de facturas falla o termina en error y el proveedor queda elegido, ¿cómo vuelve a pedirlas el usuario? ¿Se resetea el proveedor en el error, hay un botón de reintento, o la nueva guarda `proveedor()?.id === p.id` lo impide? Si lo impide: spec en rojo (commit aparte) y ajustá la guarda para que bloquee solo con el pedido en vuelo, no por tener al proveedor elegido.
+> 2. En compras-registradas y notas-credito-registradas: ¿dos Enter seguidos en el proveedor eligen dos veces con efecto dañino (se vacía algo que el usuario ya tenía)? Una línea con la conclusión y el motivo; si es inofensivo, queda declarado en el cuerpo.
+> Después: suite de frontend UNA vez sobre el HEAD final (esperado: 417 + 2 = 419, más lo que sume el punto 1; si el conteo no coincide, explicalo), verificador-tdd acotado a b171fd9 y d01c064 (y al commit del punto 1 si hay), con el worktree en ruta corta y pasándole hash, línea literal y conteo. Después el cuerpo del PR, docs, fetch y push como quedamos.
+
+- Levantado el bloqueo anterior: OK de Javi al diff, con las dos revisiones previas.
+- Revisión 1 (solo lectura): si falla el pedido de facturas de la NCA, el proveedor queda elegido y no hay botón de reintento; la única vía, antes y ahora, es «Cambiar» (`cambiarProveedor` lo borra) y elegirlo de nuevo, que vuelve a pedirlas. La guarda no lo impide: sin spec ni cambio. Lo único que cambia es que un segundo Enter tardío ya no reintenta de casualidad.
+- Revisión 2 (solo lectura): en compras y notas registradas el segundo Enter es inofensivo; vuelve a poner el mismo proveedor y vacía la lista y el campo, ya vacíos y ocultos; no toca filtros ni resultados. Si entre las dos respuestas se toca «Quitar», la tardía lo repone.
+- Visto de paso, anterior a este fix: en la factura de compra un segundo Enter vuelve a proponer el comprobante habitual, y pisaría un tipo cambiado a mano entre las dos respuestas.
+- Suite completa de frontend sobre `d01c064` (27/11 12:21), sin cambios sin commitear en `frontend/`: `Chrome Headless 158.0.0.0 (Windows 10): Executed 419 of 419 SUCCESS (5.248 secs / 4.273 secs)` · `TOTAL: 419 SUCCESS` (417 + los 2 specs nuevos, lo esperado). `ng build`: exit 0, sin advertencias.
+- `verificador-tdd`, ronda 3, lanzado solo sobre `b171fd9` y `d01c064`, con worktree en ruta corta.
+- **BLOQUEADO EN:** el veredicto de la ronda 3.
+- `verificador-tdd`, ronda 3, sobre `b171fd9` y `d01c064`: **NO APTO**. Rojo y verdes reproducidos. Sobrevive M4, `if (this.proveedor() === p) return;` (419/419): el spec responde las dos búsquedas con el mismo objeto `expoyer`, y en producción cada respuesta es un objeto distinto con el mismo `id`. La producción es correcta; falta cobertura. No bloqueantes, por lectura: respuestas de dos búsquedas en orden inverso dejan el proveedor del primer Enter; una respuesta tardía de las facturas de A pisa las de B. Worktree borrado.
+- Arreglo (solo spec, commit nuevo): la segunda respuesta es una copia de `expoyer`. Después, suite sobre ese commit y reverificación solo de él (segunda ronda sobre este cambio, de hasta 3).
+- Arreglo `b1ddce0` (2 líneas en el spec). Filtrado NCA: 42/42 sin mutar; con `if (this.proveedor() === p) return;` 1 rojo de 42 y sin la guarda 1 rojo de 42, los dos el spec del doble Enter; producción restaurada.
+- Suite completa sobre `b1ddce0` (27/11 12:33): `Chrome Headless 158.0.0.0 (Windows 10): Executed 419 of 419 SUCCESS (7.75 secs / 6.254 secs)` · `TOTAL: 419 SUCCESS`. `ng build`: exit 0, sin advertencias.
+- `verificador-tdd`, reverificación lanzada solo sobre `b1ddce0`.
+- **BLOQUEADO EN:** ese veredicto.
+- `verificador-tdd`, reverificación solo de `b1ddce0`: **APTO**. La mutación que sobrevivía y la guarda quitada dan 1 rojo de 42 cada una; control con el spec anterior, 42/42 en verde; no repitió la suite (usó la de `b1ddce0`). Worktree borrado.
+- `git fetch --all --prune`: `HEAD..origin/develop` vacío; #204 sigue abierto, así que no se mergea `develop`.
+- Commit de docs (ESTADO del Sprint 7 y esta bitácora), push y PR contra `develop`, sin merge.
+- **Abierto:** revisión del PR; conflicto de `docs/sprint07/ESTADO.md` cuando entre #204; recorrido de DoD 10; los dos «a confirmar» y la deuda anotada en el ESTADO.
+- **PR #205** contra `develop`: https://github.com/AAAActis/la-central-gestion/pull/205 (27/11). Pusheado `9d85033`, 16 commits; abierto, `MERGEABLE`, revisión requerida, sin auto-merge ni checks de CI informados. El cuerpo publicado es el borrador. Antes: sin CUIT, nombre del titular ni claves. Esta anotación queda sin commitear, y el ESTADO publicado no nombra el número.
+
+## 27/11/2026 12:49 · Auto-fix en el PR #205
+
+**Instrucción recibida (verbatim):**
+> Activar Auto-fix
+
+**Plan:** 1. Activar Auto-fix (CI, conflictos y comentarios de revisión) en el PR #205. Sin merge.
+
+**Estado:** terminada
+- Pedido el interruptor `auto_fix` de la aplicación para el PR #205; sin auto-merge. Esta anotación queda sin commitear.
+
+## 27/11/2026 12:50 · cuerpo del #205 y commit de docs de cierre
+
+**Instrucción recibida (verbatim):**
+> Dos cosas en #205, y parás:
+> 1. Verificá que el cuerpo del PR declare, en "Conocido, sin arreglar", los dos no bloqueantes de la ronda 3: (a) respuestas de búsqueda de proveedor en orden inverso dejan elegido el del primer Enter; (b) una respuesta tardía de facturas de un proveedor pisa la lista de otro elegido después. Si falta alguno, editá el cuerpo (gh pr edit), sin commit, aclarando que no los introduce este diff.
+> 2. Commit de docs (ESTADO.md y BITACORA.md) en fix/enter-codigo-exacto: nombrar el #205 abierto, esperando revisión de Santi; ronda 3 NO APTO (mutación M4 sobre la guarda por referencia), arreglo b1ddce0 solo de pruebas, reverificación APTO; tarea terminada con lo que queda abierto (recorrido DoD 10, conflicto de ESTADO.md entre #204 y #205). Sin CUIT ni nombre del titular. Push (solo documentación, sin verificadores ni suite) y un comentario en el PR que nombre ese commit. Árbol limpio: git status con solo .codex/ y AGENTS.md; pegame ese git status.
+
+**Plan:** 1. Leer el cuerpo publicado. 2. ESTADO y esta bitácora. 3. Fetch, commit, push y comentario.
+
+**Estado:** terminada
+- Cuerpo publicado del #205 leído: los dos no bloqueantes de la ronda 3 figuran en «Conocido, sin arreglar»; no se editó. En `develop` el Enter del proveedor de la NCA solo listaba, así que el del orden inverso aparece con este PR; el de las facturas tardías ya existía por clic.
+- #205 abierto contra `develop`, esperando revisión de Santi. Ronda 3 del `verificador-tdd`: NO APTO (mutación M4, la guarda comparando por referencia); arreglo `b1ddce0`, solo pruebas; reverificación APTO.
+- Commit de docs (ESTADO del Sprint 7 y esta bitácora); el push y el comentario en el PR van después. Solo documentación: sin verificadores ni suite.
+- **Tarea terminada. Abierto:** revisión y merge del #205; recorrido de DoD 10; conflicto de `docs/sprint07/ESTADO.md` entre #204 y #205.

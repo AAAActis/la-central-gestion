@@ -6,6 +6,8 @@ import {
   ApiLaCentral, ArticuloResultado, FacturaCompraResumen, NotaCreditoCompraNueva, ProveedorResumen, TotalesNotaCreditoCompra,
   mensajeDeError,
 } from '../../nucleo/api';
+import { exactoArticulo, exactoProveedor } from '../../compartido/codigo-exacto';
+import { lineaRepetida } from '../../compartido/linea-repetida';
 
 /** 057 CA-005: un artículo devuelto y su origen, elegido por línea (D9). */
 interface LineaDevuelta { articulo: ArticuloResultado; sucursalId: number | null; cantidad: number | null; }
@@ -48,7 +50,7 @@ interface Origen { id: number; nombre: string; }
             }
             <div class="fila">
               <input name="textoProveedor" [(ngModel)]="textoProveedor" placeholder="Código o nombre del proveedor"
-                aria-label="Código o nombre del proveedor" (keydown.enter)="$event.preventDefault(); buscarProveedor()" />
+                aria-label="Código o nombre del proveedor" (keydown.enter)="$event.preventDefault(); enterProveedor()" />
               <button type="button" class="secundario" (click)="buscarProveedor()">Buscar proveedor</button>
             </div>
             @if (errorProveedor()) { <p class="error">{{ errorProveedor() }}</p> }
@@ -126,9 +128,10 @@ interface Origen { id: number; nombre: string; }
             }
             <div class="fila">
               <input name="textoArticulo" [(ngModel)]="textoArticulo" placeholder="Código o nombre del artículo"
-                aria-label="Código o nombre del artículo" (keydown.enter)="$event.preventDefault(); buscarArticulo()" />
+                aria-label="Código o nombre del artículo" (keydown.enter)="$event.preventDefault(); enterArticulo()" />
               <button type="button" class="secundario" (click)="buscarArticulo()">Buscar artículo</button>
             </div>
+            @if (errorArticulo()) { <p class="error" role="alert">{{ errorArticulo() }}</p> }
             @for (a of articulos(); track a.id) {
               <button type="button" class="opcion" (click)="agregarArticulo(a)"><span class="mono">{{ a.codigoInterno }}</span> {{ a.nombre }}</button>
             }
@@ -172,6 +175,7 @@ export class NotaCreditoCompra {
   textoProveedor = '';
   readonly proveedores = signal<ProveedorResumen[]>([]);
   readonly errorProveedor = signal<string | null>(null);
+  readonly errorArticulo = signal<string | null>(null);
   readonly proveedor = signal<ProveedorResumen | null>(null);
   readonly facturas = signal<FacturaCompraResumen[]>([]);
   readonly errorFacturas = signal<string | null>(null);
@@ -247,11 +251,12 @@ export class NotaCreditoCompra {
     return this.paraRevisar().includes(campo);
   }
 
-  buscarProveedor() {
+  buscarProveedor(alTerminar?: (p: ProveedorResumen[]) => boolean) {
     this.errorProveedor.set(null);
     const texto = this.textoProveedor;
     this.api.proveedores(texto).subscribe({
       next: p => {
+        if (alTerminar?.(p)) return;
         this.proveedores.set(p);
         if (p.length === 0) this.errorProveedor.set(`No hay proveedores activos para «${texto}».`);
       },
@@ -262,8 +267,20 @@ export class NotaCreditoCompra {
     });
   }
 
+  /** HU-FCO-06 CA-002 y CA-003, como en la factura: Enter sobre un código exacto lo elige sin listar. */
+  enterProveedor() {
+    const texto = this.textoProveedor;
+    this.buscarProveedor(p => {
+      const exacto = exactoProveedor(p, texto);
+      if (exacto) this.elegirProveedor(exacto);
+      return !!exacto;
+    });
+  }
+
   /** CA-001: solo las facturas activas de ESTE proveedor. */
   elegirProveedor(p: ProveedorResumen) {
+    // Un segundo Enter no lo vuelve a elegir: pediría otra vez las facturas y vaciaría las marcadas.
+    if (this.proveedor()?.id === p.id) return;
     this.proveedor.set(p);
     this.proveedores.set([]);
     this.marcadas.set(new Set());
@@ -291,16 +308,32 @@ export class NotaCreditoCompra {
     this.marcadas.set(marcadas);
   }
 
-  buscarArticulo() {
+  buscarArticulo(alTerminar?: (a: ArticuloResultado[]) => boolean) {
+    this.errorArticulo.set(null);
     this.api.buscar(this.textoArticulo, false, 1, 20).subscribe({
-      next: r => this.articulos.set(r.articulos),
+      next: r => { if (!alTerminar?.(r.articulos)) this.articulos.set(r.articulos); },
       error: e => this.error.set(mensajeDeError(e)),
     });
   }
 
+  /** HU-FCO-06 CA-009, como en la factura: Enter sobre el código exacto de un artículo lo elige sin listar. */
+  enterArticulo() {
+    const texto = this.textoArticulo;
+    this.buscarArticulo(a => {
+      const exacto = exactoArticulo(a, texto);
+      if (exacto) this.agregarArticulo(exacto);
+      return !!exacto;
+    });
+  }
+
   agregarArticulo(a: ArticuloResultado) {
-    this.lineas = [...this.lineas, { articulo: a, sucursalId: null, cantidad: 1 }];
     this.articulos.set([]);
+    // La línea nueva entra sin origen: choca con otra del mismo artículo que todavía no lo tenga.
+    if (lineaRepetida(this.lineas, a.id, null)) {
+      this.errorArticulo.set(`${a.codigoInterno} ya está en la devolución: corregí su línea.`);
+      return;
+    }
+    this.lineas = [...this.lineas, { articulo: a, sucursalId: null, cantidad: 1 }];
     this.textoArticulo = '';
     this.invalidarTotales();
     this.api.ficha(a.id).subscribe(f => {
@@ -397,6 +430,7 @@ export class NotaCreditoCompra {
     this.importeNeto = null;
     this.percepciones = { iva: null, iibb: null, municipal: null, ganancias: null };
     this.lineas = [];
+    this.errorArticulo.set(null);
     this.paraRevisar.set([]);
     this.facturasSinEncontrar.set([]);
     this.desdePdf = false;
