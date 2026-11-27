@@ -2188,3 +2188,29 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - Sigue «a confirmar»: el control al cambiar el origen en NCA.
 
 **BLOQUEADO EN:** `verificador-tdd` desde la carpeta principal cuando esté libre; push y PR, con el OK de Javi.
+
+**Instrucción de continuación, 27/11/2026 11:02 (verbatim):**
+> Un último commit de docs en fix/proveedor-razon-social-exacta: corregí el ESTADO (los esquemas huérfanos de lacentral_javi YA se borraron, 3 de 3, el 27/11; quedan los de lacentral_santi: demo_ensayo_c3 y tres pr110_test_*, a resolver por Santi) y commiteá las anotaciones pendientes de la bitácora (push, comentario del PR, borrado). Sin CUIT ni nombre del titular. Push al PR (solo documentación, sin verificadores ni suite). Dejá el árbol limpio: git status debe mostrar solo .codex/ y AGENTS.md sin versionar. Pegame ese git status y el hash.
+> Después, sin tocar nada más, seguí con la rama de Enter en esta misma carpeta:
+> 1. git worktree list (debe haber solo el principal).
+> 2. git fetch --all --prune; git log --oneline HEAD..origin/develop. Si develop trae commits, cruzalos con lo que toca la rama de Enter (git diff --name-only) y reportá antes de mergear (sección 3 del CLAUDE.md).
+> 3. git checkout fix/enter-codigo-exacto; git branch --unset-upstream. Si el checkout se queja, parás y me pegás el error.
+> 4. Leé el último bloque en curso de la bitácora de esa rama, actualizá su ESTADO.md ANTES del push, y pegame git log --oneline origin/develop..HEAD y git diff --stat contra develop.
+> Sin push ni verificadores todavía: te digo cuándo.
+
+- Primera parte hecha en la rama del Fix E2: `767fe2d`, pusheado al #204; árbol limpio.
+- Un solo worktree. `git fetch --all --prune`: `HEAD..origin/develop` vacío (`bda2692`), antes y después del cambio de rama; nada que mergear.
+- `git checkout fix/enter-codigo-exacto` sin errores (HEAD `bb2fd35`); `git branch --unset-upstream` (seguía a `origin/develop`). La rama no está en el remoto.
+- `ESTADO` del Sprint 7: entrada en PRÓXIMA SESIÓN con commits, pruebas, lo que cambia, lo «a confirmar» y lo pendiente. Sin commit: no lo pide la instrucción.
+
+**BLOQUEADO EN:** Javi: OK para commitear el ESTADO y estas líneas, y cuándo van el `verificador-tdd`, el push y el PR.
+
+**Instrucción de continuación, 27/11/2026 11:03 (verbatim):**
+> OK: commiteá ESTADO.md (sprint07) y BITACORA.md (sprint06) en fix/enter-codigo-exacto. Sin CUIT ni nombre del titular. Sin push.
+>
+> Después, invocá UNA vez verificador-tdd, acotado a cca1741, 591a4d4, 0676f4f, 7708097 y 59f21ba. Al invocarlo pasale, como exige el CLAUDE.md §5: el hash 59f21ba, la línea literal del resumen de la suite y el conteo (los de la bitácora del 26/11), y aclarale que los commits posteriores a 59f21ba son solo documentación. Si falta alguno de esos tres datos, decime cuál antes de invocarlo. auditor-persistencia: NO aplica (frontend); se declara así en el PR.
+>
+> Antes de invocar: git worktree list con un solo worktree; Javi confirma que la demo del 5181 está cerrada.
+> Si da NO APTO: arreglá y reverificá solo los commits del arreglo, hasta 3 rondas (CLAUDE.md). Si da APTO: parás y me pegás el veredicto completo, más el borrador del cuerpo del PR. En el cuerpo: los CA uno por uno; el cambio de conducta del click-guard de la NCA, declarado; las pruebas rojo→verde por commit; PR grande por los .spec (546 líneas, casi todas de tests); y que el conflicto previsto en ESTADO.md con #204 se resuelve mergeando develop cuando #204 entre. Sin push ni PR hasta mi OK.
+
+- Se levanta el bloqueo del commit. Commit de docs: ESTADO del Sprint 7 y esta bitácora. Sigue: `verificador-tdd`.
