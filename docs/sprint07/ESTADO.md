@@ -96,6 +96,20 @@ decidido. El número 06, reservado para C2 desde el Sprint 4, queda sin usar.
 | D-S7-16 | **Comparador · detalle.** Ordena por precio neto ascendente; una fila sin neto va al final y dice «No informa precio bonificado» (032 CA-004). La diferencia (032 CA-002) es neto menos el neto más barato. El stock máximo por proveedor (054 CA4) ordena HAY > A_CONFIRMAR > NO_HAY. La vista Venta toma el precio estimado (modalidad Lista) y las existencias de la ficha del artículo, sin endpoint nuevo. | Asistente, 26/11/2026 (D-S7-13) | 030, 032, 033, 050 |
 | D-S7-17 | **054 en dos PR.** 054a: vincular (CA1, CA2, CA3, CA5, CA6, CA10 para vincular), cuando el 16 esté aplicado y re-scaffoldeado. 054b: desvincular, retiro y copia del proveedor y el código en el historial de compras (CA7, CA8, CA9), con un script 17, después de PS-01 y PS-02. | Asistente, 26/11/2026 (D-S7-13) | 054 |
 
+### Catálogo de los 4 proveedores en `lacentral_demo` · 27/11/2026
+
+Informado por Santi el 27/11/2026: los cuatro scrapes en SUCCESS y con 0 vencidos. Los workflows de n8n y sus credenciales son de Santi, fuera del repo.
+
+| Proveedor | `proveedor_id` (demo) | Corrida | Productos |
+|---|---|---|---|
+| Expoyer | 7 | 2 | 103.478 |
+| Autocor | 10 | 7 | 54.657 |
+| Fazio (NESTOR FAZIO S.A.) | 11 | 12 | 38.098 |
+| ETMAN | 8 (por `proveedor`: «ETMAN Repuestos (demo)»; sin confirmar en `scrape_corrida`, que `lacentral_santi` no puede leer) | 13 | 32.707 |
+
+- **ETMAN:** `precio_neto` = «Lista Venta 2» (el costo con los descuentos de su factura) y `precio_lista` = «Precio Etman». Los códigos que se repiten entre marcas llevan la marca agregada, así que no coinciden con el código de la factura: en la 053/054 van por candidatos, no por vinculación automática (D-S7-08 no los encuentra; es lo esperado).
+- Con esto hay datos para la prueba manual del entregable (comparador con 4 proveedores), que va al final del sprint.
+
 ### Primer scrape · Expoyer · relevado el 23/11/2026
 
 Portal con API JSON y token Bearer. Lo que entró al diseño de C2 (script 12 y `CONTRATO-N8N.md`):
