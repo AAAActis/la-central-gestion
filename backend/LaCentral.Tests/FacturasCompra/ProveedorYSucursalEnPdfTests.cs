@@ -20,7 +20,7 @@ public class ProveedorYSucursalEnPdfTests
 
     public ProveedorYSucursalEnPdfTests()
     {
-        _proveedores.Setup(p => p.BuscarActivosPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _proveedores.Setup(p => p.BuscarActivosEnNegroPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
         _facturas.Setup(f => f.ObtenerArticulosPorCodigoProveedorAsync(It.IsAny<int>(), It.IsAny<IReadOnlyCollection<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, int>());
@@ -38,7 +38,7 @@ public class ProveedorYSucursalEnPdfTests
     }
 
     private void LaRazonSocialDa(string termino, params Proveedor[] proveedores)
-        => _proveedores.Setup(p => p.BuscarActivosPorRazonSocialAsync(termino, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        => _proveedores.Setup(p => p.BuscarActivosEnNegroPorRazonSocialAsync(termino, It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(proveedores);
 
     // --- Proveedor ---------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ public class ProveedorYSucursalEnPdfTests
         await Interpretar(PdfSintetico.PresupuestoFazio());
 
         // Con un tope de 1, dos proveedores iguales parecerían una única coincidencia.
-        _proveedores.Verify(p => p.BuscarActivosPorRazonSocialAsync("Fazio", It.Is<int>(limite => limite >= 2), It.IsAny<CancellationToken>()), Times.Once);
+        _proveedores.Verify(p => p.BuscarActivosEnNegroPorRazonSocialAsync("Fazio", It.Is<int>(limite => limite >= 2), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -97,6 +97,7 @@ public class ProveedorYSucursalEnPdfTests
         Assert.Null(f.ProveedorId);
     }
 
+    // Un proveedor asignado por CUIT implica un CUIT conocido: esa sola condición impide buscar por razón social.
     [Fact]
     public async Task ElCuitManda_SobreLaRazonSocial_YNoQuedaParaRevisar()
     {
@@ -104,11 +105,11 @@ public class ProveedorYSucursalEnPdfTests
             .ReturnsAsync(new Proveedor { Id = 7, Activo = true });
         LaRazonSocialDa("ETMAN", new Proveedor { Id = 9, Activo = true });
 
-        var f = await Interpretar(PdfSintetico.FacturaEtman());
+        var f = await Interpretar(PdfSintetico.FacturaEtman(codigoAfip: "06"));
 
         Assert.Equal(7, f.ProveedorId);
         Assert.DoesNotContain("proveedorId", f.ParaRevisar);
-        _proveedores.Verify(p => p.BuscarActivosPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _proveedores.Verify(p => p.BuscarActivosEnNegroPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -118,7 +119,7 @@ public class ProveedorYSucursalEnPdfTests
             .ReturnsAsync(new Proveedor { Id = 7, Activo = false });
         LaRazonSocialDa("ETMAN", new Proveedor { Id = 9, Activo = true });
 
-        var f = await Interpretar(PdfSintetico.FacturaEtman());
+        var f = await Interpretar(PdfSintetico.FacturaEtman(codigoAfip: "06"));
 
         Assert.Null(f.ProveedorId);
         Assert.Contains("proveedorId", f.ParaRevisar);
@@ -133,9 +134,11 @@ public class ProveedorYSucursalEnPdfTests
         var f = await Interpretar(PdfSintetico.PresupuestoFazio(), proveedorElegido: 5);
 
         Assert.Equal(5, f.ProveedorId);
-        _proveedores.Verify(p => p.BuscarActivosPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _proveedores.Verify(p => p.BuscarActivosEnNegroPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    // Ningún layout reconocido llega sin razón social; un texto sin layout corta antes
+    // (InterpretarFacturaPdfUseCaseTests.UnLayoutQueNoSeConoce_Invalido_YPideLaCargaManual).
     [Theory]
     [InlineData("etman")]
     [InlineData("fazio")]
@@ -144,15 +147,45 @@ public class ProveedorYSucursalEnPdfTests
     {
         var (pdf, termino) = layout switch
         {
-            "etman" => (PdfSintetico.FacturaEtman(), "ETMAN"),
+            "etman" => (PdfSintetico.FacturaEtman(codigoAfip: "06"), "ETMAN"),
             "fazio" => (PdfSintetico.PresupuestoFazio(), "Fazio"),
-            _ => (PdfSintetico.FacturaExpoyer(), "Expoyer"),
+            _ => (PdfSintetico.FacturaExpoyer(codigoAfip: "6"), "Expoyer"),
         };
         // Un solo proveedor, y solo para el término correcto: cualquier otro no encuentra nada.
         LaRazonSocialDa(termino, new Proveedor { Id = 9, Activo = true });
 
         var f = await Interpretar(pdf);
 
+        Assert.Equal(9, f.ProveedorId);
+    }
+
+    // D-S7-12: sin CUIT es compra en negro, y una factura A no lo es.
+    [Theory]
+    [InlineData("etman")]
+    [InlineData("expoyer")]
+    public async Task UnaFacturaA_SinCuitConocido_NoSeAsignaPorRazonSocial(string layout)
+    {
+        var (pdf, termino) = layout == "etman"
+            ? (PdfSintetico.FacturaEtman(codigoAfip: "01"), "ETMAN")
+            : (PdfSintetico.FacturaExpoyer(codigoAfip: "1"), "Expoyer");
+        LaRazonSocialDa(termino, new Proveedor { Id = 9, Activo = true });
+
+        var f = await Interpretar(pdf);
+
+        Assert.Equal("A", f.TipoComprobante);
+        Assert.Null(f.ProveedorId);
+        Assert.Contains("proveedorId", f.ParaRevisar);
+        _proveedores.Verify(p => p.BuscarActivosEnNegroPorRazonSocialAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UnComprobanteDeTipoNoReconocido_NoEsA_YSeAsignaPorRazonSocial()
+    {
+        LaRazonSocialDa("ETMAN", new Proveedor { Id = 9, Activo = true });
+
+        var f = await Interpretar(PdfSintetico.FacturaEtman(codigoAfip: "99"));
+
+        Assert.Null(f.TipoComprobante);
         Assert.Equal(9, f.ProveedorId);
     }
 

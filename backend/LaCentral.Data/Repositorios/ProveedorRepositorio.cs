@@ -144,10 +144,10 @@ public class ProveedorRepositorio : IProveedorRepositorio
         };
     }
 
-    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarActivosPorRazonSocialAsync(
+    public async Task<IReadOnlyList<LaCentral.UseCases.Entidades.Proveedor>> BuscarActivosEnNegroPorRazonSocialAsync(
         string texto, int limite, CancellationToken ct = default)
     {
-        var filas = await ConTodasLasPalabras(_context.Proveedor.AsNoTracking().Where(p => p.Activo), texto)
+        var filas = await ConTodasLasPalabras(_context.Proveedor.AsNoTracking().Where(p => p.Activo && p.CuitSimulado), texto)
             .OrderBy(p => p.Id).Take(limite).ToListAsync(ct);
         return filas.Select(bd => new LaCentral.UseCases.Entidades.Proveedor
         {

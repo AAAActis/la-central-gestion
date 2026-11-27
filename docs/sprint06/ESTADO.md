@@ -398,6 +398,17 @@ reemplaza la D16). La revisión de abajo queda acá como historia y es la entrad
 - **Supuestos confirmados por Javi (23/11/2026):** en ETMAN manda la «Dir. Entrega» sobre el domicilio del cliente
   (pueden ser de sucursales distintas en el mismo PDF); los términos de búsqueda por layout son fijos («ETMAN», «Fazio», «Expoyer»).
   El #196 lo aprueba Santi o Lauti.
+**24/11 · Fix E2: proveedor por razón social EXACTA primero (`fix/proveedor-razon-social-exacta`, un solo PR; sigue al #196).**
+- Orden sin CUIT: elegido a mano > CUIT > razón social **exacta** (igualdad ignorando mayúsculas, acentos y espacios sobrantes o
+  repetidos, solo activos): 1 asigna con «Revisar»; 2 o más no asignan y **no caen a «contiene»** > si no hay exactas, «contiene» como antes.
+  Resuelve pares como «EXPOYER» / «EXPOYER S.A.» y «FAZIO» / «NESTOR FAZIO S.A.» a la cuenta de nombre corto.
+- Dónde se normaliza: método nuevo del puerto `BuscarActivosPorRazonSocialExactaAsync`; el repositorio acota por palabras y compara con
+  `NormalizacionArticulo.NombreParaBusqueda`. Sin esquema, sin `unaccent`, sin tocar la normalización de acentos de los repositorios.
+- **Convención del negocio (solo documentada, el código NO la interpreta):** un proveedor «en negro» lleva el nombre sin SA/SRL/SAS o con una
+  «X» (ejemplo: «AUTOCOR X»). Pendiente confirmar si la X va por delante o al final.
+- **Riesgo registrado:** un PDF de Fazio sin CUIT con razón social «Fazio» se asigna por exacta a la cuenta de nombre corto (en negro).
+  A confirmar con Sergio que todo lo de Fazio sin CUIT es presupuesto.
+- «Fazio (demo)» (id 9) no coincide exacto con «Fazio»: cae en «contiene» con una sola coincidencia; los tests no dependen de eso.
 - **Fix F:** script `12_Vencimiento_Proveedor.sql` escrito (rama aparte); lo aplica Santi y después el re-scaffold. Sin código que dependa de las columnas.
 
 **23/11 · cierre documental del Sprint 6 (`docs/sprint06-cierre`).**
@@ -693,3 +704,14 @@ Sprint 5). Antes de la primera HU del comparador, el equipo decide: qué entrega
 reescritura de la 055; la opción (a) o (b) del plan; CA3 de la 054 contra D2; la D1 de
 `CLAUDE.md`. Siguen C2, C5 y C6, y C1 en el mismo cambio de esquema que C2. Pendientes: contar
 R1 cuando la base responda, cerrar #160, y escribir la HU de las correcciones de Javi.
+
+---
+
+**25/11 · Fix E2 (`fix/proveedor-razon-social-exacta`): estado de la regla y riesgos. Bloque nuevo; el del 24/11 no se toca.**
+- **Estado:** regla **implementada** en la rama (commits `e5f9322`, `cdcbf64`, `d4d8cb7`), **decidida por Javi el 25/11/2026: sin CUIT = en negro; sin columna ni código**. La regla por CUIT simulado queda descartada. «Razón social exacta primero» sale tal como está. Sin PR, `verificador-tdd` ni `auditor-persistencia` todavía.
+- **Riesgo (la regla depende de los datos, no del sistema):** que «Fazio» o «Expoyer» se asignen a la cuenta de nombre corto depende de cómo se nombran los proveedores. Si alguien renombra un proveedor (por ejemplo le agrega «S.A.» o le saca la «X»), cambia el resultado sin que cambie el sistema. Lo que lo cubre es el «Revisar»: toda asignación por razón social queda marcada y el operador la confirma.
+- **Caso conocido (consecuencia de esa decisión):** un PDF sin CUIT es siempre una carga en negro (presupuesto): un proveedor real que mande el PDF sin CUIT queda tratado como en negro. En Fazio, ese PDF se asigna a la cuenta de nombre corto aunque fuera de la cuenta en blanco; lo cubre el «Revisar», con el que el operador lo corrige.
+- **Riesgo (el sistema no garantiza la convención):** si no hay razón social exacta se cae a «contiene», y un PDF sin CUIT puede asignarse a una cuenta en blanco (ejemplo: solo «NESTOR FAZIO S.A.» contiene «Fazio»). Queda marcado «Revisar». «Sin CUIT = en negro» es una convención de la operación; el sistema no la garantiza.
+- La pregunta «a confirmar con Sergio» sobre los PDF de Fazio sin CUIT, del bloque del 24/11, queda **superada por la decisión del 25/11/2026**.
+- **Convención de nombres (solo documentada, no se programa):** en negro = sin forma societaria (SA, SRL, SAS) o con una «X» (ejemplo «AUTOCOR X»); a confirmar si la X va por delante o al final.
+- Sin decisiones de negocio nuevas con número propio. Frontend, esquema, sucursal y lectura de artículos de FCO y NCA: sin cambios.
