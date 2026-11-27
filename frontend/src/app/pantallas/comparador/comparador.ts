@@ -94,7 +94,11 @@ const TEXTO_STOCK: Record<string, string> = { HAY: 'Hay', NO_HAY: 'No hay', A_CO
                       <td class="diferencia">{{ f.diferenciaConMasBarato === null ? '—' : (f.diferenciaConMasBarato === 0 ? 'El más barato' : '+ ' + (f.diferenciaConMasBarato | number: '1.2-2')) }}</td>
                       <td>{{ textoStock(f.estadoStock) }}</td>
                     }
-                    <td>{{ f.ultimaLectura | date: 'dd/MM/yyyy HH:mm' }}</td>
+                    <td>{{ f.ultimaLectura | date: 'dd/MM/yyyy HH:mm' }}
+                      @if (f.ultimaConsultaFallida) {
+                        <span class="etiqueta revisar consulta-fallida">Falló la última consulta: precio del {{ f.ultimaLectura | date: 'dd/MM/yyyy' }}</span>
+                      }
+                    </td>
                     <td>
                       @if (f.urlReferencia) {
                         <a class="sitio" [href]="f.urlReferencia" target="_blank" rel="noopener noreferrer">Abrir sitio</a>
