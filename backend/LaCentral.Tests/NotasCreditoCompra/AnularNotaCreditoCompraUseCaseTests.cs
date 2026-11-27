@@ -39,6 +39,7 @@ public class AnularNotaCreditoCompraUseCaseTests
         Usuario("cajero", id: 10, rol: Operador);
         Usuario("yo", id: DoblesBaja.UsuarioEnSesion, rol: Administrador);
         _hash.Setup(h => h.VerificarClave("clave-buena", It.IsAny<string>())).Returns(true);
+        _contexto.SetupGet(c => c.EsAdministrador).Returns(true);
     }
 
     private void Usuario(string nombre, int id, int rol) =>
@@ -95,6 +96,25 @@ public class AnularNotaCreditoCompraUseCaseTests
         _contexto = DoblesBaja.Contexto(0);
 
         await Rechaza(NotaVigente, Pedido(), TipoError.NoAutorizado);
+    }
+
+    // CA-012 (v1.3, D-S7-04): un ADMINISTRADOR la anula solo, sin autorización de otra persona.
+    [Fact]
+    public async Task CA012_UnAdministradorLaAnulaSolo()
+    {
+        var resultado = await Caso().EjecutarAsync(NotaVigente, new AnularNotaCreditoCompraRequest(" Mal cargada ", null, null));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal((NotaVigente, "Mal cargada", DoblesBaja.UsuarioEnSesion), (_anulacion!.NotaId, _anulacion.Motivo, _anulacion.UsuarioId));
+        _hash.Verify(h => h.VerificarClave(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    // CA-012 (v1.3): si quien la pide no es ADMINISTRADOR, 403 y no cambia nada.
+    [Fact]
+    public async Task CA012_UnOperador_Prohibido()
+    {
+        _contexto = DoblesBaja.Contexto(10);
+        await Rechaza(NotaVigente, Pedido(), TipoError.Prohibido);
     }
 
     [Fact]

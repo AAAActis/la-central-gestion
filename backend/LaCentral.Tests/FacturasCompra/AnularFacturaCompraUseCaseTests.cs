@@ -47,6 +47,7 @@ public class AnularFacturaCompraUseCaseTests
         _hash.Setup(h => h.VerificarClave("clave-buena", It.IsAny<string>())).Returns(true);
         _precios.Setup(p => p.ObtenerAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<int, PreciosDeArticulo>());
+        _contexto.SetupGet(c => c.EsAdministrador).Returns(true);
     }
 
     private void Usuario(string nombre, int id, int rol, bool activo = true) =>
@@ -152,6 +153,26 @@ public class AnularFacturaCompraUseCaseTests
 
         Assert.True((await Caso().EjecutarAsync(FacturaActiva, Pedido())).IsSuccess);
         Assert.Equal(10, _anulacion!.UsuarioId);
+    }
+
+    // CA-006 (v1.2, D-S7-04): un ADMINISTRADOR anula solo, sin autorización de otra persona.
+    [Fact]
+    public async Task CA006_UnAdministradorAnulaSolo_ConMotivoYQuienAnulo()
+    {
+        var resultado = await Caso().EjecutarAsync(FacturaActiva, new AnularFacturaCompraRequest(" Cargada dos veces ", null, null));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal((FacturaActiva, "Cargada dos veces", DoblesBaja.UsuarioEnSesion),
+            (_anulacion!.FacturaId, _anulacion.Motivo, _anulacion.UsuarioId));
+        _hash.Verify(h => h.VerificarClave(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    // CA-007 (v1.2, D-S7-04): un OPERADOR recibe 403 y no cambia nada, aunque traiga una autorización válida.
+    [Fact]
+    public async Task CA007_UnOperador_Prohibido()
+    {
+        _contexto = DoblesBaja.Contexto(10);
+        AssertFallo(await Caso().EjecutarAsync(FacturaActiva, Pedido()), TipoError.Prohibido);
     }
 
     // CA-001: los precios por modalidad se recalculan con el costo devuelto, en la misma unidad de trabajo.
