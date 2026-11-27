@@ -272,3 +272,25 @@ La instrucción verbatim está en el bloque «26/11/2026 · Cola autónoma…» 
 - 053 y 054a, y compras: siguen esperando que se apliquen el 16 y el 13.
 - 20:35: entra la franja de Javi (21:00–24:00). No corro nada contra PostgreSQL.
 **BLOQUEADO EN:** depende de Santi: aplicar el 13 en las tres bases (bloque fish en la bitácora de `feature/s7-script-13`) y después el 16. Lo que sigue en la base son la suite del 16 y la del 030, una por vez, después de las 24:00 o mañana.
+
+## 27/11/2026 20:40 · Franja de Javi: comparador, compras sobre el 13 y preparación del re-scaffold del 16, sin base
+
+**Instrucción recibida (verbatim):**
+> Bien lo del #202, el #206 y el #190. No pares por la franja de Javi: de 21:00 a 24:00 seguí programando sin tocar ninguna base (nada de [PostgreSqlFact], suites ni verificadores), solo unitarias filtradas con "Base!=PostgreSQL".
+>
+> Mientras tanto:
+> 1. Comparador (030, 032, 033, 034, 050): dejá terminado todo el código y las unitarias. Las de PostgreSQL quedan escritas para correrlas cuando vuelva la base.
+> 2. Compras (016, 028, #195) sobre el 13: escribí casos de uso y unitarias. Lo que necesita el 13 aplicado queda escrito y anotado como «falta correr».
+> 3. Preparalo todo para el re-scaffold del 16 (mapa del manejador, el retiro por (proveedor_id, codigo) y los conflictos por proveedor de la D-S7-19). Así, cuando yo aplique el 16, es correr y abrir el PR.
+> 4. Decime si el 13 y el 16 ya están aplicados en alguna base. Si no lo están, pasame el orden y los bloques fish. Los aplico mañana temprano en lacentral_test, o esta noche después de las 24, cuando Javi termine.
+>
+> Antes de parar, dejá la bitácora y el ESTADO al día con qué quedó escrito y qué falta correr contra la base. No mergees nada.
+
+**Plan:**
+1. Comparador: contrastar los CA de 030, 032, 033, 034 y 050 contra lo escrito en `feature/030-comparador-api` y `feature/050-comparador-pantalla`, y completar lo que falte, con unitarias.
+2. Compras sobre el 13: casos de uso y unitarias de la 016, la 028 y el #195 en una rama desde `feature/s7-script-13`. La persistencia queda escrita y anotada como «falta correr».
+3. Re-scaffold del 16, todo menos el scaffold: mapa del manejador, retiro por (`proveedor_id`, `codigo`) y conflictos por proveedor (D-S7-19), en una rama desde `feature/127-vincular`. Pruebas PostgreSQL escritas y sin correr.
+4. Estado del 13 y del 16 en las bases (ya consultado a las 18:42; no se vuelve a tocar la base en la franja) y bloques fish.
+5. ESTADO y bitácora con lo escrito y lo que falta correr.
+
+**Estado:** en curso
