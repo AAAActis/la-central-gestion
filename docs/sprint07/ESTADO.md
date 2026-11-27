@@ -290,6 +290,8 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 
 ## PRÓXIMA SESIÓN
 
+**27/11/2026 · #206 (base_completa con el CHECK de la D10) listo.** Los dos verificadores dieron APTO y la suite sobre `737e4d4` dio 865/865. Deuda C7-06 sin cambios.
+
 **26/11/2026 · `base_completa.sql` con el CHECK de baja de la D10.**
 - Rama `fix/base-completa-check-baja` desde `develop`: los 4 `*_baja_coherente` iguales a los de las bases vivas, aviso de
   esquema histórico en el encabezado y `BaseCompletaPostgreSqlTests`. El resto del desfase es deuda (C7-06), sin hacer.
