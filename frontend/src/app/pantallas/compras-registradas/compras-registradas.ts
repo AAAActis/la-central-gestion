@@ -11,14 +11,11 @@ const TAMANO_PAGINA = 20;
 /**
  * HU-FCO-02 (026) · Consulta de facturas de compra registradas: por proveedor, número y
  * rangos de emisión y de vencimiento. Las anuladas se muestran marcadas (CA-005).
- * HU-FCO-04 (028) · Desde cada fila activa se anula, con motivo y la autorización de otro
- * ADMINISTRADOR (doble certificación, CA-006).
+ * HU-FCO-04 (028) · Desde cada fila activa se anula con un motivo. Anula un ADMINISTRADOR solo
+ * (CA-006 y CA-007 v1.2, D-S7-04); a un OPERADOR la API le responde 403 y se muestra su mensaje.
  */
 const CAMPOS_ANULACION: CampoFormulario[] = [
   { nombre: 'motivo', etiqueta: 'Motivo', obligatorio: true },
-  // autocomplete off: el navegador no tiene que completar con la clave de quien está en la sesión.
-  { nombre: 'usuarioAutoriza', etiqueta: 'Usuario de quien autoriza', obligatorio: true, autocompletar: 'off' },
-  { nombre: 'contrasenaAutoriza', etiqueta: 'Contraseña de quien autoriza', tipo: 'password', obligatorio: true, autocompletar: 'new-password' },
 ];
 
 @Component({
@@ -175,8 +172,7 @@ export class ComprasRegistradas {
     const f = this.aAnular()!;
     this.enviando.set(true);
     this.api.anularFacturaCompra(f.id, {
-      // El caso de uso recorta motivo y usuario; la contraseña va tal cual.
-      motivo: v['motivo'] as string, usuarioAutoriza: v['usuarioAutoriza'] as string, contrasenaAutoriza: v['contrasenaAutoriza'] as string,
+      motivo: v['motivo'] as string,
     }).subscribe({
       next: () => {
         this.enviando.set(false);

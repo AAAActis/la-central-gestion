@@ -281,7 +281,7 @@ export class ApiLaCentral {
     return this.http.get<Pagina<FacturaCompraResumen>>('/api/facturas-compra', { params });
   }
 
-  /** HU-FCO-04 (028): quien anula sale de la sesión; autoriza otro ADMINISTRADOR con su usuario y contraseña. */
+  /** HU-FCO-04 (028): quien anula sale de la sesión y tiene que ser ADMINISTRADOR (D-S7-04). */
   anularFacturaCompra(id: number, anulacion: AnulacionFacturaCompra): Observable<void> {
     return this.http.post<void>(`/api/facturas-compra/${id}/anulacion`, anulacion);
   }
@@ -316,7 +316,7 @@ export class ApiLaCentral {
     return this.http.get<Pagina<NotaCreditoCompraResumen>>('/api/notas-credito-compra', { params });
   }
 
-  /** 057 CA-012 (D-S6-23): como la factura (028), con motivo y la autorización de otro ADMINISTRADOR. */
+  /** 057 CA-012 (v1.3, D-S7-04): como la factura (028), con motivo; la anula un ADMINISTRADOR solo. */
   anularNotaCreditoCompra(id: number, anulacion: AnulacionFacturaCompra): Observable<void> {
     return this.http.post<void>(`/api/notas-credito-compra/${id}/anulacion`, anulacion);
   }
@@ -400,8 +400,6 @@ export interface TotalesNotaCreditoCompra {
 /** HU-FCO-04 (028): el cuerpo de `POST /api/facturas-compra/{id}/anulacion`. */
 export interface AnulacionFacturaCompra {
   motivo: string;
-  usuarioAutoriza: string;
-  contrasenaAutoriza: string;
 }
 
 /** HU-FCO-02 (026): criterios de `GET /api/facturas-compra`; las fechas en ISO (aaaa-mm-dd). */

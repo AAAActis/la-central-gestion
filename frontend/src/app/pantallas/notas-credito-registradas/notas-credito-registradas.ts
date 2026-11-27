@@ -11,14 +11,11 @@ const TAMANO_PAGINA = 20;
 
 /**
  * HU-FCO-07 (057) CA-012 · Listado de notas de crédito de proveedor, por proveedor y rango de
- * emisión, con las anuladas marcadas (como la 026). Desde cada fila vigente se anula, con motivo
- * y la autorización de otro ADMINISTRADOR (como la 028, D-S6-23).
+ * emisión, con las anuladas marcadas (como la 026). Desde cada fila vigente se anula con un motivo;
+ * la anula un ADMINISTRADOR solo (CA-012 v1.3, D-S7-04, como la 028).
  */
 const CAMPOS_ANULACION: CampoFormulario[] = [
   { nombre: 'motivo', etiqueta: 'Motivo', obligatorio: true },
-  // autocomplete off: el navegador no tiene que completar con la clave de quien está en la sesión.
-  { nombre: 'usuarioAutoriza', etiqueta: 'Usuario de quien autoriza', obligatorio: true, autocompletar: 'off' },
-  { nombre: 'contrasenaAutoriza', etiqueta: 'Contraseña de quien autoriza', tipo: 'password', obligatorio: true, autocompletar: 'new-password' },
 ];
 
 const CLASES: Record<NotaCreditoCompraResumen['clase'], string> = { BONIFICACION: 'Bonificación', DEVOLUCION: 'Devolución' };
@@ -174,8 +171,7 @@ export class NotasCreditoRegistradas {
     const n = this.aAnular()!;
     this.enviando.set(true);
     this.api.anularNotaCreditoCompra(n.id, {
-      // El caso de uso recorta motivo y usuario; la contraseña va tal cual.
-      motivo: v['motivo'] as string, usuarioAutoriza: v['usuarioAutoriza'] as string, contrasenaAutoriza: v['contrasenaAutoriza'] as string,
+      motivo: v['motivo'] as string,
     }).subscribe({
       next: () => {
         this.enviando.set(false);
