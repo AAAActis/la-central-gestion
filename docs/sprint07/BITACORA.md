@@ -26,6 +26,51 @@ Sprint 7 anterior al 25/11/2026 (C2, el 12, el 14 y sus re-scaffolds) está en
 
 **Estado:** terminada. Queda abierto que Santi mergee el PR.
 
+## 26/11/2026 · base_completa.sql con el CHECK de la D10 (punto 2 del bloque del 26/11 en `feature/s7-script-13`)
+
+La instrucción verbatim y el plan están en el bloque «26/11/2026 · #202 sin conflicto y auditor; base_completa.sql…» de la bitácora de `feature/s7-script-13` (#202). Este bloque es el rastro del punto 2, en `fix/base-completa-check-baja` desde `origin/develop` (`bda2692`).
+
+**Estado:** en curso
+- Prueba `BaseCompletaPostgreSqlTests` (sin commit todavía): corre solo la parte de tablas de la PARTE A (entre `CREATE EXTENSION … pg_trgm;` y `CREATE SCHEMA staging;`; corta si ese tramo tiene DROP, TRUNCATE, SCHEMA, `public.` o search_path) en un esquema `bc_prueba_*` dentro de una transacción que se revierte, y compara `pg_constraint` contra `public` de `lacentral_test`. Rojo: `Con error: 1, Superado: 0, Total: 1`, **112 restricciones distintas**. Solo 4 son las del aviso de Javi (`usuario`, `cliente`, `proveedor`, `articulo` `*_baja_coherente`, estrictos en el archivo, D10 en la base). Las otras 108 son todo lo que agregaron los scripts 01 a 14 y el archivo (v3.0, 26/08/2026) no tiene: tablas `nota_credito_compra*`, `articulo_precio_modalidad`, `proveedor_articulo*`, `scrape_corrida`, los cuatro `*_historial_baja`, `provincia` y direcciones, la PK de `factura_compra_detalle` con `sucursal_id`; y sobra `articulo_margen`.
+
+**BLOQUEADO EN:** Santi: «igual a lo que corre en las bases» es reescribir la PARTE A entera (los 12 scripts adentro, PR grande) y deja la PARTE B/C de importación apuntando a columnas que ya no existen; o se arreglan los 4 CHECK de baja y la prueba compara solo esos.
+- Respuesta de Santi (26/11/2026), verbatim:
+  > Solo los 4 CHECK de baja, en un PR chico, con la prueba acotada a esos 4 y a la PK. Además, en el encabezado de base_completa.sql poné un aviso visible: «Esquema v3.0 del 26/08/2026, histórico. El esquema vigente es este archivo más los scripts 01 a 14 de backend/db/rescaffold/, en orden. No armar una base solo con este archivo.» El desfase completo va como deuda en el ESTADO, con la propuesta de regenerar la PARTE A desde pg_dump --schema-only de public al cerrar el Sprint 7 (no a mano) y marcar la PARTE C como histórica. Esa regeneración no se hace ahora.
+- Lectura técnica: «la PK» = la PK de cada una de esas cuatro tablas (`usuario_pkey`, `cliente_pkey`, `proveedor_pkey`, `articulo_pkey`). La de `factura_compra_detalle` (que también difiere) queda en la deuda con las otras 107.
+- Rojo `0564466` (prueba acotada): `Con error: 1, Superado: 0, Total: 1`, «4 restricciones distintas», las 4 `*_baja_coherente`; las 4 PK coinciden.
+- Producción `6f36ac9`: los 4 CHECK a la D10 y el aviso del encabezado. Filtrado: `Correctas! - Con error: 0, Superado: 1, Total: 1`. Deuda del desfase completo en el ESTADO (C7-06) y PRÓXIMA SESIÓN. Sigue: suite completa cuando termine la del auditor del #202 (no se carga la base dos veces a la vez), PR y verificadores.
+- 3) Consulta de esquemas de `lacentral_test` (dueño, tablas, tamaño; `BEGIN READ ONLY … ROLLBACK`) entregada a Santi en la respuesta. No la corrí ni borré nada.
+
+## 26/11/2026 · Cola autónoma: #202, base_completa, script 16, 053/054, comparador, compras
+
+**Instrucción recibida (verbatim):**
+> Seguí trabajando solo con esta cola, en este orden, sin esperarme entre una tarea y otra:
+>
+> 1) #202: cuando el auditor-persistencia dé su resultado, si es NO APTO arreglalo (hasta 3 rondas, como dice CLAUDE.md). Con los dos APTO, dejá el PR listo y anotalo en el ESTADO. No lo mergeo yo hasta que vuelva.
+> 2) base_completa.sql: suite completa (cuando no haya otra corriendo), push, PR y verificadores con el alcance acotado a sus commits.
+> 3) Script 16 (vinculación: UNIQUE(proveedor_id, codigo), usuario_id y fecha_vinculacion en articulo_codigo_alternativo) con sus pruebas PostgreSQL y PR. Dejá el bloque fish para aplicarlo en las tres bases en la bitácora, en una sección «PARA SANTI», y seguí.
+> 4) 053 y 054 sobre la rama del 16 (PR apilado, con la base declarada en el cuerpo; cuando el 16 entre a develop, retargeteás). Vinculación automática por código primero, después candidatos con pg_trgm (umbral configurable en 0,3, C6 pendiente), con su pantalla.
+> 5) Comparador: 030, 032, 033, 034 y la pantalla 050, con las reglas D-S7-06 a D-S7-11. La 031 solo documentada.
+> 6) Compras: 016 y 028 (D-S7-03) y #195 (D-S7-04) recién cuando yo haya aplicado el 13; si todavía no, saltealas y seguí. La 027 sigue bloqueada por la P7-01: no la toques.
+>
+> Reglas para no frenar:
+> - Nunca dos suites completas a la vez ni mientras corra un verificador: mientras una corre, avanzá escribiendo código o pruebas de la tarea siguiente, sin correr nada contra la base.
+> - Decisiones técnicas: las tomás vos y las registrás con fecha en el ESTADO.
+> - Solo parás por (a) una regla de negocio que no esté escrita, (b) algo que toque datos reales de lacentral, o (c) CA contradictorios. Si te pasa, NO te quedes esperando: anotá la pregunta en una sección «PREGUNTAS PARA SANTI» del ESTADO y seguí con la tarea siguiente de la cola.
+> - Todo lo que necesite mis manos (aplicar scripts, merges) va a «PARA SANTI» en la bitácora, con el bloque fish listo, y seguís.
+> - Si un verificador da NO APTO, lo arreglás vos (hasta 3 rondas), como dice CLAUDE.md.
+> - Al final de cada tarea: bitácora y ESTADO actualizados, y una línea con el número de PR.
+>
+> Cuando vuelva, quiero un resumen de: PRs abiertos con su estado de verificadores, bloques PARA SANTI pendientes y PREGUNTAS PARA SANTI.
+
+**Plan:**
+1. #202: esperar el resultado del auditor (en curso sobre `fe5ed3e`); NO APTO → arreglo, hasta 3 rondas. APTO → ESTADO.
+2. `fix/base-completa-check-baja`: suite completa cuando termine la del auditor; push, PR, `verificador-tdd` y `auditor-persistencia` de a uno, acotados a `0564466..6f36ac9`.
+3. Script 16: ya está en `feature/127-vinculacion-esquema` (rojo `0e28343`, verde `f8aef6d`/`bd33193`, 8/8 filtradas, bloque fish en la bitácora de esa rama). Falta: merge de `develop`, suite, PR, verificadores.
+4. 053/054 apilados sobre la rama del 16. 5. Comparador. 6. Compras, solo si el 13 está aplicado.
+Mientras corre una suite o un verificador: solo escribir código o pruebas, nada contra la base.
+
+**Estado:** en curso
 ## 25/11/2026 · Fix E2 · plan con `proveedor.cuit_simulado` (D-S7-12)
 
 **Instrucción recibida (verbatim):**
@@ -379,3 +424,14 @@ Sprint 7 anterior al 25/11/2026 (C2, el 12, el 14 y sus re-scaffolds) está en
 **Estado:** terminada
 - ESTADO corregido: los tres esquemas de `lacentral_javi` figuran como borrados y los de `lacentral_santi` como pendientes de Santi. Va en este commit junto con las anotaciones del push, el comentario y el borrado. Solo documentación: sin verificadores ni suite.
 - **Abierto en esta rama:** revisión y merge del #204. La segunda parte de la instrucción sigue en la bitácora de `fix/enter-codigo-exacto`.
+
+## 27/11/2026 · base_completa a PR (punto 2 de la cola del 27/11)
+
+La instrucción verbatim está en el bloque «27/11/2026 18:40 · Retomar el Sprint 7…» de la bitácora de `feature/127-vincular`.
+
+**Estado:** en curso
+- Merge de `origin/develop` (`80ede7a`) → `737e4d4`, solo conflictos de docs (se conservan los dos lados).
+- Suite completa sobre `737e4d4` (19:59–20:23): `Correctas! - Con error:     0, Superado:   865, Omitido:     0, Total:   865, Duración: 27 m 27 s - LaCentral.Tests.dll (net10.0)`. Son las 864 de `develop` más `BaseCompletaPostgreSqlTests`. Este commit es solo docs y queda fuera de la corrida.
+- Push y PR. `verificador-tdd` acotado a `0564466..6f36ac9`, con corte a las 20:55 (la franja de Javi empieza a las 21:00). El `auditor-persistencia` va después de las 24:00 o mañana.
+- PR **#206** abierto. `verificador-tdd` (acotado a `0564466..6f36ac9`, con la suite de `737e4d4`): **APTO**. Rojo reproducido por aserción («4 restricciones distintas») y 9 mutaciones del SQL, todas muertas; 11 corridas filtradas, todas antes de las 20:26.
+- `auditor-persistencia` (mismo alcance): **APTO**. 1 corrida filtrada a las 20:28; `public` de `lacentral_test` tiene los 4 CHECK de la D10. Sin hallazgos bloqueantes. Vio tres esquemas `pr110_test_*` huérfanos (`7c31ee4a…`, `691bc549…`, `2264c6cc…`) y no los borró.

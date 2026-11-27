@@ -2,6 +2,13 @@
 --  LA CENTRAL — Base de datos completa
 --  PostgreSQL 18 · Versión 3.0 · 26/08/2026
 -- ════════════════════════════════════════════════════════════════
+--  ⚠ AVISO: Esquema v3.0 del 26/08/2026, histórico. El esquema
+--  vigente es este archivo más los scripts 01 a 14 de
+--  backend/db/rescaffold/, en orden. No armar una base solo con
+--  este archivo.
+--  (Corregido el 26/11/2026: los CHECK *_baja_coherente ya son los
+--  de la D10, iguales a los de las bases vivas.)
+-- ════════════════════════════════════════════════════════════════
 --  Script único. Reemplaza a los archivos 01 a 06 anteriores.
 --  Borra todo y reconstruye el esquema definitivo, ya con todos
 --  los ajustes surgidos del relevamiento y de los datos reales.
@@ -55,8 +62,8 @@ CREATE TABLE usuario (
     fecha_baja      TIMESTAMPTZ,
     fecha_alta      TIMESTAMPTZ  NOT NULL DEFAULT now(),
     CONSTRAINT usuario_baja_coherente CHECK (
-        (activo AND motivo_baja IS NULL AND fecha_baja IS NULL) OR
-        (NOT activo AND motivo_baja IS NOT NULL AND fecha_baja IS NOT NULL))
+        -- D10: una fila ACTIVA puede conservar motivo y fecha (rastro de su última baja)
+        activo OR (motivo_baja IS NOT NULL AND fecha_baja IS NOT NULL))
 );
 COMMENT ON TABLE usuario IS
   'Un usuario representa un puesto de trabajo, no una persona. La trazabilidad alcanza a la terminal desde la que se operó.';
@@ -80,8 +87,8 @@ CREATE TABLE cliente (
     fecha_baja             TIMESTAMPTZ,
     fecha_alta             TIMESTAMPTZ  NOT NULL DEFAULT now(),
     CONSTRAINT cliente_baja_coherente CHECK (
-        (activo AND motivo_baja IS NULL AND fecha_baja IS NULL) OR
-        (NOT activo AND motivo_baja IS NOT NULL AND fecha_baja IS NOT NULL)),
+        -- D10: una fila ACTIVA puede conservar motivo y fecha (rastro de su última baja)
+        activo OR (motivo_baja IS NOT NULL AND fecha_baja IS NOT NULL)),
     CONSTRAINT cliente_cuit_formato CHECK (
         cuit_cuil IS NULL OR cuit_cuil ~ '^[0-9]{2}-[0-9]{8}-[0-9]$'),
     CONSTRAINT cliente_condicion_fiscal_valida CHECK (
@@ -135,8 +142,8 @@ CREATE TABLE proveedor (
     fecha_baja       TIMESTAMPTZ,
     fecha_alta       TIMESTAMPTZ  NOT NULL DEFAULT now(),
     CONSTRAINT proveedor_baja_coherente CHECK (
-        (activo AND motivo_baja IS NULL AND fecha_baja IS NULL) OR
-        (NOT activo AND motivo_baja IS NOT NULL AND fecha_baja IS NOT NULL)),
+        -- D10: una fila ACTIVA puede conservar motivo y fecha (rastro de su última baja)
+        activo OR (motivo_baja IS NOT NULL AND fecha_baja IS NOT NULL)),
     CONSTRAINT proveedor_cuit_formato CHECK (
         cuit IS NULL OR cuit ~ '^[0-9]{2}-[0-9]{8}-[0-9]$'),
     CONSTRAINT proveedor_condicion_fiscal_valida CHECK (
@@ -195,8 +202,8 @@ CREATE TABLE articulo (
     fecha_baja            TIMESTAMPTZ,
     fecha_alta            TIMESTAMPTZ   NOT NULL DEFAULT now(),
     CONSTRAINT articulo_baja_coherente CHECK (
-        (activo AND motivo_baja IS NULL AND fecha_baja IS NULL) OR
-        (NOT activo AND motivo_baja IS NOT NULL AND fecha_baja IS NOT NULL)),
+        -- D10: una fila ACTIVA puede conservar motivo y fecha (rastro de su última baja)
+        activo OR (motivo_baja IS NOT NULL AND fecha_baja IS NOT NULL)),
     CONSTRAINT articulo_precios_no_negativos CHECK (
         (precio_costo IS NULL OR precio_costo >= 0) AND
         (precio_venta_estimado IS NULL OR precio_venta_estimado >= 0))
