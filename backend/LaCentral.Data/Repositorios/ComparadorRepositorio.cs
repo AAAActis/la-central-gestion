@@ -24,7 +24,10 @@ public class ComparadorRepositorio : IComparadorRepositorio
                     on new { c.ProveedorId, c.Codigo } equals new { pa.ProveedorId, Codigo = pa.Codigo.Trim(new[] { ' ' }).ToUpper() }
                 where c.ArticuloId == articuloId && pa.Proveedor.Activo && !pa.Vencido
                 select new FilaCatalogoVinculada(pa.ProveedorId, pa.Proveedor.RazonSocial, pa.Proveedor.UrlReferencia,
-                    pa.Codigo, pa.Nombre, pa.Marca, pa.PrecioNeto, pa.PrecioLista, pa.EstadoStock, pa.Stock, pa.UrlImagen, pa.UltimaLectura))
+                    pa.Codigo, pa.Nombre, pa.Marca, pa.PrecioNeto, pa.PrecioLista, pa.EstadoStock, pa.Stock, pa.UrlImagen, pa.UltimaLectura,
+                    // 050 CA-003: la última corrida TERMINADA del proveedor; una en curso todavía no dice nada.
+                    _context.ScrapeCorrida.Where(sc => sc.ProveedorId == pa.ProveedorId && sc.Estado != "RUNNING")
+                        .OrderByDescending(sc => sc.Inicio).Select(sc => sc.Estado).FirstOrDefault() == "FAILED"))
             .ToListAsync(ct);
         return new DatosComparador(articulo.UltimoProveedorId, filas);
     }

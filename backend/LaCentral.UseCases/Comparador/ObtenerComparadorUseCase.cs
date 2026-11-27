@@ -26,7 +26,7 @@ public class ObtenerComparadorUseCase
             .OrderBy(f => f.PrecioNeto is null).ThenBy(f => f.PrecioNeto).ThenBy(f => f.Proveedor).ThenBy(f => f.Codigo)
             .Select(f => new FilaComparadorDto(f.ProveedorId, f.Proveedor, f.UrlReferencia, f.Codigo, f.Nombre, f.Marca,
                 f.PrecioNeto, f.PrecioLista, f.PrecioNeto - masBarato, f.EstadoStock, f.Stock, f.UrlImagen, f.UltimaLectura,
-                f.ProveedorId == datos.UltimoProveedorId, false))
+                f.ProveedorId == datos.UltimoProveedorId, f.UltimaCorridaFallida))
             .ToList();
         var existencias = datos.Filas.GroupBy(f => f.ProveedorId)
             .Select(g => new ExistenciaProveedorDto(g.Key,
