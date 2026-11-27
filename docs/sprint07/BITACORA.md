@@ -263,3 +263,12 @@ La instrucción verbatim está en el bloque «26/11/2026 · Cola autónoma…» 
 
 **Estado:** en curso
 - 1) 18:40. `origin/develop` = `80ede7a`: entraron el #204 (`1176af0`) y el #205 (`80ede7a`), **ya mergeados en GitHub** (13:56 y 15:40). No hay review que dejar antes del merge. Worktree sobrante `…/b376b47f…/scratchpad/auditor-bcf0975a` (`fe5ed3e`, limpio): es del auditor del #202 de la sesión anterior, que no dejó resultado en la bitácora.
+- 2) Reviews de Javi: el #204 y el #205 ya estaban mergeados en `develop` cuando arrancó la sesión. No quedó review previa que dejar. Lo que tocan quedó cubierto por las suites de hoy, que ya los incluyen: 879 en el #202 y 865 en el #206.
+- 18:42: ni el 13 ni el 16 están aplicados en `lacentral_test` ni en `lacentral_demo`. Lo consulté en modo solo lectura: no hay `costo_previo` ni `usuario_id`, y sigue `codigo_unico_global`. `lacentral_santi` no puede leer `scrape_corrida` ni `proveedor_articulo` en la demo (42501). El `proveedor_id` de ETMAN sale de `proveedor`: es el 8, «ETMAN Repuestos (demo)», sin confirmar contra la corrida.
+- 3) **#202 listo**: `auditor-persistencia` NO APTO en la ronda 1, arreglo `7fd6f8a` y APTO en la ronda 2. Suite 879/879 sobre `7fd6f8a`. Review pedida a Javi (Jotelsooon). Muestras de conexiones en el #190.
+- 4) **#206 (base_completa) listo**: suite 865/865 sobre `737e4d4`, `verificador-tdd` APTO y `auditor-persistencia` APTO.
+- 5) Script 16: merge de `develop` (`533d3f9`) y el catálogo de los 4 proveedores en el ESTADO. **Falta:** la suite, el PR y los verificadores. El borrador del cuerpo está en el scratchpad.
+- 6) Comparador, D-S7-20: sale de la pila del 16 y va en dos ramas desde `develop`. `feature/030-comparador-api` tiene unitarias 8/8 y `ComparadorApiPostgreSqlTests` con rojo y verde 3/3. `feature/050-comparador-pantalla` tiene frontend 427/427. **Falta:** la suite completa, los PR y los verificadores.
+- 053 y 054a, y compras: siguen esperando que se apliquen el 16 y el 13.
+- 20:35: entra la franja de Javi (21:00–24:00). No corro nada contra PostgreSQL.
+**BLOQUEADO EN:** depende de Santi: aplicar el 13 en las tres bases (bloque fish en la bitácora de `feature/s7-script-13`) y después el 16. Lo que sigue en la base son la suite del 16 y la del 030, una por vez, después de las 24:00 o mañana.
