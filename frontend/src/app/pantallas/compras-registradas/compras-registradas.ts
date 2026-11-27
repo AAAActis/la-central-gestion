@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiLaCentral, FacturaCompraResumen, FiltroFacturasCompra, ProveedorResumen, mensajeDeError } from '../../nucleo/api';
 import type { Pagina } from '../../compartido/listado';
+import { exactoProveedor } from '../../compartido/codigo-exacto';
 import { Modal } from '../../compartido/modal';
 import { CampoFormulario, Formulario, ValoresFormulario } from '../../compartido/formulario/formulario';
 
@@ -33,7 +34,7 @@ const CAMPOS_ANULACION: CampoFormulario[] = [
         } @else {
           <div class="fila">
             <label>Proveedor (código o nombre)
-              <input name="textoProveedor" [(ngModel)]="textoProveedor" (keydown.enter)="$event.preventDefault(); buscarProveedor()" autocomplete="off" />
+              <input name="textoProveedor" [(ngModel)]="textoProveedor" (keydown.enter)="$event.preventDefault(); enterProveedor()" autocomplete="off" />
             </label>
             <button type="button" class="secundario" (click)="buscarProveedor()">Buscar proveedor</button>
           </div>
@@ -120,10 +121,23 @@ export class ComprasRegistradas {
   /** Los criterios de la última búsqueda: la paginación no toma lo que se escribió después. */
   private buscado: FiltroFacturasCompra = {};
 
-  buscarProveedor() {
+  buscarProveedor(alTerminar?: (p: ProveedorResumen[]) => boolean) {
     const texto = this.textoProveedor.trim();
     if (texto === '') return;
-    this.api.proveedores(texto).subscribe({ next: p => this.proveedores.set(p), error: e => this.error.set(mensajeDeError(e)) });
+    this.api.proveedores(texto).subscribe({
+      next: p => { if (!alTerminar?.(p)) this.proveedores.set(p); },
+      error: e => this.error.set(mensajeDeError(e)),
+    });
+  }
+
+  /** HU-FCO-06 CA-002 y CA-003, como en la factura: Enter sobre un código exacto lo elige sin listar. */
+  enterProveedor() {
+    const texto = this.textoProveedor;
+    this.buscarProveedor(p => {
+      const exacto = exactoProveedor(p, texto);
+      if (exacto) this.elegirProveedor(exacto);
+      return !!exacto;
+    });
   }
 
   elegirProveedor(p: ProveedorResumen) {
