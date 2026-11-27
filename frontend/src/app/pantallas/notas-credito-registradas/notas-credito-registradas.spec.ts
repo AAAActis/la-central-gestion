@@ -174,27 +174,25 @@ describe('NotasCreditoRegistradas · 057 CA-012', () => {
     fixture.detectChanges();
     expect(dialogo()).withContext('diálogo de anulación').not.toBeNull();
   }
-  function completarYConfirmar(motivo: string, usuario: string, contrasena: string) {
+  function completarYConfirmar(motivo: string) {
     escribir(campo('Motivo'), motivo);
-    escribir(campo('Usuario de quien autoriza'), usuario);
-    escribir(campo('Contraseña de quien autoriza'), contrasena);
     fixture.detectChanges();
     botonEn(dialogo()!, 'Anular')!.click();
     fixture.detectChanges();
   }
 
-  it('anula con motivo y la autorización de otra persona, y el listado la muestra anulada', () => {
+  it('anula con motivo sin autorización de otra persona (D-S7-04), y el listado la muestra anulada', () => {
     listar([nota(21, 'N-21'), nota(22, 'N-22')], 25, 2);
     abrirAnulacion(0);
     expect(dialogo()!.querySelector('h2')?.textContent).toContain('N-21');
-    expect(campo('Contraseña de quien autoriza').type).toBe('password');
-    expect([campo('Usuario de quien autoriza').autocomplete, campo('Contraseña de quien autoriza').autocomplete]).toEqual(['off', 'new-password']);
+    // D-S7-04: sin doble certificación, el diálogo pide solo el motivo.
+    expect(Array.from(dialogo()!.querySelectorAll('label')).map(l => l.textContent!.trim())).toEqual(['Motivo']);
 
-    completarYConfirmar('Cargada dos veces', 'jefa', 'clave-jefa');
+    completarYConfirmar('Cargada dos veces');
 
     const anulacion = servidor.expectOne(`${URL}/21/anulacion`);
     expect(anulacion.request.method).toBe('POST');
-    expect(anulacion.request.body).toEqual({ motivo: 'Cargada dos veces', usuarioAutoriza: 'jefa', contrasenaAutoriza: 'clave-jefa' });
+    expect(anulacion.request.body).toEqual({ motivo: 'Cargada dos veces' });
     expect(botonEn(dialogo()!, 'Anular')?.disabled).withContext('confirmar deshabilitado mientras envía').toBeTrue();
     anulacion.flush(null);
     fixture.detectChanges();
@@ -231,26 +229,26 @@ describe('NotasCreditoRegistradas · 057 CA-012', () => {
     expect(dialogo()!.textContent).not.toContain('vuelve al stock');
   });
 
-  it('si la API rechaza la autorización o la nota ya estaba anulada, muestra su mensaje en el diálogo y no recarga', () => {
+  it('si la API rechaza la anulación (un OPERADOR recibe 403) o la nota ya estaba anulada, muestra su mensaje en el diálogo y no recarga', () => {
     listar([nota(1, 'N-1')]);
     abrirAnulacion(0);
-    completarYConfirmar('Error de carga', 'jefa', 'mal');
+    completarYConfirmar('Error de carga');
 
     servidor.expectOne(`${URL}/1/anulacion`).flush(
-      { detail: 'La autorización no es válida: revisá el usuario y la contraseña de quien autoriza.' },
-      { status: 400, statusText: 'Bad Request' });
+      { detail: 'Solo un ADMINISTRADOR puede anular.' },
+      { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges();
 
-    expect(dialogo()?.querySelector('[role="alert"]')?.textContent).toContain('La autorización no es válida');
+    expect(dialogo()?.querySelector('[role="alert"]')?.textContent).toContain('Solo un ADMINISTRADOR puede anular.');
     expect(botonEn(dialogo()!, 'Anular')?.disabled).withContext('se puede reintentar').toBeFalse();
     servidor.expectNone(r => r.url === URL);
   });
 
-  it('al abrir la anulación de otra nota, el diálogo no arrastra la contraseña, el motivo ni el error anteriores', () => {
+  it('al abrir la anulación de otra nota, el diálogo no arrastra el motivo ni el error anteriores', () => {
     listar([nota(1, 'N-1'), nota(2, 'N-2')]);
     abrirAnulacion(0);
-    completarYConfirmar('Error de carga', 'jefa', 'mal');
-    servidor.expectOne(`${URL}/1/anulacion`).flush({ detail: 'La autorización no es válida.' }, { status: 400, statusText: 'Bad Request' });
+    completarYConfirmar('Error de carga');
+    servidor.expectOne(`${URL}/1/anulacion`).flush({ detail: 'Solo un ADMINISTRADOR puede anular.' }, { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges();
     botonEn(dialogo()!, 'Cancelar')!.click();
     fixture.detectChanges();
@@ -258,31 +256,27 @@ describe('NotasCreditoRegistradas · 057 CA-012', () => {
 
     abrirAnulacion(1);
     expect(dialogo()!.querySelector('h2')?.textContent).toContain('N-2');
-    expect([campo('Motivo').value, campo('Usuario de quien autoriza').value, campo('Contraseña de quien autoriza').value]).toEqual(['', '', '']);
+    expect(campo('Motivo').value).toBe('');
     expect(dialogo()!.querySelector('[role="alert"]')).toBeNull();
   });
 
   it('anular la segunda fila manda el id de esa nota', () => {
     listar([nota(1, 'N-1'), nota(2, 'N-2')]);
     abrirAnulacion(1);
-    completarYConfirmar('Error de carga', 'jefa', 'clave-jefa');
+    completarYConfirmar('Error de carga');
 
     servidor.expectOne(`${URL}/2/anulacion`).flush(null);
     servidor.expectOne(r => r.url === URL).flush(pagina([nota(1, 'N-1'), nota(2, 'N-2', true)]));
   });
 
-  for (const vacio of ['Motivo', 'Usuario de quien autoriza', 'Contraseña de quien autoriza']) {
-    it(`sin «${vacio}» no manda la anulación`, () => {
-      listar([nota(1, 'N-1')]);
-      abrirAnulacion(0);
-      const valores: Record<string, string> = { 'Motivo': 'Error de carga', 'Usuario de quien autoriza': 'jefa', 'Contraseña de quien autoriza': 'clave-jefa' };
-      valores[vacio] = '';
-      completarYConfirmar(valores['Motivo'], valores['Usuario de quien autoriza'], valores['Contraseña de quien autoriza']);
+  it('sin motivo no manda la anulación', () => {
+    listar([nota(1, 'N-1')]);
+    abrirAnulacion(0);
+    completarYConfirmar('');
 
-      servidor.expectNone(r => r.url.endsWith('/anulacion'));
-      expect(dialogo()).withContext('el diálogo sigue abierto').not.toBeNull();
-    });
-  }
+    servidor.expectNone(r => r.url.endsWith('/anulacion'));
+    expect(dialogo()).withContext('el diálogo sigue abierto').not.toBeNull();
+  });
 
   describe('Enter sobre un código exacto de proveedor lo elige', () => {
     const proveedor = (id: number, codigo: string) =>
