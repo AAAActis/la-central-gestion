@@ -500,6 +500,44 @@ describe('NotaCreditoCompra · 057', () => {
       expect(responderEleccion('/api/articulos/100', { id: 100, existencias: [] })).toBe(0);
     });
 
+    it('proveedor: dos Enter antes de la respuesta piden las facturas una sola vez y no vacían las marcadas', () => {
+      const pagina = { items: [factura(501, '0011-00044774')], total: 1, pagina: 1, tamanoPagina: 100 };
+      c().textoProveedor = '3';
+      enter('textoProveedor');
+      enter('textoProveedor');
+      const busquedas = servidor.match(r => r.url === '/api/proveedores');
+      expect(busquedas.length).toBe(2);
+
+      busquedas[0].flush({ items: [expoyer] });
+      fixture.detectChanges();
+      expect(responderEleccion('/api/facturas-compra', pagina)).toBe(1);
+      marcar('0011-00044774');
+
+      busquedas[1].flush({ items: [expoyer] });
+      fixture.detectChanges();
+
+      expect(responderEleccion('/api/facturas-compra', pagina)).toBe(0);
+      expect([...c().marcadas()]).toEqual([501]);
+    });
+
+    it('proveedor: un segundo Enter con otro código, antes de la respuesta, deja elegido al último y trae sus facturas', () => {
+      const pagina = { items: [], total: 0, pagina: 1, tamanoPagina: 100 };
+      c().textoProveedor = '3';
+      enter('textoProveedor');
+      c().textoProveedor = '30';
+      enter('textoProveedor');
+      const busquedas = servidor.match(r => r.url === '/api/proveedores');
+
+      busquedas[0].flush({ items: [expoyer] });
+      fixture.detectChanges();
+      responderEleccion('/api/facturas-compra', pagina);
+      busquedas[1].flush({ items: [otro(30, '00030')] });
+      fixture.detectChanges();
+
+      expect(c().proveedor()?.id).toBe(30);
+      expect(responderEleccion('/api/facturas-compra', pagina)).toBe(1);
+    });
+
     it('artículo: elige el código interno exacto aunque venga último en una página de 20, sin pedir la aproximada', () => {
       enDevolucion(' a-100 ');
       enter('textoArticulo');
