@@ -506,3 +506,12 @@ Si en alguna base corta con «13: hay N facturas de compra anuladas sin usuario_
 **Estado:** terminada
 - ESTADO corregido: los tres esquemas de `lacentral_javi` figuran como borrados y los de `lacentral_santi` como pendientes de Santi. Va en este commit junto con las anotaciones del push, el comentario y el borrado. Solo documentación: sin verificadores ni suite.
 - **Abierto en esta rama:** revisión y merge del #204. La segunda parte de la instrucción sigue en la bitácora de `fix/enter-codigo-exacto`.
+
+## 27/11/2026 · #202: merge de develop, suite y auditor
+
+La instrucción verbatim está en el bloque «27/11/2026 18:40 · Retomar el Sprint 7…» de la bitácora de `feature/127-vincular`. Este es el rastro del punto 1 de esa cola en `feature/s7-script-13`.
+
+**Estado:** en curso
+- Merge de `origin/develop` (`80ede7a`: #204 y #205) → `a05158a`. Conflictos solo en `BITACORA.md` y `ESTADO.md` (PRÓXIMA SESIÓN); se conservan los dos lados. Lo que entró (Fix E2, Enter exacto) no toca el 13.
+- Suite completa sobre `a05158a` (`dotnet build`: 0 errores; `dotnet test --no-build`, 18:42–19:10): `Correctas! - Con error:     0, Superado:   879, Omitido:     0, Total:   879, Duración: 28 m 14 s - LaCentral.Tests.dll (net10.0)`. 873 + las 6 que trajo `develop`. Muestras de `pg_stat_activity` durante la corrida, en el #190 (comentario 7229100324).
+- Este commit es solo bitácora y queda fuera de la corrida.
