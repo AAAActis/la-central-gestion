@@ -23,14 +23,14 @@ public class ProveedorSucursalPdfPostgreSqlTests
         int primero, segundo;
         await using (var c = fixture.CrearContexto())
         {
-            var activoUno = new Proveedor { Codigo = "PRV-RS1", RazonSocial = "Frenos y Embragues CÓRDOBA SRL", Activo = true };
-            var activoDos = new Proveedor { Codigo = "PRV-RS2", RazonSocial = "Córdoba Repuestos SA", Activo = true };
+            var activoUno = new Proveedor { Codigo = "PRV-RS1", RazonSocial = "Frenos y Embragues CÓRDOBA SRL", Activo = true, CuitSimulado = true };
+            var activoDos = new Proveedor { Codigo = "PRV-RS2", RazonSocial = "Córdoba Repuestos SA", Activo = true, CuitSimulado = true };
             var inactivo = new Proveedor
             {
-                Codigo = "PRV-RS3", RazonSocial = "Cordoba Baja SA", Activo = false,
+                Codigo = "PRV-RS3", RazonSocial = "Cordoba Baja SA", Activo = false, CuitSimulado = true,
                 MotivoBaja = "Cierre", FechaBaja = DateTime.UtcNow,
             };
-            var otro = new Proveedor { Codigo = "PRV-RS4", RazonSocial = "Otro Distinto SA", Activo = true };
+            var otro = new Proveedor { Codigo = "PRV-RS4", RazonSocial = "Otro Distinto SA", Activo = true, CuitSimulado = true };
             c.Proveedor.AddRange(activoUno, activoDos, inactivo, otro);
             await c.SaveChangesAsync();
             (primero, segundo) = (activoUno.Id, activoDos.Id);
@@ -47,14 +47,58 @@ public class ProveedorSucursalPdfPostgreSqlTests
         await using var nuevo = fixture.CrearContexto();
         var repo = new ProveedorRepositorio(nuevo);
 
-        var todos = await repo.BuscarActivosPorRazonSocialAsync("cordoba", 10);
+        var todos = await repo.BuscarActivosEnNegroPorRazonSocialAsync("cordoba", 10);
         Assert.Equal([primero, segundo], todos.Select(p => p.Id));
         Assert.All(todos, p => Assert.True(p.Activo));
 
-        var conTope = await repo.BuscarActivosPorRazonSocialAsync("cordoba", 1);
+        var conTope = await repo.BuscarActivosEnNegroPorRazonSocialAsync("cordoba", 1);
         Assert.Equal([primero], conTope.Select(p => p.Id));
 
-        Assert.Empty(await repo.BuscarActivosPorRazonSocialAsync("inexistente", 10));
+        Assert.Empty(await repo.BuscarActivosEnNegroPorRazonSocialAsync("inexistente", 10));
+    }
+
+    private static Proveedor Prov(string codigo, string razon, bool enNegro) => new()
+    {
+        Codigo = codigo, RazonSocial = razon, Activo = true, CuitSimulado = enNegro,
+    };
+
+    // D-S7-12: sin CUIT es compra en negro; solo los de cuit_simulado cuentan.
+    [PostgreSqlFact]
+    public async Task EnNegro_DeUnParBlancoYNegro_DevuelveSoloElNegro_YElDeIdMenorNoConsumeElTope()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        int negro;
+        await using (var c = fixture.CrearContexto())
+        {
+            var blanco = Prov("PRV-EN1", "Zorzal Test S.A.", enNegro: false);
+            c.Proveedor.Add(blanco);
+            await c.SaveChangesAsync();
+            var enNegro = Prov("PRV-EN2", "Zorzal Test", enNegro: true);
+            c.Proveedor.Add(enNegro);
+            await c.SaveChangesAsync();
+            Assert.True(blanco.Id < enNegro.Id);
+            negro = enNegro.Id;
+        }
+
+        await using var nuevo = fixture.CrearContexto();
+        var repo = new ProveedorRepositorio(nuevo);
+
+        Assert.Equal([negro], (await repo.BuscarActivosEnNegroPorRazonSocialAsync("zorzal", 10)).Select(p => p.Id));
+        Assert.Equal([negro], (await repo.BuscarActivosEnNegroPorRazonSocialAsync("zorzal", 1)).Select(p => p.Id));
+    }
+
+    [PostgreSqlFact]
+    public async Task EnNegro_UnaCoincidenciaSoloEnBlanco_DevuelveVacio()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        await using (var c = fixture.CrearContexto())
+        {
+            c.Proveedor.Add(Prov("PRV-EN3", "Calandria Test S.A.", enNegro: false));
+            await c.SaveChangesAsync();
+        }
+
+        await using var nuevo = fixture.CrearContexto();
+        Assert.Empty(await new ProveedorRepositorio(nuevo).BuscarActivosEnNegroPorRazonSocialAsync("calandria", 10));
     }
 
     [PostgreSqlFact]

@@ -56,11 +56,12 @@ public class InterpretarFacturaPdfUseCase
                         break;
                     }
                 }
-            // Fix E: sin CUIT que lo ubique, la razón social del layout; solo si es una única coincidencia
-            // activa, y siempre para revisar. Un CUIT de un proveedor dado de baja no se reemplaza por otro.
-            if (proveedorId is null && !cuitConocido && leido.RazonSocial is { Length: > 0 } razonSocial)
+            // Fix E2 (D-S7-12): sin un CUIT que lo ubique es una compra en negro, así que la razón social del layout
+            // solo busca entre los proveedores en negro, nunca para una factura A; la coincidencia tiene que ser
+            // única y queda para revisar. Un CUIT de un proveedor dado de baja no se reemplaza por otro.
+            if (!cuitConocido && leido.TipoComprobante != "A")
             {
-                var coincidencias = (await _proveedores.BuscarActivosPorRazonSocialAsync(razonSocial, 2, ct)).Where(p => p.Activo).ToList();
+                var coincidencias = (await _proveedores.BuscarActivosEnNegroPorRazonSocialAsync(leido.RazonSocial, 2, ct)).Where(p => p.Activo).ToList();
                 if (coincidencias.Count == 1)
                 {
                     proveedorId = coincidencias[0].Id;

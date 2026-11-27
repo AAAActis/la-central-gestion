@@ -101,6 +101,16 @@ describe('FacturaCompra · HU-FCO-06', () => {
     expect(raiz().querySelectorAll('button.opcion').length).toBe(2);
   });
 
+  it('CA-002: elige según el texto buscado, aunque se siga escribiendo antes de la respuesta', () => {
+    c.textoProveedor = '35';
+    c.enterProveedor();
+    c.textoProveedor = '350';
+    servidor.expectOne(r => r.url === '/api/proveedores')
+      .flush({ items: [proveedor('350', null, 8), proveedor('00035')], total: 2, pagina: 1, tamanoPagina: 20 });
+
+    expect(c.proveedor()?.codigo).toBe('00035');
+  });
+
   // ---- CA-004 y CA-005 · tipo de comprobante y número ----
 
   it('CA-004 y CA-005: el proveedor que suele emitir B propone B y precarga 99 en el número', () => {
@@ -172,6 +182,16 @@ describe('FacturaCompra · HU-FCO-06', () => {
 
     expect(c.lineas.map(l => l.articulo.id)).toEqual([1]);
     expect(raiz().querySelectorAll('button.opcion').length).toBe(0);
+  });
+
+  it('CA-009: elige según el texto buscado, aunque se siga escribiendo antes de la respuesta', () => {
+    c.textoArticulo = 'FIL-0712';
+    c.enterArticulo();
+    c.textoArticulo = 'FIL-07120';
+    servidor.expectOne(r => r.url === '/api/articulos').flush(pagina(articulo(2, 'FIL-07120'), articulo(1, 'FIL-0712')));
+
+    expect(c.lineas.map(l => l.articulo.id)).toEqual([1]);
+    servidor.expectOne('/api/articulos/1').flush(ficha(1, null));
   });
 
   // ---- CA-010 · reemplazar el artículo ----

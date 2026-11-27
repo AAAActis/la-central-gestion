@@ -26,7 +26,7 @@ public sealed record ComprobanteLeido(
     decimal? PercepcionGanancias,
     IReadOnlyList<LineaLeida> Lineas,
     IReadOnlyList<string> ParaRevisar,
-    string? RazonSocial = null,
+    string RazonSocial,
     string? Destinatario = null);
 
 /// <summary>

@@ -9,6 +9,8 @@ import {
 } from '../../nucleo/api';
 import { SesionActual } from '../../nucleo/sesion';
 import { RELOJ, aTextoFecha, hoyIso, interpretarFecha } from '../../compartido/fecha-abreviada';
+import { exactoArticulo, exactoProveedor } from '../../compartido/codigo-exacto';
+import { lineaRepetida } from '../../compartido/linea-repetida';
 
 interface LineaEnCarga {
   articulo: ArticuloResultado;
@@ -345,11 +347,11 @@ export class FacturaCompra {
   /** CA-002 y CA-003: Enter sobre un código exacto (sin ceros a la izquierda) lo elige sin listar.
    *  Si hay más de uno (035 y 00035), lista: elegir uno solo sería adivinar. */
   enterProveedor() {
-    const codigo = sinCeros(this.textoProveedor);
+    const texto = this.textoProveedor;
     this.buscarProveedor(p => {
-      const exactos = p.filter(x => sinCeros(x.codigo) === codigo);
-      if (exactos.length === 1) this.elegirProveedor(exactos[0]);
-      return exactos.length === 1;
+      const exacto = exactoProveedor(p, texto);
+      if (exacto) this.elegirProveedor(exacto);
+      return !!exacto;
     });
   }
 
@@ -437,9 +439,9 @@ export class FacturaCompra {
 
   /** CA-009: Enter sobre el código exacto de un artículo lo elige sin listar. */
   enterArticulo() {
-    const codigo = this.textoArticulo.trim().toUpperCase();
+    const texto = this.textoArticulo;
     this.buscarArticulo(a => {
-      const exacto = a.find(x => x.codigoInterno.trim().toUpperCase() === codigo);
+      const exacto = exactoArticulo(a, texto);
       if (exacto) this.elegirArticulo(exacto);
       return !!exacto;
     });
@@ -448,9 +450,8 @@ export class FacturaCompra {
   elegirArticulo(articulo: ArticuloResultado) {
     this.articulos.set([]);
     const reemplazo = this.reemplazando();
-    // #169 (D9): repetido es el mismo artículo en el mismo destino; a otra sucursal es otra línea.
     const destino = reemplazo !== null ? this.lineas[reemplazo].sucursalId : this.sucursalCabecera;
-    if (this.lineas.some((l, i) => l.articulo.id === articulo.id && l.sucursalId === destino && i !== reemplazo)) {
+    if (lineaRepetida(this.lineas, articulo.id, destino, reemplazo)) {
       this.errorArticulo.set(`${articulo.codigoInterno} ya está en la factura: corregí su línea.`);
       return;
     }
@@ -482,7 +483,7 @@ export class FacturaCompra {
   cambiarDestino(i: number, sucursalId: number, control: NgModel) {
     const linea = this.lineas[i];
     // Sin excluir la propia línea: nunca llega su mismo destino (reelegir la opción no dispara change y el rechazo deja el select igual al modelo).
-    if (this.lineas.some(l => l.articulo.id === linea.articulo.id && l.sucursalId === sucursalId)) {
+    if (lineaRepetida(this.lineas, linea.articulo.id, sucursalId)) {
       this.errorArticulo.set(`${linea.articulo.codigoInterno} ya está en la factura: corregí su línea.`);
       control.control.setValue(linea.sucursalId, { emitViewToModelChange: false });
       return;
@@ -725,9 +726,4 @@ export class FacturaCompra {
     this.errorPdf.set(null);
     this.version++;
   }
-}
-
-/** CA-003: 35 y 00035 son el mismo código. */
-function sinCeros(codigo: string) {
-  return codigo.trim().toUpperCase().replace(/^0+(?=.)/, '');
 }
