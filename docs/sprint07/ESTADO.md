@@ -282,6 +282,16 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 
 ## PRÓXIMA SESIÓN
 
+**27/11/2026 · Fix E2: PR #204 abierto, esperando revisión de Santi. Cerrado de nuestro lado.**
+- **PR #204** (`fix/proveedor-razon-social-exacta` → `develop`), abierto el 27/11, sin merge. Código en `2d008a0`, script de demo en `782a871` y después solo documentación. Verificadores dados por válidos por Javi (detalle en «Fix E2 · implementado según la D-S7-12»).
+- **Suite completa sobre `ec3d0ee`** (27/11, 10:35–10:53, pedida por Javi): `Correctas! - Con error:     0, Superado:   864, Omitido:     0, Total:   864, Duración: 17 m 38 s`. Build limpio 0/0; 0 conexiones de otros roles en las muestras de antes y durante.
+- **Deuda:**
+  - `marcar_en_negro_demo.sql` sin aplicar (lo aplica Javi o Santi).
+  - Recorrido de DoD 10 con PDF reales contra `lacentral_demo`, pendiente.
+  - Issue de la factura A de Fazio sin abrir (lo decide Javi).
+  - Alta en negro: la app no puede dar de alta ni marcar un proveedor en negro.
+- El nombre del titular de «cuenta y orden» y los CUIT no entran al repo.
+
 **25/11/2026 · el 14 aplicado en las tres bases y su re-scaffold en PR.**
 - **#197 (script 14, Fix F) mergeado (`54569b8`)** antes que el #200; el #200 se destrabó con merge de `develop` y está mergeado (`07fd8e7`).
 - **El 14 está aplicado** (Santi, 25/11) en `public` de `lacentral_test`, en `lacentral_demo` y en `lacentral`, con «14: TODO OK.» en las tres. Backup de la real antes: `~/dev/TESIS/backups/lacentral-antes-14.dump`.
@@ -316,3 +326,31 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
   15 = alícuotas.
 - **Esperan a personas:** cierre del Sprint 6 (detalle del recorrido de Javi); re-aprobación del #193 (Javi; review
   respondido el 24/11) y merge de #193 → #198 → #199; CA3 de la 054 contra la D2 (equipo); P7-01, P7-02 y P7-03 (Sergio).
+
+---
+
+## Fix E2 · implementado según la D-S7-12 · 26/11/2026
+
+- **La spec del Fix E2 («razón social exacta primero») queda superada por la D-S7-12.** Los bloques anteriores que la describen (`docs/sprint06/ESTADO.md`, 24/11 y 25/11) no se tocan: valen como historia, no como regla vigente.
+- **Regla vigente** (`fix/proveedor-razon-social-exacta`, commits `ea6b734`, `8632734` y `00710c0`): elegido a mano > CUIT de un proveedor cargado (un CUIT de proveedor de baja no se reemplaza) > si ningún CUIT del texto pertenece a un proveedor cargado **y el comprobante leído no es A**, el único proveedor ACTIVO con `cuit_simulado = true` cuya razón social contiene el término del layout, siempre «Revisar»; con 0 o 2 o más, nada. Sin cambios de esquema ni de frontend.
+- **«No es A» incluye el tipo no reconocido** (código de ARCA que el lector no traduce): hoy se asigna. A confirmar.
+- **Datos:** los pares blanco/negro de `cuit_simulado` se verificaron **solo en `lacentral_test`** (25/11, solo lectura). **`lacentral` (la real) está sin verificar.**
+- **Demo:** `backend/db/demo/marcar_en_negro_demo.sql` marca **solo a Fazio** (`DEMO-07`) desde `782a871` (cambio de Javi, 26/11/2026: salen Expoyer y ETMAN, este se decide aparte); **sin aplicar** (lo aplica Javi o Santi). Un PDF de ETMAN no asigna proveedor por razón social.
+- **Deuda (va también en el cuerpo del PR):** un proveedor en negro no se puede dar de alta ni marcar desde la app: la app no escribe `cuit_simulado` y queda en `false`; hoy se corrige por SQL.
+- **PR #204** abierto el 27/11, esperando revisión de Santi; sin merge. Verificadores corridos: ver abajo.
+- **Ronda posterior al APTO (26/11/2026):** `f71533e` (prueba de caracterización: `ActualizarAsync` no toca `cuit_simulado`) y `2d008a0` (salen dos cláusulas inalcanzables que ya estaban en `develop`). Suite completa sobre `2d008a0`: `Con error! - Con error:    95, Superado:   769, Omitido:     0, Total:   864, Duración: 1 h 17 m` (89 de Npgsql y 6 «transient failure», #190); reintento de los 95: `Correctas! - Con error:     0, Superado:    95, Omitido:     0, Total:    95`.
+- **Verificadores:** ronda 1, `verificador-tdd` y `auditor-persistencia` APTO. Ronda 2, `verificador-tdd` APTO sobre `f71533e` y `2d008a0`; `auditor-persistencia` sin bloqueantes sobre `782a871`.
+- **Deuda:** el tipo `string` no impide una razón social vacía en un layout nuevo; hay que sumarlo a `CadaLayoutAportaSuRazonSocial`.
+- **Deuda de la demo:** `lacentral_demo` ya tiene `00037` «NESTOR FAZIO S.A.», activo y con CUIT (sin comprobar que sea el real); por esa fila, volver a correr `sembrar_proveedores_pdf.sql` cortaría (deducido, sin ejecutar), y su comentario describe la regla anterior.
+- **Compartida:** los tres esquemas `pr110_test_*` de `lacentral_javi` que quedaron huérfanos tras la suite del 26/11 (`959576…`, `9f995e…`, `ef4770…`) **se borraron el 27/11, 3 de 3**. Quedan en `lacentral_test` los de `lacentral_santi`: `demo_ensayo_c3` y tres `pr110_test_*` (`2264c6…`, `691bc5…`, `7c31ee…`), **a resolver por Santi**.
+- **27/11/2026 · decisiones de Javi:** valen los verificadores del 26/11 (no se relanzan); ningún CUIT entra al repo (es público).
+- **27/11/2026 · reintento repetido** de los 95, sobre los binarios de `2d008a0` y sin conexiones de otros roles antes ni después: `Correctas! - Con error:     0, Superado:    95, Omitido:     0, Total:    95, Duración: 7 m 42 s`.
+- **27/11/2026 · tres PDF reales por el lector** (`LectorTextoPdf` y `LayoutsPdf`, sin base ni caso de uso completo): presupuesto de Fazio → «Fazio» (texto fijo del layout), tipo B, toma el CUIT del cliente (BOSAC); en `lacentral_demo` ningún proveedor lo tiene (0 de 10, solo lectura). Factura de ETMAN → «ETMAN», tipo A, `descuento4` para revisar. **Factura A de Fazio → ningún layout la reconoce.**
+- **Hallazgo fuera de alcance (no se arregla en este PR):** no hay layout para la factura A de Fazio, solo el del presupuesto. El texto sí se extrae; al escribirlo, el CUIT del proveedor es el primero y el de «cuenta y orden», el último. Issue propuesto, sin abrir: lo decide Javi.
+- **Sin verificar:** si algún proveedor de `lacentral` tiene el CUIT del cliente (BOSAC no tiene que estar cargado como proveedor); si alguna base tiene los CUIT de esos emisores; importes y percepciones contra los PDF; el recorrido de DoD 10 en `lacentral_demo`.
+- **Verificación sobre `187ba6a` (26/11/2026):** suite completa `Con error! - Con error:    42, Superado:   821, Omitido:     0, Total:   863, Duración: 1 h 36 m` (los 42, de conexión a la base, #190); reintento filtrado de los 42: 34 superados y 8 fallos; segundo reintento de esos 8: `Correctas! - Con error: 0, Superado: 8, Total: 8`. `dotnet build --no-incremental` en una carpeta de salida limpia: 0 advertencias, 0 errores.
+- **Script de demo (`bb87162`, reemplazado por `782a871`: solo Fazio):** aprobado por Javi; **fuera de la corrida de la suite** (commit posterior, ninguna prueba lo ejecuta) y **sin ejecutar**: lo aplica Javi o Santi. Va así declarado en el cuerpo del PR.
+- **Deuda (script de demo aparte, no va en este PR):** sembrar los gemelos en blanco con CUIT real (Fazio y Expoyer) y ETMAN, según los PDFs de Javi.
+- **Confirmado por Javi (26/11/2026):** un comprobante de tipo no reconocido (`null`) se asigna; la regla es «no es A». Reemplaza el «A confirmar» de más arriba.
+- **Riesgo (va en el cuerpo del PR):** un código de ARCA que el lector no traduce, en una factura A real de un proveedor cuyo CUIT no está cargado, caería a la cuenta en negro, con «Revisar».
+- **Tipos que traduce el lector de facturas de compra:** ETMAN `01` → A, `06` → B; Expoyer `1` → A, `6` → B; Fazio, siempre B (presupuesto, no lee código). Cualquier otro código, o un código que no se encuentra, da `null`.

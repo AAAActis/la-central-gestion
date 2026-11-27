@@ -139,6 +139,34 @@ public class ProveedorPostgreSqlTests
         Assert.False(await lectura.ProveedorDireccion.AnyAsync(d => d.ProveedorId == id));
     }
 
+    // Fix E2: la app no escribe cuit_simulado; modificar un proveedor no borra la marca «en negro» ni la pone.
+    [PostgreSqlFact]
+    public async Task Actualizar_NoTocaCuitSimulado_NiEnTrueNiEnFalse()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var negro = new LaCentral.Data.Models.Proveedor { Codigo = "PRV-SIM1", RazonSocial = "En Negro", Activo = true, CuitSimulado = true };
+        var blanco = new LaCentral.Data.Models.Proveedor { Codigo = "PRV-SIM2", RazonSocial = "En Blanco", Activo = true, CuitSimulado = false };
+        await using (var setup = fixture.CrearContexto())
+        {
+            setup.Proveedor.AddRange(negro, blanco);
+            await setup.SaveChangesAsync();
+        }
+
+        foreach (var id in new[] { negro.Id, blanco.Id })
+        {
+            await using var contexto = fixture.CrearContexto();
+            var repo = new ProveedorRepositorio(contexto);
+            var leido = (await repo.ObtenerDetallePorIdAsync(id))!;
+            leido.RazonSocial += " Modificado";
+            Assert.True(await repo.ActualizarAsync(leido));
+        }
+
+        await using var lectura = fixture.CrearContexto();
+        var filas = await lectura.Proveedor.AsNoTracking().OrderBy(p => p.Codigo).ToListAsync();
+        Assert.Equal([("En Negro Modificado", true), ("En Blanco Modificado", false)],
+            filas.Select(p => (p.RazonSocial, p.CuitSimulado)));
+    }
+
     private static CrearProveedorRequest Alta(string codigo, string razonSocial) =>
         new(codigo, razonSocial, null, null, null, null);
 }
