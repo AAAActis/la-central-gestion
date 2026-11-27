@@ -134,6 +134,31 @@ public class ComparadorApiPostgreSqlTests : IClassFixture<WebApplicationFactory<
         Assert.Equal(HttpStatusCode.NotFound, (await http.GetAsync("/api/articulos/999999/comparador")).StatusCode);
     }
 
+    [PostgreSqlFact]
+    public async Task CA003_050_LaUltimaCorridaTerminadaFallida_SeInforma_YUnaEnCursoNoCuenta()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var s = await SembrarAsync(fixture);
+        await using (var contexto = fixture.CrearContexto())
+        {
+            var despues = DateTime.UtcNow.AddMinutes(5);
+            // Norte: la última terminada falló. Sur: falló una vieja, y después hubo una en curso.
+            contexto.AddRange(
+                new ScrapeCorrida { ProveedorId = s.Norte, Estado = "FAILED", Inicio = despues, Fin = despues, CantidadItems = 0, MensajeError = "timeout" },
+                new ScrapeCorrida { ProveedorId = s.Sur, Estado = "FAILED", Inicio = DateTime.UtcNow.AddDays(-3), Fin = DateTime.UtcNow.AddDays(-3), CantidadItems = 0 },
+                new ScrapeCorrida { ProveedorId = s.Sur, Estado = "RUNNING", Inicio = despues });
+            await contexto.SaveChangesAsync();
+        }
+        using var http = Cliente(fixture);
+
+        var cuerpo = await OkAsync(await http.GetAsync($"/api/articulos/{s.Articulo}/comparador"));
+
+        var fallidas = cuerpo.GetProperty("filas").EnumerateArray()
+            .ToDictionary(f => f.GetProperty("proveedorId").GetInt32(), f => f.GetProperty("ultimaConsultaFallida").GetBoolean());
+        Assert.True(fallidas[s.Norte]);
+        Assert.False(fallidas[s.Sur]);   // su última terminada (la del sembrado) fue SUCCESS
+    }
+
     private HttpClient Cliente(PostgreSqlPruebas fixture)
     {
         var configuracion = new Dictionary<string, string?>

@@ -31,6 +31,15 @@ public class ObtenerComparadorUseCaseTests
     }
 
     [Fact]
+    public async Task CA003_050_SiLaUltimaConsultaAlProveedorFallo_LoInformaConSuUltimoPrecio()
+    {
+        var fallida = Fila(1, "A", 100m) with { UltimaCorridaFallida = true };
+        var c = await CompararAsync(null, fallida, Fila(2, "B", 120m));
+        Assert.Equal([("A", true, 100m, Lectura), ("B", false, 120m, Lectura)],
+            c.Filas.Select(f => (f.Codigo, f.UltimaConsultaFallida, f.PrecioNeto!.Value, f.UltimaLectura)));
+    }
+
+    [Fact]
     public async Task D_S7_09_SeComparaElNeto_NoElDeLista()
     {
         // La de lista más baja no es la más barata.
