@@ -209,3 +209,57 @@ La instrucción verbatim está en el bloque «26/11/2026 · Cola autónoma…» 
 - 054a CA5 (alta y vínculo en una operación): rojo `998dc4b`→ caso de uso rojo en `…` (ver log: `test(catalogo): 054a CA5 · alta y vínculo…`, 3/3 en rojo), producción `def614a` (`LaCentral.Tests.Catalogo` 22/22), prueba HTTP `998dc4b` (2 más en `VinculacionApiPostgreSqlTests`, ahora 7) y endpoint `ad41244`; pantalla rojo y verde en los dos últimos commits de frontend (391/391). La composición reusa `CrearArticuloUseCase` dentro de una unidad de trabajo exterior: si la vinculación falla, el alta se descarta. **Falta correr** `VinculacionApiPostgreSqlTests` (7), en rojo sobre `7f9fa36`/`998dc4b` y en verde, con el 16 aplicado.
 - Corrección de la línea anterior: el rojo del caso de uso del CA5 es `e6d4a57` (no `998dc4b`, que es la prueba HTTP); la pantalla del CA5 es rojo `f7e6e35` (1 en rojo) y verde `854314e`.
 - D-S7-19 en el ESTADO: deuda para el PR del re-scaffold del 16. El retiro de la ficha borra todos los códigos del proveedor, y la validación de conflictos sigue siendo global. No se puede dar mientras el 16 no esté aplicado.
+
+## 27/11/2026 18:40 · Retomar el Sprint 7: #202, reviews de Javi, base_completa, 16, 053/054a, comparador, compras
+
+**Instrucción recibida (verbatim):**
+> Retomamos el Sprint 7. Primero hacé lo que dice CLAUDE.md al arrancar: bitácora (bloque nuevo con esta instrucción verbatim), leé el último bloque «en curso», git fetch y comparación con develop, y git worktree list (sacá los tuyos antes de cualquier verificador).
+>
+> CONTEXTO NUEVO (no está en el repo):
+> - Los 4 scrapes están corridos en lacentral_demo, todos en SUCCESS y con 0 vencidos:
+>   · Expoyer: proveedor_id 7, corrida 2, 103.478 productos.
+>   · Autocor: proveedor_id 10, corrida 7, 54.657 productos.
+>   · Fazio (NESTOR FAZIO S.A.): proveedor_id 11, corrida 12, 38.098 productos.
+>   · ETMAN: corrida 13, 32.707 productos. Leé el proveedor_id con un SELECT sobre scrape_corrida (solo lectura). En ETMAN, precio_neto = «Lista Venta 2» (el costo con los descuentos de su factura) y precio_lista = «Precio Etman». Hay códigos de ETMAN que se repiten entre marcas: en esos casos el código lleva la marca agregada, así que no van a coincidir con el código de la factura. Tenelo en cuenta en la 053/054: van por candidatos, no por vinculación automática.
+> - Podés anotar en el ESTADO que la demo tiene catálogo de los 4 proveedores, con estos números. Los workflows de n8n y sus credenciales no se documentan ni se tocan: son míos, por fuera.
+> - Ya hay datos para la prueba manual del entregable del Sprint 7 sobre la demo (comparador con 4 proveedores).
+>
+> COORDINACIÓN CON JAVI (importante):
+> - HOY de 21:00 a 24:00 lacentral_test es de Javi: nada contra PostgreSQL en esa franja, ni suites ni tests [PostgreSqlFact] ni verificadores que corran la suite. En esas horas programá y corré solo las unitarias.
+> - Javi pidió (#190) medir conexiones mientras corre una suite. Cuando corras tu próxima suite completa (antes de las 21 o después de las 24), tomá 3 o 4 muestras de pg_stat_activity (count por datname y state) durante la corrida y dejá el resultado como comentario en el #190.
+> - Javi subió PRs. Hacé gh pr list y revisá los suyos (al menos el #204, Fix E2, y el #205, Enter exacto): leé el diff, compilá y corré filtrado lo que tocan. No corras la suite completa por los PRs de él. Dejá la review en GitHub (aprobación u observaciones concretas). Orden de merge sugerido: primero el #204 y después el #205, con merge commit. No mergees vos: avisame.
+>
+> PR PENDIENTE #202 (script 13, mío): tiene que quedar bien. Mergeá origin/develop (sin rebase; conflictos de docs conservando los dos lados). Terminá el auditor-persistencia, acotado a sus commits, y si da NO APTO arreglalo según CLAUDE.md. Cuando los dos verificadores estén en APTO, pedile review a Javi en el PR y avisame.
+>
+> RITMO DE PRUEBAS (no quiero que estés 2 horas testeando, quiero que labures):
+> - Mientras programás: solo unitarias filtradas (dotnet test --filter "Base!=PostgreSQL" o por clase, con --no-build). Son segundos.
+> - Las de PostgreSQL: solo las de la clase que tocaste, filtradas, y nunca en la franja de Javi.
+> - La suite completa: una sola vez por PR, justo antes de abrirlo, sobre el último commit. A los verificadores pasales siempre el hash, la línea literal y el conteo, para que no la repitan.
+> - Nunca dos suites a la vez (ni tuyas ni con Javi). Si una falla, corré filtrado lo que falló y la completa una sola vez al final.
+> - Los recorridos e2e y la prueba manual del entregable van al final del sprint, no por HU.
+> - Mientras corre una suite o un verificador, seguí escribiendo código de la siguiente HU sin tocar la base.
+>
+> COLA DE TRABAJO (un PR por HU, desde develop, como siempre):
+> 1. #202 y las reviews de Javi (lo de arriba).
+> 2. El PR de base_completa que quedó de la cola anterior: cerralo y abrilo.
+> 3. Script 16 (feature/127-vinculacion-esquema): que quede en PR listo. Fijate si el 13 y el 16 ya están aplicados en las bases (consulta de solo lectura). Si no lo están, dejame los bloques fish en «PARA SANTI» (están en la bitácora) y decime en qué orden los aplico.
+> 4. 053 y 054a (ramas ya escritas): correr lo que falta contra PostgreSQL cuando el 16 esté aplicado, verificadores y PR. 054b espera PS-01 y PS-02.
+> 5. Comparador: 030, 032, 033, 034 y 050 (feature/030-comparador). La 031 como ya quedó documentada.
+> 6. Compras: 016, 028 y #195, cuando el 13 esté aplicado. La 027 sigue bloqueada por la P7-01.
+>
+> REGLAS:
+> - Las decisiones técnicas las tomás vos y las registrás con fecha en el ESTADO (D-S7-13). Parás solo por una regla de negocio que falta, por datos reales de lacentral o por CA contradictorios. Las preguntas de negocio las juntás en «PREGUNTAS PARA SANTI», todas juntas al final de la HU, y seguís con lo que no depende de ellas.
+> - PRs chicos: si una HU pasa de unas 300 líneas, partila.
+> - No mergees nada. Cuando un PR esté listo, avisame con su número, el resumen de CA y la suite, y seguí con la siguiente HU.
+> - Nada contra lacentral (la real). Nada de TRUNCATE ni DROP fuera de tus esquemas de prueba.
+> - Bitácora mientras pasa y ESTADO como dice CLAUDE.md, antes de cada push.
+
+**Plan:**
+1. Arranque: fetch y comparación con `develop`, worktrees.
+2. Reviews de Javi (#204, #205).
+3. #202: merge de `origin/develop`, suite completa una vez (con muestras de `pg_stat_activity` para el #190), auditor acotado, review a Javi.
+4. base_completa → PR. 5. Script 16 → PR y estado de las bases. 6. 053/054a. 7. Comparador. 8. Compras si el 13 está aplicado.
+5. Franja 21:00–24:00: nada contra PostgreSQL.
+
+**Estado:** en curso
+- 1) 18:40. `origin/develop` = `80ede7a`: entraron el #204 (`1176af0`) y el #205 (`80ede7a`), **ya mergeados en GitHub** (13:56 y 15:40). No hay review que dejar antes del merge. Worktree sobrante `…/b376b47f…/scratchpad/auditor-bcf0975a` (`fe5ed3e`, limpio): es del auditor del #202 de la sesión anterior, que no dejó resultado en la bitácora.
