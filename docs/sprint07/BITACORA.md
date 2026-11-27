@@ -74,3 +74,241 @@ Sprint 7 anterior al 25/11/2026 (C2, el 12, el 14 y sus re-scaffolds) está en
 **Estado:** terminada
 - `LayoutsPdf.cs`: ETMAN `Nro.: (\d{2})` con `01` → A y `06` → B; Expoyer «Código N… (\d{1,2})» con `1` → A y `6` → B; Fazio fija `"B"`. Resto o sin coincidencia → `null`.
 - ESTADO: confirmación, riesgo para el PR y lista de códigos. Sin commit. Quedan push, PR y verificadores.
+
+## 26/11/2026 · Fix E2 · verificadores
+
+**Instrucción recibida (verbatim):**
+> Ya hay un solo worktree. Antes de nada: git fetch --all --prune y git log --oneline HEAD..origin/develop; si develop trajo algo, avisame antes de seguir. 1) verificador-tdd, UNA vez, acotado a los commits ea6b734, 8632734 y 00710c0 (lo que se revisa es el diff neto contra develop). Pasale: Hash 187ba6a. Línea literal: Con error! - Con error: 42, Superado: 821, Omitido: 0, Total: 863, Duración: 1 h 36 m - LaCentral.Tests.dll (net10.0). Los 42 fallos son de infraestructura (#190: 29 Npgsql y 13 de «transient failure»); ninguno de las clases del fix. Reintento filtrado: 42 → 8 con error → 8/8 verdes. build --no-incremental: 0 advertencias, 0 errores (en carpeta aparte). Mutaciones sobre la condición != "A": falla 1 con == "B" y 5 con == null. Si decide correr la suite de nuevo, que la corra. 2) auditor-persistencia, UNA vez, con el mismo alcance MÁS bb87162 (el script de demo: idempotencia, guarda de base, filas que toca). Mismos datos de la suite. Ante un NO APTO: se arregla (solo producción y tests), y se verifica solo lo arreglado, hasta 3 rondas, sin tocar la definición del verificador ni el cuerpo del PR. Sin push ni PR hasta que ambos den APTO y yo lo autorice. Mostrame cada veredicto completo.
+
+**Plan:** 1. Fetch y comparar. 2. `verificador-tdd`. 3. `auditor-persistencia`. 4. Veredictos.
+
+**Estado:** terminada
+- `git fetch --all --prune`: `HEAD..origin/develop` vacío (`origin/develop` = `bda2692`). Un solo worktree.
+- `verificador-tdd`: **APTO** sobre `ea6b734`, `8632734`, `00710c0` (HEAD `9fb0f70`). Rojo reproducido en `8632734`: 4 con error, 52 superados, 56 en total. Mutaciones: ninguna sobreviviente (U1–U7, R1–R4). Suite completa corrida por él sobre `9fb0f70`: `Con error! - Con error:     2, Superado:   861, Omitido:     0, Total:   863, Duración: 1 h 14 m` (2 de infraestructura, #190); reintento de los 2: 2/2. `build --no-incremental`: 0 advertencias, 0 errores. Worktree borrado; `git worktree list` muestra solo el principal. Hallazgos no bloqueantes: caracterización del tipo no reconocido (declarar en el PR); `proveedorId is null` y `razonSocial` no vacía parecen cláusulas no alcanzables (decide el equipo).
+- `git fetch` antes del auditor: `HEAD..origin/develop` vacío.
+- `auditor-persistencia`: **APTO** sobre los mismos commits más `bb87162`, sin bloqueantes. No corrió pruebas propias (usó la suite de `9fb0f70`). No bloqueantes, los dos en `marcar_en_negro_demo.sql` y hoy no alcanzables: la verificación final cuenta uno por término y no que sean DEMO-06, DEMO-07 y `00035`; `ILIKE` no normaliza acentos y la app sí. Nota: el README de demo (sección 4) y `sembrar_proveedores_pdf.sql` describen la regla anterior. Ensayó el script en un esquema propio de `lacentral_test` (guarda reescrita solo en su copia), borrado al terminar; `lacentral_demo` solo lectura.
+- Encontró 5 esquemas `pr110_test_*` en `lacentral_test` que no son suyos (4 de `lacentral_javi`, 1 de `lacentral_santi`), origen desconocido. No se borraron.
+- Limpieza: `git worktree list` muestra solo el principal, HEAD `9fb0f70`, `HEAD..origin/develop` vacío.
+- **Abierto:** push y PR; ESTADO y esta bitácora sin commit; decidir los no bloqueantes.
+- **BLOQUEADO EN:** autorización de Javi para push y PR.
+- Corrección: el ESTADO **no** está sin commit (entró en `9fb0f70`); sin commit está solo esta bitácora. Falta una actualización **nueva** del ESTADO (los dos veredictos, la suite de `9fb0f70` con su reintento, el PR) antes del push y en el mismo push. La instrucción de este bloque (correr los verificadores y mostrar los veredictos) terminó; push y PR van en un bloque nuevo.
+- Revisadas las cláusulas del hallazgo 3: sin layout reconocido el caso de uso corta en L33-34, y los tres layouts pasan un literal en `RazonSocial`; `proveedorId is null` está implicado por `!cuitConocido`. Ninguna de las dos es alcanzable en producción. Sin cambios: decide Javi.
+
+## 26/11/2026 14:42 · Fix E2 · ronda posterior al APTO
+
+**Instrucción recibida (verbatim):**
+> Antes de decidir, pegame el veredicto COMPLETO de verificador-tdd, no solo las
+> dos cláusulas.
+> Autorizado, en este orden, commits nuevos, sin rebase, sin push:
+> 1. Borrá las dos cláusulas inalcanzables de InterpretarFacturaPdfUseCase.cs:62
+>    (reescribiendo el patrón de RazonSocial, que hoy descarta el nulo del
+>    tipo). Dejá el test que demuestra que ese caso no puede ocurrir. Un test
+>    de PostgreSQL que fije que ActualizarAsync no toca cuit_simulado (primero
+>    en rojo si es posible; si ya pasa, caracterización, declaralo).
+> 2. Tests filtrados en el bucle; suite completa UNA vez sobre el último commit,
+>    con la base libre. Línea literal, conteo, hash. Reintento filtrado solo de
+>    lo que falle por #190.
+> 3. verificador-tdd acotado SOLO a los commits de esta ronda, con la suite.
+> 4. Después: arreglá la verificación del script (los tres pares con activo
+>    AND cuit_simulado, y la misma normalización de acentos que producción) y
+>    la nota del README. Reproducí los escenarios 4, 5 y 7 del auditor en un
+>    esquema temporal propio antes de commitear. auditor-persistencia acotado a
+>    ESE commit.
+> 5. Esquemas huérfanos: borrá los cuatro pr110_test_* del rol lacentral_javi,
+>    por nombre exacto, solo si no hay conexiones activas. NO toques el de
+>    lacentral_santi ni demo_ensayo_c3.
+> Mostrame cada resultado. Sin push ni PR hasta mi OK.
+
+**Plan:** 1. Veredicto completo en el chat. 2. Cláusulas y pruebas. 3. Filtradas y suite. 4. `verificador-tdd`. 5. Script y README de demo, ensayo y `auditor-persistencia`. 6. Esquemas huérfanos.
+
+**Estado:** terminada
+- `git fetch --all --prune`: `HEAD..origin/develop` vacío. HEAD `9fb0f70`, un solo worktree. Veredicto del `verificador-tdd` pegado completo en el chat.
+- Paso 2 (pruebas), commit `f71533e`: `Actualizar_NoTocaCuitSimulado_NiEnTrueNiEnFalse` en PostgreSQL, **caracterización** (pasa sobre el código actual, 1/1). Discrimina: `ActualizarAsync` escribiendo `false` → 1/1 con error; escribiendo `true` → 1/1 con error; revertidas.
+- Paso 2 (producción), commit `2d008a0`: sin `proveedorId is null`; `ComprobanteLeido.RazonSocial` pasa a `string` sin valor por defecto. `build --no-incremental` 0/0; Moq y PDF 92/92. Mutaciones: sin `!cuitConocido` → 2 en rojo (`ElCuitManda_...`, `UnCuitQueEsDeUnProveedorInactivo_...`); layout con razón social vacía: ETMAN 2, Fazio 3, Expoyer 1 en rojo; revertidas.
+- Filtrado PostgreSQL sobre `2d008a0`: 19 pruebas, 10 verdes (las 6 de `ProveedorPostgreSqlTests` y las 4 de `ProveedorSucursalPdfPostgreSqlTests`) y 9 de `CatalogoProveedorPostgreSqlTests` (entraron por el nombre) con `FileNotFoundException` de `docs/sprint07/CONTRATO-N8N.md`: compilé con `--artifacts-path` fuera del repo. En `bin` la prueba sin base de esas 9 pasa 1/1; las 8 restantes las cubre la suite. La API ajena ya no corre.
+- Base libre antes de la suite: 0 sesiones ajenas en `lacentral_test`; esquemas `pr110_test_*`: los mismos 5. Suite completa sobre `2d008a0` lanzada.
+
+
+## 26/11/2026 16:02 · Fix E2 · cierre de la ronda y cuerpo del PR
+
+**Instrucción recibida (verbatim):**
+> Cuando termine la suite sobre 2d008a0:
+> 1. Mostrame dónde se usa ComprobanteLeido fuera de UseCases (Api, DTOs,
+>    frontend). Si RazonSocial llega a un contrato expuesto, pará y avisame.
+> 2. verificador-tdd acotado SOLO a f71533e y 2d008a0; pasale la línea de esa
+>    suite y aclarale que las 9 de CatalogoProveedor del filtrado fallaron por
+>    compilar fuera del repo.
+> 3. Después, el arreglo del script y el auditor sobre ese commit, y los 4
+>    esquemas pr110_test_* de lacentral_javi.
+> 4. Cuerpo del PR: declará (a) el test de caracterización del tipo no
+>    reconocido y el de ActualizarAsync, (b) la limpieza de las cláusulas
+>    preexistentes como cambio aparte, con su motivo, (c) que 00710c0 toca dos
+>    archivos de prueba para compilar, (d) las dos corridas de la suite con sus
+>    fallos de #190 y reintentos, (e) la deuda del alta en negro.
+> Sin push ni PR hasta mi OK.
+
+**Plan:** 1. Usos de `ComprobanteLeido` (solo lectura, no toca la base ni la suite). 2. Esperar la suite. 3. `verificador-tdd`. 4. Script y README de demo, ensayo, commit y `auditor-persistencia`. 5. Cuatro esquemas. 6. Cuerpo del PR (borrador, sin abrirlo). Continúa el bloque anterior, que se cierra junto con este.
+
+**Estado:** terminada
+- Paso 1: `ComprobanteLeido` fuera de `UseCases` solo en `backend/LaCentral.Tests/FacturasCompra/LecturaPdfTests.cs:21`. `Api` y `frontend/src`: sin referencias. `POST /api/facturas-compra/pdf` devuelve `FacturaPdfInterpretada`, sin razón social (igual que la interfaz de `api.ts`). No llega a un contrato expuesto: se sigue. Las dos cláusulas retiradas ya estaban en `origin/develop`.
+- **BLOQUEADO EN:** el fin de la suite completa sobre `2d008a0` (en segundo plano).
+
+## 26/11/2026 16:20 · Fix E2 · el script de demo queda solo con Fazio
+
+**Instrucción recibida (verbatim):**
+> Cambio de Javi sobre marcar_en_negro_demo.sql: queda SOLO Fazio (DEMO-07).
+> Sacá Expoyer (trabaja solo en negro; el blanco se resuelve por CUIT y no se
+> marca) y sacá ETMAN (se decide aparte). Actualizá el encabezado, el README, el
+> término de la verificación final y la línea del ESTADO que decía «Expoyer se
+> marca en negro por decisión de Javi»: bloque NUEVO en la bitácora que lo
+> revierta, sin reescribir el viejo. La verificación final con los pares
+> (codigo, razon_social) y la normalización de acentos se arregla igual.
+> Anotá como deuda, para un script de demo aparte: los gemelos en blanco con CUIT
+> real (Fazio, Expoyer) y ETMAN, según los PDFs de Javi. No va en este PR.
+
+**Plan:** Entra en el paso del script, después del `verificador-tdd`: 1. Script, README y ESTADO solo con Fazio. 2. Ensayo en esquema propio (escenarios 4, 5 y 7, este con un nombre acentuado de Fazio). 3. Deuda en el ESTADO y en el cuerpo del PR.
+
+**Estado:** terminada
+- **Revierte** la decisión anterior de que Expoyer se marca en negro en `lacentral_demo`: desde hoy el script marca solo a Fazio (`DEMO-07`). Expoyer y ETMAN salen. Los bloques anteriores no se tocan.
+- (bloque «cierre de la ronda») Suite completa sobre `2d008a0` (14:56–16:14): `Con error! - Con error:    95, Superado:   769, Omitido:     0, Total:   864, Duración: 1 h 17 m`. Los 95 son de infraestructura (#190): 89 `NpgsqlException`/timeout y 6 «transient failure»; ninguna aserción.
+- **Corrección:** el «0 sesiones ajenas» anterior a la suite no vale. La consulta filtraba por `backend_type`, que PostgreSQL oculta para sesiones de otros roles. Sin ese filtro (16:2x) hay 9 sesiones de `lacentral_santi`, 2 con nombre de esquema de prueba y un esquema suyo con 20 candados. No se sabe si estaba corriendo pruebas durante la suite.
+- Esquemas nuevos de `lacentral_javi` que no estaban antes de la suite, sin candados: `pr110_test_959576f5a2e94cd8b7672947a4edb9ea`, `pr110_test_9f995e9519264abc8e01c6037ea15eb3`, `pr110_test_ef4770ee9a5b40d8a365e102c526810f`. No están entre los cuatro autorizados: no se borran.
+- **BLOQUEADO EN:** una ventana con la base libre (Santi la está usando). El reintento de los 95 métodos fallidos queda en segundo plano y arranca solo tras dos chequeos seguidos sin pruebas ajenas (tope: 60 chequeos).
+- Reintento filtrado de los 95 métodos sobre `2d008a0` (19:14–19:38, tras dos chequeos libres a las 19:11 y 19:14): `Correctas! - Con error:     0, Superado:    95, Omitido:     0, Total:    95, Duración: 23 m 54 s`. Al terminar, 0 sesiones y 0 candados ajenos visibles; sin esquemas nuevos.
+- **Corrección de horas:** la lectura de los fallos y el chequeo de las sesiones de Santi fueron hacia las 18:41, no «16:2x»; el bloque «el script de demo queda solo con Fazio» tampoco se abrió a las 16:20 sino hacia las 18:40.
+- Antes del verificador: `git fetch --all --prune`, `HEAD..origin/develop` vacío; un solo worktree; HEAD `2d008a0`. `verificador-tdd` lanzado sobre `f71533e` y `2d008a0`.
+- `verificador-tdd` sobre `f71533e` y `2d008a0`: **APTO**. Caracterización 1/1 sobre `f71533e`; 8 mutaciones del diff, ninguna sobrevive; reprodujo las declaradas; `build --no-incremental` 0/0; no repitió la suite (usó la de `2d008a0` y su reintento). No bloqueante: `string` no impide una razón social vacía; hoy no es alcanzable, y un cuarto layout sin su caso de prueba no tendría esa protección. Worktree borrado.
+- (bloque «solo Fazio») `782a871`: script y README de demo, solo con Fazio. Ensayo en un esquema propio `e2_ensayo_1543243c` de `lacentral_test` (guarda reescrita solo en memoria), releyendo con conexión nueva; borrado al terminar. Script anterior: los escenarios 5 («Nafazio» en negro con el objetivo renombrado) y 7 («Fázio Sur») terminaban en OK; el 4 ya cortaba. Script nuevo: los 10 casos (1 a 9 y 5b) como se esperaba; cambia solo `DEMO-07` en la primera corrida y nada en la segunda. El 7 se adaptó de Expoyer a Fazio. No se aplicó a `lacentral_demo`.
+- ESTADO (sin commit): script solo con Fazio y la deuda de los gemelos en blanco y ETMAN, en lugar de la línea de Expoyer.
+- `sembrar_proveedores_pdf.sql` (líneas 10-11) todavía describe la regla anterior a la D-S7-12: no se tocó, no estaba en el pedido.
+- `auditor-persistencia` lanzado sobre `782a871` (HEAD), con la suite de `2d008a0` y su reintento; declarado que el commit del script queda fuera de esa corrida.
+- **BLOQUEADO EN:** el veredicto del `auditor-persistencia` (en segundo plano).
+- `auditor-persistencia` sobre `782a871`: **persistencia verificada contra el motor real, sin hallazgos bloqueantes**. Ensayo propio de 16 casos en `aud_e2_cb082bf1` (borrado), `fallos=0`; paridad con `BuscarActivosEnNegroPorRazonSocialAsync` sobre 12 nombres; `lacentral_demo` solo SELECT (10 proveedores, 0 activos en negro: ninguna versión del script está aplicada). No corrió la suite sobre `782a871`. No bloqueantes: (1) en la demo existe `00037 «NESTOR FAZIO S.A.»`, con CUIT y sin marcar; (2) deducido, sin ejecutar: por esa fila, volver a correr `sembrar_proveedores_pdf.sql` cortaría; (3) el README no dice la consecuencia para un PDF de Expoyer. Worktree borrado.
+- Paso de esquemas: los cuatro autorizados, por nombre exacto, con chequeo de conexiones.
+- Esquemas: borrados los cuatro autorizados por nombre exacto, en una transacción (antes: 4/4 propios, 0 sesiones con esos nombres, 0 candados, 0 otras sesiones de mi rol; 536 relaciones adentro; 8885 objetos de afuera controlados, 0 faltantes). Releído con conexión nueva: quedan `demo_ensayo_c3`, tres `pr110_test_*` de `lacentral_santi`, `staging` y los tres nuevos de `lacentral_javi` (no autorizados).
+- `graphify update .`: 4521 nodos, 13663 aristas. ESTADO al día (sin commit). Cuerpo del PR redactado en el scratchpad de la sesión (`pr/cuerpo-pr.md`), sin abrir el PR.
+- Cierre de los tres bloques de hoy (14:42, 16:02 y el del script de demo). **Abierto:** commit de ESTADO y bitácora, push y PR (sin merge); la suite completa no corrió sobre `782a871`; tres esquemas huérfanos nuevos de `lacentral_javi`.
+- **BLOQUEADO EN:** el OK de Javi para commitear los documentos, pushear y abrir el PR.
+- Revisión final: `git diff --stat 2d008a0 HEAD` toca solo `backend/db/demo/` (2 archivos, sin `.cs` ni `.csproj`). `git blame` en `origin/develop`: las líneas de producción que cambian son de los commits del Fix E (`c3e1d93`, `6ce13f3`). ESTADO: PRÓXIMA SESIÓN del 26/11 y `bb87162` marcado como reemplazado.
+
+## 27/11/2026 09:16 · estado del reintento y actividad de la base
+
+**Instrucción recibida (verbatim):**
+> Probemos ahora. Antes de lanzar nada, mostrame el estado: qué quedó del
+> reintento que esperaba en segundo plano (si corrió, su línea literal), y
+> si hay procesos tuyos vivos.
+> Después revisá la actividad de otros roles en lacentral_test SIN el filtro que
+> ocultaba sesiones ajenas: cuántas conexiones hay y de qué rol. Si hay sesiones
+> de lacentral_santi con consultas activas, no lances nada y decímelo; si solo
+> hay conexiones inactivas o ninguna, lanzá el reintento filtrado de los 95
+> fallos de la suite sobre 2d008a0.
+> Pasame la línea literal y, si algo falla, solo los nombres de lo que falló
+> (no las trazas).
+> Sin push, sin PR, sin verificadores todavía.
+
+**Plan:** 1. Log del reintento anterior y procesos vivos. 2. Actividad sin filtrar. 3. Reintento según corresponda. Solo lecturas hasta decidir.
+
+**Estado:** terminada
+- Estado: el reintento anterior corrió el 26/11 (19:14–19:38) sobre `2d008a0`: `Correctas! - Con error:     0, Superado:    95, Omitido:     0, Total:    95, Duración: 23 m 54 s`. Sin procesos `dotnet`, `testhost` ni `bash` vivos. Actividad sin filtrar (09:16:54–09:17:55, cuatro muestras): 0 conexiones de cualquier rol.
+- Reintento relanzado por pedido: los mismos 95 métodos, `--no-build` sobre los binarios del build de `2d008a0` (26/11 14:55); `2d008a0..HEAD` solo toca `backend/db/demo/`. Chequeo previo: `lacentral_santi` sin conexiones. Log nuevo `reintento2.log`.
+- **BLOQUEADO EN:** el fin del reintento en segundo plano.
+- Reintento relanzado (27/11, 09:19–09:27), mismos 95 métodos sobre los binarios de `2d008a0`: `Correctas! - Con error:     0, Superado:    95, Omitido:     0, Total:    95, Duración: 7 m 42 s`. Antes y después: `lacentral_santi` sin conexiones.
+- **Abierto:** sin cambios; falta el OK de Javi para commitear los documentos, pushear y abrir el PR, y decidir si la suite se declara o se repite.
+
+## 27/11/2026 09:29 · verificaciones, commit docs y cuerpo del PR
+
+**Instrucción recibida (verbatim):**
+> No hay OK de push todavía. Faltan dos verificaciones, en este orden:
+> 1. Mostrame git log --oneline -10 y git diff --stat 2d008a0..HEAD, y el
+>    contenido final del script de demo, con el resultado del ensayo de los
+>    escenarios 4, 5 y 7 en esquema temporal propio.
+> 2. Invocá verificador-tdd UNA vez, acotado SOLO a f71533e y 2d008a0. Pasale:
+>    - Suite sobre 2d008a0: Con error! - Con error: 95, Superado: 769, Omitido:
+>      0, Total: 864, Duración: 1 h 17 m (los 95 de #190, base ocupada).
+>    - Reintento de esos 95 sobre los mismos binarios, con la base libre (0
+>      conexiones de otros roles antes y después): Correctas! - Con error: 0,
+>      Superado: 95, Total: 95, Duración: 7 m 42 s.
+>    - 2d008a0..HEAD solo toca backend/db/demo/.
+>    - Mutaciones y build limpio de 2d008a0.
+> 3. Después, auditor-persistencia acotado SOLO al commit del script (782a871 y
+>    los del arreglo).
+> 4. Cuando ambos den APTO: ESTADO y bitácora en un commit docs, y redactame el
+>    cuerpo del PR para que yo lo lea ANTES de pushear.
+> Si alguno da NO APTO: se arregla y se verifica solo lo arreglado, hasta 3 rondas.
+> Sin push ni PR.
+
+**Plan:** 1. Fetch y comparar. 2. Commits, diff, script y ensayo. 3. Verificadores: comprobar primero qué ya corrió sobre estos commits. 4. Commit docs. 5. Cuerpo del PR.
+
+**Estado:** terminada
+- `git fetch --all --prune`: `HEAD..origin/develop` vacío. HEAD `782a871`, un solo worktree, `backend/` limpio. Mostrados `git log --oneline -10`, `git diff --stat 2d008a0..HEAD` (solo `backend/db/demo/`), el script del commit y el ensayo del 26/11 (blob `a028eb89`, el mismo que se ensayó).
+- Verificadores: no se relanzan sin confirmación. Ya corrieron el 26/11 sobre el alcance pedido: `verificador-tdd` APTO sobre `f71533e` y `2d008a0` (HEAD `2d008a0`); `auditor-persistencia` «verificada contra el motor real», sin bloqueantes, sobre `782a871`, que sigue siendo HEAD. No hay commits de arreglo. La regla del repo es no invocarlos dos veces sobre el mismo HEAD.
+- **BLOQUEADO EN:** que Javi decida si valen esos veredictos (y sigue el commit de docs y el cuerpo del PR) o se relanzan los dos.
+
+## 27/11/2026 10:13 · tres PDF reales por el lector, antes del cuerpo del PR
+
+**Instrucción recibida (verbatim):**
+> Autorizado: dar por válidos los verificadores del 26/11 (tdd sobre f71533e y 2d008a0; auditor sobre 782a871). No se relanzan.
+>
+> Antes del cuerpo del PR, un paso nuevo, solo lectura y sin base: pasá por el reader (el mismo que usa InterpretarFacturaPdfUseCase) estos tres PDFs reales y pegame, por cada uno, RazonSocial, Cuit y TipoComprobante tal como los extrae:
+> 1. Presupuesto_49108.pdf (Fazio, negro). Imprime solo el CUIT del cliente BOSAC S.A.S. ([CUIT del cliente (BOSAC)]) y ningún nombre de proveedor; el encabezado es "***".
+> 2. Factura_A000100099753.pdf (Nestor Fazio SA, A). Imprime CUIT [CUIT de la SA] arriba y, al pie, "por cuenta y orden de el titular (CUIT [CUIT del titular])".
+> 3. 10713-VT-FA0137-26150.pdf (ETMAN / MULTIORIGINAL PARTS S.A., A). CUIT [CUIT de ETMAN]; el cliente es el mismo BOSAC.
+> Los PDFs están en la carpeta de Javi; si no los ves, avisá y los pasa él.
+>
+> Qué quiero saber:
+> a) Si en el presupuesto el reader toma el CUIT de BOSAC como CUIT del proveedor, y qué RazonSocial saca (si saca la del cliente, la regla busca "BOSAC").
+> b) Qué CUIT toma en la factura de Fazio (el primero o el de cuenta y orden).
+> c) Si los tres dan el TipoComprobante esperado (B, A, A).
+> No cambies código por esto. Si el resultado muestra un problema, reportalo y paramos ahí.
+>
+> Después: commit de docs (ESTADO.md antes del push, bitácora append-only) y el cuerpo del PR para que Javi lo lea ANTES de pushear. En "sin verificar" declará lo que salga de este paso, y que el recorrido con PDFs reales sobre lacentral_demo (DoD 10) está pendiente. Sin push ni PR hasta el OK de Javi.
+
+**Plan:** 1. Fetch y comparar. 2. Lector real sobre los tres PDF, sin base, desde un script en el scratchpad (los PDF no se copian al repo). 3. Reportar; si hay un problema, parar. 4. Si no, commit de docs y cuerpo del PR.
+
+**Estado:** terminada
+- Decisión de Javi: valen los verificadores del 26/11; no se relanzan. Se levanta el bloqueo del bloque anterior.
+- Lector real (`LectorTextoPdf` + `LayoutsPdf.Leer`, sin base, script en el scratchpad; los PDF no se copiaron): `Presupuesto_49108.pdf` → razón social «Fazio» (fija del layout), un solo CUIT (el del cliente), tipo B, 2 líneas. `Factura_A000100099753.pdf` → **ningún layout lo reconoce** (`null`): sin razón social, CUIT ni tipo. `10713-VT-FA0137-26150.pdf` → «ETMAN», dos CUIT (ETMAN y el cliente, en ese orden), tipo A, 1 línea.
+- `LayoutsPdf` y `LectorTextoPdf` no cambian en este PR: la falta del layout de la factura A de Fazio es previa.
+- **BLOQUEADO EN:** problema en el punto (c); la instrucción manda parar. Falta que Javi decida si sigue el commit de docs y el cuerpo del PR declarándolo, y qué se hace con los CUIT reales del bloque (el repo es público).
+
+## 27/11/2026 10:22 · enmascarar CUIT, commit docs, cuerpo del PR y consulta en la demo
+
+**Instrucción recibida (verbatim):**
+> Respuestas:
+> 1. Los CUIT se enmascaran en la bitácora (antes del primer commit) y en el cuerpo del PR: referirse a ellos como "CUIT de la SA", "CUIT del cliente (BOSAC)", "CUIT del titular", con una nota en la bitácora "(CUIT omitidos: repo público)". Ningún CUIT, ni de empresa ni de persona, entra al repo.
+> 2. La factura A de Fazio sin layout NO se arregla en este PR. Declaralo en el PR como hallazgo fuera de alcance: no hay layout para la factura A de Fazio (solo el del presupuesto); el texto sí se extrae; al escribirlo, cuidar que el CUIT del proveedor es el primero y el de "cuenta y orden" es el último. Proponé el texto de un issue aparte; no lo abras, lo decide Javi.
+> 3. Seguí: commit de docs (ESTADO.md antes del push, bitácora append-only), y el cuerpo del PR para que Javi lo lea antes de pushear. En el cuerpo, declará lo que salió de los PDFs: presupuesto de Fazio OK (razón social fija del layout, tipo B, el CUIT de BOSAC se toma pero no coincide con ningún proveedor); ETMAN OK (tipo A, descuento4 para revisar); Fazio A no reconocida. En "sin verificar": si algún proveedor tiene esos CUIT (condición: BOSAC no cargado como proveedor), importes y percepciones contra los PDF, y el recorrido de DoD 10 sobre lacentral_demo.
+> 4. Chequeo de solo lectura en lacentral_demo, SELECT únicamente: ¿existe algún proveedor con el CUIT de BOSAC? Reportá cantidad, sin mostrar el CUIT. En lacentral (real) no consultes nada.
+> Sin push ni PR hasta el OK de Javi.
+
+**Plan:** 1. Enmascarar. 2. La consulta del punto 4 primero, porque el cuerpo del PR afirma algo que depende de ella. 3. ESTADO y bitácora. 4. Cuerpo del PR y texto del issue. 5. Commit de docs.
+
+**Estado:** terminada
+- (CUIT omitidos: repo público) Por decisión de Javi se reemplazaron los CUIT del bloque «tres PDF reales», antes del primer commit; es el único cambio sobre esas líneas.
+- Punto 4: un `SELECT` en `lacentral_demo`, sesión de solo lectura verificada: 10 proveedores, 2 con CUIT, **0 con el CUIT del cliente (BOSAC)**. `lacentral` no se consultó.
+- Escaneo de patrones de CUIT (con y sin guiones) en las líneas agregadas por la rama, los mensajes de commit y los cambios sin commitear: ninguno.
+- La factura A de Fazio queda como hallazgo fuera de alcance; el issue se propone sin abrirlo. ESTADO actualizado.
+- Cuerpo del PR actualizado y texto del issue de la factura A de Fazio, los dos en el scratchpad de la sesión (`pr/cuerpo-pr.md`, `pr/issue-factura-a-fazio.md`); el PR y el issue no se abrieron. Sin patrones de CUIT en ellos, en la bitácora ni en el ESTADO.
+- La suite completa no se repitió sobre el HEAD: se declara en el cuerpo del PR la de `2d008a0` con sus reintentos.
+- Commit de docs: ESTADO y esta bitácora. Cierra los bloques «verificaciones, commit docs y cuerpo del PR», «tres PDF reales por el lector» y este.
+- **Abierto:** push y PR (sin merge); decidir el issue; recorrido de DoD 10 en `lacentral_demo`.
+- **BLOQUEADO EN:** el OK de Javi para pushear y abrir el PR, después de leer el cuerpo.
+
+## 27/11/2026 10:30 · ajustes al cuerpo del PR y nombre del titular, antes del push
+
+**Instrucción recibida (verbatim):**
+> Javi aprueba el cuerpo del PR con tres ajustes, antes de pushear:
+> 1. En "Demo": cambiá "ETMAN y Expoyer se eligen a mano" por "ETMAN y Expoyer se resuelven por CUIT si están cargados, o se eligen a mano".
+> 2. Grep en toda la rama (diff y mensajes de commit) y en el cuerpo del PR e issue por el nombre completo de la persona titular del "por cuenta y orden" (el que aparece en el pie de la factura de Fazio). Reportá solo la cantidad de coincidencias, sin pegar el nombre. Si hay alguna, reemplazala por "el titular" y recommiteá solo docs.
+> 3. Antes de pushear: git fetch --all --prune y git log --oneline HEAD..origin/develop. Si trae commits, aplicá la regla de la sección 3 del CLAUDE.md.
+> Suite: Javi va a intentar una ventana con la base libre. Hasta que él te diga "corré la suite", no la corras. Si te dice que no hay ventana, pusheás con lo declarado.
+> Con el OK de Javi: push de la rama y PR con este cuerpo, que cierra con la línea de atribución de siempre. NO abras el issue de la factura A de Fazio; lo decide Javi.
+
+**Plan:** 1. Fetch y comparar. 2. Frase de la demo. 3. Contar el nombre, reemplazar y recommitear docs. 4. Esperar el OK de Javi (suite o push).
+
+**Estado:** terminada
+- `git fetch --all --prune`: `HEAD..origin/develop` vacío (`bda2692`); la rama no está en el remoto.
+- Cuerpo del PR: ajustada la frase de «Demo».
+- (nombre del titular reemplazado por «el titular»: repo público) 1 coincidencia en la rama, en el bloque «tres PDF reales», dentro del commit de docs sin pushear; 0 en mensajes de commit, cuerpo del PR e issue. Se rehizo ese commit (`--amend`) para que no quede en la historia que se publica.
+- **Abierto:** la suite (solo si Javi pide correrla), push y PR sin merge; el issue lo decide Javi.
+- **BLOQUEADO EN:** Javi: ventana para la suite u OK para pushear con lo declarado.
