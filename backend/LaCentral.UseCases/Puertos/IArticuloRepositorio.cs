@@ -42,7 +42,7 @@ public interface IArticuloRepositorio
     Task AgregarCodigosAsync(int id, IReadOnlyList<CodigoAlternativo> codigos, CancellationToken ct = default);
 
     /// <summary>Borra el código de ese proveedor (D2: hay uno solo). false si no había.</summary>
-    Task<bool> RetirarCodigoAsync(int id, int proveedorId, CancellationToken ct = default);
+    Task<bool> RetirarCodigoAsync(int id, int proveedorId, string codigo, CancellationToken ct = default);
 
     /// <summary>false si no hay un artículo ACTIVO con ese Id.</summary>
     Task<bool> DarDeBajaAsync(int id, string motivo, DateTime fechaBaja, CancellationToken ct = default);

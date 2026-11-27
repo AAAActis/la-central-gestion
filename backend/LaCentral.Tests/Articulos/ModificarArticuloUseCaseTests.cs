@@ -179,7 +179,7 @@ public class ModificarArticuloUseCaseTests
         Assert.NotNull(_agregados);
         var agregado = Assert.Single(_agregados);
         Assert.Equal(("NGK-1", 20), (agregado.Codigo, agregado.ProveedorId));
-        _articulos.Verify(r => r.RetirarCodigoAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _articulos.Verify(r => r.RetirarCodigoAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // El mismo código del propio artículo NO es conflicto, aunque venga con otro formato.

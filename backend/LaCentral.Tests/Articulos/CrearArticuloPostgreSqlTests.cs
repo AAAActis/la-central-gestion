@@ -150,8 +150,8 @@ public class CrearArticuloPostgreSqlTests
             => _real.AsignarUbicacionAsync(id, sucursalId, ubicacionDeposito, ct);
         public Task AgregarCodigosAsync(int id, IReadOnlyList<LaCentral.UseCases.Entidades.CodigoAlternativo> codigos,
             CancellationToken ct = default) => _real.AgregarCodigosAsync(id, codigos, ct);
-        public Task<bool> RetirarCodigoAsync(int id, int proveedorId, CancellationToken ct = default)
-            => _real.RetirarCodigoAsync(id, proveedorId, ct);
+        public Task<bool> RetirarCodigoAsync(int id, int proveedorId, string codigo, CancellationToken ct = default)
+            => _real.RetirarCodigoAsync(id, proveedorId, codigo, ct);
         public Task<bool> DarDeBajaAsync(int id, string motivo, DateTime fechaBaja, CancellationToken ct = default)
             => _real.DarDeBajaAsync(id, motivo, fechaBaja, ct);
         public Task<bool> ReactivarAsync(int id, CancellationToken ct = default) => _real.ReactivarAsync(id, ct);

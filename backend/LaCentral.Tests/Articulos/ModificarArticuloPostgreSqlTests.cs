@@ -388,11 +388,34 @@ public class ModificarArticuloPostgreSqlTests
 
         Result resultado;
         await using (var contexto = fixture.CrearContexto())
-            resultado = await Retirar(contexto).EjecutarAsync(id, norte);
+            resultado = await Retirar(contexto).EjecutarAsync(id, norte, "BPR-6ES");
 
         Assert.True(resultado.IsSuccess, resultado.Error);
         Assert.Equal(new[] { ("NGK-1", sur) }, Codigos(await LeerAsync(fixture, id)));
         Assert.Equal(new[] { ("FA-100", norte) }, Codigos(await LeerAsync(fixture, otro)));
+    }
+
+    // D-S7-19 · FALTA CORRER: necesita el 16 aplicado (sin él, un_codigo_por_proveedor rechaza el segundo
+    // código). Con dos códigos del mismo proveedor (el segundo, por la vinculación de la 054a), retirar
+    // uno deja el otro.
+    [PostgreSqlFact]
+    public async Task Retirar_UnoDeLosDosCodigosDelMismoProveedor_DejaElOtro()
+    {
+        await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
+        var norte = await CrearProveedorAsync(fixture, "PRV-N");
+        var id = await CrearArticuloAsync(fixture, "Bomba de agua", (norte, "BA-SKF"));
+        await using (var contexto = fixture.CrearContexto())
+        {
+            contexto.ArticuloCodigoAlternativo.Add(new ArticuloCodigoAlternativo { ArticuloId = id, ProveedorId = norte, Codigo = "BA-GATES" });
+            await contexto.SaveChangesAsync();
+        }
+
+        Result resultado;
+        await using (var contexto = fixture.CrearContexto())
+            resultado = await Retirar(contexto).EjecutarAsync(id, norte, "BA-SKF");
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(new[] { ("BA-GATES", norte) }, Codigos(await LeerAsync(fixture, id)));
     }
 
     // Retirado el código, el proveedor puede tener uno nuevo (D2) y el viejo queda libre.
@@ -404,7 +427,7 @@ public class ModificarArticuloPostgreSqlTests
         var id = await CrearArticuloAsync(fixture, "Bujía", (norte, "BPR-6ES"));
 
         await using (var contexto = fixture.CrearContexto())
-            Assert.True((await Retirar(contexto).EjecutarAsync(id, norte)).IsSuccess);
+            Assert.True((await Retirar(contexto).EjecutarAsync(id, norte, "bpr-6es")).IsSuccess);
         Result resultado;
         await using (var contexto = fixture.CrearContexto())
             resultado = await Modificar(contexto).EjecutarAsync(id, Datos("Bujía", null, (norte, "BPR-7ES")));

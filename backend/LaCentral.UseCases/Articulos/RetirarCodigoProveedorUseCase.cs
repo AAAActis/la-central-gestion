@@ -22,7 +22,7 @@ public class RetirarCodigoProveedorUseCase
     /// D2: hay un solo código por proveedor, así que el proveedor lo identifica. El rol sale
     /// de la sesión, nunca del cuerpo de la petición.
     /// </summary>
-    public async Task<Result> EjecutarAsync(int id, int proveedorId, CancellationToken ct = default)
+    public async Task<Result> EjecutarAsync(int id, int proveedorId, string? codigo, CancellationToken ct = default)
     {
         if (!_contexto.EsAdministrador)
             return Result.Failure(TipoError.Prohibido, "Solo un administrador puede retirar un código de proveedor.");
@@ -35,7 +35,7 @@ public class RetirarCodigoProveedorUseCase
         if (!articulo.Codigos.Any(c => c.ProveedorId == proveedorId))
             return Result.Failure(TipoError.NoEncontrado, "El artículo no tiene un código de ese proveedor.");
 
-        if (!await _articulos.RetirarCodigoAsync(id, proveedorId, ct))
+        if (!await _articulos.RetirarCodigoAsync(id, proveedorId, codigo ?? "", ct))
             return Result.Failure(TipoError.NoEncontrado, "El artículo no tiene un código de ese proveedor.");
         return Result.Success();
     }

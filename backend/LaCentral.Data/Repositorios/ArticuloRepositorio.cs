@@ -129,7 +129,7 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
         await _context.SaveChangesAsync(ct);
     }
 
-    public async Task<bool> RetirarCodigoAsync(int id, int proveedorId, CancellationToken ct = default)
+    public async Task<bool> RetirarCodigoAsync(int id, int proveedorId, string codigo, CancellationToken ct = default)
         => await _context.ArticuloCodigoAlternativo.Where(c => c.ArticuloId == id && c.ProveedorId == proveedorId)
             .ExecuteDeleteAsync(ct) > 0;
 

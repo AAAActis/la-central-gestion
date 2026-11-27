@@ -26,7 +26,7 @@ public class BajaYCodigosArticuloUseCaseTests
     public BajaYCodigosArticuloUseCaseTests()
     {
         Articulo(activo: true);
-        _articulos.Setup(r => r.RetirarCodigoAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _articulos.Setup(r => r.RetirarCodigoAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _articulos.Setup(r => r.DarDeBajaAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -37,7 +37,8 @@ public class BajaYCodigosArticuloUseCaseTests
     private void Articulo(bool activo, params StockSucursalConsultaDto[] existencias) =>
         _consulta.Setup(c => c.ObtenerDetallePorIdAsync(Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ArticuloDetalleConsultaDto(Id, "LC-000042", "Bujía", activo, null, null,
-                new[] { new CodigoProveedorConsultaDto(ProveedorNorte, "Distribuidora Norte", "bpr-6es", "BPR-6ES") },
+                new[] { new CodigoProveedorConsultaDto(ProveedorNorte, "Distribuidora Norte", "bpr-6es", "BPR-6ES"),
+                    new CodigoProveedorConsultaDto(ProveedorNorte, "Distribuidora Norte", "BPR-7", "BPR-7") },
                 existencias, Array.Empty<PrecioModalidadConsultaDto>()));
 
     private void Rol(bool administrador) => _contexto.SetupGet(c => c.EsAdministrador).Returns(administrador);
@@ -51,7 +52,7 @@ public class BajaYCodigosArticuloUseCaseTests
         new(_articulos.Object, _consulta.Object, _historial.Object, _unidad.Object, _contexto.Object);
 
     private void NoSeRetiro() =>
-        _articulos.Verify(r => r.RetirarCodigoAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _articulos.Verify(r => r.RetirarCodigoAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
 
     private void NoSeDioDeBaja()
     {
@@ -74,7 +75,7 @@ public class BajaYCodigosArticuloUseCaseTests
     {
         Rol(administrador: false);
 
-        var resultado = await Retirar().EjecutarAsync(Id, ProveedorNorte);
+        var resultado = await Retirar().EjecutarAsync(Id, ProveedorNorte, "bpr-6es");
 
         Assert.Equal(TipoError.Prohibido, resultado.Tipo);
         NoSeRetiro();
@@ -85,10 +86,10 @@ public class BajaYCodigosArticuloUseCaseTests
     {
         Rol(administrador: true);
 
-        var resultado = await Retirar().EjecutarAsync(Id, ProveedorNorte);
+        var resultado = await Retirar().EjecutarAsync(Id, ProveedorNorte, "bpr-6es");
 
         Assert.True(resultado.IsSuccess, resultado.Error);
-        _articulos.Verify(r => r.RetirarCodigoAsync(Id, ProveedorNorte, It.IsAny<CancellationToken>()), Times.Once);
+        _articulos.Verify(r => r.RetirarCodigoAsync(Id, ProveedorNorte, "BPR-6ES", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -96,7 +97,7 @@ public class BajaYCodigosArticuloUseCaseTests
     {
         Rol(administrador: true);
 
-        var resultado = await Retirar().EjecutarAsync(999, ProveedorNorte);
+        var resultado = await Retirar().EjecutarAsync(999, ProveedorNorte, "bpr-6es");
 
         Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
         NoSeRetiro();
@@ -109,7 +110,7 @@ public class BajaYCodigosArticuloUseCaseTests
         Rol(administrador: true);
         Articulo(activo: false);
 
-        var resultado = await Retirar().EjecutarAsync(Id, ProveedorNorte);
+        var resultado = await Retirar().EjecutarAsync(Id, ProveedorNorte, "bpr-6es");
 
         Assert.Equal(TipoError.Invalido, resultado.Tipo);
         Assert.Contains("reactiv", resultado.Error, StringComparison.OrdinalIgnoreCase);
@@ -121,10 +122,40 @@ public class BajaYCodigosArticuloUseCaseTests
     {
         Rol(administrador: true);
 
-        var resultado = await Retirar().EjecutarAsync(Id, 20);
+        var resultado = await Retirar().EjecutarAsync(Id, 20, "bpr-6es");
 
         Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
         NoSeRetiro();
+    }
+
+    // D-S7-19: con el 16, un artículo puede tener dos códigos del mismo proveedor; el retiro dice cuál.
+    [Fact]
+    public async Task Retirar_UnoDeLosDosCodigosDelProveedor_NoEncontradoSiEseCodigoNoEsSuyo()
+    {
+        Rol(administrador: true);
+        var resultado = await Retirar().EjecutarAsync(Id, ProveedorNorte, "OTRO-1");
+        Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
+        NoSeRetiro();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("  ")]
+    public async Task Retirar_SinCodigo_InvalidoYNoRetira(string? codigo)
+    {
+        Rol(administrador: true);
+        var resultado = await Retirar().EjecutarAsync(Id, ProveedorNorte, codigo);
+        Assert.Equal(TipoError.Invalido, resultado.Tipo);
+        NoSeRetiro();
+    }
+
+    [Fact]
+    public async Task Retirar_ElCodigoSeComparaNormalizado_YAlRepositorioVaLaClave()
+    {
+        Rol(administrador: true);
+        var resultado = await Retirar().EjecutarAsync(Id, ProveedorNorte, " bpr-7 ");
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        _articulos.Verify(r => r.RetirarCodigoAsync(Id, ProveedorNorte, "BPR-7", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // Otra sesión lo retiró entre la lectura y el borrado.
@@ -132,10 +163,10 @@ public class BajaYCodigosArticuloUseCaseTests
     public async Task Retirar_YaNoEstabaAlBorrar_NoEncontrado()
     {
         Rol(administrador: true);
-        _articulos.Setup(r => r.RetirarCodigoAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        _articulos.Setup(r => r.RetirarCodigoAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
-        var resultado = await Retirar().EjecutarAsync(Id, ProveedorNorte);
+        var resultado = await Retirar().EjecutarAsync(Id, ProveedorNorte, "bpr-6es");
 
         Assert.Equal(TipoError.NoEncontrado, resultado.Tipo);
     }

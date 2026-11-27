@@ -148,10 +148,10 @@ public class ArticulosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RetirarCodigo(
-        int id, int proveedorId,
+        int id, int proveedorId, [FromQuery] string? codigo,
         [FromServices] RetirarCodigoProveedorUseCase useCase, CancellationToken cancellationToken)
     {
-        var resultado = await useCase.EjecutarAsync(id, proveedorId, cancellationToken);
+        var resultado = await useCase.EjecutarAsync(id, proveedorId, codigo, cancellationToken);
         return this.AResultadoHttp(resultado);
     }
 
