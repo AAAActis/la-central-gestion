@@ -379,3 +379,12 @@ Sprint 7 anterior al 25/11/2026 (C2, el 12, el 14 y sus re-scaffolds) está en
 **Estado:** terminada
 - ESTADO corregido: los tres esquemas de `lacentral_javi` figuran como borrados y los de `lacentral_santi` como pendientes de Santi. Va en este commit junto con las anotaciones del push, el comentario y el borrado. Solo documentación: sin verificadores ni suite.
 - **Abierto en esta rama:** revisión y merge del #204. La segunda parte de la instrucción sigue en la bitácora de `fix/enter-codigo-exacto`.
+
+## 27/11/2026 · Comparador desde develop (030 API y 050 pantalla)
+
+La instrucción verbatim está en el bloque «27/11/2026 18:40 · Retomar el Sprint 7…» de la bitácora de `feature/127-vincular`. Este es el rastro del punto 5 de esa cola.
+
+**Estado:** en curso
+- D-S7-20: el comparador sale de la pila del 16. `feature/030-comparador-api` desde `origin/develop` (`80ede7a`) con `02b91f3` → `80923b7` (rojo) y `2613307` → `441b4a4` (producción), por cherry-pick sin conflictos. Build 0 errores, 0 advertencias; `Comparador&Base!=PostgreSQL`: `Correctas! - Con error: 0, Superado: 8, Total: 8`.
+- `feature/050-comparador-pantalla` sobre la anterior, con `cc1a4b6`, `430a603` y `6b3d522` (`173a979`, `a9f83d6`, `83a1644`). Frontend completo: `TOTAL: 427 SUCCESS` (solo Chromium).
+- **Falta:** `ComparadorApiPostgreSqlTests` (3), en rojo sobre el commit de prueba y en verde; suite completa; PR y verificadores. Nada contra la base de 21:00 a 24:00 (franja de Javi).
