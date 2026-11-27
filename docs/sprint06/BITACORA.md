@@ -1848,7 +1848,7 @@ Mientras tanto, la 057 avanza contra una copia descartable mía (`nc057_ensayo_2
 
 **Plan:** 1. Cambiar a la rama del #196. 2. Actualizar el README de la demo. 3. Mostrar el diff. 4. Con OK: commit de docs/demo, push, una línea en la descripción del #196.
 
-**Estado:** en curso
+**Estado:** terminada
 - Rama del #196 al día con su remota; `origin/develop` sin commits nuevos que me falten. README actualizado; diff por mostrar.
 **BLOQUEADO EN:** OK de Javi sobre el diff para commitear y pushear.
 
@@ -2021,6 +2021,34 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - 3) **El #198 quedó mergeado a una rama muerta (24/11/2026)**: contra `docs/sprint06-cierre-correcciones` (`8521ae7`) cuando el #193 ya estaba en `develop`; entra por el #199. El 12 aplicado por Santi en `lacentral_test` (`public`) y `lacentral_demo`; `lacentral_n8n` con clave. ESTADO del Sprint 7 al día (fila #128 y PRÓXIMA SESIÓN).
 
 **BLOQUEADO EN:** 2) el «mergeado» de Santi para el #199. Después: bloque fish (backup de `lacentral`, el 12 en `lacentral`, borrado de los tres esquemas de ensayo) y re-scaffold contra `public` con su PR.
+
+- Commit `89ea769` pusheado al #196 con la siembra y el README; descripción del #196 actualizada. Abierto: aprobación del #196 (mergeado después en develop, c13d9ff).
+
+## 24/11/2026 · Fix E2 · reconocimiento de proveedor por razón social exacta primero
+
+**Instrucción recibida (verbatim):**
+> Tarea: Fix E2 · reconocimiento de proveedor por razón social exacta primero. Antes de tocar nada, leé CLAUDE.md y la spec adjunta (spec-fix-proveedor-razon-social-exacta.md), y hacé la inspección del repo: git status, estado de develop (tiene que incluir el #196, c13d9ff o posterior), InterpretarFacturaPdfUseCase, IProveedorRepositorio, ProveedorRepositorio y los tests actuales de la razón social. Reglas que valen siempre: Rama fix/proveedor-razon-social-exacta desde origin/develop. Un solo PR. NO commitees ni pushees sin mi OK. Mostrame el diff primero. Nunca toques la base lacentral. Persistencia solo contra lacentral_test, releyendo con un contexto nuevo. No deshabilites PostgreSqlSeguridadTests. Sin migraciones EF y sin cambios de esquema. Si creés que hace falta uno, detenete y avisame. TDD en tres commits: andamiaje, pruebas en rojo por aserción, producción. Pasá verificador-tdd y auditor-persistencia. Sin nombres, ids ni sufijos de proveedores hardcodeados. La convención "en negro = sin SA/SRL/SAS o con una X" solo se documenta, no se programa. Si la suite de backend da timeouts de Npgsql (#190), filtrá los que fallan, declaralo y anotá sobre qué commit corrió. No cambies la lectura de artículos de FCO ni de NCA, ni el reconocimiento de sucursal. No refactorices la normalización de acentos de los repositorios. Si algo de la spec contradice lo que encontrás en el código, o falta una decisión de negocio, preguntame antes de inventar. Cuando termines, informá con este formato exacto: QUÉ HICE / EVIDENCIA / QUÉ FALTA / PREGUNTAS.
+
+**Plan:** 1. Rama desde `origin/develop`. 2. Leer la spec y el código. 3. Andamiaje, pruebas en rojo, producción (tres commits). 4. Suites filtradas y completa. 5. `verificador-tdd` y `auditor-persistencia`. 6. Mostrar el diff.
+
+**Estado:** en curso
+- Rama `fix/proveedor-razon-social-exacta` creada desde `origin/develop` (f58aea4, incluye #196 = c13d9ff). Árbol limpio salvo `.codex/` y `AGENTS.md`.
+- La spec `spec-fix-proveedor-razon-social-exacta.md` no está adjunta: no está en el repo, en Descargas, Escritorio ni Documentos.
+**BLOQUEADO EN:** el texto de la spec (qué significa «exacta primero»: comparación, desempates y qué pasa si no hay exacta), de Javi.
+- Spec recibida (pegada por Javi, 24/11/2026): orden CUIT / elección a mano → exacta (1 asigna con «Revisar», 2 o más no asigna y no cae a «contiene») → «contiene» como hoy. Inspección hecha, sin tocar código: la búsqueda actual es `BuscarActivosPorRazonSocialAsync` (palabras con `Replace` de acentos en la consulta, `OrderBy(Id).Take`); no se usa `unaccent` (el 07 usa `translate` a propósito). Propuesta a Javi: normalizar con `NormalizacionArticulo.NombreParaBusqueda` (mayúsculas, acentos, espacios), un método nuevo del puerto para la exacta, sin esquema.
+**BLOQUEADO EN:** OK de Javi sobre el diseño de la inspección (dónde se normaliza y tope de candidatos) antes del andamiaje.
+- Diseño aprobado por Javi («Sí, seguí así»). Implementado en el árbol, sin commits: puerto `BuscarActivosPorRazonSocialExactaAsync`, repositorio (candidatas por palabras + igualdad con `NormalizacionArticulo.NombreParaBusqueda`, sin tope previo), caso de uso (exactas primero; 2+ no asignan ni caen a «contiene»; 0 → «contiene»). Tests: 8 Moq + 4 PostgreSQL. Contra el andamiaje: 7 de 12 en rojo por aserción/Verify; con la producción: `Correctas! Superado: 12, Total: 12`.
+- Después de eso las pruebas de PostgreSQL dejaron de poder correr: `PostgreSqlPruebas.CrearAsync` aborta con «El esquema fuente 'public' tiene tablas o vistas que el modelo no clona (proveedor_articulo, proveedor_articulo_historial, scrape_corrida)». Alguien aplicó en `lacentral_test` un script de `feature/128-catalogo-scrape` (no está en `develop`, que no tiene commits nuevos). No es de esta tarea; no se toca el esquema ni la guarda.
+**BLOQUEADO EN:** que el equipo deje `lacentral_test.public` alineado con `develop` (o que esa rama entre y se haga el re-scaffold) para correr la suite completa y los verificadores; y OK de Javi sobre el diff para commitear.
+- Orden de Javi (24/11/2026, pegada): commitear en local sin pushear; antes, `merge origin/develop` (entró #199, modelo del 12; la guarda del esquema ya no choca). NO abrir PR, NO `verificador-tdd` ni `auditor-persistencia`, NO suite completa, NO push: el equipo decide entre la exacta, una regla por CUIT simulado y una columna «en negro»; no implementar las otras dos. Santi avisado por Javi.
+- Merge de `origin/develop` (`0633b3b`) con conflicto solo en esta bitácora: conservados los dos lados, 45 `**Estado:**` y 45 encabezados `##`.
+- Commits: andamiaje `e5f9322`; pruebas `cdcbf64`, en rojo sobre ese commit: `Con error: 7, Superado: 5, Total: 12` (3 Moq por Assert/Verify, 4 PostgreSQL por Assert); producción en el commit siguiente.
+**BLOQUEADO EN:** decisión del equipo sobre la regla (exacta / CUIT simulado / columna «en negro»); sin PR ni verificadores hasta entonces.
+- Corrida filtrada (`FacturasCompra` y `Proveedor`) sobre `d4d8cb7`: `Con error: 50, Superado: 375, Total: 425`; los 50 son timeouts de conexión de Npgsql (#190) en clases de PostgreSQL ajenas al fix, ninguno de `ProveedorRazonSocialExacta`. Reintento filtrado de esos nombres: `Correctas! - Con error: 0, Superado: 51, Total: 51`. Sin suite completa ni verificadores (orden de Javi).
+- Orden de Javi (25/11/2026): commitear el bloque de ESTADO (`docs:`); **desvío anotado: el caso 8 de la spec real (mayúsculas, acentos y espacios en la comparación exacta) queda cubierto por PostgreSQL (`Exacta_IgnoraMayusculasAcentosYEspaciosSobrantesORepetidos`), no por Moq, porque la comparación está en el puerto, según la spec**; no cambiar el diseño; agregar test propio de PostgreSQL para «ninguna exacta devuelve vacío» en un commit `test:` aparte. Sin push, sin PR, sin suite completa ni verificadores hasta que entren el #200 y el #197 a `develop` (se traen con un solo merge).
+- Test `Exacta_SinNingunaExacta_DevuelveVacio_AunqueHayaQuienLaContenga` agregado (verde desde el primer momento: la producción ya existía). Filtrado `ProveedorRazonSocialExacta`: `Correctas! - Con error: 0, Superado: 13, Total: 13`.
+**BLOQUEADO EN:** entrada del #200 y el #197 a `develop` y decisión del equipo sobre la regla.
+
 - 2) #199 mergeado (`0633b3b`). Bloque fish entregado a Santi: backup de `lacentral`, el 12 en `lacentral` con verificación (3 tablas) y borrado de `nc057_fuente`, `c2_fuente` y `c2_ensayo_e6807bae` en `lacentral_test` (con `nc057_fuente_borrado.sql` y `sed`; guardas: solo `lacentral_test` y sin dependencias de afuera). Sin probar desde acá (no hay `ssh` a `arch`).
 - Re-scaffold contra `public` de `lacentral_test` en `chore/rescaffold-12` (`f353c36`): **0 diferencias de modelo** (`git diff --ignore-cr-at-eol` vacío); solo cambian finales de línea en 9 archivos, la salida del scaffold tal cual. Suite completa sobre `f353c36` (`--no-incremental`, 0 advertencias): `Correctas! - Con error: 0, Superado: 858, Omitido: 0, Total: 858, Duración: 15 m 58 s`. PR del re-scaffold abierto (ver ESTADO).
 
@@ -2055,6 +2083,34 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 **Estado:** terminada. Abierto: Santi aplica el 14 en `lacentral_demo` y en la real; después, PR aparte con el re-scaffold del 14.
 - 1) `origin/develop` (#197, `54569b8`) mergeado en `chore/rescaffold-12`. Entraron solo `backend/db/rescaffold/14_Vencimiento_Proveedor.sql`, `14_Vencimiento_Proveedor_deshacer.sql` y esta bitácora. Único conflicto: esta bitácora. Orden final: las dos líneas de esta rama que cierran el bloque del 24/11 (#199 mergeado y re-scaffold), el bloque «Segundo merge de develop (#199)» de `develop`, y este bloque al final (corrige el orden del plan: las dos líneas tenían que quedar pegadas a su bloque). Sin marcadores; 48 encabezados `##` = 44 de la base + 3 de `develop` + 1 de esta rama; ninguna línea de ningún lado falta. Sin re-scaffold del 14.
 - 2) Push `4300cd5` (merge) + `fcd2d58` (ESTADO: #197 mergeado). Cuerpo del #200 con la sección «Merge de develop tras el #197»: solo SQL y docs, sin suite ni verificadores, y sin re-scaffold del 14. GitHub: `mergeable: MERGEABLE` (`mergeStateStatus: BLOCKED`, por la revisión pendiente, no por conflicto).
+
+## 25/11/2026 · Fix E2 · merge de `develop` (#197 y #200) y suite completa
+
+**Instrucción recibida (verbatim):**
+> El #197 y el #200 ya están en develop (#200 = 07fd8e7). Autorizado: 1. Hacé la inversión temporal del test P3: cambiá la consulta exacta a «contiene», corré solo ese test y confirmá que falla. Después revertí el cambio sin commitearlo (git diff tiene que quedar limpio). 2. git fetch --all --prune y un solo git merge origin/develop (merge commit, sin rebase). Si conflictúa la bitácora, se conservan los dos lados (primero HEAD) y se verifica que la cantidad de líneas «Estado» coincida con la cantidad de encabezados «##». 3. Suite completa UNA sola vez sobre el último commit, desde backend/. Dame la línea literal del resumen, el conteo y el hash del commit sobre el que corrió. Si hay timeouts de Npgsql (#190): corré filtrado solo lo que falló y declaralo, sin repetir la suite entera. 4. Pará ahí y mostrame el resultado. Sin push, sin PR, sin verificadores todavía. Registrá cada paso en la bitácora con su evidencia.
+
+**Plan:** 1. Inversión de P3. 2. Merge de `origin/develop`. 3. Suite completa una vez. 4. Reintento filtrado de lo que falle. 5. Parar.
+
+**Estado:** terminada
+- Inversión de P3 (hecha antes de esta orden, mismo pedido): con el filtro de igualdad cambiado a `true`, `Exacta_SinNingunaExacta_DevuelveVacio_AunqueHayaQuienLaContenga` falló (`Assert.Empty() Failure: Collection was not empty`, `Con error: 1, Superado: 0, Total: 1`); revertida sin commitear, `git status` limpio.
+- Merge de `origin/develop` (`07fd8e7`, #200) en `01e2560`; conflicto solo en esta bitácora, conservados los dos lados con HEAD primero; 49 `**Estado:**` y 49 encabezados `##` antes de este bloque.
+- Suite completa, una vez, sobre `01e2560`: `Con error! - Con error:   240, Superado:   631, Omitido:     0, Total:   871, Duración: 13 m 52 s - LaCentral.Tests.dll (net10.0)`. De los 240: 239 son `NpgsqlException` («Failed to connect to 100.125.169.91:5432» 228, «Exception while reading from stream» 10, timeout 1) y uno, `PostgreSqlPruebasLimpiezaTests.CreacionCortadaAMitadDeCamino_NoDejaElEsquemaHuerfano`, un `Assert.NotNull` de una prueba de infraestructura de PostgreSQL. Incluyen las dos pruebas PostgreSQL de este fix, que fallaron por conexión.
+- Reintento filtrado (sin repetir la suite entera), por las 35 clases con fallos: `Correctas! - Con error:     0, Superado:   270, Omitido:     0, Total:   270, Duración: 20 m 36 s`. Un primer intento filtrando por los 240 nombres no corrió (el filtro excedió el límite de la herramienta de pruebas) y no cuenta.
+- Declarado (#190): los 240 fallos de la suite completa son de infraestructura (la base compartida dejó de responder durante la corrida), no del fix; todos pasan en el reintento. Corrió sobre `01e2560`.
+**BLOQUEADO EN:** decisión del equipo sobre la regla; sin push, PR ni verificadores hasta entonces.
+
+## 25/11/2026 · Fix E2 · decisión: sin CUIT = en negro
+
+**Instrucción recibida (verbatim):**
+> Decisión de Javi, 25/11/2026: un PDF sin CUIT es SIEMPRE una carga en negro (presupuesto). No se agrega columna ni bandera, y la regla del CUIT simulado que propuso Santi queda descartada. «Razón social exacta primero» sale tal como está. Autorizado, SOLO documentación (cero código, cero tests): 1. En docs/sprint06/ESTADO.md, en el bloque del E2: cambiá «a confirmar» por «decidida por Javi el 25/11/2026: sin CUIT = en negro; sin columna ni código». Mantené el riesgo Fazio, redactado como consecuencia de esa decisión: un proveedor real que mande el PDF sin CUIT queda tratado como en negro. 2. Bitácora: un bloque NUEVO (se agrega, no se reescribe) con esta decisión y su fecha. Verificá que Estado = encabezados ##. 3. Un solo commit, tipo docs. Sin push, sin PR, sin verificadores. 4. Mostrame el diff del ESTADO antes de commitear.
+
+**Plan:** 1. ESTADO. 2. Este bloque y conteo. 3. Mostrar el diff. 4. Con OK: un commit `docs:`.
+
+**Estado:** terminada
+- **Decisión (Javi, 25/11/2026):** un PDF sin CUIT es siempre una carga en negro (presupuesto); sin columna ni bandera; descartada la regla del CUIT simulado; «razón social exacta primero» sale tal como está. Levanta el bloqueo por la decisión de la regla.
+- ESTADO editado (bloque del 25/11, líneas «Estado» y «Caso conocido»).
+**BLOQUEADO EN:** OK de Javi sobre el diff del ESTADO para commitear.
+- OK de Javi (25/11/2026) para el commit `docs:` con dos agregados en el ESTADO: el riesgo de que «contiene» asigne un PDF sin CUIT a una cuenta en blanco («sin CUIT = en negro» es convención de la operación, el sistema no la garantiza) y que la pregunta a Sergio del bloque del 24/11 queda superada. «La X va por delante o al final» sigue a confirmar. Sin push, PR ni verificadores: quedan abiertos.
 
 ## 25/11/2026 · Re-scaffold del 14 contra `public` de `lacentral_test`
 

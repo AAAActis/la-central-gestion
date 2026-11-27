@@ -57,8 +57,9 @@ Se corre **después** de `sembrar_demo.cs`, con SQL contra `lacentral_demo`. No 
 máquinas: se aplicó con un `.cs` de una sola vez que ejecuta el archivo con Npgsql.
 
 `sembrar_proveedores_pdf.sql` agrega `DEMO-06` «ETMAN Repuestos (demo)» y `DEMO-07` «Fazio (demo)»:
-activos y **sin CUIT**, para que ningún CUIT del PDF los ubique y se pruebe el camino por razón
-social, que los deja marcados «Revisar».
+activos y **sin CUIT**, para que ningún CUIT del PDF los ubique. Desde el Fix E2 (D-S7-12) eso no
+alcanza: por razón social solo se busca entre los proveedores en negro (ver 4 bis). Hoy se marca
+solo Fazio; **un PDF de ETMAN no asigna proveedor por razón social y hay que elegirlo a mano**.
 
 - **SQL directo**, excepción a «por la API» de la sección 3: son dos filas sin CUIT, hechas
   a propósito para probar el reconocimiento por razón social del Fix E.
@@ -67,6 +68,13 @@ social, que los deja marcados «Revisar».
 - **Idempotente por `codigo`** (`ON CONFLICT (codigo) DO NOTHING`) y una sola transacción, con
   verificación final: exactamente un ETMAN y un Fazio activos.
 - Expoyer ya está en la demo; no se siembra.
+
+### 4 bis · Marcarlos en negro (Fix E2, D-S7-12)
+
+Después del anterior, `marcar_en_negro_demo.sql` pone `cuit_simulado = true` **solo en `DEMO-07`
+«Fazio (demo)»**. Sin eso, un PDF de Fazio sin CUIT conocido no lo reconoce; una factura A no se asigna
+nunca por razón social. No marca a ETMAN ni a Expoyer, y no desmarca nada.
+Solo `lacentral_demo` (tiene guarda), idempotente; lo aplica Javi o Santi.
 
 ## Ensayo del 04/11/2026
 
