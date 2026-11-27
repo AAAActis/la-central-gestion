@@ -2266,3 +2266,29 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 - `git fetch --all --prune`: `HEAD..origin/develop` vacío; #204 sigue abierto, así que no se mergea `develop`.
 - Commit de docs (ESTADO del Sprint 7 y esta bitácora), push y PR contra `develop`, sin merge.
 - **Abierto:** revisión del PR; conflicto de `docs/sprint07/ESTADO.md` cuando entre #204; recorrido de DoD 10; los dos «a confirmar» y la deuda anotada en el ESTADO.
+- **PR #205** contra `develop`: https://github.com/AAAActis/la-central-gestion/pull/205 (27/11). Pusheado `9d85033`, 16 commits; abierto, `MERGEABLE`, revisión requerida, sin auto-merge ni checks de CI informados. El cuerpo publicado es el borrador. Antes: sin CUIT, nombre del titular ni claves. Esta anotación queda sin commitear, y el ESTADO publicado no nombra el número.
+
+## 27/11/2026 12:49 · Auto-fix en el PR #205
+
+**Instrucción recibida (verbatim):**
+> Activar Auto-fix
+
+**Plan:** 1. Activar Auto-fix (CI, conflictos y comentarios de revisión) en el PR #205. Sin merge.
+
+**Estado:** terminada
+- Pedido el interruptor `auto_fix` de la aplicación para el PR #205; sin auto-merge. Esta anotación queda sin commitear.
+
+## 27/11/2026 12:50 · cuerpo del #205 y commit de docs de cierre
+
+**Instrucción recibida (verbatim):**
+> Dos cosas en #205, y parás:
+> 1. Verificá que el cuerpo del PR declare, en "Conocido, sin arreglar", los dos no bloqueantes de la ronda 3: (a) respuestas de búsqueda de proveedor en orden inverso dejan elegido el del primer Enter; (b) una respuesta tardía de facturas de un proveedor pisa la lista de otro elegido después. Si falta alguno, editá el cuerpo (gh pr edit), sin commit, aclarando que no los introduce este diff.
+> 2. Commit de docs (ESTADO.md y BITACORA.md) en fix/enter-codigo-exacto: nombrar el #205 abierto, esperando revisión de Santi; ronda 3 NO APTO (mutación M4 sobre la guarda por referencia), arreglo b1ddce0 solo de pruebas, reverificación APTO; tarea terminada con lo que queda abierto (recorrido DoD 10, conflicto de ESTADO.md entre #204 y #205). Sin CUIT ni nombre del titular. Push (solo documentación, sin verificadores ni suite) y un comentario en el PR que nombre ese commit. Árbol limpio: git status con solo .codex/ y AGENTS.md; pegame ese git status.
+
+**Plan:** 1. Leer el cuerpo publicado. 2. ESTADO y esta bitácora. 3. Fetch, commit, push y comentario.
+
+**Estado:** terminada
+- Cuerpo publicado del #205 leído: los dos no bloqueantes de la ronda 3 figuran en «Conocido, sin arreglar»; no se editó. En `develop` el Enter del proveedor de la NCA solo listaba, así que el del orden inverso aparece con este PR; el de las facturas tardías ya existía por clic.
+- #205 abierto contra `develop`, esperando revisión de Santi. Ronda 3 del `verificador-tdd`: NO APTO (mutación M4, la guarda comparando por referencia); arreglo `b1ddce0`, solo pruebas; reverificación APTO.
+- Commit de docs (ESTADO del Sprint 7 y esta bitácora); el push y el comentario en el PR van después. Solo documentación: sin verificadores ni suite.
+- **Tarea terminada. Abierto:** revisión y merge del #205; recorrido de DoD 10; conflicto de `docs/sprint07/ESTADO.md` entre #204 y #205.
