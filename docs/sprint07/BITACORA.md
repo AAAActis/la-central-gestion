@@ -312,3 +312,21 @@ Sprint 7 anterior al 25/11/2026 (C2, el 12, el 14 y sus re-scaffolds) está en
 - (nombre del titular reemplazado por «el titular»: repo público) 1 coincidencia en la rama, en el bloque «tres PDF reales», dentro del commit de docs sin pushear; 0 en mensajes de commit, cuerpo del PR e issue. Se rehizo ese commit (`--amend`) para que no quede en la historia que se publica.
 - **Abierto:** la suite (solo si Javi pide correrla), push y PR sin merge; el issue lo decide Javi.
 - **BLOQUEADO EN:** Javi: ventana para la suite u OK para pushear con lo declarado.
+
+## 27/11/2026 10:33 · suite completa sobre ec3d0ee en la ventana
+
+**Instrucción recibida (verbatim):**
+> Corré la suite
+
+**Plan:** 1. Fetch y comparar. 2. Comprobar que la base esté libre, sin filtrar sesiones ajenas. 3. `build --no-incremental` y suite completa sobre `ec3d0ee`. 4. Reintento filtrado solo de lo que falle por #190. 5. Cuerpo del PR, ESTADO y esta bitácora. El push espera el OK de Javi.
+
+**Estado:** terminada
+- `git fetch --all --prune`: `HEAD..origin/develop` vacío; HEAD `ec3d0ee`, un solo worktree, sin procesos `dotnet` vivos.
+- Base antes de lanzar (10:33:49–10:34:49, cuatro muestras sin filtrar): 0 conexiones de cualquier rol.
+- `build --no-incremental` y suite completa lanzados sobre `ec3d0ee` en segundo plano, con una muestra de actividad de otros roles cada 10 minutos.
+- **BLOQUEADO EN:** el fin de la suite.
+- Suite completa sobre `ec3d0ee` (27/11, 10:35–10:53): `Correctas! - Con error:     0, Superado:   864, Omitido:     0, Total:   864, Duración: 17 m 38 s`. `build --no-incremental`: 0 advertencias, 0 errores. Sin reintentos.
+- Otros roles durante la corrida (10:35, 10:45, 10:53): 0 conexiones, 0 en transacción. Sin esquemas de prueba nuevos al terminar. `HEAD..origin/develop` vacío.
+- Cuerpo del PR y ESTADO actualizados; commit de docs aparte, posterior a la corrida.
+- **Abierto:** push y PR sin merge; decidir el issue; recorrido de DoD 10.
+- **BLOQUEADO EN:** el OK de Javi para pushear y abrir el PR.

@@ -285,7 +285,8 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 **27/11/2026 · Fix E2 listo en local, sin push ni PR.**
 - Rama `fix/proveedor-razon-social-exacta`; código en `2d008a0`, script de demo en `782a871` y después solo documentación. Verificadores dados por válidos por Javi (detalle en «Fix E2 · implementado según la D-S7-12»).
 - Cuerpo del PR aprobado por Javi con ajustes, ya hechos. El nombre del titular de «cuenta y orden» no entra al repo.
-- **Espera a Javi:** una ventana con la base libre para la suite (se corre solo si él lo pide) o su OK para pushear con lo declarado; el PR, sin merge. El issue de la factura A de Fazio lo decide él.
+- **Suite completa sobre `ec3d0ee`** (27/11, 10:35–10:53, pedida por Javi): `Correctas! - Con error:     0, Superado:   864, Omitido:     0, Total:   864, Duración: 17 m 38 s`. Build limpio 0/0; 0 conexiones de otros roles en las muestras de antes y durante.
+- **Espera a Javi:** su OK para pushear y abrir el PR (sin merge). El issue de la factura A de Fazio lo decide él.
 - Después: `marcar_en_negro_demo.sql` lo aplica Javi o Santi, y el recorrido de DoD 10 con PDF reales contra `lacentral_demo`.
 
 **25/11/2026 · el 14 aplicado en las tres bases y su re-scaffold en PR.**
