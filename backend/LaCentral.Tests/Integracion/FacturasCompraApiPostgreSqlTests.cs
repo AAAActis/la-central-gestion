@@ -153,9 +153,9 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
         Assert.Contains("El rango de vencimiento empieza después de terminar.", await respuesta.Content.ReadAsStringAsync());
     }
 
-    // HU-FCO-04 (028): anula quien está en el token; autoriza otro usuario ADMINISTRADOR con su contraseña.
+    // HU-FCO-04 (028) CA-006 y CA-007 (v1.2, D-S7-04): anula el ADMINISTRADOR del token, solo, sin autorizante.
     [PostgreSqlFact]
-    public async Task PostAnulacion_Valida_204_YLaFacturaQuedaAnuladaConElUsuarioDelTokenYElQueAutorizo()
+    public async Task PostAnulacion_DeUnAdministrador_204_YLaFacturaQuedaAnuladaConElUsuarioDelToken_SinAutorizante()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
         var s = await SembrarAsync(fixture);
@@ -176,13 +176,19 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
         var alta = await cliente.PostAsJsonAsync("/api/facturas-compra", Cuerpo(s));
         var id = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
 
-        var respuesta = await cliente.PostAsJsonAsync($"/api/facturas-compra/{id}/anulacion",
-            new { motivo = "Cargada dos veces", usuarioAutoriza = "jefa.api", contrasenaAutoriza = "clave-jefa" });
+        // CA-007: el OPERADOR recibe 403 y no cambia nada.
+        var delOperador = await cliente.PostAsJsonAsync($"/api/facturas-compra/{id}/anulacion", new { motivo = "Cargada dos veces" });
+        Assert.Equal(HttpStatusCode.Forbidden, delOperador.StatusCode);
+        await using (var antes = fixture.CrearContexto())
+            Assert.Equal("ACTIVA", await antes.FacturaCompra.Where(f => f.Id == id).Select(f => f.Estado).SingleAsync());
+
+        using var deLaJefa = Cliente(fixture, "ADMINISTRADOR", jefa);
+        var respuesta = await deLaJefa.PostAsJsonAsync($"/api/facturas-compra/{id}/anulacion", new { motivo = "Cargada dos veces" });
 
         Assert.Equal(HttpStatusCode.NoContent, respuesta.StatusCode);
         await using var relectura = fixture.CrearContexto();
         var factura = await relectura.FacturaCompra.AsNoTracking().SingleAsync(f => f.Id == id);
-        Assert.Equal(("ANULADA", "Cargada dos veces", (int?)s.UsuarioId, (int?)jefa),
+        Assert.Equal(("ANULADA", "Cargada dos veces", (int?)jefa, (int?)null),
             (factura.Estado, factura.MotivoAnulacion, factura.UsuarioAnulacionId, factura.UsuarioAutorizacionId));
         Assert.Equal(1m, await relectura.Stock.Where(x => x.ArticuloId == s.ArticuloId && x.SucursalId == s.SucursalId)
             .Select(x => x.Cantidad).SingleAsync());
@@ -193,10 +199,9 @@ public class FacturasCompraApiPostgreSqlTests : IClassFixture<WebApplicationFact
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
         var s = await SembrarAsync(fixture);
-        using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
+        using var cliente = Cliente(fixture, "ADMINISTRADOR", s.UsuarioId);
 
-        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra/999999/anulacion",
-            new { motivo = "Error", usuarioAutoriza = "x", contrasenaAutoriza = "y" });
+        var respuesta = await cliente.PostAsJsonAsync("/api/facturas-compra/999999/anulacion", new { motivo = "Error" });
 
         Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
         Assert.Contains("La factura de compra indicada no existe.", await respuesta.Content.ReadAsStringAsync());

@@ -152,8 +152,7 @@ public class FacturaCompraRepositorio : IFacturaCompraRepositorio
                 .SetProperty(f => f.Estado, EstadoAnulada)
                 .SetProperty(f => f.MotivoAnulacion, anulacion.Motivo)
                 .SetProperty(f => f.FechaAnulacion, anulacion.Fecha)
-                .SetProperty(f => f.UsuarioAnulacionId, anulacion.UsuarioId)
-                .SetProperty(f => f.UsuarioAutorizacionId, anulacion.UsuarioAutorizacionId), ct);
+                .SetProperty(f => f.UsuarioAnulacionId, anulacion.UsuarioId), ct);
         if (marcadas == 0)
             return Result.Failure(TipoError.Conflicto, "La factura ya no está activa.");
 

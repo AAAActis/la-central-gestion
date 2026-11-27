@@ -10,20 +10,15 @@ using Moq;
 namespace LaCentral.Tests.FacturasCompra;
 
 /// <summary>
-/// HU-FCO-04 (028), lógica del caso de uso con Moq. La doble certificación (B.4 del 07,
-/// decisión del 14/11/2026): anula quien está en la sesión (ADMINISTRADOR u OPERADOR) y la
-/// autoriza OTRO usuario, ADMINISTRADOR y activo, que prueba quién es con su contraseña.
+/// HU-FCO-04 (028), lógica del caso de uso con Moq. Anula quien está en la sesión, si es
+/// ADMINISTRADOR, sin autorización de otra persona (CA-006 y CA-007 v1.2, D-S7-04).
 /// </summary>
 public class AnularFacturaCompraUseCaseTests
 {
     private const int FacturaActiva = 40;
     private const int FacturaAnulada = 41;
-    private const int Administrador = 2;
-    private const int Operador = 1;
 
     private readonly Mock<IFacturaCompraRepositorio> _facturas = new();
-    private readonly Mock<IUsuarioRepositorio> _usuarios = new();
-    private readonly Mock<IServicioHash> _hash = new();
     private readonly Mock<IPreciosArticuloRepositorio> _precios = new();
     private readonly Mock<INotaCreditoCompraRepositorio> _notas = new();
     private Mock<IUnidadDeTrabajo> _unidad = DoblesBaja.UnidadQueEjecuta();
@@ -40,26 +35,17 @@ public class AnularFacturaCompraUseCaseTests
             .Callback((AnulacionFacturaCompra a, CancellationToken _) => _anulacion = a)
             .ReturnsAsync(Result.Success());
         _notas.Setup(n => n.ObtenerVigentesDeFacturaAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
-        Usuario("jefa", id: 9, rol: Administrador);
-        Usuario("cajero", id: 10, rol: Operador);
-        Usuario("ex.jefe", id: 11, rol: Administrador, activo: false);
-        Usuario("yo", id: DoblesBaja.UsuarioEnSesion, rol: Administrador);
-        _hash.Setup(h => h.VerificarClave("clave-buena", It.IsAny<string>())).Returns(true);
         _precios.Setup(p => p.ObtenerAsync(It.IsAny<IReadOnlyCollection<int>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<int, PreciosDeArticulo>());
         _contexto.SetupGet(c => c.EsAdministrador).Returns(true);
     }
 
-    private void Usuario(string nombre, int id, int rol, bool activo = true) =>
-        _usuarios.Setup(u => u.ObtenerPorNombreAsync(nombre, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Usuario { Id = id, NombreUsuario = nombre, HashContrasena = $"hash-{nombre}", RolId = rol, Activo = activo });
 
     private AnularFacturaCompraUseCase Caso() =>
-        new(_facturas.Object, _usuarios.Object, _hash.Object, _unidad.Object, _contexto.Object,
+        new(_facturas.Object, _unidad.Object, _contexto.Object,
             new CalcularPreciosArticuloUseCase(_precios.Object), _notas.Object);
 
-    private static AnularFacturaCompraRequest Pedido(string? motivo = " Cargada dos veces ", string? autoriza = "jefa",
-        string? clave = "clave-buena") => new(motivo, autoriza, clave);
+    private static AnularFacturaCompraRequest Pedido(string? motivo = " Cargada dos veces ") => new(motivo);
 
     private void NoSeAnulo() =>
         _facturas.Verify(f => f.AnularConEfectosAsync(It.IsAny<AnulacionFacturaCompra>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -95,79 +81,19 @@ public class AnularFacturaCompraUseCaseTests
     public async Task FacturaYaAnulada_Conflicto()
         => AssertFallo(await Caso().EjecutarAsync(FacturaAnulada, Pedido()), TipoError.Conflicto);
 
-    // Doble certificación: sin autorización válida no se anula. Los cuatro dan el mismo
-    // mensaje para no revelar qué usuarios existen.
-    [Theory]
-    [InlineData(null, "clave-buena")]
-    [InlineData("nadie", "clave-buena")]
-    [InlineData("jefa", "clave-mala")]
-    [InlineData("jefa", null)]
-    [InlineData("ex.jefe", "clave-buena")]
-    public async Task AutorizacionInvalida_Invalido(string? autoriza, string? clave)
-    {
-        var resultado = await Caso().EjecutarAsync(FacturaActiva, Pedido(autoriza: autoriza, clave: clave));
-
-        AssertFallo(resultado, TipoError.Invalido);
-        Assert.Contains("autorización", resultado.Error);
-    }
-
-    [Fact]
-    public async Task AutorizaUnOperador_Invalido()
-    {
-        var resultado = await Caso().EjecutarAsync(FacturaActiva, Pedido(autoriza: "cajero"));
-
-        AssertFallo(resultado, TipoError.Invalido);
-        Assert.Contains("ADMINISTRADOR", resultado.Error);
-    }
-
-    // Dos personas distintas: el de la sesión no se autoriza a sí mismo, aunque sea ADMINISTRADOR.
-    [Fact]
-    public async Task SeAutorizaASiMismo_Invalido()
-    {
-        var resultado = await Caso().EjecutarAsync(FacturaActiva, Pedido(autoriza: "yo"));
-
-        AssertFallo(resultado, TipoError.Invalido);
-        Assert.Contains("otra persona", resultado.Error);
-    }
-
-    [Fact]
-    public async Task ConAutorizacionValida_AnulaConMotivoSesionYAutorizante()
-    {
-        var resultado = await Caso().EjecutarAsync(FacturaActiva, Pedido());
-
-        Assert.True(resultado.IsSuccess, resultado.Error);
-        Assert.NotNull(_anulacion);
-        Assert.Equal(FacturaActiva, _anulacion!.FacturaId);
-        Assert.Equal("Cargada dos veces", _anulacion.Motivo);
-        Assert.Equal(DoblesBaja.UsuarioEnSesion, _anulacion.UsuarioId);
-        Assert.Equal(9, _anulacion.UsuarioAutorizacionId);
-        Assert.True((DateTime.UtcNow - _anulacion.Fecha).Duration() < TimeSpan.FromMinutes(1));
-        _hash.Verify(h => h.VerificarClave("clave-buena", "hash-jefa"), Times.Once);
-    }
-
-    // Un OPERADOR también anula, con la autorización de un ADMINISTRADOR.
-    [Fact]
-    public async Task AnulaUnOperadorConAutorizacionDeUnAdministrador()
-    {
-        _contexto = DoblesBaja.Contexto(10);
-
-        Assert.True((await Caso().EjecutarAsync(FacturaActiva, Pedido())).IsSuccess);
-        Assert.Equal(10, _anulacion!.UsuarioId);
-    }
-
     // CA-006 (v1.2, D-S7-04): un ADMINISTRADOR anula solo, sin autorización de otra persona.
     [Fact]
     public async Task CA006_UnAdministradorAnulaSolo_ConMotivoYQuienAnulo()
     {
-        var resultado = await Caso().EjecutarAsync(FacturaActiva, new AnularFacturaCompraRequest(" Cargada dos veces ", null, null));
+        var resultado = await Caso().EjecutarAsync(FacturaActiva, new AnularFacturaCompraRequest(" Cargada dos veces "));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
         Assert.Equal((FacturaActiva, "Cargada dos veces", DoblesBaja.UsuarioEnSesion),
             (_anulacion!.FacturaId, _anulacion.Motivo, _anulacion.UsuarioId));
-        _hash.Verify(h => h.VerificarClave(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        Assert.True((DateTime.UtcNow - _anulacion.Fecha).Duration() < TimeSpan.FromMinutes(1));
     }
 
-    // CA-007 (v1.2, D-S7-04): un OPERADOR recibe 403 y no cambia nada, aunque traiga una autorización válida.
+    // CA-007 (v1.2, D-S7-04): un OPERADOR recibe 403 y no cambia nada.
     [Fact]
     public async Task CA007_UnOperador_Prohibido()
     {

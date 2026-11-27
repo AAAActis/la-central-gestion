@@ -16,12 +16,8 @@ public class AnularNotaCreditoCompraUseCaseTests
 {
     private const int NotaVigente = 70;
     private const int NotaAnulada = 71;
-    private const int Administrador = 2;
-    private const int Operador = 1;
 
     private readonly Mock<INotaCreditoCompraRepositorio> _notas = new();
-    private readonly Mock<IUsuarioRepositorio> _usuarios = new();
-    private readonly Mock<IServicioHash> _hash = new();
     private Mock<IUnidadDeTrabajo> _unidad = DoblesBaja.UnidadQueEjecuta();
     private Mock<IContextoUsuario> _contexto = DoblesBaja.Contexto();
     private AnulacionNotaCreditoCompra? _anulacion;
@@ -35,22 +31,14 @@ public class AnularNotaCreditoCompraUseCaseTests
         _notas.Setup(n => n.AnularConEfectosAsync(It.IsAny<AnulacionNotaCreditoCompra>(), It.IsAny<CancellationToken>()))
             .Callback((AnulacionNotaCreditoCompra a, CancellationToken _) => _anulacion = a)
             .ReturnsAsync(Result.Success());
-        Usuario("jefa", id: 9, rol: Administrador);
-        Usuario("cajero", id: 10, rol: Operador);
-        Usuario("yo", id: DoblesBaja.UsuarioEnSesion, rol: Administrador);
-        _hash.Setup(h => h.VerificarClave("clave-buena", It.IsAny<string>())).Returns(true);
         _contexto.SetupGet(c => c.EsAdministrador).Returns(true);
     }
 
-    private void Usuario(string nombre, int id, int rol) =>
-        _usuarios.Setup(u => u.ObtenerPorNombreAsync(nombre, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Usuario { Id = id, NombreUsuario = nombre, HashContrasena = $"hash-{nombre}", RolId = rol, Activo = true });
 
     private AnularNotaCreditoCompraUseCase Caso() =>
-        new(_notas.Object, _usuarios.Object, _hash.Object, _unidad.Object, _contexto.Object);
+        new(_notas.Object, _unidad.Object, _contexto.Object);
 
-    private static AnularNotaCreditoCompraRequest Pedido(string? motivo = " Mal cargada ", string? autoriza = "jefa",
-        string? clave = "clave-buena") => new(motivo, autoriza, clave);
+    private static AnularNotaCreditoCompraRequest Pedido(string? motivo = " Mal cargada ") => new(motivo);
 
     private async Task Rechaza(int notaId, AnularNotaCreditoCompraRequest pedido, TipoError tipo)
     {
@@ -59,17 +47,6 @@ public class AnularNotaCreditoCompraUseCaseTests
         Assert.Equal((false, tipo), (resultado.IsSuccess, resultado.Tipo));
         Assert.False(string.IsNullOrWhiteSpace(resultado.Error));
         _notas.Verify(n => n.AnularConEfectosAsync(It.IsAny<AnulacionNotaCreditoCompra>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task ConAutorizacionValida_AnulaConMotivoSesionYAutorizante()
-    {
-        var resultado = await Caso().EjecutarAsync(NotaVigente, Pedido());
-
-        Assert.True(resultado.IsSuccess, resultado.Error);
-        Assert.Equal((NotaVigente, "Mal cargada", DoblesBaja.UsuarioEnSesion, 9),
-            (_anulacion?.NotaId, _anulacion?.Motivo, _anulacion?.UsuarioId, _anulacion?.UsuarioAutorizacionId));
-        Assert.True((DateTime.UtcNow - _anulacion!.Fecha).Duration() < TimeSpan.FromMinutes(1));
     }
 
     [Theory]
@@ -83,13 +60,6 @@ public class AnularNotaCreditoCompraUseCaseTests
     [Fact]
     public async Task NotaYaAnulada_Conflicto() => await Rechaza(NotaAnulada, Pedido(), TipoError.Conflicto);
 
-    [Theory]
-    [InlineData("jefa", "clave-mala")]
-    [InlineData("cajero", "clave-buena")]
-    [InlineData("yo", "clave-buena")]
-    public async Task SinDobleCertificacionValida_Invalido(string autoriza, string clave)
-        => await Rechaza(NotaVigente, Pedido(autoriza: autoriza, clave: clave), TipoError.Invalido);
-
     [Fact]
     public async Task SinUsuarioEnLaSesion_NoAutorizado()
     {
@@ -102,11 +72,11 @@ public class AnularNotaCreditoCompraUseCaseTests
     [Fact]
     public async Task CA012_UnAdministradorLaAnulaSolo()
     {
-        var resultado = await Caso().EjecutarAsync(NotaVigente, new AnularNotaCreditoCompraRequest(" Mal cargada ", null, null));
+        var resultado = await Caso().EjecutarAsync(NotaVigente, new AnularNotaCreditoCompraRequest(" Mal cargada "));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
         Assert.Equal((NotaVigente, "Mal cargada", DoblesBaja.UsuarioEnSesion), (_anulacion!.NotaId, _anulacion.Motivo, _anulacion.UsuarioId));
-        _hash.Verify(h => h.VerificarClave(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        Assert.True((DateTime.UtcNow - _anulacion.Fecha).Duration() < TimeSpan.FromMinutes(1));
     }
 
     // CA-012 (v1.3): si quien la pide no es ADMINISTRADOR, 403 y no cambia nada.

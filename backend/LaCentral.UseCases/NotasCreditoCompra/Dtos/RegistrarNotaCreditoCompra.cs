@@ -42,10 +42,10 @@ public sealed record NotaCreditoPdfInterpretada(
 /// <summary>CA-014: de un artículo, lo comprado en las facturas referenciadas y lo devuelto en notas vigentes.</summary>
 public sealed record CompradoYDevuelto(int ArticuloId, decimal Comprado, decimal Devuelto);
 
-/// <summary>CA-012 (D-S6-23): pedido de anulación, como el de la factura (028).</summary>
-public sealed record AnularNotaCreditoCompraRequest(string? Motivo, string? UsuarioAutoriza, string? ContrasenaAutoriza);
+/// <summary>CA-012 (v1.3, D-S7-04): pedido de anulación, como el de la factura (028). Quién anula sale de la sesión.</summary>
+public sealed record AnularNotaCreditoCompraRequest(string? Motivo);
 
 public sealed record NotaCreditoParaAnular(int Id, string Numero, bool Activa);
 
 /// <summary>CA-012: lo que se escribe al anular. Si la nota era por devolución, el stock vuelve a cada origen.</summary>
-public sealed record AnulacionNotaCreditoCompra(int NotaId, string Motivo, int UsuarioId, int UsuarioAutorizacionId, DateTime Fecha);
+public sealed record AnulacionNotaCreditoCompra(int NotaId, string Motivo, int UsuarioId, DateTime Fecha);

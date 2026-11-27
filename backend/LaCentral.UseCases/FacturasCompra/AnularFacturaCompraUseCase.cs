@@ -5,12 +5,10 @@ using LaCentral.UseCases.Puertos;
 
 namespace LaCentral.UseCases.FacturasCompra;
 
-/// <summary>HU-FCO-04 (028) · Anulación de factura de compra, con doble certificación.</summary>
+/// <summary>HU-FCO-04 (028) · Anulación de factura de compra: la hace un ADMINISTRADOR solo (D-S7-04).</summary>
 public class AnularFacturaCompraUseCase
 {
     private readonly IFacturaCompraRepositorio _facturas;
-    private readonly IUsuarioRepositorio _usuarios;
-    private readonly IServicioHash _hash;
     private readonly IUnidadDeTrabajo _unidadDeTrabajo;
     private readonly IContextoUsuario _contexto;
     private readonly CalcularPreciosArticuloUseCase _calcularPrecios;
@@ -18,8 +16,6 @@ public class AnularFacturaCompraUseCase
 
     public AnularFacturaCompraUseCase(
         IFacturaCompraRepositorio facturas,
-        IUsuarioRepositorio usuarios,
-        IServicioHash hash,
         IUnidadDeTrabajo unidadDeTrabajo,
         IContextoUsuario contexto,
         CalcularPreciosArticuloUseCase calcularPrecios,
@@ -27,8 +23,6 @@ public class AnularFacturaCompraUseCase
     {
         _notas = notas;
         _facturas = facturas;
-        _usuarios = usuarios;
-        _hash = hash;
         _unidadDeTrabajo = unidadDeTrabajo;
         _contexto = contexto;
         _calcularPrecios = calcularPrecios;
@@ -39,6 +33,9 @@ public class AnularFacturaCompraUseCase
         var usuarioId = _contexto.UsuarioId;
         if (usuarioId <= 0)
             return Result.Failure(TipoError.NoAutorizado, "No se pudo determinar el usuario que ejecuta la operación.");
+        // CA-007 (v1.2, D-S7-04): solo un ADMINISTRADOR anula.
+        if (!_contexto.EsAdministrador)
+            return Result.Failure(TipoError.Prohibido, "Solo un ADMINISTRADOR puede anular una factura de compra.");
         if (string.IsNullOrWhiteSpace(request.Motivo))
             return Result.Failure(TipoError.Invalido, "El motivo de la anulación es obligatorio.");
 
@@ -48,12 +45,7 @@ public class AnularFacturaCompraUseCase
         if (!factura.Activa)
             return Result.Failure(TipoError.Conflicto, $"La factura {factura.Numero} ya está anulada.");
 
-        // Doble certificación (B.4 del 07): otra persona, ADMINISTRADOR y activa, con su contraseña.
-        var autoriza = await DobleCertificacion.VerificarAsync(_usuarios, _hash, request.UsuarioAutoriza, request.ContrasenaAutoriza, usuarioId, ct);
-        if (!autoriza.IsSuccess)
-            return Result.Failure(autoriza.Tipo, autoriza.Error);
-
-        var anulacion = new AnulacionFacturaCompra(facturaId, request.Motivo.Trim(), usuarioId, autoriza.Value, DateTime.UtcNow);
+        var anulacion = new AnulacionFacturaCompra(facturaId, request.Motivo.Trim(), usuarioId, DateTime.UtcNow);
         return await _unidadDeTrabajo.EjecutarAsync(async token =>
         {
             // CA-011 (D-S6-22): con la factura bloqueada, así no entra una nota entre la consulta y la anulación.

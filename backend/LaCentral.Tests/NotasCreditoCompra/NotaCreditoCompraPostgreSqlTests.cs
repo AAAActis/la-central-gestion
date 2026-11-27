@@ -115,9 +115,18 @@ public class NotaCreditoCompraPostgreSqlTests
     private static async Task<Result> AnularAsync(Escenario e, int nota, string motivo = "Cargada dos veces")
     {
         await using var contexto = e.Fixture.CrearContexto();
-        return await new AnularNotaCreditoCompraUseCase(new NotaCreditoCompraRepositorio(contexto), new UsuarioRepositorio(contexto),
-                new ServicioHash(), new UnidadDeTrabajo(contexto), Sesion(e).Object)
-            .EjecutarAsync(nota, new AnularNotaCreditoCompraRequest(motivo, "jefa.fco07", ClaveJefa));
+        return await new AnularNotaCreditoCompraUseCase(new NotaCreditoCompraRepositorio(contexto), new UnidadDeTrabajo(contexto),
+                (await SesionDeLaJefaAsync(contexto)).Object)
+            .EjecutarAsync(nota, new AnularNotaCreditoCompraRequest(motivo));
+    }
+
+    /// <summary>D-S7-04: anula un ADMINISTRADOR solo; la sesión es la de la jefa.</summary>
+    private static async Task<Mock<IContextoUsuario>> SesionDeLaJefaAsync(LaCentralDbContext contexto)
+    {
+        var sesion = new Mock<IContextoUsuario>();
+        sesion.SetupGet(s => s.UsuarioId).Returns(await contexto.Usuario.Where(u => u.NombreUsuario == "jefa.fco07").Select(u => u.Id).SingleAsync());
+        sesion.SetupGet(s => s.EsAdministrador).Returns(true);
+        return sesion;
     }
 
     private static async Task<decimal?> StockAsync(Escenario e, int articulo, short sucursal)
@@ -321,7 +330,7 @@ public class NotaCreditoCompraPostgreSqlTests
         await using var relectura = fixture.CrearContexto();
         var fila = await relectura.NotaCreditoCompra.AsNoTracking().SingleAsync(n => n.Id == nota.Value.Id);
         var jefa = await relectura.Usuario.Where(u => u.NombreUsuario == "jefa.fco07").Select(u => u.Id).SingleAsync();
-        Assert.Equal(("ANULADA", "Mal cargada", e.Operador, jefa), (fila.Estado, fila.MotivoAnulacion, fila.UsuarioAnulacionId, fila.UsuarioAutorizacionId));
+        Assert.Equal(("ANULADA", "Mal cargada", jefa, (int?)null), (fila.Estado, fila.MotivoAnulacion, fila.UsuarioAnulacionId, fila.UsuarioAutorizacionId));
         Assert.True(fila.FechaAnulacion > DateTime.UtcNow.AddMinutes(-5));
         Assert.Equal(0m, await StockAsync(e, e.X, e.RC));
         Assert.Equal(2m, await StockAsync(e, e.Y, e.S2));
@@ -329,7 +338,7 @@ public class NotaCreditoCompraPostgreSqlTests
         Assert.False(await repositorioNuevo.ExisteNumeroAsync(e.P1, "NC-9"));
         Assert.Equal(new NotaCreditoParaAnular(nota.Value.Id, "NC-9", false), await repositorioNuevo.ObtenerParaAnularAsync(nota.Value.Id));
 
-        var otraVez = await repositorioNuevo.AnularConEfectosAsync(new AnulacionNotaCreditoCompra(nota.Value.Id, "x", e.Operador, jefa, DateTime.UtcNow));
+        var otraVez = await repositorioNuevo.AnularConEfectosAsync(new AnulacionNotaCreditoCompra(nota.Value.Id, "x", jefa, DateTime.UtcNow));
         Assert.Equal(TipoError.Conflicto, otraVez.Tipo);
         Assert.Equal(2m, await StockAsync(e, e.Y, e.S2));
         Assert.True((await RegistrarAsync(e, Devolucion(e, "NC-9", [e.F1], new LineaNotaCreditoCompraRequest(e.Y, e.S2, 1m)))).IsSuccess);
@@ -391,10 +400,10 @@ public class NotaCreditoCompraPostgreSqlTests
     private static async Task<Result> AnularFacturaAsync(Escenario e, int factura)
     {
         await using var contexto = e.Fixture.CrearContexto();
-        return await new AnularFacturaCompraUseCase(new FacturaCompraRepositorio(contexto), new UsuarioRepositorio(contexto),
-                new ServicioHash(), new UnidadDeTrabajo(contexto), Sesion(e).Object,
+        return await new AnularFacturaCompraUseCase(new FacturaCompraRepositorio(contexto), new UnidadDeTrabajo(contexto),
+                (await SesionDeLaJefaAsync(contexto)).Object,
                 new CalcularPreciosArticuloUseCase(new ArticuloRepositorio(contexto)), new NotaCreditoCompraRepositorio(contexto))
-            .EjecutarAsync(factura, new AnularFacturaCompraRequest("Cargada dos veces", "jefa.fco07", ClaveJefa));
+            .EjecutarAsync(factura, new AnularFacturaCompraRequest("Cargada dos veces"));
     }
 
     // El registro vuelve a mirar las facturas dentro de la transacción, con ellas bloqueadas: si una
@@ -445,7 +454,7 @@ public class NotaCreditoCompraPostgreSqlTests
         await EsperarBloqueoAsync(fixture, pidRegistro, enEspera);
 
         Assert.True((await new FacturaCompraRepositorio(anulacion).AnularConEfectosAsync(
-            new AnulacionFacturaCompra(e.F2, "Cargada dos veces", e.Operador, jefa, DateTime.UtcNow))).IsSuccess);
+            new AnulacionFacturaCompra(e.F2, "Cargada dos veces", jefa, DateTime.UtcNow))).IsSuccess);
         await transaccion.CommitAsync();
 
         Assert.Equal(TipoError.Conflicto, (await enEspera).Tipo);

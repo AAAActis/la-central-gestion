@@ -102,10 +102,13 @@ public class AnularFacturaCompraPostgreSqlTests
     private static async Task<Result> AnularAsync(Escenario e, int factura, string motivo = "Cargada dos veces")
     {
         await using var contexto = e.Fixture.CrearContexto();
-        return await new AnularFacturaCompraUseCase(new FacturaCompraRepositorio(contexto), new UsuarioRepositorio(contexto),
-                new ServicioHash(), new UnidadDeTrabajo(contexto), Sesion(e).Object,
+        // D-S7-04: anula un ADMINISTRADOR solo; la sesión es la de la jefa.
+        var sesion = new Mock<IContextoUsuario>();
+        sesion.SetupGet(s => s.UsuarioId).Returns(e.Jefa);
+        sesion.SetupGet(s => s.EsAdministrador).Returns(true);
+        return await new AnularFacturaCompraUseCase(new FacturaCompraRepositorio(contexto), new UnidadDeTrabajo(contexto), sesion.Object,
                 new CalcularPreciosArticuloUseCase(new ArticuloRepositorio(contexto)), new NotaCreditoCompraRepositorio(contexto))
-            .EjecutarAsync(factura, new AnularFacturaCompraRequest(motivo, "jefa.fco04", ClaveJefa));
+            .EjecutarAsync(factura, new AnularFacturaCompraRequest(motivo));
     }
 
     private sealed record Foto(string EstadoF2, string? Motivo, int? Anulo, int? Autorizo, decimal StockXS1, decimal? StockYS2,
@@ -126,9 +129,9 @@ public class AnularFacturaCompraPostgreSqlTests
             await c.ArticuloHistorialCompra.CountAsync(h => h.Anulado));
     }
 
-    // CA-001 y CA-002, y la doble certificación escrita en la fila.
+    // CA-001 y CA-002, y quién anuló escrito en la fila (CA-006 v1.2, D-S7-04: sin autorizante).
     [PostgreSqlFact]
-    public async Task Anular_RevierteStockCostoYProveedor_YDejaLaFacturaAnuladaConQuienAnuloYQuienAutorizo()
+    public async Task Anular_RevierteStockCostoYProveedor_YDejaLaFacturaAnuladaConQuienAnulo_SinAutorizante()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
         var e = await SembrarAsync(fixture);
@@ -139,7 +142,7 @@ public class AnularFacturaCompraPostgreSqlTests
         Assert.True(resultado.IsSuccess, resultado.Error);
         // X vuelve al costo y al proveedor de F1, y su Lista se recalcula (100 × 1,50).
         // Y no tiene registro válido anterior: queda sin último proveedor y conserva su costo (CA-002).
-        Assert.Equal(new Foto("ANULADA", "Cargada dos veces", e.Operador, e.Jefa, 5m, 0m, 100m, e.P1, 80m, null, 150m, 2),
+        Assert.Equal(new Foto("ANULADA", "Cargada dos veces", e.Jefa, null, 5m, 0m, 100m, e.P1, 80m, null, 150m, 2),
             await FotografiarAsync(e));
         await using var c = fixture.CrearContexto();
         Assert.NotNull((await c.FacturaCompra.AsNoTracking().SingleAsync(f => f.Id == e.F2)).FechaAnulacion);
@@ -203,7 +206,7 @@ public class AnularFacturaCompraPostgreSqlTests
         Result segunda;
         await using (var contexto = fixture.CrearContexto())
             segunda = await new UnidadDeTrabajo(contexto).EjecutarAsync(token => new FacturaCompraRepositorio(contexto)
-                .AnularConEfectosAsync(new AnulacionFacturaCompra(e.F2, "Otra vez", e.Operador, e.Jefa, DateTime.UtcNow), token));
+                .AnularConEfectosAsync(new AnulacionFacturaCompra(e.F2, "Otra vez", e.Jefa, DateTime.UtcNow), token));
 
         Assert.Equal(TipoError.Conflicto, segunda.Tipo);
         var foto = await FotografiarAsync(e);

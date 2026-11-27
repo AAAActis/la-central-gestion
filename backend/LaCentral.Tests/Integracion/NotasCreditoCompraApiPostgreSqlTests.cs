@@ -146,9 +146,17 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
         Assert.False(await relectura.NotaCreditoCompra.AnyAsync());
     }
 
-    // CA-012: la anulación por HTTP, con la doble certificación; el stock vuelve al origen.
+    /// <summary>D-S7-04: la anulación la hace un ADMINISTRADOR solo; este es el cliente de la jefa sembrada.</summary>
+    private async Task<(HttpClient Cliente, int Id)> JefaAsync(PostgreSqlPruebas fixture)
+    {
+        await using var c = fixture.CrearContexto();
+        var id = await c.Usuario.Where(u => u.NombreUsuario == "jefa.notas").Select(u => u.Id).SingleAsync();
+        return (Cliente(fixture, "ADMINISTRADOR", id), id);
+    }
+
+    // CA-012 (v1.3, D-S7-04): la anula un ADMINISTRADOR solo, sin autorizante; un OPERADOR recibe 403; el stock vuelve al origen.
     [PostgreSqlFact]
-    public async Task PostAnulacion_204_YLaNotaQuedaAnuladaConElUsuarioDelTokenYElQueAutorizo()
+    public async Task PostAnulacion_DeUnAdministrador_204_YLaNotaQuedaAnuladaConElUsuarioDelToken_SinAutorizante()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
         var s = await SembrarAsync(fixture);
@@ -156,15 +164,17 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
         var alta = await cliente.PostAsJsonAsync("/api/notas-credito-compra", Devolucion(s));
         Assert.Equal(HttpStatusCode.Created, alta.StatusCode);
         var id = (await alta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await cliente.PostAsJsonAsync($"/api/notas-credito-compra/{id}/anulacion", new { motivo = "Mal cargada" })).StatusCode);
+        var (deLaJefa, jefa) = await JefaAsync(fixture);
+        using var _ = deLaJefa;
 
-        var respuesta = await cliente.PostAsJsonAsync($"/api/notas-credito-compra/{id}/anulacion",
-            new { motivo = "Mal cargada", usuarioAutoriza = "jefa.notas", contrasenaAutoriza = "clave-jefa" });
+        var respuesta = await deLaJefa.PostAsJsonAsync($"/api/notas-credito-compra/{id}/anulacion", new { motivo = "Mal cargada" });
 
         Assert.Equal(HttpStatusCode.NoContent, respuesta.StatusCode);
         await using var relectura = fixture.CrearContexto();
         var nota = await relectura.NotaCreditoCompra.AsNoTracking().SingleAsync(n => n.Id == id);
-        var jefa = await relectura.Usuario.Where(u => u.NombreUsuario == "jefa.notas").Select(u => u.Id).SingleAsync();
-        Assert.Equal(("ANULADA", "Mal cargada", (int?)s.UsuarioId, (int?)jefa),
+        Assert.Equal(("ANULADA", "Mal cargada", (int?)jefa, (int?)null),
             (nota.Estado, nota.MotivoAnulacion, nota.UsuarioAnulacionId, nota.UsuarioAutorizacionId));
         Assert.Equal(4m, await StockAsync(fixture, s));
     }
@@ -178,8 +188,9 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
         using var cliente = Cliente(fixture, "OPERADOR", s.UsuarioId);
         Assert.Equal(HttpStatusCode.Created, (await cliente.PostAsJsonAsync("/api/notas-credito-compra", Devolucion(s))).StatusCode);
 
-        var respuesta = await cliente.PostAsJsonAsync($"/api/facturas-compra/{s.FacturaId}/anulacion",
-            new { motivo = "Cargada dos veces", usuarioAutoriza = "jefa.notas", contrasenaAutoriza = "clave-jefa" });
+        var (deLaJefa, _) = await JefaAsync(fixture);
+        using var jefa = deLaJefa;
+        var respuesta = await jefa.PostAsJsonAsync($"/api/facturas-compra/{s.FacturaId}/anulacion", new { motivo = "Cargada dos veces" });
 
         Assert.Equal(HttpStatusCode.Conflict, respuesta.StatusCode);
         Assert.Contains("0010-00021495", await respuesta.Content.ReadAsStringAsync());
@@ -213,7 +224,7 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
         Assert.Equal(HttpStatusCode.Unauthorized, (await sinToken.PostAsJsonAsync("/api/notas-credito-compra/calculo", Devolucion(s))).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await invitado.PostAsJsonAsync("/api/notas-credito-compra", Devolucion(s))).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await invitado.PostAsJsonAsync("/api/notas-credito-compra/1/anulacion",
-            new { motivo = "x", usuarioAutoriza = "jefa.notas", contrasenaAutoriza = "clave-jefa" })).StatusCode);
+            new { motivo = "x" })).StatusCode);
         await using var relectura = fixture.CrearContexto();
         Assert.False(await relectura.NotaCreditoCompra.AnyAsync());
     }
@@ -334,8 +345,10 @@ public class NotasCreditoCompraApiPostgreSqlTests : IClassFixture<WebApplication
         var url = $"/api/notas-credito-compra?proveedorId={s.ProveedorId}&emisionDesde=2026-11-05&emisionHasta=2026-11-05";
 
         var antes = await cliente.GetFromJsonAsync<JsonElement>(url);
-        Assert.Equal(HttpStatusCode.NoContent, (await cliente.PostAsJsonAsync($"/api/notas-credito-compra/{id}/anulacion",
-            new { motivo = "Mal cargada", usuarioAutoriza = "jefa.notas", contrasenaAutoriza = "clave-jefa" })).StatusCode);
+        var (deLaJefa, _) = await JefaAsync(fixture);
+        using (deLaJefa)
+            Assert.Equal(HttpStatusCode.NoContent, (await deLaJefa.PostAsJsonAsync($"/api/notas-credito-compra/{id}/anulacion",
+                new { motivo = "Mal cargada" })).StatusCode);
         var despues = await cliente.GetFromJsonAsync<JsonElement>(url);
 
         var fila = Assert.Single(antes.GetProperty("items").EnumerateArray());

@@ -142,8 +142,7 @@ public class NotaCreditoCompraRepositorio : INotaCreditoCompraRepositorio
                 .SetProperty(n => n.Estado, EstadoAnulada)
                 .SetProperty(n => n.MotivoAnulacion, anulacion.Motivo)
                 .SetProperty(n => n.FechaAnulacion, anulacion.Fecha)
-                .SetProperty(n => n.UsuarioAnulacionId, anulacion.UsuarioId)
-                .SetProperty(n => n.UsuarioAutorizacionId, anulacion.UsuarioAutorizacionId), ct);
+                .SetProperty(n => n.UsuarioAnulacionId, anulacion.UsuarioId), ct);
         if (marcadas == 0)
             return Result.Failure(TipoError.Conflicto, "La nota de crédito ya no está activa.");
 
