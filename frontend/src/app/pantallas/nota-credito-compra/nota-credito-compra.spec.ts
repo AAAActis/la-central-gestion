@@ -513,7 +513,8 @@ describe('NotaCreditoCompra · 057', () => {
       expect(responderEleccion('/api/facturas-compra', pagina)).toBe(1);
       marcar('0011-00044774');
 
-      busquedas[1].flush({ items: [expoyer] });
+      // Cada respuesta se parsea por separado: la segunda es otro objeto, con el mismo id.
+      busquedas[1].flush({ items: [{ ...expoyer }] });
       fixture.detectChanges();
 
       expect(responderEleccion('/api/facturas-compra', pagina)).toBe(0);
