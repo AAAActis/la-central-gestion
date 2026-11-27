@@ -13,7 +13,7 @@ describe('Comparador · HU-UI-12 (050)', () => {
   const fila = (proveedorId: number, cambios: Partial<FilaComparador> = {}): FilaComparador => ({
     proveedorId, proveedor: `Proveedor ${proveedorId}`, urlReferencia: null, codigo: `C-${proveedorId}`, nombre: 'Bomba',
     marca: 'SKF', precioNeto: 100, precioLista: 200, diferenciaConMasBarato: 0, estadoStock: 'HAY', stock: null,
-    urlImagen: null, ultimaLectura: '2026-11-20T10:00:00Z', ultimoComprado: false, ...cambios,
+    urlImagen: null, ultimaLectura: '2026-11-20T10:00:00Z', ultimoComprado: false, ultimaConsultaFallida: false, ...cambios,
   });
 
   const ficha = (precioLista: number | null): FichaArticulo => ({
@@ -66,6 +66,17 @@ describe('Comparador · HU-UI-12 (050)', () => {
     const filas = raiz().querySelectorAll('tr.proveedor');
     expect(filas[0].querySelector('.ultimo-comprado')).toBeNull();
     expect(filas[1].querySelector('.ultimo-comprado')).not.toBeNull();
+  });
+
+  it('CA-003 (050): si la última consulta a un proveedor falló, lo informa y muestra su último precio con la fecha', () => {
+    elegir({ articuloId: 5, filas: [fila(1), fila(2, { ultimaConsultaFallida: true, precioNeto: 130 })], existenciaPorProveedor: [], mensaje: null });
+
+    const filas = raiz().querySelectorAll('tr.proveedor');
+    expect(filas[0].querySelector('.consulta-fallida')).toBeNull();
+    const aviso = filas[1].querySelector('.consulta-fallida');
+    expect(aviso).not.toBeNull();
+    expect(aviso!.textContent).toContain('20/11/2026');
+    expect(filas[1].textContent).toContain('130');
   });
 
   it('CA-004 (032): el proveedor que publica un solo precio lo muestra aclarando que no informa bonificado', () => {

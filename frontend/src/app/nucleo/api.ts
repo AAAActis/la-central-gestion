@@ -190,6 +190,8 @@ export interface FilaComparador {
   precioNeto: number | null; precioLista: number | null; diferenciaConMasBarato: number | null;
   estadoStock: 'HAY' | 'NO_HAY' | 'A_CONFIRMAR' | null; stock: number | null; urlImagen: string | null;
   ultimaLectura: string; ultimoComprado: boolean;
+  /** 050 CA-003: falló la última corrida terminada del scrape de este proveedor; el precio es el último conocido. */
+  ultimaConsultaFallida: boolean;
 }
 
 /** 030 · El comparador de un artículo; `existenciaPorProveedor` es el máximo entre sus filas (054 CA4). */
