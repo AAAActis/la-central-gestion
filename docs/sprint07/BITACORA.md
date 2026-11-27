@@ -360,3 +360,22 @@ Sprint 7 anterior al 25/11/2026 (C2, el 12, el 14 y sus re-scaffolds) está en
 - `git fetch --all --prune`: `HEAD..origin/develop` vacío. #204 abierto en `447e17c`, sin revisiones ni comentarios.
 - Fix E2: **PR #204** (https://github.com/AAAActis/la-central-gestion/pull/204), abierto el 27/11, esperando revisión de Santi; cerrado de nuestro lado. ESTADO corregido. Este commit es solo documentación: no se relanzan verificadores ni suite.
 - **Abierto:** revisión y merge del #204; `marcar_en_negro_demo.sql` sin aplicar; DoD 10 pendiente; issue de la factura A de Fazio sin abrir; alta en negro; borrado de los tres esquemas huérfanos, autorizado, que se ejecuta después de este commit.
+- Commit de docs `3763e15` pusheado al #204 y comentario dejado en el PR (https://github.com/AAAActis/la-central-gestion/pull/204#issuecomment-7220174143). Antes: sin CUIT ni nombre del titular, `HEAD..origin/develop` vacío.
+- Esquemas en `lacentral_test`: borrados uno por uno y por nombre exacto `pr110_test_959576f5a2e94cd8b7672947a4edb9ea`, `pr110_test_9f995e9519264abc8e01c6037ea15eb3` y `pr110_test_ef4770ee9a5b40d8a365e102c526810f`. Antes: los tres de `lacentral_javi`, 0 conexiones de otros roles y 0 candados. Después, releído con conexión nueva: quedan `demo_ensayo_c3`, tres `pr110_test_*` de `lacentral_santi` y `staging`. Esta anotación es posterior al commit y queda sin commitear.
+
+## 27/11/2026 11:00 · último commit de docs del Fix E2 y paso a la rama de Enter
+
+**Instrucción recibida (verbatim):**
+> Un último commit de docs en fix/proveedor-razon-social-exacta: corregí el ESTADO (los esquemas huérfanos de lacentral_javi YA se borraron, 3 de 3, el 27/11; quedan los de lacentral_santi: demo_ensayo_c3 y tres pr110_test_*, a resolver por Santi) y commiteá las anotaciones pendientes de la bitácora (push, comentario del PR, borrado). Sin CUIT ni nombre del titular. Push al PR (solo documentación, sin verificadores ni suite). Dejá el árbol limpio: git status debe mostrar solo .codex/ y AGENTS.md sin versionar. Pegame ese git status y el hash.
+> Después, sin tocar nada más, seguí con la rama de Enter en esta misma carpeta:
+> 1. git worktree list (debe haber solo el principal).
+> 2. git fetch --all --prune; git log --oneline HEAD..origin/develop. Si develop trae commits, cruzalos con lo que toca la rama de Enter (git diff --name-only) y reportá antes de mergear (sección 3 del CLAUDE.md).
+> 3. git checkout fix/enter-codigo-exacto; git branch --unset-upstream. Si el checkout se queja, parás y me pegás el error.
+> 4. Leé el último bloque en curso de la bitácora de esa rama, actualizá su ESTADO.md ANTES del push, y pegame git log --oneline origin/develop..HEAD y git diff --stat contra develop.
+> Sin push ni verificadores todavía: te digo cuándo.
+
+**Plan:** 1. ESTADO y bitácora, commit y push al #204. 2. Los cuatro pasos de la rama de Enter, que se registran en la bitácora de esa rama.
+
+**Estado:** terminada
+- ESTADO corregido: los tres esquemas de `lacentral_javi` figuran como borrados y los de `lacentral_santi` como pendientes de Santi. Va en este commit junto con las anotaciones del push, el comentario y el borrado. Solo documentación: sin verificadores ni suite.
+- **Abierto en esta rama:** revisión y merge del #204. La segunda parte de la instrucción sigue en la bitácora de `fix/enter-codigo-exacto`.
