@@ -20,5 +20,18 @@ public sealed record EfectoEnArticulo(bool CambiaCosto, decimal? Costo, int? Ult
 public static class CostoAlAnular
 {
     public static EfectoEnArticulo Decidir(CostoDeArticuloAlAnular a)
-        => new(false, a.CostoActual, null);
+    {
+        // Sin registro anterior válido, el artículo queda sin último proveedor comprado (en los dos casos).
+        var ultimoProveedor = a.AnteriorValido?.ProveedorId;
+        if (a.CostoPrevioGuardado)
+            // Si el costo sigue siendo el que puso la factura, nadie lo cambió: vuelve el de antes (null incluido).
+            // shortcut: un cambio a mano al MISMO valor no se distingue de «nadie lo tocó»; haría falta un historial de costos.
+            return a.CostoActual == a.CostoPuestoPorLaFactura
+                ? new(true, a.CostoPrevio, ultimoProveedor)
+                : new(false, a.CostoActual, ultimoProveedor);
+        // Líneas anteriores al 13 (v1.1): el último registro válido; sin ninguno, conserva el costo.
+        return a.AnteriorValido is null
+            ? new(false, a.CostoActual, null)
+            : new(true, a.AnteriorValido.PrecioCosto, ultimoProveedor);
+    }
 }
