@@ -651,7 +651,9 @@ public class RegistrarFacturaCompraPostgreSqlTests
             Estado = anulada ? "ANULADA" : "ACTIVA", Origen = "MANUAL", UsuarioId = e.UsuarioId,
             FechaRegistro = DateTime.UtcNow,
             MotivoAnulacion = anulada ? "Cargada por error" : null,
-            FechaAnulacion = anulada ? DateTime.UtcNow : null
+            FechaAnulacion = anulada ? DateTime.UtcNow : null,
+            // el 13 (fc_anulacion_con_usuario) exige quién anuló
+            UsuarioAnulacionId = anulada ? e.UsuarioId : null
         };
         contexto.FacturaCompra.Add(factura);
         await contexto.SaveChangesAsync();
