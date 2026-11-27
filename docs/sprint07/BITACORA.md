@@ -424,3 +424,12 @@ Mientras corre una suite o un verificador: solo escribir código o pruebas, nada
 **Estado:** terminada
 - ESTADO corregido: los tres esquemas de `lacentral_javi` figuran como borrados y los de `lacentral_santi` como pendientes de Santi. Va en este commit junto con las anotaciones del push, el comentario y el borrado. Solo documentación: sin verificadores ni suite.
 - **Abierto en esta rama:** revisión y merge del #204. La segunda parte de la instrucción sigue en la bitácora de `fix/enter-codigo-exacto`.
+
+## 27/11/2026 · base_completa a PR (punto 2 de la cola del 27/11)
+
+La instrucción verbatim está en el bloque «27/11/2026 18:40 · Retomar el Sprint 7…» de la bitácora de `feature/127-vincular`.
+
+**Estado:** en curso
+- Merge de `origin/develop` (`80ede7a`) → `737e4d4`, solo conflictos de docs (se conservan los dos lados).
+- Suite completa sobre `737e4d4` (19:59–20:23): `Correctas! - Con error:     0, Superado:   865, Omitido:     0, Total:   865, Duración: 27 m 27 s - LaCentral.Tests.dll (net10.0)`. Son las 864 de `develop` más `BaseCompletaPostgreSqlTests`. Este commit es solo docs y queda fuera de la corrida.
+- Push y PR. `verificador-tdd` acotado a `0564466..6f36ac9`, con corte a las 20:55 (la franja de Javi empieza a las 21:00). El `auditor-persistencia` va después de las 24:00 o mañana.
