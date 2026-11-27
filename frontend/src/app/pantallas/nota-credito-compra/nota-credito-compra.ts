@@ -279,6 +279,8 @@ export class NotaCreditoCompra {
 
   /** CA-001: solo las facturas activas de ESTE proveedor. */
   elegirProveedor(p: ProveedorResumen) {
+    // Un segundo Enter no lo vuelve a elegir: pediría otra vez las facturas y vaciaría las marcadas.
+    if (this.proveedor()?.id === p.id) return;
     this.proveedor.set(p);
     this.proveedores.set([]);
     this.marcadas.set(new Set());
