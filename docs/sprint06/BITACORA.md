@@ -2090,7 +2090,7 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 3. Plan a Javi y OK.
 4. Tres commits TDD; suite una vez; verificador-tdd una vez.
 
-**Estado:** en curso
+**Estado:** terminada
 - 1) Rama `fix/enter-codigo-exacto` creada desde `origin/develop` (`54569b8`); develop traía commits respecto del worktree viejo, no hay trabajo propio que cruzar.
 - 2) Inspección hecha, sin editar código. Proveedor: `api.proveedores` sin tamanoPagina → el backend usa 20 y ordena el código exacto primero (`ProveedorRepositorio.cs:90`). Artículo: el código interno exacto es Prioridad 0 (`ArticuloRepositorio.cs:166`), primero en el orden. El exacto no queda afuera de la página en ninguno de los dos.
 - A confirmar (no implementado): normalizar los códigos de proveedor a 5 dígitos, propuesta de Javi.
@@ -2214,3 +2214,55 @@ En n8n, la credencial de Postgres: host del contenedor, base `lacentral_demo`, u
 > Si da NO APTO: arreglá y reverificá solo los commits del arreglo, hasta 3 rondas (CLAUDE.md). Si da APTO: parás y me pegás el veredicto completo, más el borrador del cuerpo del PR. En el cuerpo: los CA uno por uno; el cambio de conducta del click-guard de la NCA, declarado; las pruebas rojo→verde por commit; PR grande por los .spec (546 líneas, casi todas de tests); y que el conflicto previsto en ESTADO.md con #204 se resuelve mergeando develop cuando #204 entre. Sin push ni PR hasta mi OK.
 
 - Se levanta el bloqueo del commit. Commit de docs: ESTADO del Sprint 7 y esta bitácora. Sigue: `verificador-tdd`.
+- Commit `f0d1310` (ESTADO y bitácora), sin CUIT ni nombre del titular, sin push.
+- Antes de invocar: un solo worktree; nada escucha en el 5181 y no hay procesos `dotnet` (Javi confirma la demo cerrada). `59f21ba..HEAD`: solo `docs/sprint06/BITACORA.md` y `docs/sprint07/ESTADO.md`.
+- `verificador-tdd` lanzado sobre `cca1741`, `591a4d4`, `0676f4f`, `7708097` y `59f21ba`, con la suite de `59f21ba` (408 de 408). `auditor-persistencia`: no aplica (solo frontend).
+- **BLOQUEADO EN:** el veredicto del `verificador-tdd`.
+- `verificador-tdd`, ronda 1, sobre los cinco commits: **NO APTO**. Rojos de `591a4d4` (4 de 86) y `7708097` (1 de 88) reproducidos; sin afirmaciones falsas. Sobreviven 4 mutaciones sobre líneas del diff (186/186 en verde): M3 `codigo-exacto.ts:14` (código interno guardado en minúsculas), M4 `codigo-exacto.ts:19` (código de proveedor con letras), M10 `nota-credito-compra.ts:328` (clic sobre un repetido deja la lista a la vista), M13 `compras-registradas.ts:137` (elegir según un texto que no se buscó). No bloqueantes: `quitarLinea` y `cambiarProveedor` no limpian `errorArticulo`; dos Enter de proveedor en la NCA piden dos veces las facturas. Worktree borrado.
+- Plan de la ronda 2: solo specs, en un commit nuevo (la conducta ya existe, nacen en verde y se prueban en rojo mutando producción); suite de frontend sobre ese commit; reverificar solo ese commit.
+- Arreglo de la ronda 1: `60ccf7e` (solo specs, 9 nuevos). Filtrado sobre producción sin cambios: 130/130. Nueve mutaciones, una por vez, todas en rojo por la prueba esperada y producción restaurada: M3, M4, M10, M13 (1 rojo cada una) y el texto actual en notas, proveedor NCA, factura proveedor y factura artículo (1 cada una) y artículo NCA (2). Nacen en verde: son de caracterización.
+- Suite completa de frontend sobre `60ccf7e` (27/11 11:25), sin cambios sin commitear en `frontend/`: `Chrome Headless 158.0.0.0 (Windows 10): Executed 417 of 417 SUCCESS (3.159 secs / 2.657 secs)` · `TOTAL: 417 SUCCESS`. `ng build`: exit 0, sin advertencias.
+- `verificador-tdd`, ronda 2, lanzado solo sobre `60ccf7e`.
+- **BLOQUEADO EN:** el veredicto de la ronda 2.
+- `verificador-tdd`, ronda 2, solo sobre `60ccf7e`: **APTO**. Las 9 mutaciones en rojo por aserción (incluidas M3, M4, M10 y M13), ninguna sobrevive; 130/130 sin mutar; no repitió la suite (usó la de `60ccf7e`). Worktree borrado (con `rm -rf` y `prune` tras un `Filename too long`).
+- No bloqueantes de la ronda 1, introducidos por este fix y sin arreglar: `quitarLinea` y `cambiarProveedor` no limpian el aviso de repetido; dos Enter en el proveedor de la NCA piden dos veces las facturas y la segunda respuesta vacía las marcadas. Decide Javi.
+- ESTADO actualizado y cuerpo del PR redactado (scratchpad de la sesión). `graphify update .` corrido. Sin commit, sin push, sin PR.
+- **BLOQUEADO EN:** el OK de Javi para commitear estos documentos, pushear y abrir el PR.
+
+**Instrucción de continuación, 27/11/2026 12:08 (verbatim):**
+> Antes de abrir: arreglá el doble Enter en el proveedor de la nota de crédito, misma familia que el del artículo, con el mismo patrón de guarda.
+> 1. Commit de test en rojo: dos Enter seguidos en el proveedor, antes de la respuesta, piden las facturas una sola vez y no vacían las ya marcadas. Corré el spec y mostrame el rojo por aserción (no por compilación).
+> 2. Commit de producción aparte con la guarda. Corré filtrado: nota-credito-compra y compartido, --no-build equivalente de frontend. Mostrame el verde.
+> 3. Pasame el diff de esos dos commits y esperá mi OK; después invocás verificador-tdd UNA vez acotado a esos dos commits (aclarale que el resto ya dio APTO en las rondas 1 y 2, y pasale hash, línea literal y conteo de la suite; si cambió el conteo, corré la suite de frontend una vez sobre el HEAD y pasale ese resultado).
+> 4. Actualizá el cuerpo del PR: sacá el doble Enter de «Conocido, sin arreglar», sumalo a Criterios y al rojo→verde, agregá la ronda 3 a Verificadores y corregí la línea de la suite al HEAD nuevo. «quitarLinea/cambiarProveedor» queda como conocido.
+> 5. Recién entonces: commit de docs (ESTADO.md y bitácora), fetch, y si #204 ya entró en develop mergeá develop y resolvé ESTADO.md conservando ambos bloques; si no, no. Push sin merge y abrí el PR. Sin CUIT ni nombre del titular.
+> Si el verificador da NO APTO: arreglo y reverificación solo de esos commits, hasta 3 rondas. Worktree del verificador con una ruta corta (el anterior falló con Filename too long).
+
+- Precisión sobre la ronda 1: dio **NO APTO** (lo anotado arriba); el APTO es de la ronda 2, sobre `60ccf7e`.
+- Doble Enter en el proveedor de la NCA. Rojo `b171fd9`: sobre producción sin cambios, `TOTAL: 1 FAILED, 41 SUCCESS`, por aserción (`nota-credito-compra.spec.ts:519`, `Expected 1 to be 0`; `:520`, `Expected $.length = 0 to equal 1`). El segundo spec (otro código antes de la respuesta) nace en verde.
+- Producción `d01c064`: `elegirProveedor` corta si el proveedor ya es el elegido. Quien lo llama: el clic de la lista, el Enter y la lectura de PDF (que antes llama a `nueva()`). Filtrado NCA, NCA PDF y `compartido/`, sobre ese cambio: `TOTAL: 184 SUCCESS`. Mutación de control (`if (this.proveedor()) return;`): 1 rojo de 42, el segundo spec; restaurada.
+- **BLOQUEADO EN:** el OK de Javi al diff de `b171fd9` y `d01c064` para correr la suite y el `verificador-tdd`.
+
+**Instrucción de continuación, 27/11/2026 12:20 (verbatim):**
+> OK con dos condiciones, ambas por lectura de código, sin correr nada pesado, antes de invocar al verificador:
+> 1. En nota-credito-compra.ts: si el pedido de facturas falla o termina en error y el proveedor queda elegido, ¿cómo vuelve a pedirlas el usuario? ¿Se resetea el proveedor en el error, hay un botón de reintento, o la nueva guarda `proveedor()?.id === p.id` lo impide? Si lo impide: spec en rojo (commit aparte) y ajustá la guarda para que bloquee solo con el pedido en vuelo, no por tener al proveedor elegido.
+> 2. En compras-registradas y notas-credito-registradas: ¿dos Enter seguidos en el proveedor eligen dos veces con efecto dañino (se vacía algo que el usuario ya tenía)? Una línea con la conclusión y el motivo; si es inofensivo, queda declarado en el cuerpo.
+> Después: suite de frontend UNA vez sobre el HEAD final (esperado: 417 + 2 = 419, más lo que sume el punto 1; si el conteo no coincide, explicalo), verificador-tdd acotado a b171fd9 y d01c064 (y al commit del punto 1 si hay), con el worktree en ruta corta y pasándole hash, línea literal y conteo. Después el cuerpo del PR, docs, fetch y push como quedamos.
+
+- Levantado el bloqueo anterior: OK de Javi al diff, con las dos revisiones previas.
+- Revisión 1 (solo lectura): si falla el pedido de facturas de la NCA, el proveedor queda elegido y no hay botón de reintento; la única vía, antes y ahora, es «Cambiar» (`cambiarProveedor` lo borra) y elegirlo de nuevo, que vuelve a pedirlas. La guarda no lo impide: sin spec ni cambio. Lo único que cambia es que un segundo Enter tardío ya no reintenta de casualidad.
+- Revisión 2 (solo lectura): en compras y notas registradas el segundo Enter es inofensivo; vuelve a poner el mismo proveedor y vacía la lista y el campo, ya vacíos y ocultos; no toca filtros ni resultados. Si entre las dos respuestas se toca «Quitar», la tardía lo repone.
+- Visto de paso, anterior a este fix: en la factura de compra un segundo Enter vuelve a proponer el comprobante habitual, y pisaría un tipo cambiado a mano entre las dos respuestas.
+- Suite completa de frontend sobre `d01c064` (27/11 12:21), sin cambios sin commitear en `frontend/`: `Chrome Headless 158.0.0.0 (Windows 10): Executed 419 of 419 SUCCESS (5.248 secs / 4.273 secs)` · `TOTAL: 419 SUCCESS` (417 + los 2 specs nuevos, lo esperado). `ng build`: exit 0, sin advertencias.
+- `verificador-tdd`, ronda 3, lanzado solo sobre `b171fd9` y `d01c064`, con worktree en ruta corta.
+- **BLOQUEADO EN:** el veredicto de la ronda 3.
+- `verificador-tdd`, ronda 3, sobre `b171fd9` y `d01c064`: **NO APTO**. Rojo y verdes reproducidos. Sobrevive M4, `if (this.proveedor() === p) return;` (419/419): el spec responde las dos búsquedas con el mismo objeto `expoyer`, y en producción cada respuesta es un objeto distinto con el mismo `id`. La producción es correcta; falta cobertura. No bloqueantes, por lectura: respuestas de dos búsquedas en orden inverso dejan el proveedor del primer Enter; una respuesta tardía de las facturas de A pisa las de B. Worktree borrado.
+- Arreglo (solo spec, commit nuevo): la segunda respuesta es una copia de `expoyer`. Después, suite sobre ese commit y reverificación solo de él (segunda ronda sobre este cambio, de hasta 3).
+- Arreglo `b1ddce0` (2 líneas en el spec). Filtrado NCA: 42/42 sin mutar; con `if (this.proveedor() === p) return;` 1 rojo de 42 y sin la guarda 1 rojo de 42, los dos el spec del doble Enter; producción restaurada.
+- Suite completa sobre `b1ddce0` (27/11 12:33): `Chrome Headless 158.0.0.0 (Windows 10): Executed 419 of 419 SUCCESS (7.75 secs / 6.254 secs)` · `TOTAL: 419 SUCCESS`. `ng build`: exit 0, sin advertencias.
+- `verificador-tdd`, reverificación lanzada solo sobre `b1ddce0`.
+- **BLOQUEADO EN:** ese veredicto.
+- `verificador-tdd`, reverificación solo de `b1ddce0`: **APTO**. La mutación que sobrevivía y la guarda quitada dan 1 rojo de 42 cada una; control con el spec anterior, 42/42 en verde; no repitió la suite (usó la de `b1ddce0`). Worktree borrado.
+- `git fetch --all --prune`: `HEAD..origin/develop` vacío; #204 sigue abierto, así que no se mergea `develop`.
+- Commit de docs (ESTADO del Sprint 7 y esta bitácora), push y PR contra `develop`, sin merge.
+- **Abierto:** revisión del PR; conflicto de `docs/sprint07/ESTADO.md` cuando entre #204; recorrido de DoD 10; los dos «a confirmar» y la deuda anotada en el ESTADO.

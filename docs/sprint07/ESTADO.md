@@ -282,14 +282,18 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 
 ## PRÓXIMA SESIÓN
 
-**27/11/2026 · Fix «Enter sobre un código exacto lo elige» (Javi): implementado en local, sin push ni PR.**
+**27/11/2026 · Fix «Enter sobre un código exacto lo elige» (Javi): PR contra `develop`, esperando revisión.**
 - Rama `fix/enter-codigo-exacto` (merges de `develop`: `de068fd` y `5be5732`; al día con `bda2692`). Solo frontend, sin backend ni esquema. Bitácora: `docs/sprint06/BITACORA.md`, bloque del 25/11.
 - Commits: `cca1741` (la regla pasa a `compartido/`, sin cambio de comportamiento; su spec es de caracterización), `591a4d4` (specs en rojo) y `0676f4f` (Enter elige en la NCA, compras registradas y notas registradas); `7708097` (rojo) y `59f21ba` (la NCA no agrega dos veces un artículo sin origen).
 - Sobre `59f21ba` (26/11): suite de frontend `TOTAL: 408 SUCCESS`, solo Chromium; `ng build` sin advertencias; las dos pruebas de backend del orden «exacto primero», contra `lacentral_test`: 2/2 (no es la suite de backend).
+- **27/11 · `verificador-tdd`:** ronda 1 NO APTO (4 mutaciones sin cubrir), arreglado solo con pruebas en `60ccf7e`; ronda 2 **APTO**. Suite de frontend sobre `60ccf7e`: `TOTAL: 417 SUCCESS`, solo Chromium; `ng build` sin advertencias.
+- **27/11 · doble Enter en el proveedor de la NCA** (pedido por Javi): `b171fd9` (rojo) y `d01c064` (guarda). `verificador-tdd`: ronda 3 NO APTO (el spec no distinguía comparar por id de comparar por referencia), arreglado solo en el spec en `b1ddce0`; reverificación **APTO**. Suite de frontend sobre `b1ddce0`: `TOTAL: 419 SUCCESS`, solo Chromium; `ng build` sin advertencias.
+- **Deuda de este fix (no bloqueante):** `quitarLinea` y `cambiarProveedor` no limpian el aviso de repetido de la NCA. Por lectura, sin probar: dos búsquedas de proveedor que respondan en orden inverso dejan el primero; las facturas de un proveedor que lleguen tarde se muestran bajo el elegido después.
+- **Anterior a este fix:** la NCA no tiene botón para reintentar las facturas (se reintenta con «Cambiar»); en la factura de compra un segundo Enter vuelve a proponer el comprobante habitual.
 - **Para el cuerpo del PR, comportamiento que cambia aparte del Enter** (confirmado por Javi, 26/11): en la NCA el clic tampoco agrega dos veces un artículo mientras la primera línea no tiene origen.
 - **A confirmar (sin implementar):** normalizar los códigos de proveedor a 5 dígitos; control de repetido al **cambiar el origen** de una línea en la NCA.
 - **Sin verificar:** el recorrido en el navegador (no figura en la bitácora).
-- **Espera a Javi:** `verificador-tdd` (acotado a `cca1741`, `591a4d4`, `0676f4f`, `7708097` y `59f21ba`; `auditor-persistencia` no aplica), push y PR.
+- **Sigue:** revisión del PR, sin merge de este lado (`auditor-persistencia` no aplica). Si #204 entra antes, se mergea `develop` en la rama y se resuelve este archivo conservando los dos bloques.
 
 **25/11/2026 · el 14 aplicado en las tres bases y su re-scaffold en PR.**
 - **#197 (script 14, Fix F) mergeado (`54569b8`)** antes que el #200; el #200 se destrabó con merge de `develop` y está mergeado (`07fd8e7`).
