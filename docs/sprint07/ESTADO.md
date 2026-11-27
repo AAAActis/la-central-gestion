@@ -282,6 +282,11 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 
 ## PRÓXIMA SESIÓN
 
+**27/11/2026 · #202 (script 13) listo para review de Javi.**
+- `develop` mergeado (`a05158a`). `auditor-persistencia` ronda 1 NO APTO (dos seeds de pruebas con facturas ANULADA sin quién anuló, que romperían con el 13 aplicado); arreglo `7fd6f8a`, solo pruebas; ronda 2 **APTO**. `verificador-tdd` APTO desde la ronda 2 del 25/11 (`a23c8fb`); `7fd6f8a` no toca producción ni las pruebas del 13.
+- Suite completa sobre `7fd6f8a`: `Superado: 879, Total: 879, Duración: 27 m 27 s`.
+- **Orden para aplicar en las bases:** primero el 13 (test, demo, real con backup), cuando quieras. El 16 después del 13, nunca de 21:00 a 24:00 de un día en que Javi tenga `lacentral_test`, y solo cuando su PR esté abierto: aplicado en test deja dos pruebas en rojo hasta el re-scaffold del 16.
+
 **25/11/2026 · arranque del Sprint 7 · script 13.**
 - **Bitácora nueva:** `docs/sprint07/BITACORA.md` (lo anterior del Sprint 7 está en la del Sprint 6).
 - **#201 (re-scaffold del 14) sigue abierto:** no se toca `Proveedor` hasta que entre. Fix E2 y Fix F.3–F.5 son de Javi; los workflows de n8n y el scrape, de Santi (fuera del repo).
