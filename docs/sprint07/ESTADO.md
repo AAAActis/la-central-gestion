@@ -282,12 +282,15 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 
 ## PRÓXIMA SESIÓN
 
-**27/11/2026 · Fix E2 listo en local, sin push ni PR.**
-- Rama `fix/proveedor-razon-social-exacta`; código en `2d008a0`, script de demo en `782a871` y después solo documentación. Verificadores dados por válidos por Javi (detalle en «Fix E2 · implementado según la D-S7-12»).
-- Cuerpo del PR aprobado por Javi con ajustes, ya hechos. El nombre del titular de «cuenta y orden» no entra al repo.
+**27/11/2026 · Fix E2: PR #204 abierto, esperando revisión de Santi. Cerrado de nuestro lado.**
+- **PR #204** (`fix/proveedor-razon-social-exacta` → `develop`), abierto el 27/11, sin merge. Código en `2d008a0`, script de demo en `782a871` y después solo documentación. Verificadores dados por válidos por Javi (detalle en «Fix E2 · implementado según la D-S7-12»).
 - **Suite completa sobre `ec3d0ee`** (27/11, 10:35–10:53, pedida por Javi): `Correctas! - Con error:     0, Superado:   864, Omitido:     0, Total:   864, Duración: 17 m 38 s`. Build limpio 0/0; 0 conexiones de otros roles en las muestras de antes y durante.
-- **Espera a Javi:** su OK para pushear y abrir el PR (sin merge). El issue de la factura A de Fazio lo decide él.
-- Después: `marcar_en_negro_demo.sql` lo aplica Javi o Santi, y el recorrido de DoD 10 con PDF reales contra `lacentral_demo`.
+- **Deuda:**
+  - `marcar_en_negro_demo.sql` sin aplicar (lo aplica Javi o Santi).
+  - Recorrido de DoD 10 con PDF reales contra `lacentral_demo`, pendiente.
+  - Issue de la factura A de Fazio sin abrir (lo decide Javi).
+  - Alta en negro: la app no puede dar de alta ni marcar un proveedor en negro.
+- El nombre del titular de «cuenta y orden» y los CUIT no entran al repo.
 
 **25/11/2026 · el 14 aplicado en las tres bases y su re-scaffold en PR.**
 - **#197 (script 14, Fix F) mergeado (`54569b8`)** antes que el #200; el #200 se destrabó con merge de `develop` y está mergeado (`07fd8e7`).
@@ -334,12 +337,12 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 - **Datos:** los pares blanco/negro de `cuit_simulado` se verificaron **solo en `lacentral_test`** (25/11, solo lectura). **`lacentral` (la real) está sin verificar.**
 - **Demo:** `backend/db/demo/marcar_en_negro_demo.sql` marca **solo a Fazio** (`DEMO-07`) desde `782a871` (cambio de Javi, 26/11/2026: salen Expoyer y ETMAN, este se decide aparte); **sin aplicar** (lo aplica Javi o Santi). Un PDF de ETMAN no asigna proveedor por razón social.
 - **Deuda (va también en el cuerpo del PR):** un proveedor en negro no se puede dar de alta ni marcar desde la app: la app no escribe `cuit_simulado` y queda en `false`; hoy se corrige por SQL.
-- **Pendiente:** push y PR (esperan el OK de Javi). Verificadores corridos: ver abajo.
+- **PR #204** abierto el 27/11, esperando revisión de Santi; sin merge. Verificadores corridos: ver abajo.
 - **Ronda posterior al APTO (26/11/2026):** `f71533e` (prueba de caracterización: `ActualizarAsync` no toca `cuit_simulado`) y `2d008a0` (salen dos cláusulas inalcanzables que ya estaban en `develop`). Suite completa sobre `2d008a0`: `Con error! - Con error:    95, Superado:   769, Omitido:     0, Total:   864, Duración: 1 h 17 m` (89 de Npgsql y 6 «transient failure», #190); reintento de los 95: `Correctas! - Con error:     0, Superado:    95, Omitido:     0, Total:    95`.
 - **Verificadores:** ronda 1, `verificador-tdd` y `auditor-persistencia` APTO. Ronda 2, `verificador-tdd` APTO sobre `f71533e` y `2d008a0`; `auditor-persistencia` sin bloqueantes sobre `782a871`.
 - **Deuda:** el tipo `string` no impide una razón social vacía en un layout nuevo; hay que sumarlo a `CadaLayoutAportaSuRazonSocial`.
 - **Deuda de la demo:** `lacentral_demo` ya tiene `00037` «NESTOR FAZIO S.A.», activo y con CUIT (sin comprobar que sea el real); por esa fila, volver a correr `sembrar_proveedores_pdf.sql` cortaría (deducido, sin ejecutar), y su comentario describe la regla anterior.
-- **Compartida:** tres esquemas `pr110_test_*` de `lacentral_javi` quedaron huérfanos tras la suite del 26/11 (`959576…`, `9f995e…`, `ef4770…`).
+- **Compartida:** tres esquemas `pr110_test_*` de `lacentral_javi` quedaron huérfanos tras la suite del 26/11 (`959576…`, `9f995e…`, `ef4770…`). Javi autorizó borrarlos el 27/11; se borran después de este commit (resultado en la bitácora).
 - **27/11/2026 · decisiones de Javi:** valen los verificadores del 26/11 (no se relanzan); ningún CUIT entra al repo (es público).
 - **27/11/2026 · reintento repetido** de los 95, sobre los binarios de `2d008a0` y sin conexiones de otros roles antes ni después: `Correctas! - Con error:     0, Superado:    95, Omitido:     0, Total:    95, Duración: 7 m 42 s`.
 - **27/11/2026 · tres PDF reales por el lector** (`LectorTextoPdf` y `LayoutsPdf`, sin base ni caso de uso completo): presupuesto de Fazio → «Fazio» (texto fijo del layout), tipo B, toma el CUIT del cliente (BOSAC); en `lacentral_demo` ningún proveedor lo tiene (0 de 10, solo lectura). Factura de ETMAN → «ETMAN», tipo A, `descuento4` para revisar. **Factura A de Fazio → ningún layout la reconoce.**

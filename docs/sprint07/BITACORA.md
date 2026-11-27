@@ -330,3 +330,33 @@ Sprint 7 anterior al 25/11/2026 (C2, el 12, el 14 y sus re-scaffolds) está en
 - Cuerpo del PR y ESTADO actualizados; commit de docs aparte, posterior a la corrida.
 - **Abierto:** push y PR sin merge; decidir el issue; recorrido de DoD 10.
 - **BLOQUEADO EN:** el OK de Javi para pushear y abrir el PR.
+
+## 27/11/2026 10:55 · push y PR del Fix E2
+
+**Instrucción recibida (verbatim):**
+> OK de Javi: repetí el fetch (git log --oneline HEAD..origin/develop). Si viene vacío, push de fix/proveedor-razon-social-exacta y abrí el PR contra develop con el cuerpo actual (cita ec3d0ee y 447e17c, cierra con la línea de atribución). Sin merge. NO abras el issue de la factura A de Fazio. Si develop trae commits, aplicá la sección 3 del CLAUDE.md y parás a reportar antes de pushear.
+> Cuando esté abierto, pasame el número y el link del PR, y anotá en la bitácora el número de PR (el ESTADO ya está actualizado antes del push; si necesitás cambiarlo por el número, hacelo en un commit docs aparte antes del push o decime y lo dejamos como deuda).
+
+**Plan:** 1. Fetch; si develop trae commits, parar. 2. Revisar lo que se publica y pushear `447e17c`. 3. PR contra `develop`. 4. Número del PR en esta bitácora. Sin merge y sin issue.
+
+**Estado:** terminada
+- `git fetch --all --prune` y `git log --oneline HEAD..origin/develop`: vacío (`bda2692`). Escaneo previo de lo publicado: sin CUIT, sin el nombre del titular y sin claves.
+- Push de `447e17c` (22 commits sobre `develop`) y **PR #204** contra `develop`: https://github.com/AAAActis/la-central-gestion/pull/204 . Abierto, sin merge ni auto-merge, `MERGEABLE`, revisión requerida, sin checks de CI informados. El cuerpo publicado es el archivo aprobado. El issue de la factura A de Fazio no se abrió.
+- Esta anotación queda sin commitear, posterior al push.
+- **Deuda:** el ESTADO publicado todavía dice que el push y el PR esperan el OK de Javi y no nombra el #204; se corrige en un commit de docs cuando Javi lo autorice.
+- **Abierto:** revisión y merge del #204 (no es de este asistente); commit de docs con el número; decidir el issue; recorrido de DoD 10 en `lacentral_demo`.
+
+## 27/11/2026 10:57 · cierre del Fix E2: docs en el PR #204 y esquemas huérfanos
+
+**Instrucción recibida (verbatim):**
+> Autorizado, en este orden:
+> 1. Commit de docs (ESTADO.md y BITACORA.md): el ESTADO publicado todavía dice que el push y el PR esperan OK y no nombra el #204; corregilo (PR #204 abierto el 27/11, esperando revisión de Santi; Fix E2 cerrado de nuestro lado; deuda: script de demo sin aplicar, DoD 10 pendiente, issue Fazio A sin abrir, alta en negro). Bitácora: el número del PR y el cierre de la tarea (Estado: terminada, con lo que queda abierto). Sin CUIT ni nombre del titular. Push de ese commit y sumalo al PR: es solo documentación, no relances verificadores ni suite; dejá una línea en el PR (comentario) diciendo qué commit docs se agregó.
+> 2. Borrá los tres esquemas pr110_test_* huérfanos de lacentral_javi, SOLO en lacentral_test: primero listalos con su dueño, confirmá que el dueño es lacentral_javi y que no hay conexiones de otros roles, y borralos por nombre exacto (DROP SCHEMA ... CASCADE, uno por uno, sin comodines). Pegame el antes y el después.
+> 3. Después parás. La rama de Enter la sigo yo.
+
+**Plan:** 1. Fetch y comparar. 2. ESTADO y bitácora. 3. Commit, push y comentario en el #204. 4. Los tres esquemas. 5. Parar.
+
+**Estado:** terminada
+- `git fetch --all --prune`: `HEAD..origin/develop` vacío. #204 abierto en `447e17c`, sin revisiones ni comentarios.
+- Fix E2: **PR #204** (https://github.com/AAAActis/la-central-gestion/pull/204), abierto el 27/11, esperando revisión de Santi; cerrado de nuestro lado. ESTADO corregido. Este commit es solo documentación: no se relanzan verificadores ni suite.
+- **Abierto:** revisión y merge del #204; `marcar_en_negro_demo.sql` sin aplicar; DoD 10 pendiente; issue de la factura A de Fazio sin abrir; alta en negro; borrado de los tres esquemas huérfanos, autorizado, que se ejecuta después de este commit.
