@@ -25,6 +25,14 @@ describe('Código exacto · HU-FCO-06 CA-002, CA-003 y CA-009', () => {
     expect(exactoArticulo([a('A-1000'), a(' A-100 ')], ' a-100 ')).toEqual(a(' A-100 '));
   });
 
+  it('elige el artículo guardado en minúsculas: el importado no pasó por la normalización', () => {
+    expect(exactoArticulo([a('ab-100')], 'AB-100')).toEqual(a('ab-100'));
+  });
+
+  it('en proveedores con letras en el código, las mayúsculas no cuentan', () => {
+    expect(exactoProveedor([p('AB12')], 'ab12')).toEqual(p('AB12'));
+  });
+
   it('sin código interno exacto no elige artículo', () => {
     expect(exactoArticulo([a('A-1000')], 'A-100')).toBeNull();
   });

@@ -462,6 +462,44 @@ describe('NotaCreditoCompra · 057', () => {
       expect(opciones()).toBe(1);
     });
 
+    it('proveedor: elige según el texto buscado, aunque se siga escribiendo antes de la respuesta', () => {
+      c().textoProveedor = '3';
+      enter('textoProveedor');
+      c().textoProveedor = '30';
+      responderProveedores([otro(30, '00030'), expoyer]);
+
+      expect(c().proveedor()).toEqual(expoyer);
+      responderEleccion('/api/facturas-compra', { items: [], total: 0, pagina: 1, tamanoPagina: 100 });
+    });
+
+    it('artículo: elige según el texto buscado, aunque se siga escribiendo antes de la respuesta', () => {
+      enDevolucion('A-100');
+      enter('textoArticulo');
+      c().textoArticulo = 'A-1001';
+      responderArticulos([parecido(1), articulo]);
+
+      expect(c().lineas.map(l => l.articulo.id)).toEqual([100]);
+      responderEleccion('/api/articulos/100', { id: 100, existencias: [] });
+    });
+
+    it('artículo: el clic sobre uno repetido no agrega otra línea, saca la lista y avisa', () => {
+      enDevolucion('A-100');
+      enter('textoArticulo');
+      responderArticulos([articulo]);
+      responderEleccion('/api/articulos/100', { id: 100, existencias: [] });
+
+      c().textoArticulo = 'bomba';
+      clic('Buscar artículo');
+      responderArticulos([articulo]);
+      (raiz.querySelector('button.opcion') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(c().lineas.length).toBe(1);
+      expect(opciones()).toBe(0);
+      expect(raiz.querySelector('p.error[role="alert"]')?.textContent).toContain('A-100 ya está en la devolución');
+      expect(responderEleccion('/api/articulos/100', { id: 100, existencias: [] })).toBe(0);
+    });
+
     it('artículo: elige el código interno exacto aunque venga último en una página de 20, sin pedir la aproximada', () => {
       enDevolucion(' a-100 ');
       enter('textoArticulo');

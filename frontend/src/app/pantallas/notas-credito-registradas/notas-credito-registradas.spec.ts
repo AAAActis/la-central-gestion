@@ -340,6 +340,14 @@ describe('NotasCreditoRegistradas · 057 CA-012', () => {
       expect(opciones()).toBe(1);
     });
 
+    it('elige según el texto buscado, aunque se siga escribiendo antes de la respuesta', () => {
+      enter('35');
+      c.textoProveedor = '350';
+      responder([proveedor(8, '00350'), proveedor(7, '00035')]);
+
+      expect(c.proveedor()?.id).toBe(7);
+    });
+
     it('con el campo vacío no consulta', () => {
       enter('   ');
 
