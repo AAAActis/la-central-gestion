@@ -33,7 +33,9 @@ public class ConsultarFacturasCompraPostgreSqlTests
             ProveedorId = proveedor, Numero = numero, FechaEmision = emision, FechaImputacion = emision, FechaVencimiento = vence,
             TipoComprobante = numero[0], Estado = anulada ? "ANULADA" : "ACTIVA", Origen = "MANUAL", UsuarioId = usuario,
             FechaRegistro = DateTime.UtcNow, MotivoAnulacion = anulada ? "Cargada por error" : null,
-            FechaAnulacion = anulada ? DateTime.UtcNow : null
+            FechaAnulacion = anulada ? DateTime.UtcNow : null,
+            // el 13 (fc_anulacion_con_usuario) exige quién anuló
+            UsuarioAnulacionId = anulada ? usuario : null
         };
         c.FacturaCompra.AddRange(
             Factura(p1.Id, "A-1", new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30)),

@@ -64,7 +64,7 @@ Lo pidió Santi el 25/11/2026, para que cada uno (y su Claude) sepa qué es suyo
 | C5 · proformas de la 053 y la 054 (con la pantalla de vinculación) | 053, 054 | Sin escribir. El CA3 de la 054 choca con la D2: lo decide el equipo antes |
 | C6 · medición sobre 50 artículos | 053 | Con los primeros scrapes de Santi |
 | C1 · modalidad L2 y retiro de Tarjeta3/6 | 032, 033 y el CA-004 de la 050 | **Propuesta (para el equipo):** no va en el 12. El plan la ponía junto con C2, pero C2 destraba los scrapes y no tiene que esperar el cambio de modalidades, que además toca código de precios. Script propio cuando arranquen la 032 y la 033 |
-| E13 · script 13 (costo previo por línea, D-S7-03; anulación sin doble certificación, D-S7-04) | #9, #23, #195 | Pendiente de escribir |
+| E13 · script 13 (costo previo por línea, D-S7-03; anulación sin doble certificación, D-S7-04) | #9, #23, #195 | Escrito y ensayado (25/11/2026) en `feature/s7-script-13`: `13: TODO OK.` en un esquema descartable de `lacentral_test` (borrado después), idempotente, con una guarda nueva (corta si hay facturas anuladas sin quién las anuló). 11 pruebas PostgreSQL (`Script13PostgreSqlTests`) que corren el archivo tal cual. **Lo aplica Santi** en test, demo y la real (con backup); el bloque fish está en `docs/sprint07/BITACORA.md`. Después: re-scaffold en PR aparte |
 | E15 · script 15 (alícuotas, D-S7-02) | #194 | Pendiente de escribir; espera la pregunta P7-02 a Sergio |
 | E14 · script 14 (vencimiento de facturas por proveedor, Fix F) | #197 | Mergeado a `develop` (`54569b8`, 25/11/2026), antes que el #200, que quedó con conflicto en la bitácora y se resolvió con merge (`4300cd5`). Aplicado por Santi (25/11) en `lacentral_test`, `lacentral_demo` y `lacentral`, con «14: TODO OK.» en las tres (backup de la real antes, en `~/dev/TESIS/backups/lacentral-antes-14.dump`). Re-scaffold en `chore/rescaffold-14` (`99d6320`): solo `VencimientoModo` y `VencimientoDias` en `Proveedor` y su configuración. Era el «12» del #197, renumerado el 24/11/2026 (decisión de Santi: el 12 es C2) |
 
@@ -282,6 +282,16 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 
 ## PRÓXIMA SESIÓN
 
+**27/11/2026 · #202 (script 13) listo para review de Javi.**
+- `develop` mergeado (`a05158a`). `auditor-persistencia` ronda 1 NO APTO (dos seeds de pruebas con facturas ANULADA sin quién anuló, que romperían con el 13 aplicado); arreglo `7fd6f8a`, solo pruebas; ronda 2 **APTO**. `verificador-tdd` APTO desde la ronda 2 del 25/11 (`a23c8fb`); `7fd6f8a` no toca producción ni las pruebas del 13.
+- Suite completa sobre `7fd6f8a`: `Superado: 879, Total: 879, Duración: 27 m 27 s`.
+- **Orden para aplicar en las bases:** primero el 13 (test, demo, real con backup), cuando quieras. El 16 después del 13, nunca de 21:00 a 24:00 de un día en que Javi tenga `lacentral_test`, y solo cuando su PR esté abierto: aplicado en test deja dos pruebas en rojo hasta el re-scaffold del 16.
+
+**25/11/2026 · arranque del Sprint 7 · script 13.**
+- **Bitácora nueva:** `docs/sprint07/BITACORA.md` (lo anterior del Sprint 7 está en la del Sprint 6).
+- **#201 (re-scaffold del 14) sigue abierto:** no se toca `Proveedor` hasta que entre. Fix E2 y Fix F.3–F.5 son de Javi; los workflows de n8n y el scrape, de Santi (fuera del repo).
+- **Script 13** en `feature/s7-script-13`: ensayado, con pruebas, en PR (ver la fila E13). Espera que Santi lo aplique en las tres bases; después, re-scaffold en PR aparte, y recién ahí la 028 y la 016 (D-S7-03) y el #195 (D-S7-04) en código.
+- **Sigue:** la 053 y la 054 (vinculación automática por código, después candidatos por pg_trgm). La 054 tiene el CA3 contra la D2 sin decidir: se pregunta antes de construirla.
 **27/11/2026 · Fix «Enter sobre un código exacto lo elige» (Javi): PR #205 abierto contra `develop`, esperando revisión de Santi. Tarea terminada de este lado.**
 - Rama `fix/enter-codigo-exacto` (merges de `develop`: `de068fd` y `5be5732`; al día con `bda2692`). Solo frontend, sin backend ni esquema. Bitácora: `docs/sprint06/BITACORA.md`, bloque del 25/11.
 - Commits: `cca1741` (la regla pasa a `compartido/`, sin cambio de comportamiento; su spec es de caracterización), `591a4d4` (specs en rojo) y `0676f4f` (Enter elige en la NCA, compras registradas y notas registradas); `7708097` (rojo) y `59f21ba` (la NCA no agrega dos veces un artículo sin origen).
