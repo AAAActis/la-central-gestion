@@ -36,8 +36,8 @@ public sealed class ManejadorExcepcionesGlobal : IExceptionHandler
             ["proveedor_cuit_key"] = "Ya existe un proveedor registrado con ese CUIT.",
             ["usuario_nombre_usuario_key"] = "Ya existe un usuario con ese nombre.",
             ["articulo_codigo_interno_key"] = "Ya existe un artículo con ese código interno.",
-            ["codigo_unico_global"] = "Ese código ya está asignado a otro artículo.",
-            ["un_codigo_por_proveedor"] = "El artículo ya tiene un código vigente de ese proveedor.",
+            // El 16 (D-S7-06): la unicidad de los códigos de proveedor es por (proveedor_id, codigo).
+            ["codigo_alt_proveedor_codigo_unico"] = "Ese código de ese proveedor ya está asignado a otro artículo.",
             ["ux_factura_compra_numero_activa"] = "Ya existe una factura de compra activa con ese número para el proveedor.",
             ["ux_factura_venta_numero_activa"] = "Ya existe una factura de venta activa con ese número.",
             ["ux_nota_credito_compra_numero_activa"] = "Ya existe una nota de crédito vigente con ese número para el proveedor.",
