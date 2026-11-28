@@ -230,6 +230,8 @@ public class ModificarArticuloPostgreSqlTests
 
         public Task<IReadOnlyList<ArticuloResumenConsultaDto>> ObtenerConflictosCodigoAsync(string codigo, CancellationToken ct = default)
             => _real.ObtenerConflictosCodigoAsync(codigo, ct);
+        public Task<ArticuloResumenConsultaDto?> ObtenerDuenioCodigoProveedorAsync(int proveedorId, string codigo, CancellationToken ct = default)
+            => _real.ObtenerDuenioCodigoProveedorAsync(proveedorId, codigo, ct);
     }
 
     // B2 del auditor: un administrador cambia el código interno entre la lectura y la escritura
@@ -295,6 +297,8 @@ public class ModificarArticuloPostgreSqlTests
 
         public Task<IReadOnlyList<ArticuloResumenConsultaDto>> ObtenerConflictosCodigoAsync(string codigo, CancellationToken ct = default)
             => _real.ObtenerConflictosCodigoAsync(codigo, ct);
+        public Task<ArticuloResumenConsultaDto?> ObtenerDuenioCodigoProveedorAsync(int proveedorId, string codigo, CancellationToken ct = default)
+            => _real.ObtenerDuenioCodigoProveedorAsync(proveedorId, codigo, ct);
     }
 
     // La condición "activo" va en el UPDATE: vale lo que la fila es al escribir.
@@ -326,19 +330,22 @@ public class ModificarArticuloPostgreSqlTests
         private readonly ArticuloRepositorio _real;
         private readonly PostgreSqlPruebas _fixture;
         private readonly int _otroArticulo;
-        private readonly int _proveedor;
 
-        public ConsultaConCarreraDeCodigo(LaCentralDbContext contexto, PostgreSqlPruebas fixture, int otroArticulo, int proveedor)
-            => (_real, _fixture, _otroArticulo, _proveedor) = (new ArticuloRepositorio(contexto), fixture, otroArticulo, proveedor);
+        public ConsultaConCarreraDeCodigo(LaCentralDbContext contexto, PostgreSqlPruebas fixture, int otroArticulo)
+            => (_real, _fixture, _otroArticulo) = (new ArticuloRepositorio(contexto), fixture, otroArticulo);
 
-        public async Task<IReadOnlyList<ArticuloResumenConsultaDto>> ObtenerConflictosCodigoAsync(string codigo, CancellationToken ct = default)
+        public Task<IReadOnlyList<ArticuloResumenConsultaDto>> ObtenerConflictosCodigoAsync(string codigo, CancellationToken ct = default)
+            => _real.ObtenerConflictosCodigoAsync(codigo, ct);
+
+        // D-S7-19: la validación previa es por (proveedor, código); la carrera mete ese mismo par en otro artículo.
+        public async Task<ArticuloResumenConsultaDto?> ObtenerDuenioCodigoProveedorAsync(int proveedorId, string codigo, CancellationToken ct = default)
         {
-            var conflictos = await _real.ObtenerConflictosCodigoAsync(codigo, ct);
+            var duenio = await _real.ObtenerDuenioCodigoProveedorAsync(proveedorId, codigo, ct);
             await using var otraSesion = _fixture.CrearContexto();
             otraSesion.ArticuloCodigoAlternativo.Add(new ArticuloCodigoAlternativo
-                { ArticuloId = _otroArticulo, ProveedorId = _proveedor, Codigo = NormalizacionArticulo.Codigo(codigo) });
+                { ArticuloId = _otroArticulo, ProveedorId = proveedorId, Codigo = NormalizacionArticulo.Codigo(codigo) });
             await otraSesion.SaveChangesAsync(ct);
-            return conflictos;
+            return duenio;
         }
 
         public Task<ArticuloDetalleConsultaDto?> ObtenerDetallePorIdAsync(int id, CancellationToken ct = default)
@@ -348,29 +355,28 @@ public class ModificarArticuloPostgreSqlTests
             => _real.BuscarAsync(consulta, ct);
     }
 
-    // Atomicidad: el código choca en el MOTOR (codigo_unico_global) cuando los datos del
-    // artículo ya se escribieron. No queda nada de la modificación.
+    // Atomicidad: el código choca en el MOTOR (codigo_alt_proveedor_codigo_unico, el 16) cuando los
+    // datos del artículo ya se escribieron. No queda nada de la modificación. FALTA CORRER con el 16.
     [PostgreSqlFact]
     public async Task Modificar_ElCodigoChocaEnElMotorDespuesDeActualizarLosDatos_NoQuedaNada()
     {
         await using var fixture = await PostgreSqlPruebas.CrearAsync(_salida);
-        var norte = await CrearProveedorAsync(fixture, "PRV-N");
-        var sur = await CrearProveedorAsync(fixture, "PRV-S");
+                var sur = await CrearProveedorAsync(fixture, "PRV-S");
         var otro = await CrearArticuloAsync(fixture, "Filtro de aire");
         var id = await CrearArticuloAsync(fixture, "Bujía");
 
         await using (var contexto = fixture.CrearContexto())
         {
             var excepcion = await Assert.ThrowsAsync<DbUpdateException>(() =>
-                Modificar(contexto, consulta: new ConsultaConCarreraDeCodigo(contexto, fixture, otro, norte))
+                Modificar(contexto, consulta: new ConsultaConCarreraDeCodigo(contexto, fixture, otro))
                     .EjecutarAsync(id, Datos("Bujía corregida", null, (sur, "NGK-1"))));
-            Assert.Contains("codigo_unico_global", excepcion.InnerException?.Message);
+            Assert.Contains("codigo_alt_proveedor_codigo_unico", excepcion.InnerException?.Message);
         }
 
         var articulo = await LeerAsync(fixture, id);
         Assert.Equal("Bujía", articulo.Nombre);
         Assert.Empty(articulo.ArticuloCodigoAlternativo);
-        Assert.Equal(new[] { ("NGK-1", norte) }, Codigos(await LeerAsync(fixture, otro)));
+        Assert.Equal(new[] { ("NGK-1", sur) }, Codigos(await LeerAsync(fixture, otro)));
     }
 
     // ---- Retiro explícito ----

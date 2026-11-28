@@ -119,11 +119,12 @@ public class CrearArticuloUseCaseTests
         NoSeEscribioNada();
     }
 
+    // D-S7-06 y D-S7-19: el choque es por (proveedor, código).
     [Fact]
     public async Task CodigoDeOtroArticulo_ConflictoInformandoCual()
     {
-        _consulta.Setup(c => c.ObtenerConflictosCodigoAsync("GN-01", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[] { new ArticuloResumenConsultaDto(77, "MD14753", "Mouse Genius", true) });
+        _consulta.Setup(c => c.ObtenerDuenioCodigoProveedorAsync(10, "GN-01", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ArticuloResumenConsultaDto(77, "MD14753", "Mouse Genius", true));
 
         var resultado = await Caso().EjecutarAsync(Request((10, " gn-01 ")));
 
@@ -131,6 +132,18 @@ public class CrearArticuloUseCaseTests
         Assert.Contains("MD14753", resultado.Error);
         Assert.Contains("Mouse Genius", resultado.Error);
         NoSeEscribioNada();
+    }
+
+    // D-S7-06: sin unicidad global, el mismo código de OTRO proveedor en otro artículo no choca.
+    [Fact]
+    public async Task ElMismoCodigoDeOtroProveedorEnOtroArticulo_NoEsConflicto()
+    {
+        _consulta.Setup(c => c.ObtenerConflictosCodigoAsync("GN-01", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { new ArticuloResumenConsultaDto(77, "MD14753", "Mouse Genius", true) });
+
+        var resultado = await Caso().EjecutarAsync(Request((10, " gn-01 ")));
+
+        Assert.True(resultado.IsSuccess, resultado.Error);
     }
 
     // ---- Proveedor ----

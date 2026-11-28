@@ -166,5 +166,7 @@ public class BajaArticuloConStockPostgreSqlTests
 
         public Task<IReadOnlyList<ArticuloResumenConsultaDto>> ObtenerConflictosCodigoAsync(string codigo, CancellationToken ct = default)
             => _real.ObtenerConflictosCodigoAsync(codigo, ct);
+        public Task<ArticuloResumenConsultaDto?> ObtenerDuenioCodigoProveedorAsync(int proveedorId, string codigo, CancellationToken ct = default)
+            => _real.ObtenerDuenioCodigoProveedorAsync(proveedorId, codigo, ct);
     }
 }

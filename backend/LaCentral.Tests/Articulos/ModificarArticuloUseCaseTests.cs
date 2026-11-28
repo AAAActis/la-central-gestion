@@ -57,6 +57,10 @@ public class ModificarArticuloUseCaseTests
         _consulta.Setup(c => c.ObtenerConflictosCodigoAsync(clave, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new[] { new ArticuloResumenConsultaDto(articuloId, codigoInterno, nombre, true) });
 
+    private void DuenioDelCodigo(int proveedorId, string clave, int articuloId, string codigoInterno, string nombre) =>
+        _consulta.Setup(c => c.ObtenerDuenioCodigoProveedorAsync(proveedorId, clave, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ArticuloResumenConsultaDto(articuloId, codigoInterno, nombre, true));
+
     private void Operador() => _contexto.SetupGet(c => c.EsAdministrador).Returns(false);
     private void Administrador() => _contexto.SetupGet(c => c.EsAdministrador).Returns(true);
 
@@ -209,11 +213,11 @@ public class ModificarArticuloUseCaseTests
         SeActualizo("Bujía NGK", null);
     }
 
-    // CA3: el código ya pertenece a otro artículo → se rechaza informando cuál.
+    // CA3: el código de ese proveedor ya pertenece a otro artículo → se rechaza informando cuál (D-S7-19: por proveedor).
     [Fact]
     public async Task CodigoDeOtroArticulo_ConflictoInformandoCual()
     {
-        Conflicto("NGK-1", 7, "LC-000007", "Filtro de aire");
+        DuenioDelCodigo(20, "NGK-1", 7, "LC-000007", "Filtro de aire");
 
         var resultado = await Caso().EjecutarAsync(Id, Request(null, (20, "ngk-1")));
 
@@ -223,16 +227,16 @@ public class ModificarArticuloUseCaseTests
         NoSeEscribioNada();
     }
 
-    // La unicidad es global: el propio artículo ya lo tiene, pero de OTRO proveedor.
+    // D-S7-06: la unicidad ya no es global. El propio artículo lo tiene de OTRO proveedor: se agrega.
     [Fact]
-    public async Task CodigoQueElArticuloYaTieneDeOtroProveedor_Conflicto()
+    public async Task CodigoQueElArticuloYaTieneDeOtroProveedor_SeAgrega()
     {
         Conflicto("BPR-6ES", Id, CodigoActual, "Bujía");
 
-        var resultado = await Caso().EjecutarAsync(Id, Request(null, (20, "BPR-6ES")));
+        var resultado = await Caso().EjecutarAsync(Id, Request(null, (10, "BPR-6ES"), (20, "BPR-6ES")));
 
-        Assert.Equal(TipoError.Conflicto, resultado.Tipo);
-        NoSeEscribioNada();
+        Assert.True(resultado.IsSuccess, resultado.Error);
+        Assert.Equal(new[] { ("BPR-6ES", 20) }, _agregados!.Select(c => (c.Codigo, c.ProveedorId)));
     }
 
     // D2: un segundo código del mismo proveedor se rechaza. Cambiarlo es retirar + agregar.

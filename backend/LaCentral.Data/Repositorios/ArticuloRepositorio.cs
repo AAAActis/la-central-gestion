@@ -251,6 +251,9 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
             .ToListAsync(ct);
     }
 
+    public Task<ArticuloResumenConsultaDto?> ObtenerDuenioCodigoProveedorAsync(int proveedorId, string codigo, CancellationToken ct = default)
+        => throw new NotImplementedException();
+
     public async Task<IReadOnlyList<RegistroHistorialCompraDto>?> HistorialComprasAsync(int articuloId, CancellationToken ct = default)
     {
         if (!await _context.Articulo.AnyAsync(a => a.Id == articuloId, ct)) return null;
