@@ -19,8 +19,9 @@ public class RetirarCodigoProveedorUseCase
     }
 
     /// <summary>
-    /// D2: hay un solo código por proveedor, así que el proveedor lo identifica. El rol sale
-    /// de la sesión, nunca del cuerpo de la petición.
+    /// D2 revisada (D-S7-06, D-S7-19): un artículo puede tener varios códigos del mismo proveedor,
+    /// así que el código se identifica por (proveedor, código). El rol sale de la sesión, nunca del
+    /// cuerpo de la petición.
     /// </summary>
     public async Task<Result> EjecutarAsync(int id, int proveedorId, string? codigo, CancellationToken ct = default)
     {
@@ -32,11 +33,14 @@ public class RetirarCodigoProveedorUseCase
             return Result.Failure(TipoError.NoEncontrado, "El artículo indicado no existe.");
         if (!articulo.Activo)
             return Result.Failure(TipoError.Invalido, "El artículo está dado de baja: reactivalo antes de modificarlo.");
-        if (!articulo.Codigos.Any(c => c.ProveedorId == proveedorId))
-            return Result.Failure(TipoError.NoEncontrado, "El artículo no tiene un código de ese proveedor.");
+        if (string.IsNullOrWhiteSpace(codigo))
+            return Result.Failure(TipoError.Invalido, "Indicá qué código del proveedor se retira.");
+        var clave = NormalizacionArticulo.Codigo(codigo);
+        if (!articulo.Codigos.Any(c => c.ProveedorId == proveedorId && c.ClaveNormalizada == clave))
+            return Result.Failure(TipoError.NoEncontrado, $"El artículo no tiene el código {clave} de ese proveedor.");
 
-        if (!await _articulos.RetirarCodigoAsync(id, proveedorId, codigo ?? "", ct))
-            return Result.Failure(TipoError.NoEncontrado, "El artículo no tiene un código de ese proveedor.");
+        if (!await _articulos.RetirarCodigoAsync(id, proveedorId, clave, ct))
+            return Result.Failure(TipoError.NoEncontrado, $"El artículo no tiene el código {clave} de ese proveedor.");
         return Result.Success();
     }
 }

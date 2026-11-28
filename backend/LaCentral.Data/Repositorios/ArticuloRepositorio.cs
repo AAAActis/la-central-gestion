@@ -130,7 +130,9 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
     }
 
     public async Task<bool> RetirarCodigoAsync(int id, int proveedorId, string codigo, CancellationToken ct = default)
-        => await _context.ArticuloCodigoAlternativo.Where(c => c.ArticuloId == id && c.ProveedorId == proveedorId)
+        // D-S7-19: solo ese código; la clave llega normalizada y la fila se compara igual que en la ficha.
+        => await _context.ArticuloCodigoAlternativo
+            .Where(c => c.ArticuloId == id && c.ProveedorId == proveedorId && c.Codigo.Trim(new[] { ' ' }).ToUpper() == codigo)
             .ExecuteDeleteAsync(ct) > 0;
 
     public async Task<bool> DarDeBajaAsync(int id, string motivo, DateTime fechaBaja, CancellationToken ct = default)
