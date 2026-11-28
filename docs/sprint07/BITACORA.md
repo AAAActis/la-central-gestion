@@ -553,3 +553,4 @@ La instrucción verbatim está en el bloque «26/11/2026 · Cola autónoma…» 
 **Estado:** terminada
 - ESTADO corregido: los tres esquemas de `lacentral_javi` figuran como borrados y los de `lacentral_santi` como pendientes de Santi. Va en este commit junto con las anotaciones del push, el comentario y el borrado. Solo documentación: sin verificadores ni suite.
 - **Abierto en esta rama:** revisión y merge del #204. La segunda parte de la instrucción sigue en la bitácora de `fix/enter-codigo-exacto`.
+- 27/11/2026 noche: lo de esta rama está registrado en el bloque «27/11/2026 20:40 · Franja de Javi» de `feature/127-vincular`, y lo que falta correr, en el ESTADO («27/11/2026 noche»).
