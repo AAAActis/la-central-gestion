@@ -154,7 +154,7 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
         using var cliente = Cliente(fixture, "OPERADOR", usuario);
         var id = await CrearArticuloAsync(cliente, "Bujía", (norte, "BPR-6ES"));
 
-        var respuesta = await cliente.DeleteAsync($"/api/articulos/{id}/codigos/{norte}");
+        var respuesta = await cliente.DeleteAsync($"/api/articulos/{id}/codigos/{norte}?codigo=BPR-6ES");
 
         Assert.Equal(HttpStatusCode.Forbidden, respuesta.StatusCode);
         Assert.Single((await LeerAsync(fixture, id)).ArticuloCodigoAlternativo);
@@ -169,7 +169,7 @@ public class ModificarArticuloApiPostgreSqlTests : IClassFixture<WebApplicationF
         using var cliente = Cliente(fixture, "ADMINISTRADOR", usuario);
         var id = await CrearArticuloAsync(cliente, "Bujía", (norte, "BPR-6ES"));
 
-        var respuesta = await cliente.DeleteAsync($"/api/articulos/{id}/codigos/{norte}");
+        var respuesta = await cliente.DeleteAsync($"/api/articulos/{id}/codigos/{norte}?codigo=BPR-6ES");
 
         Assert.Equal(HttpStatusCode.NoContent, respuesta.StatusCode);
         Assert.Empty((await LeerAsync(fixture, id)).ArticuloCodigoAlternativo);
