@@ -120,7 +120,7 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
             """, ct) == 1;
 
     // Solo inserta: los códigos que el artículo ya tiene no se tocan. Una carrera con otro
-    // artículo la cierran codigo_unico_global y un_codigo_por_proveedor (23505 → 409).
+    // artículo la cierra codigo_alt_proveedor_codigo_unico (el 16; 23505 → 409).
     public async Task AgregarCodigosAsync(int id, IReadOnlyList<LaCentral.UseCases.Entidades.CodigoAlternativo> codigos,
         CancellationToken ct = default)
     {
@@ -251,8 +251,14 @@ public class ArticuloRepositorio : IConsultaArticulosRepositorio, IArticuloRepos
             .ToListAsync(ct);
     }
 
-    public Task<ArticuloResumenConsultaDto?> ObtenerDuenioCodigoProveedorAsync(int proveedorId, string codigo, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    public async Task<ArticuloResumenConsultaDto?> ObtenerDuenioCodigoProveedorAsync(int proveedorId, string codigo, CancellationToken ct = default)
+    {
+        var clave = NormalizacionArticulo.Codigo(codigo);
+        return await _context.ArticuloCodigoAlternativo.AsNoTracking()
+            .Where(c => c.ProveedorId == proveedorId && c.Codigo.Trim(new[] { ' ' }).ToUpper() == clave)
+            .Select(c => new ArticuloResumenConsultaDto(c.Articulo.Id, c.Articulo.CodigoInterno, c.Articulo.Nombre, c.Articulo.Activo))
+            .FirstOrDefaultAsync(ct);
+    }
 
     public async Task<IReadOnlyList<RegistroHistorialCompraDto>?> HistorialComprasAsync(int articuloId, CancellationToken ct = default)
     {

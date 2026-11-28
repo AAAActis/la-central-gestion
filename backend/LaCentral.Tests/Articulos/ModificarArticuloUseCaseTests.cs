@@ -233,7 +233,8 @@ public class ModificarArticuloUseCaseTests
     {
         Conflicto("BPR-6ES", Id, CodigoActual, "Bujía");
 
-        var resultado = await Caso().EjecutarAsync(Id, Request(null, (10, "BPR-6ES"), (20, "BPR-6ES")));
+        // Omitir el de Norte no lo retira.
+        var resultado = await Caso().EjecutarAsync(Id, Request(null, (20, "BPR-6ES")));
 
         Assert.True(resultado.IsSuccess, resultado.Error);
         Assert.Equal(new[] { ("BPR-6ES", 20) }, _agregados!.Select(c => (c.Codigo, c.ProveedorId)));

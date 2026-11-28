@@ -28,7 +28,7 @@ public class CrearArticuloUseCase
     /// <summary>
     /// El código interno sale del Id que genera la base (identidad), no de MAX+1: dos altas
     /// simultáneas desde las dos sucursales no pueden chocar. La validación previa de códigos
-    /// no cierra la carrera; la cierran los índices codigo_unico_global y un_codigo_por_proveedor,
+    /// no cierra la carrera; la cierra codigo_alt_proveedor_codigo_unico (el 16),
     /// que el manejador global traduce a 409.
     /// </summary>
     public static string GenerarCodigoInterno(int id) => $"LC-{id:D6}";
@@ -57,10 +57,11 @@ public class CrearArticuloUseCase
                     $"El artículo solo puede tener un código del proveedor {proveedor.RazonSocial}.");
         }
 
+        // D-S7-06 y D-S7-19: un código choca solo con el mismo código del MISMO proveedor.
         foreach (var codigo in codigos)
         {
             var clave = NormalizacionArticulo.Codigo(codigo.Codigo);
-            var duenio = (await _consulta.ObtenerConflictosCodigoAsync(clave, ct)).FirstOrDefault();
+            var duenio = await _consulta.ObtenerDuenioCodigoProveedorAsync(codigo.ProveedorId, clave, ct);
             if (duenio is not null)
                 return Result<CrearArticuloResponse>.Failure(TipoError.Conflicto,
                     $"El código {clave} ya pertenece al artículo {duenio.CodigoInterno} ({duenio.Nombre}).");

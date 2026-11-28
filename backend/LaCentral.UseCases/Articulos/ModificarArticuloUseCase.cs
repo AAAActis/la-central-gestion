@@ -101,9 +101,10 @@ public class ModificarArticuloUseCase
                     $"El artículo solo puede tener un código del proveedor {proveedor.RazonSocial}.");
         }
 
+        // D-S7-06 y D-S7-19: un código choca solo con el mismo código del MISMO proveedor.
         foreach (var codigo in nuevos)
         {
-            var duenio = (await _consulta.ObtenerConflictosCodigoAsync(codigo.Codigo, ct)).FirstOrDefault();
+            var duenio = await _consulta.ObtenerDuenioCodigoProveedorAsync(codigo.ProveedorId, codigo.Codigo, ct);
             if (duenio is not null)
                 return Result.Failure(TipoError.Conflicto,
                     $"El código {codigo.Codigo} ya pertenece al artículo {duenio.CodigoInterno} ({duenio.Nombre}).");
