@@ -100,10 +100,10 @@ const TEXTO_RAZON: Record<RazonAusencia, string> = {
         </table>
 
         <h3>Códigos de proveedor</h3>
-        @for (c of f.codigos; track c.proveedorId) {
+        @for (c of f.codigos; track c.proveedorId + '|' + c.claveNormalizada) {
           <p><span class="codigo">{{ c.codigoOriginal }}</span> {{ c.razonSocial }}
             @if (esAdministrador() && f.activo) {
-              <button type="button" class="secundario" (click)="retirarCodigo(f, c.proveedorId)">Retirar</button>
+              <button type="button" class="secundario" (click)="retirarCodigo(f, c.proveedorId, c.claveNormalizada)">Retirar</button>
             }
           </p>
         } @empty { <p class="tenue">Sin códigos de proveedor.</p> }
@@ -325,9 +325,9 @@ export class Articulos {
     });
   }
 
-  retirarCodigo(f: FichaArticulo, proveedorId: number) {
+  retirarCodigo(f: FichaArticulo, proveedorId: number, codigo: string) {
     this.errorCodigos.set(null);
-    this.api.retirarCodigo(f.id, proveedorId).subscribe({
+    this.api.retirarCodigo(f.id, proveedorId, codigo).subscribe({
       next: () => this.cargarFicha(f.id),
       error: e => this.errorCodigos.set(mensajeDeError(e)),
     });

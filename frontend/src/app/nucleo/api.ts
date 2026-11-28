@@ -225,8 +225,9 @@ export class ApiLaCentral {
   }
 
   /** Solo ADMINISTRADOR: lo decide la API con el rol de la sesión. */
-  retirarCodigo(id: number, proveedorId: number): Observable<void> {
-    return this.http.delete<void>(`/api/articulos/${id}/codigos/${proveedorId}`);
+  /** D-S7-19: el código va en la consulta (hay códigos con «/») porque un proveedor puede tener varios. */
+  retirarCodigo(id: number, proveedorId: number, codigo: string): Observable<void> {
+    return this.http.delete<void>(`/api/articulos/${id}/codigos/${proveedorId}`, { params: { codigo } });
   }
 
   /** 014 · `confirmacion` es el código interno reescrito (CA-004): lo compara la API. */
