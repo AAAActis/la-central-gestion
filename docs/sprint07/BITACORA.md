@@ -520,3 +520,4 @@ La instrucción verbatim está en el bloque «27/11/2026 18:40 · Retomar el Spr
 - Suite completa sobre `7fd6f8a` (19:27–19:54): `Correctas! - Con error:     0, Superado:   879, Omitido:     0, Total:   879, Duración: 27 m 27 s - LaCentral.Tests.dll (net10.0)`. Reemplaza a la de `a05158a`. Auditor, ronda 2, acotada a `7fd6f8a`.
 - `auditor-persistencia` ronda 2 (solo `7fd6f8a`, sin corridas propias): **APTO**. Sin hallazgos nuevos; ningún otro seed siembra una ANULADA sin quién anuló.
 - ESTADO: PRÓXIMA SESIÓN con el #202 listo y el orden de aplicación (13 antes que 16). Review pedida a Javi en el #202.
+- 27/11/2026 noche: lo de esta rama está registrado en el bloque «27/11/2026 20:40 · Franja de Javi» de `feature/127-vincular`, y lo que falta correr, en el ESTADO («27/11/2026 noche»).
