@@ -283,6 +283,24 @@ después de la defensa, como mejora para el negocio. No entra a los Sprints 7 ni
 
 ## PRÓXIMA SESIÓN
 
+### 27/11/2026 noche · lo escrito en la franja de Javi y lo que falta correr contra la base
+
+Ni el 13 ni el 16 están aplicados en `lacentral_test` ni en `lacentral_demo` (consulta de solo lectura de las 18:42). Orden: el 13 en test, después en demo, después en la real con respaldo. Después el 16, fuera de la franja de Javi. Los bloques fish están en la bitácora, en «PARA SANTI · 25/11/2026 · script 13 en las tres bases» (rama `feature/s7-script-13`) y en «PARA SANTI · 25/11/2026 · script 16 en las tres bases» (rama `feature/127-vinculacion-esquema`). Durante la franja nada tocó una base: solo se corrieron unitarias (`Base!=PostgreSQL`) y el frontend.
+
+| Rama (sin PR) | Lo que quedó escrito | Corrido | Falta correr |
+|---|---|---|---|
+| `feature/030-comparador-api` | 050 CA-003: la fila informa si la última corrida **terminada** del scrape de su proveedor quedó en FAILED (una RUNNING no cuenta). | Unitarias 9/9 | PG `CA003_050_LaUltimaCorridaTerminadaFallida…`, la suite completa, los verificadores y el PR |
+| `feature/050-comparador-pantalla` | 050 CA-003 en pantalla: el aviso «Falló la última consulta: precio del dd/mm/aaaa». La 034 ya estaba (link «Abrir sitio» con su spec). | Frontend 428/428 | Suite, verificadores, PR (después del 030) |
+| `feature/028-costo-previo` (desde el 13) | 028 CA-002 y 016 CA-004: la regla del costo al anular (D-S7-03) como función pura, `CostoAlAnular.Decidir`. | Unitarias 7/7 | 3 PG en `CostoPrevioPostgreSqlTests`. Antes hay que cablear `FacturaCompraRepositorio` (guardar `costo_previo` y `costo_previo_guardado`, y que `AnularConEfectosAsync` use la regla), y eso requiere el re-scaffold del 13 |
+| `feature/195-anulacion-un-admin` (desde el 13) | D-S7-04: anula un ADMINISTRADOR solo, con motivo; un OPERADOR recibe 403; sin doble certificación (se borró `DobleCertificacion`). El frontend pide solo el motivo. | Unitarias 568/568, frontend 415/415 | PG y HTTP de la anulación de facturas y de notas (la de notas, recién con el 13 aplicado: `ncc_anulacion_coherente` todavía exige autorizante) |
+| `chore/rescaffold-16` (desde `feature/127-vinculacion-esquema`) | D-S7-19 completa sin el scaffold. El retiro es `DELETE …/codigos/{proveedorId}?codigo=…` y borra solo ese código. Alta y modificación chocan por (proveedor, código) con el puerto `ObtenerDuenioCodigoProveedorAsync`; el código interno sigue global. El manejador traduce `codigo_alt_proveedor_codigo_unico`. La ficha distingue dos códigos del mismo proveedor (antes daba NG0955). | Unitarias 582/582, frontend 420/420 | Aplicar el 16, re-scaffold, PG de `ModificarArticuloPostgreSqlTests` (retiro de uno de dos, carrera por par), `RestriccionesUnicasPostgreSqlTests`, `ModificarArticuloApiPostgreSqlTests`, la suite, los verificadores y el PR |
+
+Decisiones técnicas (D-S7-13):
+- **D-S7-21 · 27/11/2026:** la regla del costo al anular es una función pura del caso de uso. El cableado en el repositorio espera al re-scaffold del 13, para no escribir contra columnas que el modelo todavía no tiene.
+- **D-S7-22 · 27/11/2026:** el código del retiro viaja en la query string y no en la ruta, porque hay códigos con «/». El caso de uso lo normaliza y compara la clave.
+
+La 032 y la 033 siguen esperando la compuerta C1 (L2 todavía no existe en el esquema): no se escribieron.
+
 **27/11/2026 · Fix «Enter sobre un código exacto lo elige» (Javi): PR #205 abierto contra `develop`, esperando revisión de Santi. Tarea terminada de este lado.**
 - Rama `fix/enter-codigo-exacto` (merges de `develop`: `de068fd` y `5be5732`; al día con `bda2692`). Solo frontend, sin backend ni esquema. Bitácora: `docs/sprint06/BITACORA.md`, bloque del 25/11.
 - Commits: `cca1741` (la regla pasa a `compartido/`, sin cambio de comportamiento; su spec es de caracterización), `591a4d4` (specs en rojo) y `0676f4f` (Enter elige en la NCA, compras registradas y notas registradas); `7708097` (rojo) y `59f21ba` (la NCA no agrega dos veces un artículo sin origen).
